@@ -1,0 +1,56 @@
+.profile-menu {
+  .dropdown-toggle {
+    // Using the unified button style from Header.scss
+    background-color: transparent !important;
+    padding: 8px !important;
+
+    &::after {
+      display: none;
+    }
+  }
+
+  .profile-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px var(--shadow-color);
+    }
+  }
+
+  .dropdown-menu {
+    margin-top: 10px !important;
+    border: 1px solid var(--topbar-border-color);
+    box-shadow: 0 5px 20px var(--shadow-color);
+    animation: fadeInScale 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+    background-color: var(--body-bg);
+  }
+
+  .dropdown-item {
+    color: var(--text-color);
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.03);
+    }
+  }
+}
+
+[data-theme="dark"] .profile-menu {
+  .dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

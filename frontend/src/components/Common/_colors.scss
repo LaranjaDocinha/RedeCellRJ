@@ -1,0 +1,75 @@
+// frontend/src/components/Common/_colors.scss
+
+:root, [data-theme="light"] {
+  // Paleta de Cores Semântica
+  --color-primary: #556ee6;
+  --color-secondary: #74788d;
+  --color-success: #34c38f;
+  --color-info: #FF6F00;
+  --color-warning: #f1b44c;
+  --color-danger: #f46a6a;
+
+  // Cores de UI
+  --color-body-bg: #f8f9fa;
+  --color-body-text: #212529;
+  --color-component-bg: #ffffff;
+  --color-component-secondary-bg: #f8f9fa;
+  --color-border: #dee2e6;
+  --color-text-muted: #74788d;
+
+  // Cores para estados
+  --color-disabled-bg: #e9ecef;
+  --color-disabled-border: #dee2e6;
+  --color-disabled-text: #6c757d;
+  --color-active-menu-bg: rgba(85, 110, 230, 0.15);
+  --color-active-menu-text: var(--color-primary);
+
+  // Sombras e Efeitos
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --glass-bg: rgba(255, 255, 255, 0.8);
+
+  // Tons de Cinza
+  --gray-100: #f8f9fa;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-400: #ced4da;
+  --gray-500: #adb5bd;
+  --gray-600: #6c757d;
+  --gray-700: #495057;
+  --gray-800: #343a40;
+  --gray-900: #212529;
+  --white: #ffffff;
+  --black: #000000;
+}
+
+[data-theme="dark"] {
+  // Paleta de Cores Semântica
+  --color-primary: #556ee6; // Manter a mesma cor primária ou ajustar se necessário
+  --color-secondary: #a6b0cf;
+  --color-success: #34c38f;
+  --color-info: #FF6F00;
+  --color-warning: #f1b44c;
+  --color-danger: #f46a6a;
+
+  // Cores de UI
+  --color-body-bg: #2c2c2e;
+  --color-body-text: #f0f2f5;
+  --color-component-bg: #3a3a3c;
+  --color-component-secondary-bg: #2c2c2e;
+  --color-border: #4a4a4c;
+  --color-text-muted: #a6b0cf;
+
+  // Cores para estados
+  --color-disabled-bg: #3a3a3c;
+  --color-disabled-border: #4a4a4c;
+  --color-disabled-text: #8e8e93;
+  --color-active-menu-bg: rgba(255, 255, 255, 0.15);
+  --color-active-menu-text: var(--white);
+
+  // Sombras e Efeitos
+  --shadow-color: rgba(0, 0, 0, 0.25);
+  --glass-bg: rgba(44, 44, 46, 0.7);
+}
+
+// Cores para gráficos (podem ser usadas diretamente ou via variáveis CSS se a troca de tema for necessária)
+$chart-colors: #556ee6, #34c38f, #f1b44c, #f46a6a, #50a5f1, #ff6f00, #74788d, #a6b0cf;

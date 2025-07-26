@@ -1,0 +1,106 @@
+/* Receipt.css */
+.receipt-container {
+  font-family: 'Courier New', Courier, monospace;
+  color: var(--bs-body-color);
+  width: 300px; /* Largura típica de impressora térmica */
+  margin: 0 auto;
+  padding: 15px;
+  background-color: var(--bs-body-bg);
+}
+
+.receipt-header, .receipt-footer {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.receipt-header h2 {
+  margin: 0;
+  font-size: 1.4em;
+}
+
+.receipt-header p, .receipt-info p, .receipt-totals p, .receipt-notes p {
+  margin: 2px 0;
+  font-size: 0.9em;
+}
+
+.receipt-info {
+  margin-bottom: 15px;
+  border-top: 1px dashed var(--bs-border-color);
+  border-bottom: 1px dashed var(--bs-border-color);
+  padding: 10px 0;
+}
+
+.receipt-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 15px;
+}
+
+.receipt-table th, .receipt-table td {
+  text-align: left;
+  padding: 3px 0;
+  font-size: 0.9em;
+}
+
+.receipt-table th:nth-child(2), .receipt-table td:nth-child(2) {
+  text-align: center;
+}
+.receipt-table th:nth-child(3), .receipt-table td:nth-child(3),
+.receipt-table th:nth-child(4), .receipt-table td:nth-child(4) {
+  text-align: right;
+}
+
+.receipt-totals {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--bs-border-color);
+}
+
+.receipt-totals p {
+  display: flex;
+  justify-content: space-between;
+}
+
+.receipt-totals .total-amount {
+  font-size: 1.1em;
+  margin-top: 5px;
+}
+
+.receipt-notes {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--bs-border-color);
+  font-size: 0.8em;
+}
+
+.receipt-footer {
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px solid var(--bs-border-color);
+}
+
+/* Estilos de impressão */
+@media print {
+  body, html {
+    background: #fff;
+    margin: 0;
+    padding: 0;
+  }
+  .receipt-container {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+  /* Esconde o resto da página ao imprimir */
+  body > *:not(.receipt-print-wrapper) {
+    display: none;
+  }
+  .receipt-print-wrapper {
+    display: block !important;
+  }
+}
+
+.hidden-for-print {
+  display: none;
+}

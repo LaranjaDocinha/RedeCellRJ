@@ -1,0 +1,44 @@
+.theme-toggle-btn {
+  // The unified button style is now in Header.scss
+  // This file can be simplified or removed if no specific styles are needed.
+  
+  .icon-wrapper {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    
+    .sun, .moon {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.5s cubic-bezier(0.55, 0.06, 0.68, 0.19), opacity 0.5s ease;
+      color: var(--text-color);
+    }
+
+    .sun {
+      transform: rotate(0deg) scale(1);
+      opacity: 1;
+    }
+
+    .moon {
+      transform: rotate(90deg) scale(0);
+      opacity: 0;
+    }
+  }
+}
+
+[data-theme="dark"] .theme-toggle-btn {
+  .icon-wrapper {
+    .sun {
+      transform: rotate(-90deg) scale(0);
+      opacity: 0;
+    }
+
+    .moon {
+      transform: rotate(0deg) scale(1);
+      opacity: 1;
+    }
+  }
+}

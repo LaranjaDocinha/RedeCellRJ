@@ -1,0 +1,47 @@
+import React from 'react';
+import { Row, Col, Card, CardBody } from 'reactstrap';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
+
+const ProductPageSkeleton = () => {
+  return (
+    <div className="page-content">
+      <div className="container-fluid">
+        <Row>
+          <Col lg="12">
+            <Card>
+              <CardBody>
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                  <Skeleton height={30} width={250} />
+                  <div className="d-flex">
+                    <Skeleton height={38} width={180} className="me-2" />
+                    <Skeleton height={38} width={80} className="me-2" />
+                    <Skeleton height={38} width={40} className="me-1" />
+                    <Skeleton height={38} width={40} />
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <Skeleton height={38} />
+                </div>
+                
+                {/* Skeleton for Table */}
+                <div>
+                  <Skeleton height={40} className="mb-2" />
+                  <Skeleton height={50} count={10} />
+                </div>
+
+                {/* Skeleton for Footer */}
+                <div className="d-flex justify-content-between align-items-center mt-3">
+                  <Skeleton height={20} width={200} />
+                  <Skeleton height={32} width={250} />
+                </div>
+              </CardBody>
+            </Card>
+          </Col>
+        </Row>
+      </div>
+    </div>
+  );
+};
+
+export default ProductPageSkeleton;

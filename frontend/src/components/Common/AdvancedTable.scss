@@ -1,0 +1,31 @@
+.advanced-table-container {
+  .table-controls {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+
+    .form-control-sm {
+      max-width: 300px;
+    }
+  }
+
+  .table-responsive {
+    th {
+      cursor: pointer;
+      user-select: none;
+    }
+  }
+
+  .pagination-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+
+    .pagination-info {
+      font-size: 0.875rem;
+      color: #6c757d;
+    }
+  }
+}

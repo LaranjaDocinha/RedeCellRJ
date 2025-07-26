@@ -1,0 +1,105 @@
+// frontend/src/index.scss
+
+// 1. Importe o Design System, que agora contém todas as nossas variáveis.
+@import "components/Common/design_system";
+
+// 2. Importe o Bootstrap. Ele usará as variáveis CSS definidas no nosso Design System.
+@import "~bootstrap/scss/bootstrap";
+
+// 3. Estilos globais que usam as variáveis de CSS.
+body {
+  margin: 0;
+  font-family: var(--font-family-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-body-bg);
+  color: var(--color-body-text);
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.page-content {
+  background-color: var(--color-body-bg);
+}
+
+.card {
+  background-color: var(--color-component-bg) !important;
+  color: var(--color-body-text);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow);
+}
+
+.card-body {
+  color: var(--color-body-text);
+}
+
+.card-title,
+.card-body h1,
+.card-body h2,
+.card-body h3,
+.card-body h4,
+.card-body h5,
+.card-body h6 {
+  color: var(--color-body-text);
+}
+
+.card .text-muted {
+  color: var(--color-text-muted) !important;
+}
+
+.table {
+  color: var(--color-body-text);
+  border-color: var(--color-border);
+  --bs-table-bg: transparent;
+  --bs-table-striped-bg: rgba(0, 0, 0, 0.02);
+}
+
+.table th, .table td {
+  color: var(--color-body-text);
+}
+
+.table > thead > tr > th {
+  background-color: var(--color-component-bg) !important;
+  color: var(--color-body-text) !important;
+  border-color: var(--color-border) !important;
+  border-bottom-width: 1px;
+}
+
+.table-hover > tbody > tr:hover > * {
+  --bs-table-accent-bg: var(--shadow-color);
+  color: var(--color-body-text);
+}
+
+.form-control,
+.form-select,
+.input-group-text {
+  background-color: var(--color-component-bg);
+  color: var(--color-body-text);
+  border-color: var(--color-border);
+}
+
+.form-control:disabled,
+.form-control[readonly] {
+  background-color: var(--color-disabled-bg);
+}
+
+.form-control::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.6;
+}
+
+.modal-content {
+  background-color: var(--color-component-bg);
+  color: var(--color-body-text);
+}
+
+.modal-header {
+  border-bottom-color: var(--color-border);
+}
+
+.modal-footer {
+  border-top-color: var(--color-border);
+}
+
+code {
+  font-family: var(--font-family-monospace);
+}

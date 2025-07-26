@@ -1,0 +1,51 @@
+@import "../Common/colors";
+
+:root {
+  --sidebar-width: 260px;
+  --sidebar-width-collapsed: 88px;
+}
+
+.app-container {
+  display: flex;
+  height: 100vh;
+}
+
+.main-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background-color: var(--body-bg);
+  transition: background-color 0.2s ease-in-out, margin-left 0.3s ease;
+  margin-left: var(--sidebar-width);
+}
+
+.sidebar-collapsed .main-content {
+  margin-left: var(--sidebar-width-collapsed);
+}
+
+.content-page {
+  padding: 24px;
+  flex-grow: 1;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000; // Abaixo da sidebar, acima do conteúdo
+  display: none;
+}
+
+// Estilos para responsividade
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0 !important;
+  }
+  .mobile-menu-open .overlay {
+    display: block;
+  }
+}

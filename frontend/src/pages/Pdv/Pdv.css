@@ -1,0 +1,39 @@
+/* Efeitos e Animações para o PDV */
+
+/* Efeito de Hover para o Card do Produto */
+.product-card {
+    transition: all 0.2s ease-in-out;
+    border: 1px solid var(--bs-border-color);
+}
+
+.product-card:hover:not(.disabled) {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(var(--bs-body-color-rgb), 0.1);
+    border-color: var(--bs-primary);
+}
+
+/* Animação 'Voar para o Carrinho' */
+@keyframes fly-to-cart {
+    0% {
+        transform: scale(1) translate(0, 0);
+        opacity: 1;
+        position: fixed;
+        z-index: 9999;
+    }
+    100% {
+        transform: scale(0.1) translate(var(--target-x, 0), var(--target-y, 0));
+        opacity: 0;
+        position: fixed;
+        z-index: 9999;
+    }
+}
+
+.fly-to-cart-animation {
+    animation: fly-to-cart 0.7s ease-in-out forwards;
+    pointer-events: none; /* Garante que a animação não intercepte cliques */
+}
+
+/* Estilo para a coluna da Venda Atual para ser o alvo da animação */
+#sale-column-card {
+    /* Usado como referência para o alvo da animação */
+}
