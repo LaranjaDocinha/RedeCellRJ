@@ -7,6 +7,8 @@
 @import "~bootstrap/scss/bootstrap";
 
 // 3. Estilos globais que usam as variáveis de CSS.
+@import "pages/Authentication/auth"; // Importar estilos de autenticação
+
 body {
   margin: 0;
   font-family: var(--font-family-sans);

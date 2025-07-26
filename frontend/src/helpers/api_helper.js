@@ -34,6 +34,10 @@ axiosApi.interceptors.request.use(
 // Interceptador para tratar respostas e erros de forma centralizada
 axiosApi.interceptors.response.use(
   (response) => {
+    // Se a resposta contiver uma mensagem de sucesso, exiba-a
+    if (response.data && response.data.message) {
+      toast.success(response.data.message);
+    }
     return response.data;
   },
   (error) => {

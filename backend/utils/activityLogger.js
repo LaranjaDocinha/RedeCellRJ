@@ -1,14 +1,21 @@
-const { pool } = require('../db');
+const fs = require('fs').promises;
+const path = require('path');
 
-const logRepairActivity = async (repairId, activityType, description, userId = null) => {
+const logFilePath = path.join(__dirname, '../../logs', 'auth.log');
+
+const logActivity = async (message) => {
+  const logMessage = `${new Date().toISOString()} - ${message}\n`;
   try {
-    await pool.query(
-      'INSERT INTO repair_activities (repair_id, user_id, activity_type, description) VALUES ($1, $2, $3, $4)',
-      [repairId, userId, activityType, description]
-    );
-  } catch (err) {
-    console.error('Error logging repair activity:', err.message);
+    await fs.appendFile(logFilePath, logMessage);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      // Se o diretório de logs não existe, crie-o
+      await fs.mkdir(path.dirname(logFilePath), { recursive: true });
+      await fs.appendFile(logFilePath, logMessage);
+    } else {
+      console.error('Failed to write to log file:', error);
+    }
   }
 };
 
-module.exports = { logRepairActivity };
+module.exports = { logActivity };

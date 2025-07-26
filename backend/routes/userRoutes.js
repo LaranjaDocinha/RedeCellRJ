@@ -1,10 +1,22 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const { authenticateToken, authorizeRoles } = require('../middleware/authMiddleware');
+const { validatePassword } = require('../utils/validation');
+const { logActivity } = require('../utils/activityLogger');
 
 const router = express.Router();
+
+// Rate Limiter para a rota de login
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10, // Limita cada IP a 10 requisições por janela
+  message: 'Muitas tentativas de login a partir deste IP, por favor, tente novamente após 15 minutos.',
+  standardHeaders: true, // Retorna informações do limite nos cabeçalhos `RateLimit-*`
+  legacyHeaders: false, // Desabilita os cabeçalhos `X-RateLimit-*`
+});
 
 // --- ROTAS CRUD PARA GERENCIAMENTO DE USUÁRIOS (Protegidas para Admin) ---
 
@@ -152,6 +164,12 @@ router.delete('/:id', [authenticateToken, authorizeRoles('admin')], async (req, 
 
 // --- ROTAS DE AUTENTICAÇÃO PÚBLICA ---
 
+const { validatePassword } = require('../utils/validation');
+
+const { validatePassword } = require('../utils/validation');
+
+const { validatePassword } = require('../utils/validation');
+
 // Rota para registrar um novo usuário (pode ser pública ou restrita)
 // Por enquanto, vamos manter pública, mas poderia ser protegida também.
 router.post('/register', async (req, res) => {
@@ -159,6 +177,12 @@ router.post('/register', async (req, res) => {
     if (!name || !email || !password) {
         return res.status(400).json({ message: 'Nome, email e senha são obrigatórios.' });
     }
+
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+        return res.status(400).json({ message: passwordValidation.message });
+    }
+
     try {
         const salt = await bcrypt.genSalt(10);
         const password_hash = await bcrypt.hash(password, salt);
@@ -178,7 +202,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Rota para login de usuário
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
         return res.status(400).json({ message: 'Email e senha são obrigatórios.' });
@@ -186,13 +210,18 @@ router.post('/login', async (req, res) => {
     try {
         const userResult = await db.query('SELECT * FROM users WHERE email = $1 AND is_active = TRUE', [email]);
         if (userResult.rows.length === 0) {
-            return res.status(401).json({ message: 'Credenciais inválidas ou usuário inativo.' });
+            await logActivity(`Tentativa de login falhou para o e-mail: ${email} (usuário não encontrado ou inativo).`);
+            // Resposta genérica para não revelar se o usuário existe ou não
+            return res.status(401).json({ message: 'Credenciais inválidas.' });
         }
         const user = userResult.rows[0];
         const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) {
+            await logActivity(`Tentativa de login falhou para o usuário: ${user.name} <${email}> (senha incorreta).`);
+            // Resposta genérica
             return res.status(401).json({ message: 'Credenciais inválidas.' });
         }
+        await logActivity(`Usuário ${user.name} <${email}> logado com sucesso.`);
         const payload = { user: { id: user.id, name: user.name, role: user.role } };
         jwt.sign(
             payload,
