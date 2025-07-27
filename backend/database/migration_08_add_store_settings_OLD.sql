@@ -10,3 +10,4 @@ INSERT INTO store_settings (key, value) VALUES ('store_address', 'Endereço da L
 INSERT INTO store_settings (key, value) VALUES ('store_phone', '(00) 00000-0000') ON CONFLICT (key) DO NOTHING;
 INSERT INTO store_settings (key, value) VALUES ('store_cnpj', '00.000.000/0001-00') ON CONFLICT (key) DO NOTHING;
 INSERT INTO store_settings (key, value) VALUES ('store_logo_url', '') ON CONFLICT (key) DO NOTHING;
+COMMIT;

@@ -2,16 +2,12 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// Middleware de autenticação (provisório)
-const authMiddleware = (req, res, next) => {
-    req.user = { id: 1, name: 'Admin' }; 
-    next();
-};
+
 
 // --- ROTAS PRINCIPAIS DE ORDENS DE SERVIÇO ---
 
 // GET /api/repairs - Listar todas as O.S. com filtros
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', async (req, res) => {
     const { limit = 10, offset = 0, search = '', status = '' } = req.query;
     try {
         let query = `
@@ -76,11 +72,11 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 // POST /api/repairs - Criar uma nova O.S.
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', async (req, res) => {
     const { 
         customer_id, device_type, brand, model, imei_serial, 
         problem_description, service_cost = 0, priority = 'Normal', 
-        tags 
+        tags, user_id 
     } = req.body;
 
     if (!customer_id || !device_type || !problem_description) {
@@ -128,7 +124,7 @@ router.post('/', authMiddleware, async (req, res) => {
 });
 
 // GET /api/repairs/stats - Obter estatísticas dos reparos
-router.get('/stats', authMiddleware, async (req, res) => {
+router.get('/stats', async (req, res) => {
     try {
         const statsQuery = `
             SELECT 
@@ -149,7 +145,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
 });
 
 // GET /api/repairs/:id - Obter detalhes de uma O.S.
-router.get('/:id', authMiddleware, async (req, res, next) => {
+router.get('/:id', async (req, res, next) => {
     const { id } = req.params;
     if (!/^\d+$/.test(id)) {
         return next();
@@ -200,9 +196,9 @@ router.get('/:id', authMiddleware, async (req, res, next) => {
 });
 
 // PATCH /api/repairs/:id/status - Atualizar o status de uma O.S.
-router.patch('/:id/status', authMiddleware, async (req, res) => {
+router.patch('/:id/status', async (req, res) => {
     const { id } = req.params;
-    const { status, notes = '' } = req.body;
+    const { status, notes = '', user_id } = req.body;
     if (!status) {
         return res.status(400).json({ message: 'O novo status é obrigatório.' });
     }
@@ -239,9 +235,9 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
 // --- ROTAS PARA GERENCIAR PEÇAS EM UMA O.S. ---
 
 // POST /api/repairs/:id/parts - Adicionar uma peça a uma O.S.
-router.post('/:id/parts', authMiddleware, async (req, res) => {
+router.post('/:id/parts', async (req, res) => {
     const { id: repair_id } = req.params;
-    const { variation_id, quantity_used } = req.body;
+    const { variation_id, quantity_used, user_id } = req.body;
     if (!variation_id || !quantity_used) {
         return res.status(400).json({ message: 'ID da peça e quantidade são obrigatórios.' });
     }

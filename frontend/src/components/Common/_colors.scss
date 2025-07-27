@@ -1,13 +1,30 @@
 // frontend/src/components/Common/_colors.scss
 
+// Variáveis base que serão definidas pelo JavaScript
+:root {
+  --theme-color-primary: #556ee6;
+  --theme-color-secondary: #74788d;
+  --theme-color-success: #34c38f;
+  --theme-color-info: #FF6F00;
+  --theme-color-warning: #f1b44c;
+  --theme-color-danger: #f46a6a;
+  --theme-color-primary-rgb: 85, 110, 230; // RGB para sombras e opacidades
+  // Adicione outras cores do tema aqui que serão controladas pelo JS
+
+  // Variáveis de fonte
+  --font-family-primary: 'Inter', sans-serif;
+  --font-family-secondary: 'Roboto', sans-serif;
+}
+
+// Mapeamento semântico para as variáveis do tema
 :root, [data-theme="light"] {
-  // Paleta de Cores Semântica
-  --color-primary: #556ee6;
-  --color-secondary: #74788d;
-  --color-success: #34c38f;
-  --color-info: #FF6F00;
-  --color-warning: #f1b44c;
-  --color-danger: #f46a6a;
+  --color-primary: var(--theme-color-primary);
+  --color-secondary: var(--theme-color-secondary);
+  --color-success: var(--theme-color-success);
+  --color-info: var(--theme-color-info);
+  --color-warning: var(--theme-color-warning);
+  --color-danger: var(--theme-color-danger);
+  --gradient-primary: linear-gradient(to right, var(--color-primary), #7a8ee6); // Usar var(--color-primary)
 
   // Cores de UI
   --color-body-bg: #f8f9fa;
@@ -21,12 +38,13 @@
   --color-disabled-bg: #e9ecef;
   --color-disabled-border: #dee2e6;
   --color-disabled-text: #6c757d;
-  --color-active-menu-bg: rgba(85, 110, 230, 0.15);
+  --color-active-menu-bg: rgba(var(--theme-color-primary-rgb), 0.15);
   --color-active-menu-text: var(--color-primary);
 
   // Sombras e Efeitos
   --shadow-color: rgba(0, 0, 0, 0.1);
   --glass-bg: rgba(255, 255, 255, 0.8);
+  --color-glow: rgba(var(--theme-color-primary-rgb), 0.3);
 
   // Tons de Cinza
   --gray-100: #f8f9fa;
@@ -44,7 +62,6 @@
 
 [data-theme="dark"] {
   // Paleta de Cores Semântica
-  --color-primary: #556ee6; // Manter a mesma cor primária ou ajustar se necessário
   --color-secondary: #a6b0cf;
   --color-success: #34c38f;
   --color-info: #FF6F00;
@@ -63,8 +80,8 @@
   --color-disabled-bg: #3a3a3c;
   --color-disabled-border: #4a4a4c;
   --color-disabled-text: #8e8e93;
-  --color-active-menu-bg: rgba(255, 255, 255, 0.15);
-  --color-active-menu-text: var(--white);
+  --color-active-menu-bg: rgba(var(--theme-color-primary-rgb), 0.15);
+  --color-active-menu-text: var(--color-primary);
 
   // Sombras e Efeitos
   --shadow-color: rgba(0, 0, 0, 0.25);

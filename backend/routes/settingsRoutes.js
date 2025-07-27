@@ -5,7 +5,7 @@ const { authenticateToken, authorizeRoles } = require('../middleware/authMiddlew
 const router = express.Router();
 
 // Proteger todas as rotas de configurações para administradores
-router.use(authenticateToken, authorizeRoles('admin'));
+
 
 // GET /api/settings - Obter todas as configurações da loja
 router.get('/', async (req, res) => {

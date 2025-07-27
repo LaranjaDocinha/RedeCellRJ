@@ -2,34 +2,31 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Card, CardBody, Button, Input, Spinner, Alert, Badge } from 'reactstrap';
 import { Link } from 'react-router-dom';
 import Breadcrumbs from '../../components/Common/Breadcrumb';
-import axios from 'axios';
-import config from '../../config';
+import useApi from '../../hooks/useApi';
+import { get, post } from '../../helpers/api_helper';
+import { useAuthStore } from '../../store/authStore';
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
 const RepairList = () => {
   document.title = "Ordens de Serviço | Skote PDV";
 
+  const { user } = useAuthStore();
   const [repairs, setRepairs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const { request: fetchRepairsApi, loading, error } = useApi(get);
 
   const fetchRepairs = useCallback(async () => {
-    setLoading(true);
-    setError(null);
     try {
-      const params = { search: searchTerm, status: statusFilter, limit: 100 };
-      const response = await axios.get(`${config.api.API_URL}/repairs`, { params });
-      setRepairs(response.data.repairs);
+      const params = { search: searchTerm, status: statusFilter, limit: 100, userId: user?.id };
+      const response = await fetchRepairsApi('/api/repairs', { params });
+      setRepairs(response.repairs || []);
     } catch (err) {
-      setError("Falha ao carregar as Ordens de Serviço.");
+      // O erro já é capturado e exposto pelo hook useApi
       console.error(err);
-    } finally {
-      setLoading(false);
     }
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, fetchRepairsApi, user?.id]);
 
   useEffect(() => {
     fetchRepairs();
@@ -52,7 +49,7 @@ const RepairList = () => {
       <div className="page-content">
         <Container fluid>
           <Breadcrumbs title="Gerenciamento" breadcrumbItem="Ordens de Serviço" />
-          {error && <Alert color="danger">{error}</Alert>}
+          {error && <Alert color="danger" timeout={0}>{error}</Alert>}
           <Card>
             <CardBody>
               <Row className="mb-4">

@@ -1,0 +1,1 @@
+UPDATE users SET role = 'seller' WHERE role IS NULL;

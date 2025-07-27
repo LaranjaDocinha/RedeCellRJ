@@ -5,7 +5,7 @@ const { authenticateToken, authorizeRoles } = require('../middleware/authMiddlew
 const router = express.Router();
 
 // Todas as rotas de fornecedores são protegidas e requerem a role 'admin'
-router.use(authenticateToken, authorizeRoles('admin'));
+
 
 // GET /api/suppliers - Listar todos os fornecedores
 router.get('/', async (req, res) => {

@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.0.0",
+    "@mdi/font": "^7.4.47",
+    "@tsparticles/slim": "^3.8.1",
+    "boxicons": "^2.1.4",
+    "react-lottie": "^1.2.10",
+    "react-tsparticles": "^2.12.2",
+    "tsparticles": "^3.8.1"
+  }
+}

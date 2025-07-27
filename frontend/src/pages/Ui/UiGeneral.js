@@ -231,6 +231,7 @@ const UiGeneral = () => {
                       toggle={() => {
                         setpopovertop(!popovertop);
                       }}
+                      transition={{ timeout: 300 }}
                     >
                       <PopoverHeader>Popover Title</PopoverHeader>
                       <PopoverBody>
@@ -254,6 +255,7 @@ const UiGeneral = () => {
                       toggle={() => {
                         setpopoverright(!popoverright);
                       }}
+                      transition={{ timeout: 300 }}
                     >
                       <PopoverHeader>Popover Title</PopoverHeader>
                       <PopoverBody>
@@ -277,6 +279,7 @@ const UiGeneral = () => {
                       toggle={() => {
                         setpopoverbottom(!popoverbottom);
                       }}
+                      transition={{ timeout: 300 }}
                     >
                       <PopoverHeader>Popover Title</PopoverHeader>
                       <PopoverBody>
@@ -300,6 +303,7 @@ const UiGeneral = () => {
                       toggle={() => {
                         setpopoverleft(!popoverleft);
                       }}
+                      transition={{ timeout: 300 }}
                     >
                       <PopoverHeader>Popover Title</PopoverHeader>
                       <PopoverBody>
@@ -320,6 +324,7 @@ const UiGeneral = () => {
                       trigger="focus"
                       target="Popoverdismiss"
                       placement="right"
+                      transition={{ timeout: 300 }}
                     >
                       <PopoverHeader>Dismissible popover</PopoverHeader>
                       <PopoverBody>
@@ -347,6 +352,7 @@ const UiGeneral = () => {
                       toggle={() => {
                         setttop(!ttop);
                       }}
+                      transition={{ timeout: 300 }}
                     >
                       Hello world!
                     </Tooltip>
@@ -357,6 +363,7 @@ const UiGeneral = () => {
                       toggle={() => {
                         settright(!tright);
                       }}
+                      transition={{ timeout: 300 }}
                     >
                       Hello world!
                     </Tooltip>
@@ -367,6 +374,7 @@ const UiGeneral = () => {
                       toggle={() => {
                         settbottom(!tbottom);
                       }}
+                      transition={{ timeout: 300 }}
                     >
                       Hello world!
                     </Tooltip>
@@ -377,6 +385,7 @@ const UiGeneral = () => {
                       toggle={() => {
                         settleft(!tleft);
                       }}
+                      transition={{ timeout: 300 }}
                     >
                       Hello world!
                     </Tooltip>

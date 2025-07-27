@@ -23,3 +23,4 @@ ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT TRUE;
 -- Garante que o usuário com id 1 seja um admin para testes iniciais.
 -- Em um ambiente de produção, isso seria gerenciado de outra forma.
 UPDATE users SET role = 'admin' WHERE id = 1;
+COMMIT;

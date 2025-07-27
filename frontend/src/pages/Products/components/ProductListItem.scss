@@ -1,0 +1,101 @@
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "../../../components/Common/design_system";
+
+// Animações
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; transform: scaleY(0); }
+}
+
+.product-list-item-wrapper {
+  animation: fadeIn 0.4s ease-out forwards;
+
+  &.exiting {
+    animation: fadeOut 0.4s ease-in forwards;
+  }
+}
+
+.product-list-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid var(--#{$prefix}border-color);
+  border-radius: $card-border-radius;
+  margin-bottom: 0.5rem;
+  background-color: var(--#{$prefix}card-bg);
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+
+  &:focus-within {
+    outline: 2px solid var(--#{$prefix}primary);
+    box-shadow: 0 0 0 3px rgba(var(--#{$prefix}primary-rgb), 0.25);
+  }
+
+  &.selected {
+    background-color: var(--#{$prefix}primary-bg-subtle);
+    border-color: var(--#{$prefix}primary);
+  }
+
+  &:hover {
+    background-color: var(--bs-secondary-bg-subtle);
+  }
+
+  &__selection {
+    margin-right: 1rem;
+  }
+
+  &__image {
+    width: 60px;
+    height: 60px;
+    margin-right: 1rem;
+    
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: $border-radius-sm;
+    }
+  }
+
+  &__info {
+    flex-grow: 1;
+    min-width: 0; // Permite que o flex item encolha e o ellipsis funcione
+
+    h6, small {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+  }
+
+  &__price,
+  &__stock,
+  &__type {
+    width: 120px;
+    text-align: center;
+    flex-shrink: 0; // Impede que esses itens encolham
+  }
+
+  &__actions {
+    width: 100px;
+    text-align: right;
+    flex-shrink: 0;
+
+    .btn {
+      margin-left: 0.5rem;
+      background-color: var(--bs-secondary-bg-subtle);
+      color: var(--bs-emphasis-color);
+      border: 1px solid var(--bs-border-color-translucent);
+
+      &:hover {
+        background-color: var(--bs-tertiary-bg);
+      }
+    }
+  }
+}

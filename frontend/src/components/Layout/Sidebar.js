@@ -3,6 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { Collapse, Tooltip } from 'reactstrap';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../../store/authStore'; // Importa o store do Zustand
+import { useThemeStore } from '../../store/themeStore'; // Importa o themeStore
 import './Sidebar.scss';
 
 // Definição base dos itens de menu
@@ -22,7 +23,7 @@ const allMenuItems = [
     children: [
       { path: '/products', icon: 'bxs-package', title: 'Produtos' },
       { path: '/customers', icon: 'bxs-user-detail', title: 'Clientes' },
-      { path: '/suppliers', icon: 'bxs-truck', title: 'Fornecedores', roles: ['admin'] }, // Protegido
+      { path: '/suppliers', icon: 'bxs-truck', title: 'Fornecedores' },
       { path: '/purchase-orders', icon: 'bx-notepad', title: 'Ordens de Compra', roles: ['admin'] }, // Protegido
       { path: '/users', icon: 'bxs-user-account', title: 'Usuários', roles: ['admin'] }, // Protegido
     ],
@@ -40,7 +41,7 @@ const allMenuItems = [
       { path: '/finance/payables', title: 'Contas a Pagar' },
     ],
   },
-  { path: '/settings', icon: 'bx-cog', title: 'Configurações', roles: ['admin'] },
+  { path: '/settings', icon: 'bx-cog', title: 'Configurações' },
 ];
 
 // Componente recursivo para filtrar itens de menu com base nas permissões
@@ -88,13 +89,13 @@ const SidebarItem = ({ item, isCollapsed }) => {
   if (hasChildren) {
     return (
       <li className={isOpen ? 'menu-item open' : 'menu-item'}>
-        <a className="nav-link" onClick={toggle} id={linkId}>
+        <button className="nav-link" onClick={toggle} id={linkId}>
           {item.icon && <i className={`bx ${item.icon}`}></i>}
           {!isCollapsed && <span>{item.title}</span>}
           {!isCollapsed && <i className="bx bx-chevron-down arrow"></i>}
-        </a>
+        </button>
         {isCollapsed && (
-          <Tooltip placement="right" isOpen={tooltipOpen} target={linkId} toggle={toggleTooltip}>
+          <Tooltip placement="right" isOpen={tooltipOpen} target={linkId} toggle={toggleTooltip} transition={{ timeout: 300 }}>
             {item.title}
           </Tooltip>
         )}
@@ -121,7 +122,7 @@ const SidebarItem = ({ item, isCollapsed }) => {
         {!isCollapsed && <span>{item.title}</span>}
       </NavLink>
       {isCollapsed && (
-        <Tooltip placement="right" isOpen={tooltipOpen} target={linkId} toggle={toggleTooltip}>
+        <Tooltip placement="right" isOpen={tooltipOpen} target={linkId} toggle={toggleTooltip} transition={{ timeout: 300 }}>
           {item.title}
         </Tooltip>
       )}
@@ -131,6 +132,8 @@ const SidebarItem = ({ item, isCollapsed }) => {
 
 const Sidebar = ({ isCollapsed, isMobileOpen }) => {
   const { hasRole, isAuthLoading } = useAuthStore();
+  const getCurrentLogo = useThemeStore((state) => state.getCurrentLogo);
+  const currentLogo = getCurrentLogo();
 
   // Filtra os itens de menu com base na permissão do usuário.
   // useMemo garante que o filtro não seja re-executado a cada renderização.
@@ -143,7 +146,7 @@ const Sidebar = ({ isCollapsed, isMobileOpen }) => {
     <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}>
       <div className="sidebar-header">
         <motion.div animate={{ opacity: isCollapsed ? 0 : 1, width: isCollapsed ? 0 : 'auto' }}>
-          {!isCollapsed && <h3>PDV Web</h3>}
+          {!isCollapsed && <img src={currentLogo} alt="PDV Web Logo" className="sidebar-logo" />}
         </motion.div>
       </div>
       <nav className="sidebar-nav">

@@ -1,0 +1,1 @@
+INSERT INTO store_settings (key, value) VALUES ('store_phone', '(00) 00000-0000') ON CONFLICT (key) DO NOTHING;

@@ -1,0 +1,1 @@
+INSERT INTO store_settings (key, value) VALUES ('store_name', 'Nome da Loja') ON CONFLICT (key) DO NOTHING;

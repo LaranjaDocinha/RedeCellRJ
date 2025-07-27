@@ -14,6 +14,7 @@
     "apexcharts": "^5.3.1",
     "axios": "^1.11.0",
     "bootstrap": "^5.3.7",
+    "formik": "^2.4.6",
     "framer-motion": "^12.23.9",
     "fuse.js": "^7.1.0",
     "lodash": "^4.17.21",
@@ -21,6 +22,7 @@
     "react": "^18.2.0",
     "react-apexcharts": "^1.7.0",
     "react-barcode": "^1.6.1",
+    "react-confetti": "^6.4.0",
     "react-countup": "^6.5.3",
     "react-dom": "^18.2.0",
     "react-grid-layout": "^1.5.2",
@@ -36,15 +38,20 @@
     "sass": "^1.89.2",
     "simplebar-react": "^3.3.2",
     "web-vitals": "^2.1.4",
-    "zustand": "^5.0.6"
+    "yup": "^1.6.1",
+    "zustand": "^5.0.6",
+    "tsparticles": "^3.0.0",
+    "@tsparticles/react": "^3.0.0",
+    "@tsparticles/slim": "^3.0.0"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0 && prettier --check .",
+    "lint:fix": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0 --fix && prettier --write ."
   },
-  
   "browserslist": {
     "production": [
       ">0.2%",

@@ -1,0 +1,153 @@
+// Importa as funções e variáveis do Bootstrap primeiro
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+
+@import "../../../components/Common/_design_system.scss";
+
+// Animação de entrada
+@keyframes fadeInSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Animação de saída
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    height: 0;
+    padding: 0;
+    margin: 0;
+    border: 0;
+  }
+}
+
+.product-card-col {
+  animation: fadeInSlideUp 0.5s ease-out forwards;
+
+  &.exiting {
+    animation: fadeOut 0.5s ease-out forwards;
+  }
+}
+
+.product-card {
+  transition: all 0.3s ease-in-out;
+  border: 1px solid var(--#{$prefix}border-color);
+  border-radius: $card-border-radius;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%; // Garante que o card preencha a altura da coluna
+
+  &:focus-within {
+    outline: 2px solid var(--#{$prefix}primary);
+    box-shadow: 0 0 0 3px rgba(var(--#{$prefix}primary-rgb), 0.25);
+  }
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: $box-shadow-lg;
+  }
+
+  .product-image-container {
+    position: relative;
+    overflow: hidden;
+    
+    // Adiciona um overlay escuro no hover para destacar os botões
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 1;
+    }
+  }
+
+  .product-image {
+    width: 100%;
+    height: 200px; // Altura fixa para a imagem
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  &:hover .product-image {
+    transform: scale(1.05);
+  }
+
+  .card-body {
+    flex-grow: 1; // Faz o corpo do card crescer para preencher o espaço
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-title {
+    // Truncamento de texto
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  
+  .text-muted {
+    // Truncamento de texto para categoria
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  &.selected {
+    border-color: var(--#{$prefix}primary);
+    box-shadow: 0 0 0 2px rgba(var(--#{$prefix}primary-rgb), 0.5);
+  }
+
+  .product-selection-checkbox {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 3; // Garante que fique acima do overlay
+  }
+
+  .card-actions {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    display: flex;
+    gap: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover .card-actions {
+    opacity: 1;
+  }
+  
+  &:hover .product-image-container::after {
+    opacity: 1; // Mostra o overlay no hover do card
+  }
+
+  .action-btn {
+    background-color: var(--bs-secondary-bg-subtle);
+    color: var(--bs-emphasis-color);
+    border: 1px solid var(--bs-border-color-translucent);
+
+    &:hover {
+      background-color: var(--bs-tertiary-bg);
+    }
+  }
+}

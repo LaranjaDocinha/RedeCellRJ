@@ -16,7 +16,7 @@ const kpiData = {
 };
 
 const fetchData = (widgetId, period) => {
-  console.log(`Fetching data for ${widgetId} for period: ${period}`);
+  
   return new Promise(resolve => {
     setTimeout(() => {
       switch (widgetId) {

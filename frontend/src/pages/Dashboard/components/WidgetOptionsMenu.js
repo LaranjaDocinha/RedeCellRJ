@@ -31,15 +31,21 @@ const WidgetOptionsMenu = ({ onRemove = () => {}, onExpand = () => {}, onExport 
       {isOpen && (
         <div className="options-dropdown">
           <ul>
-            <li onClick={createHandler(onExpand)}>
-              <i className="ri-fullscreen-line"></i> Expandir
+            <li>
+              <button onClick={createHandler(onExpand)} className="dropdown-item">
+                <i className="ri-fullscreen-line"></i> Expandir
+              </button>
             </li>
-            <li onClick={createHandler(onExport)}>
-              <i className="ri-download-2-line"></i> Exportar
+            <li>
+              <button onClick={createHandler(onExport)} className="dropdown-item">
+                <i className="ri-download-2-line"></i> Exportar
+              </button>
             </li>
             <li className="separator"></li>
-            <li onClick={createHandler(onRemove)} className="danger">
-              <i className="ri-delete-bin-line"></i> Remover
+            <li>
+              <button onClick={createHandler(onRemove)} className="dropdown-item danger">
+                <i className="ri-delete-bin-line"></i> Remover
+              </button>
             </li>
           </ul>
         </div>

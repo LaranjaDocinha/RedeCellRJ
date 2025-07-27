@@ -17,4 +17,4 @@ SELECT
 FROM sale_items si
 JOIN sales s ON si.sale_id = s.id
 LEFT JOIN stock_history sh ON sh.reason = 'Venda ID: ' || s.id AND sh.variation_id = si.variation_id
-WHERE sh.id IS NULL AND s.sale_type = 'sale';
+WHERE sh.id IS NULL;

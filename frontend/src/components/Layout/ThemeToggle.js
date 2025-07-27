@@ -1,9 +1,19 @@
-import React from 'react';
-import { useTheme } from '../../context/ThemeContext';
+import React, { useEffect } from 'react';
+import { useThemeStore } from '../../store/themeStore';
 import './ThemeToggle.scss';
 
 const ThemeToggle = () => {
-  const { toggleTheme } = useTheme();
+  const setThemeMode = useThemeStore((state) => state.setThemeMode);
+  const themeMode = useThemeStore((state) => state.theme.mode);
+
+  const toggleTheme = () => {
+    setThemeMode(themeMode === 'light' ? 'dark' : 'light');
+  };
+
+  useEffect(() => {
+    document.body.classList.remove('light-mode', 'dark-mode');
+    document.body.classList.add(`${themeMode}-mode`);
+  }, [themeMode]);
 
   return (
     <button

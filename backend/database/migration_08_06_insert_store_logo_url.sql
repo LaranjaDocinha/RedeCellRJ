@@ -1,0 +1,1 @@
+INSERT INTO store_settings (key, value) VALUES ('store_logo_url', '') ON CONFLICT (key) DO NOTHING;

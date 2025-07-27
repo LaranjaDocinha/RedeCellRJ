@@ -29,10 +29,10 @@ const StockManagement = () => {
       const flattenedVariations = response.data.products.flatMap(product => 
         product.variations.map(variation => ({
           ...variation,
-          product_id: product.id,
-          product_name: product.name,
+          productId: product.id,
+          productName: product.name,
           description: product.description,
-          category_id: product.category_id
+          categoryId: product.category_id
         }))
       );
 
@@ -95,7 +95,7 @@ const StockManagement = () => {
         <Container fluid>
           <Breadcrumbs title="Estoque" breadcrumbItem="Gestão de Estoque" />
           
-          {error && <Alert color="danger">{error}</Alert>}
+          {error && <Alert color="danger" fade={false}>{error}</Alert>}
 
           <Card>
             <CardBody>
@@ -136,7 +136,7 @@ const StockManagement = () => {
                     ) : (
                       filteredVariations.map(v => (
                         <tr key={v.id}>
-                          <td>{v.product_name}</td>
+                          <td>{v.productName}</td>
                           <td>{v.color}</td>
                           <td>{v.barcode || 'N/A'}</td>
                           <td><strong>{v.stock_quantity}</strong></td>

@@ -7,7 +7,7 @@ import { useAuthStore } from '../../store/authStore'; // Import no topo do arqui
 import './ProfileMenu.scss';
 
 // Import Images
-import avatar from '../../assets/images/redecellrj.png';
+
 
 const ProfileMenu = () => {
   const [menu, setMenu] = useState(false);
@@ -24,13 +24,13 @@ const ProfileMenu = () => {
           id="page-header-user-dropdown"
           tag="button"
         >
-          <img
-            className="rounded-circle header-profile-user profile-avatar"
-            src={avatar}
-            alt="Header Avatar"
-          />
-          <span className="d-none d-xl-inline-block ms-1">{username}</span>
-          <i className="bx bx-chevron-down d-none d-xl-inline-block" />
+          <div className="profile-avatar-container">
+            <img
+              className="rounded-circle header-profile-user profile-avatar"
+              src="/redecellrj.png"
+              alt="Header Avatar"
+            />
+          </div>
         </DropdownToggle>
         <DropdownMenu className="dropdown-menu-end">
           <DropdownItem tag={Link} to="/user-profile">

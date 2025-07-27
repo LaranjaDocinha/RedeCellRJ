@@ -1,0 +1,1 @@
+ALTER TABLE users RENAME COLUMN access_level TO role;

@@ -1,2 +1,1 @@
 ALTER TABLE repairs
-ADD COLUMN final_cost DECIMAL(10, 2) DEFAULT 0.00;

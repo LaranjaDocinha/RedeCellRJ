@@ -11,13 +11,13 @@ const RepairForm = () => {
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
-        customer_id: '',
-        device_type: '',
+        customerId: '',
+        deviceType: '',
         brand: '',
         model: '',
-        imei_serial: '',
-        problem_description: '',
-        service_cost: 0,
+        imeiSerial: '',
+        problemDescription: '',
+        serviceCost: 0,
         priority: 'Normal',
         tags: '',
     });
@@ -59,13 +59,13 @@ const RepairForm = () => {
             setSuccess("Ordem de Serviço criada com sucesso!");
             // Limpar formulário ou redirecionar
             setFormData({
-                customer_id: '',
-                device_type: '',
+                customerId: '',
+                deviceType: '',
                 brand: '',
                 model: '',
-                imei_serial: '',
-                problem_description: '',
-                service_cost: 0,
+                imeiSerial: '',
+                problemDescription: '',
+                serviceCost: 0,
                 priority: 'Normal',
                 tags: '',
             });
@@ -92,13 +92,13 @@ const RepairForm = () => {
                                     <Form onSubmit={handleSubmit}>
                                         <Row>
                                             <Col md={6} className="mb-3">
-                                                <Label htmlFor="customer_id">Cliente</Label>
+                                                <Label htmlFor="customerId">Cliente</Label>
                                                 {loadingCustomers ? (
-                                                    <Input type="select" id="customer_id" name="customer_id" value="" disabled>
+                                                    <Input type="select" id="customerId" name="customerId" value="" disabled>
                                                         <option>Carregando clientes...</option>
                                                     </Input>
                                                 ) : (
-                                                    <Input type="select" id="customer_id" name="customer_id" value={formData.customer_id} onChange={handleChange} required>
+                                                    <Input type="select" id="customerId" name="customerId" value={formData.customerId} onChange={handleChange} required>
                                                         <option value="">Selecione um cliente</option>
                                                         {customers.map(customer => (
                                                             <option key={customer.id} value={customer.id}>
@@ -109,8 +109,8 @@ const RepairForm = () => {
                                                 )}
                                             </Col>
                                             <Col md={6} className="mb-3">
-                                                <Label htmlFor="device_type">Tipo de Aparelho</Label>
-                                                <Input type="text" id="device_type" name="device_type" value={formData.device_type} onChange={handleChange} placeholder="Ex: Celular, Notebook, Tablet" required />
+                                                <Label htmlFor="deviceType">Tipo de Aparelho</Label>
+                                                <Input type="text" id="deviceType" name="deviceType" value={formData.deviceType} onChange={handleChange} placeholder="Ex: Celular, Notebook, Tablet" required />
                                             </Col>
                                         </Row>
                                         <Row>
@@ -125,17 +125,17 @@ const RepairForm = () => {
                                         </Row>
                                         <Row>
                                             <Col md={6} className="mb-3">
-                                                <Label htmlFor="imei_serial">IMEI/Nº de Série</Label>
-                                                <Input type="text" id="imei_serial" name="imei_serial" value={formData.imei_serial} onChange={handleChange} placeholder="Opcional" />
+                                                <Label htmlFor="imeiSerial">IMEI/Nº de Série</Label>
+                                                <Input type="text" id="imeiSerial" name="imeiSerial" value={formData.imeiSerial} onChange={handleChange} placeholder="Opcional" />
                                             </Col>
                                             <Col md={6} className="mb-3">
-                                                <Label htmlFor="service_cost">Valor do Serviço para o Cliente (R$)</Label>
-                                                <Input type="number" id="service_cost" name="service_cost" value={formData.service_cost} onChange={handleChange} placeholder="0.00" step="0.01" />
+                                                <Label htmlFor="serviceCost">Valor do Serviço para o Cliente (R$)</Label>
+                                                <Input type="number" id="serviceCost" name="serviceCost" value={formData.serviceCost} onChange={handleChange} placeholder="0.00" step="0.01" />
                                             </Col>
                                         </Row>
                                         <div className="mb-3">
-                                            <Label htmlFor="problem_description">Descrição do Problema</Label>
-                                            <Input type="textarea" id="problem_description" name="problem_description" value={formData.problem_description} onChange={handleChange} placeholder="Descreva o problema do aparelho..." rows="4" required />
+                                            <Label htmlFor="problemDescription">Descrição do Problema</Label>
+                                            <Input type="textarea" id="problemDescription" name="problemDescription" value={formData.problemDescription} onChange={handleChange} placeholder="Descreva o problema do aparelho..." rows="4" required />
                                         </div>
                                         <Row>
                                             <Col md={6} className="mb-3">

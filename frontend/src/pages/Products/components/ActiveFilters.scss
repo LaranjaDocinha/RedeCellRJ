@@ -1,0 +1,58 @@
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+
+.active-filters-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; // Empurra o botão para a direita
+  gap: 8px;
+  padding: 8px 0;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+  margin-bottom: 1rem;
+}
+
+.filters-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background-color: var(--bs-tertiary-bg);
+  color: var(--bs-emphasis-color);
+  border: 1px solid var(--bs-border-color-translucent);
+  border-radius: 16px;
+  // A borda de depuração foi removida daqui
+
+  .filter-close-btn {
+    margin-left: 8px;
+    padding: 0;
+    background: none;
+    border: none;
+    opacity: 0.6;
+    font-size: 1.2em;
+    border-radius: 50%;
+    color: var(--bs-emphasis-color);
+
+    &:hover {
+      opacity: 1;
+    }
+    
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(var(--#{$prefix}primary-rgb), 0.5);
+    }
+  }
+}
+
+.clear-filters-btn {
+  // O botão já é estilizado pelo Reactstrap, podemos adicionar ajustes finos se necessário
+  white-space: nowrap; // Impede que o texto do botão quebre
+}

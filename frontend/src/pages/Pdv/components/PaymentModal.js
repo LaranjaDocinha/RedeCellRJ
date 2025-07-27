@@ -91,7 +91,6 @@ const PaymentModal = ({
                     value={amountReceived}
                     onChange={e => setAmountReceived(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleAddPayment()}
-                    autoFocus
                 />
             </InputGroup>
             <div className="d-flex flex-wrap gap-2 mb-3">

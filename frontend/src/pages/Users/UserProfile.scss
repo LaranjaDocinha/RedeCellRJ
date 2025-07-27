@@ -1,0 +1,48 @@
+.profile-image-upload-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin-bottom: 20px;
+
+  .profile-image-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 3px solid var(--color-primary);
+    box-shadow: 0 0 0 5px var(--color-component-bg);
+  }
+
+  .profile-image-upload-icon {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background-color: var(--color-primary);
+    color: var(--white);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: color-mix(in srgb, var(--color-primary), #000 10%);
+    }
+
+    i {
+      font-size: 1.2rem;
+    }
+  }
+}
+
+/* Estilos para o tema escuro */
+[data-theme="dark"] {
+  .profile-image-upload-container {
+    .profile-image-preview {
+      box-shadow: 0 0 0 5px var(--color-component-bg);
+    }
+  }
+}

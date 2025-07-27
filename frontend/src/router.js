@@ -4,6 +4,11 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 // Layout
 import Layout from './components/Layout/Layout';
 
+// Loaders
+import { dashboardLoader } from './loaders/dashboardLoader';
+
+import { ProductProvider } from './context/ProductContext';
+
 // Pages (Lazy Loaded)
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Pdv = lazy(() => import('./pages/Pdv'));
@@ -24,6 +29,9 @@ const ReportsPage = lazy(() => import('./pages/Reports'));
 const SalesReport = lazy(() => import('./pages/Reports/Sales'));
 const ProfitabilityReport = lazy(() => import('./pages/Reports/Profitability'));
 const CustomerReport = lazy(() => import('./pages/Reports/Customers'));
+const Logout = lazy(() => import('./pages/Authentication/Logout'));
+const Login = lazy(() => import('./pages/Authentication/Login'));
+const UserProfile = lazy(() => import('./pages/Users/UserProfile'));
 
 const router = createBrowserRouter([
   {
@@ -31,9 +39,9 @@ const router = createBrowserRouter([
     element: <Layout />,
     children: [
       { index: true, element: <Navigate to="/dashboard" replace /> },
-      { path: 'dashboard', element: <Dashboard /> },
+      { path: 'dashboard', element: <Dashboard />, loader: dashboardLoader },
       { path: 'pdv', element: <Pdv /> },
-      { path: 'products', element: <Products /> },
+      { path: 'products', element: <ProductProvider><Products /></ProductProvider> },
       { path: 'repairs', element: <Repairs /> },
       { path: 'repairs/new', element: <RepairForm /> },
       { path: 'customers', element: <Customers /> },
@@ -50,7 +58,16 @@ const router = createBrowserRouter([
       { path: 'reports/sales', element: <SalesReport /> },
       { path: 'reports/profitability', element: <ProfitabilityReport /> },
       { path: 'reports/customers', element: <CustomerReport /> },
+      { path: 'user-profile', element: <UserProfile /> },
     ],
+  },
+  {
+    path: '/logout',
+    element: <Logout />,
+  },
+  {
+    path: '/login',
+    element: <Login />,
   },
 ]);
 

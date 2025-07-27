@@ -1,0 +1,1 @@
+ALTER TABLE users DROP CONSTRAINT IF EXISTS role_check;

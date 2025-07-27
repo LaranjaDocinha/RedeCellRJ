@@ -6,6 +6,7 @@ import {
 import useApi from '../../hooks/useApi';
 import { get, post } from '../../helpers/api_helper';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '../../store/authStore';
 
 const OpenCashierForm = ({ onCashierOpened, loading }) => {
   const [openingBalance, setOpeningBalance] = useState('');
@@ -16,7 +17,7 @@ const OpenCashierForm = ({ onCashierOpened, loading }) => {
       toast.error("Por favor, insira um saldo de abertura válido.");
       return;
     }
-    onCashierOpened({ opening_balance: parseFloat(openingBalance) });
+    onCashierOpened({ openingBalance: parseFloat(openingBalance) });
   };
 
   return (
@@ -51,8 +52,9 @@ const CloseCashierForm = ({ session, onCashierClosed, loading }) => {
       toast.error("Por favor, insira o valor total contado no caixa.");
       return;
     }
+    // Passa para cima o valor em camelCase
     onCashierClosed({ 
-      closing_balance: parseFloat(closingBalance),
+      closingBalance: parseFloat(closingBalance),
       notes 
     });
   };
@@ -60,7 +62,7 @@ const CloseCashierForm = ({ session, onCashierClosed, loading }) => {
   return (
     <Form onSubmit={handleSubmit}>
       <CardTitle className="h4 mb-4">Fechar Caixa</CardTitle>
-      <Alert color="info">
+      <Alert color="info" fade={false}>
         O caixa foi aberto com <strong>R$ {parseFloat(session.opening_balance).toFixed(2)}</strong> em {new Date(session.opened_at).toLocaleString('pt-BR')}.
       </Alert>
       <FormGroup>
@@ -93,21 +95,29 @@ const CloseCashierForm = ({ session, onCashierClosed, loading }) => {
 };
 
 const CashierPage = () => {
+  const { user } = useAuthStore();
   const { data: statusData, loading: loadingStatus, request: fetchStatus } = useApi(get);
   const { loading: opening, request: openCashier } = useApi(post);
   const { loading: closing, request: closeCashier } = useApi(post);
 
   const refreshStatus = useCallback(() => {
-    fetchStatus('/cashier/status');
-  }, [fetchStatus]);
+    if (user?.id) {
+      fetchStatus(`/api/cashier/status?userId=${user.id}`);
+    }
+  }, [fetchStatus, user?.id]);
 
   useEffect(() => {
     refreshStatus();
-  }, [refreshStatus]);
+  }, [refreshStatus, user]);
 
   const handleOpenCashier = async (payload) => {
     try {
-      await openCashier('/cashier/open', payload);
+      // Converte para o formato da API aqui
+      const apiPayload = {
+        ['opening_balance']: payload.openingBalance,
+        userId: user.id
+      };
+      await openCashier('/api/cashier/open', apiPayload);
       toast.success('Caixa aberto com sucesso!');
       refreshStatus();
     } catch (err) {
@@ -117,10 +127,16 @@ const CashierPage = () => {
 
   const handleCloseCashier = async (payload) => {
     try {
-      const result = await closeCashier('/cashier/close', payload);
+      // Converte para o formato da API aqui
+      const apiPayload = {
+        ['closing_balance']: payload.closingBalance,
+        notes: payload.notes,
+        userId: user.id
+      };
+      const result = await closeCashier('/api/cashier/close', apiPayload);
       toast.success('Caixa fechado com sucesso!');
       // Aqui você pode mostrar um resumo do fechamento se desejar
-      console.log('Fechamento:', result);
+      
       refreshStatus();
     } catch (err) {
       toast.error(`Erro ao fechar caixa: ${err.message}`);

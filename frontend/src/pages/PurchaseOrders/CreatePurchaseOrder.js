@@ -37,10 +37,10 @@ const CreatePurchaseOrder = () => {
   const handleAddItem = (product) => {
     if (items.find(i => i.variation_id === product.value)) return; // Evita duplicados
     setItems([...items, {
-      variation_id: product.value,
-      product_name: product.label,
+      variationId: product.value,
+      productName: product.label,
       quantity: 1,
-      cost_price: product.cost_price || 0,
+      costPrice: product.costPrice || 0,
     }]);
     setProductSearch(''); // Limpa a busca
   };
@@ -63,7 +63,7 @@ const CreatePurchaseOrder = () => {
     if (items.length === 0) errors.items = 'Adicione pelo menos um item.';
     items.forEach((item, index) => {
       if (item.quantity <= 0) errors[`item_quantity_${index}`] = 'Qtde > 0';
-      if (item.cost_price <= 0) errors[`item_cost_${index}`] = 'Custo > 0';
+      if (item.costPrice <= 0) errors[`item_cost_${index}`] = 'Custo > 0';
     });
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -77,13 +77,13 @@ const CreatePurchaseOrder = () => {
     }
 
     const orderData = {
-      supplier_id: supplier.value,
-      expected_delivery_date: expectedDate || null,
+      supplierId: supplier.value,
+      expectedDeliveryDate: expectedDate || null,
       notes,
-      items: items.map(({ variation_id, quantity, cost_price }) => ({
-        variation_id,
+      items: items.map(({ variationId, quantity, costPrice }) => ({
+        variationId,
         quantity: Number(quantity),
-        cost_price: Number(cost_price),
+        costPrice: Number(costPrice),
       })),
     };
 
@@ -100,7 +100,7 @@ const CreatePurchaseOrder = () => {
     p.variations.map(v => ({
       value: v.id,
       label: `${p.name} (${v.color || 'Padrão'})`,
-      cost_price: v.cost_price
+      costPrice: v.cost_price
     }))
   );
 
@@ -168,8 +168,8 @@ const CreatePurchaseOrder = () => {
                 </thead>
                 <tbody>
                   {items.map((item, index) => (
-                    <tr key={item.variation_id}>
-                      <td>{item.product_name}</td>
+                    <tr key={item.variationId}>
+                      <td>{item.productName}</td>
                       <td>
                         <Input 
                           type="number" 
@@ -182,8 +182,8 @@ const CreatePurchaseOrder = () => {
                         <Input 
                           type="number" 
                           step="0.01"
-                          value={item.cost_price} 
-                          onChange={e => handleItemChange(index, 'cost_price', e.target.value)}
+                          value={item.costPrice} 
+                          onChange={e => handleItemChange(index, 'costPrice', e.target.value)}
                           invalid={!!formErrors[`item_cost_${index}`]}
                         />
                       </td>

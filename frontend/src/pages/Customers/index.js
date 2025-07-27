@@ -29,7 +29,7 @@ const Customers = () => {
   const fetchCustomers = useCallback(() => {
     // Busca todos os clientes. A paginação e busca serão no frontend.
     // Para datasets muito grandes, a API deveria suportar paginação/busca.
-    fetchCustomersApi('/customers?limit=9999'); 
+    fetchCustomersApi('/api/customers?limit=9999'); 
   }, [fetchCustomersApi]);
 
   useEffect(() => {
@@ -64,7 +64,7 @@ const Customers = () => {
   };
 
   const validateForm = () => {
-    let errors = {};
+    const errors = {};
     if (!formData.name) errors.name = 'Nome é obrigatório.';
     if (formData.email && !/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.email)) {
       errors.email = 'Email inválido.';
@@ -92,8 +92,8 @@ const Customers = () => {
     if (!validateForm()) return;
 
     const promise = selectedCustomer
-      ? updateCustomer(`/customers/${selectedCustomer.id}`, formData)
-      : addCustomer('/customers', formData);
+      ? updateCustomer('/api/customers/${selectedCustomer.id}', formData)
+      : addCustomer('/api/customers', formData);
 
     try {
       await promise;
@@ -108,7 +108,7 @@ const Customers = () => {
   const handleDeleteCustomer = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir este cliente?')) {
       try {
-        await deleteCustomer(`/customers/${id}`);
+        await deleteCustomer('/api/customers/${id}');
         fetchCustomers();
         showToast('Cliente excluído com sucesso!', 'success');
       } catch (err) {
@@ -149,21 +149,17 @@ const Customers = () => {
             <Col lg="12">
               <Card>
                 <CardBody>
-                  <div className="d-flex justify-content-between align-items-center mb-4">
-                    <CardTitle className="h4 mb-0">Gerenciamento de Clientes</CardTitle>
-                    <Button color="primary" onClick={handleAddClick}>Adicionar Novo Cliente</Button>
-                  </div>
-                  
-                  {toast.show && (
-                    <Alert color={toast.type} isOpen={toast.show} toggle={() => setToast({ ...toast, show: false })}>
-                      {toast.message}
-                    </Alert>
-                  )}
-
                   <AdvancedTable
                     columns={columns}
                     data={customers}
                     loading={loadingCustomers}
+                    actions={
+                      <Button color="primary" onClick={handleAddClick}>Adicionar Novo Cliente</Button>
+                    }
+                    emptyStateTitle="Nenhum Cliente Encontrado"
+                    emptyStateMessage="Cadastre seu primeiro cliente para começar."
+                    emptyStateActionText="Adicionar Cliente"
+                    onEmptyStateActionClick={handleAddClick}
                   />
 
                 </CardBody>

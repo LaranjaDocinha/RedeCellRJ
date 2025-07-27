@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactApexChart from 'react-apexcharts';
-import { useTheme } from '../../../../context/ThemeContext';
+import { useThemeStore } from '../../../../store/themeStore';
 import { useDashboard } from '../../../../context/DashboardContext';
 import './Charts.scss';
 
 const SalesByPaymentMethodChart = () => {
-  const { theme } = useTheme();
+  const themeMode = useThemeStore((state) => state.theme.mode);
   const { dashboardData } = useDashboard();
 
   const paymentData = dashboardData?.widgets?.paymentMethods || [];
@@ -16,7 +16,7 @@ const SalesByPaymentMethodChart = () => {
   const options = {
     chart: {
       type: 'donut',
-      foreColor: theme === 'dark' ? '#f0f2f5' : '#333',
+      foreColor: themeMode === 'dark' ? '#f0f2f5' : '#333',
     },
     labels: labels,
     plotOptions: {

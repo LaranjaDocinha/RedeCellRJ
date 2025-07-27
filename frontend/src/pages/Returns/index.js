@@ -40,12 +40,12 @@ const ReturnsPage = () => {
     }
 
     const returnPayload = {
-      original_sale_id: saleDetails.id,
-      customer_id: saleDetails.customer_id,
+      originalSaleId: saleDetails.id,
+      customerId: saleDetails.customer_id,
       items: itemsToReturn.map(item => ({
-        variation_id: item.variation_id,
+        variationId: item.variation_id,
         quantity: item.quantity,
-        unit_price: item.unit_price, // O preço do item na devolução
+        unitPrice: item.unit_price, // O preço do item na devolução
       })),
       // Pagamentos podem ser tratados de forma diferente (crédito, etc.)
       // Por agora, vamos focar em reverter o estoque.

@@ -1,3 +1,6 @@
+@import "~@mdi/font/css/materialdesignicons.min.css";
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+@import "boxicons/css/boxicons.min.css";
 // frontend/src/index.scss
 
 // 1. Importe o Design System, que agora contém todas as nossas variáveis.
@@ -8,6 +11,9 @@
 
 // 3. Estilos globais que usam as variáveis de CSS.
 @import "pages/Authentication/auth"; // Importar estilos de autenticação
+@import "components/Common/validation";
+@import "components/Common/RippleEffect";
+@import "components/Common/LoadingBar";
 
 body {
   margin: 0;
@@ -24,13 +30,15 @@ body {
 }
 
 .card {
-  background-color: var(--color-component-bg) !important;
+  border-radius: var(--card-border-radius);
+  background-color: var(--card-background-color) !important;
   color: var(--color-body-text);
   border: 1px solid var(--color-border);
-  box-shadow: var(--shadow);
+  box-shadow: var(--card-box-shadow);
 }
 
 .card-body {
+  padding: var(--card-padding);
   color: var(--color-body-text);
 }
 
@@ -49,34 +57,39 @@ body {
 }
 
 .table {
-  color: var(--color-body-text);
-  border-color: var(--color-border);
-  --bs-table-bg: transparent;
-  --bs-table-striped-bg: rgba(0, 0, 0, 0.02);
+  color: var(--table-text-color);
+  border-color: var(--table-border-color);
+  --bs-table-bg: var(--table-bg);
+  --bs-table-striped-bg: var(--table-striped-bg);
 }
 
 .table th, .table td {
-  color: var(--color-body-text);
+  color: var(--table-text-color);
 }
 
 .table > thead > tr > th {
-  background-color: var(--color-component-bg) !important;
-  color: var(--color-body-text) !important;
-  border-color: var(--color-border) !important;
+  background-color: var(--table-header-bg) !important;
+  color: var(--table-text-color) !important;
+  border-color: var(--table-border-color) !important;
   border-bottom-width: 1px;
 }
 
 .table-hover > tbody > tr:hover > * {
-  --bs-table-accent-bg: var(--shadow-color);
-  color: var(--color-body-text);
+  --bs-table-accent-bg: var(--table-hover-bg);
+  color: var(--table-text-color);
 }
 
 .form-control,
 .form-select,
 .input-group-text {
-  background-color: var(--color-component-bg);
+  background-color: var(--form-background-color);
   color: var(--color-body-text);
-  border-color: var(--color-border);
+  border-color: var(--form-border-color);
+
+  &:focus {
+    border-color: var(--form-focus-border-color);
+    box-shadow: var(--form-focus-box-shadow);
+  }
 }
 
 .form-control:disabled,
@@ -104,4 +117,19 @@ body {
 
 code {
   font-family: var(--font-family-monospace);
+}
+
+.auth-card-body {
+  background-color: var(--color-component-bg);
+  border-radius: 0.5rem;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+
+  &:hover {
+    color: var(--text-hover-color);
+  }
 }

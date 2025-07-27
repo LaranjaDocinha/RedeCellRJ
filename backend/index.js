@@ -1,7 +1,7 @@
 require('dotenv').config();
 console.log('DB_USER:', process.env.DB_USER);
 console.log('DB_HOST:', process.env.DB_HOST);
-console.log('DB_DATABASE:', process.env.DB_DATABASE);
+console.log('DB_DATABASE:', process.env.DB_NAME);
 console.log('DB_PORT:', process.env.DB_PORT);
 // console.log('DB_PASSWORD:', process.env.DB_PASSWORD ? '*****' : 'Not Set'); // Não logar a senha em produção
 const express = require('express');
@@ -9,6 +9,7 @@ const cors = require('cors'); // Import cors
 const { pool } = require('./db');
 const fs = require('fs').promises;
 const path = require('path');
+const { exec } = require('child_process');
 const customerRoutes = require('./routes/customerRoutes');
 const productRoutes = require('./routes/productRoutes');
 const repairRoutes = require('./routes/repairRoutes');
@@ -52,7 +53,7 @@ app.get('/test-db', async (req, res) => {
 
 app.get('/init-db', async (req, res) => {
   try {
-    const schemaPath = path.join(__dirname, 'database', 'schema.sql');
+    const schemaPath = path.join(__dirname, 'database', 'schema_consolidated.sql');
     const schemaSql = await fs.readFile(schemaPath, 'utf8');
     await pool.query(schemaSql);
     res.status(200).send('Database schema initialized successfully!');
@@ -63,28 +64,44 @@ app.get('/init-db', async (req, res) => {
 });
 
 app.get('/apply-migrations', async (req, res) => {
-  const client = await pool.connect();
   try {
-    await client.query('BEGIN');
+    const dbUser = process.env.DB_USER || 'postgres';
+    const dbHost = process.env.DB_HOST || 'localhost';
+    const dbName = process.env.DB_NAME || 'pdv_web';
+    const dbPassword = process.env.DB_PASSWORD || 'postgres';
+    const dbPort = process.env.DB_PORT || 5432;
+
     const migrationFiles = (await fs.readdir(path.join(__dirname, 'database')))
       .filter(file => file.startsWith('migration_') && file.endsWith('.sql'))
       .sort();
 
     let appliedMigrations = 0;
     for (const file of migrationFiles) {
-      const migrationSql = await fs.readFile(path.join(__dirname, 'database', file), 'utf8');
-      await client.query(migrationSql);
+      const filePath = path.join(__dirname, 'database', file);
+      const command = `psql -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -f ${filePath}`;
+      
+      console.log(`Attempting to apply migration: ${file}`);
+      console.log(`Executing command: ${command}`);
+      const { stdout, stderr, error } = await new Promise((resolve) => {
+        exec(command, { env: { ...process.env, PGPASSWORD: dbPassword } }, (err, stdout, stderr) => {
+          resolve({ stdout, stderr, error: err });
+        });
+      });
+
+      if (error) {
+        console.error(`Error applying migration ${file}:`, error);
+        console.error('stdout:', stdout);
+        console.error('stderr:', stderr);
+        throw new Error(`Failed to apply migration ${file}: ${error.message || stderr}`);
+      }
+      console.log(`Successfully applied migration: ${file}`);
       appliedMigrations++;
     }
     
-    await client.query('COMMIT');
     res.status(200).send(`${appliedMigrations} migration(s) applied successfully!`);
   } catch (err) {
-    await client.query('ROLLBACK');
     console.error('Error applying migrations:', err);
     res.status(500).send('Failed to apply migrations.');
-  } finally {
-    client.release();
   }
 });
 

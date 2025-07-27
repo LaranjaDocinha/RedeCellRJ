@@ -3,8 +3,9 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { debounce } from 'lodash';
 import { get, post } from '../../helpers/api_helper';
 import { useReactToPrint } from "react-to-print";
-import { Container, Row, Col, Button, Alert } from 'reactstrap';
+import { Container, Row, Col, Button, Alert, Spinner } from 'reactstrap';
 import toast, { Toaster } from 'react-hot-toast';
+import { useAuthStore } from "../../store/authStore";
 
 // Importa a nova estrutura de layout
 import SearchColumn from "./components/layout/SearchColumn";
@@ -23,6 +24,7 @@ const Pdv = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
 
   // Refs
   const productSearchInputRef = useRef(null);
@@ -68,10 +70,10 @@ const Pdv = () => {
   const togglePaymentModal = () => setPaymentModalOpen(!isPaymentModalOpen);
 
   // --- Funções de Caixa ---
-  const fetchCashierStatus = useCallback(async () => {
-    setCashierStatus({ loading: true, isOpen: false, session: null });
+  const fetchCashierStatus = useCallback(async (userId) => {
+    setCashierStatus(prev => ({ ...prev, loading: true }));
     try {
-      const data = await get('/cashier/status');
+      const data = await get(`/api/cashier/status?userId=${userId}`);
       setCashierStatus({ loading: false, isOpen: data.isOpen, session: data.session });
     } catch (err) {
       toast.error("Falha ao verificar o status do caixa.");
@@ -80,14 +82,17 @@ const Pdv = () => {
   }, []);
 
   const toggleCashierModal = useCallback(() => {
+    if (cashierStatus.loading) return; // Impede abrir o modal se ainda estiver carregando
     setCashierModalOpen(prevState => !prevState);
-  }, []);
+  }, [cashierStatus.loading]);
 
   const onCashierUpdate = useCallback(() => {
-    fetchCashierStatus();
+    if (user?.id) {
+      fetchCashierStatus(user.id);
+    }
     setCashierModalOpen(false);
     toast.success("Status do caixa atualizado!");
-  }, [fetchCashierStatus]);
+  }, [user?.id, fetchCashierStatus]);
 
   // --- Funções de Impressão ---
   const handlePrint = useReactToPrint({
@@ -96,11 +101,22 @@ const Pdv = () => {
     onAfterPrint: () => document.body.classList.remove('receipt-print-wrapper'),
   });
 
+  const fetchPaymentMethods = useCallback(async () => {
+    try {
+      const data = await get('/api/payment-methods');
+      setPaymentMethods(data);
+    } catch (err) {
+      toast.error("Falha ao carregar métodos de pagamento.");
+    }
+  }, []);
+
   // --- Efeitos ---
   useEffect(() => {
-    fetchCashierStatus();
-    fetchPaymentMethods();
-  }, []);
+    if (user?.id) {
+      fetchCashierStatus(user.id);
+      fetchPaymentMethods();
+    }
+  }, [user?.id, fetchCashierStatus, fetchPaymentMethods]);
 
   useEffect(() => {
     if (isCashierOpen) {
@@ -133,12 +149,12 @@ const Pdv = () => {
       setReturnMode(saleToReturn.id);
       const itemsToReturn = saleToReturn.items.map(item => ({
         ...item,
-        variation_id: item.variation_id || item.item_id,
+        variationId: item.variationId || item.itemId,
         quantity: -Math.abs(item.quantity),
-        unit_price: parseFloat(item.unit_price),
-        stock_quantity: Infinity,
+        unitPrice: parseFloat(item.unit_price),
+        stockQuantity: Infinity,
         discount: { type: item.discount_type || 'fixed', value: item.discount_value || 0 },
-        manual_price: parseFloat(item.unit_price)
+        manualPrice: parseFloat(item.unit_price)
       }));
       setCart(itemsToReturn);
       if (saleToReturn.customer_name) {
@@ -198,25 +214,25 @@ const Pdv = () => {
     }
     
     setCart(prevCart => {
-        const existingItemIndex = prevCart.findIndex(item => item.variation_id === variation.id);
+        const existingItemIndex = prevCart.findIndex(item => item.variationId === variation.id);
         if (existingItemIndex > -1) {
             const updatedCart = [...prevCart];
             const newQuantity = updatedCart[existingItemIndex].quantity + 1;
-            if (newQuantity <= variation.stock_quantity) {
+            if (newQuantity <= variation.stockQuantity) {
                 updatedCart[existingItemIndex].quantity = newQuantity;
             } else {
                 toast.error(`Estoque máximo atingido para ${product.name}`);
             }
             return updatedCart;
         } else {
-            if (1 <= variation.stock_quantity) {
+            if (1 <= variation.stockQuantity) {
                 const newItem = {
-                    product_id: product.id,
-                    product_name: product.name,
-                    variation_id: variation.id,
+                    productId: product.id,
+                    productName: product.name,
+                    variationId: variation.id,
                     quantity: 1,
-                    unit_price: parseFloat(variation.price || product.unit_price),
-                    stock_quantity: variation.stock_quantity,
+                    unitPrice: parseFloat(variation.price || product.unit_price),
+                    stockQuantity: variation.stock_quantity,
                     discount: { type: 'fixed', value: 0 },
                     color: variation.color,
                     size: variation.size,
@@ -272,7 +288,7 @@ const Pdv = () => {
 
   // --- Funções de Cálculo ---
   const calculateItemTotal = useCallback((item) => {
-    const price = parseFloat(item.manual_price || item.unit_price);
+    const price = parseFloat(item.manualPrice || item.unitPrice);
     const quantity = item.quantity;
     const discountValue = item.discount?.value || 0;
     const discountType = item.discount?.type || 'fixed';
@@ -282,10 +298,10 @@ const Pdv = () => {
     return itemTotal;
   }, []);
 
-  const subtotal = cart.reduce((acc, item) => acc + (parseFloat(item.manual_price || item.unit_price) * item.quantity), 0);
+  const subtotal = cart.reduce((acc, item) => acc + (parseFloat(item.manualPrice || item.unitPrice) * item.quantity), 0);
 
   const calculateTotalDiscount = useCallback(() => {
-    let itemDiscounts = cart.reduce((acc, item) => {
+    const itemDiscounts = cart.reduce((acc, item) => {
       const price = parseFloat(item.manual_price || item.unit_price);
       const quantity = item.quantity;
       const discountValue = item.discount?.value || 0;
@@ -300,19 +316,9 @@ const Pdv = () => {
   }, [cart, saleDiscount, subtotal]);
 
   const totalAmount = useCallback(() => {
-    let total = subtotal - calculateTotalDiscount();
+    const total = subtotal - calculateTotalDiscount();
     return returnMode ? total : (total > 0 ? total : 0);
   }, [subtotal, calculateTotalDiscount, returnMode]);
-
-  // --- Funções de Pagamento ---
-  const fetchPaymentMethods = useCallback(async () => {
-    try {
-      const data = await get('/payment-methods');
-      setPaymentMethods(data);
-    } catch (err) {
-      toast.error("Falha ao carregar métodos de pagamento.");
-    }
-  }, []);
 
   // --- Funções de Busca ---
   const searchProducts = useCallback(debounce(async (query, isBarcode = false) => {
@@ -321,7 +327,7 @@ const Pdv = () => {
         return; 
     }
     try {
-        const data = await get(`/products/search?query=${query}`);
+        const data = await get(`/api/products/search?query=${query}`);
         if (isBarcode && data.length === 1) {
             addToCart(data[0].variations?.[0] || data[0], data[0]);
             setBarcodeSearch("");
@@ -340,9 +346,9 @@ const Pdv = () => {
     if (isCartDisabled || cart.length === 0) return;
     setLoading(true);
     try {
-      await post('/sales/suspend', {
-        customer_id: selectedCustomer?.id || null,
-        items: cart, sale_discount: saleDiscount, notes, status: 'suspended',
+      await post('/api/sales/suspend', {
+        customerId: selectedCustomer?.id || null,
+        items: cart, saleDiscount: saleDiscount, notes, status: 'suspended',
       });
       handleClearSale();
       toast('Venda suspensa com sucesso.');
@@ -358,16 +364,16 @@ const Pdv = () => {
     
     setLoading(true);
     const saleData = {
-      customer_id: selectedCustomer?.id || null,
+      customerId: selectedCustomer?.id || null,
       items: cart, 
       payments: payments,
-      sale_discount: saleDiscount, 
+      saleDiscount: saleDiscount, 
       notes,
-      original_sale_id: returnMode,
+      originalSaleId: returnMode,
     };
     try {
-      const data = await post('/sales', saleData);
-      setSaleSuccessModalData({ ...data, items: cart, customer: selectedCustomer, sale_discount: saleDiscount, notes, timestamp: new Date().toISOString(), sale_type: returnMode ? 'return' : 'sale' });
+      const data = await post('/api/sales', saleData);
+            setSaleSuccessModalData({ ...data, items: cart, customer: selectedCustomer, saleDiscount: saleDiscount, notes, timestamp: new Date().toISOString(), saleType: returnMode ? 'return' : 'sale' });
       setPaymentModalOpen(false);
       setSuccessModalOpen(true);
       toast.success(returnMode ? "Devolução finalizada com sucesso!" : "Venda finalizada com sucesso!");
@@ -410,85 +416,96 @@ const Pdv = () => {
     };
   }, [isPdvDisabled, isPaymentModalOpen, handleSuspendSale, handleClearSale, cart]);
 
+  const renderContent = () => {
+    if (cashierStatus.loading) {
+      return (
+        <div className="text-center my-5">
+          <Spinner />
+          <p className="mt-2">Verificando status do caixa...</p>
+        </div>
+      );
+    }
+
+    if (!isCashierOpen) {
+      return (
+        <div className="text-center my-5">
+          <p className="font-size-18">O caixa está fechado. Por favor, abra o caixa para iniciar as operações.</p>
+          <Button color="primary" onClick={toggleCashierModal} disabled={cashierStatus.loading}>
+            <i className="bx bx-wallet-alt me-1"></i> Abrir Caixa
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {returnMode && (
+          <Alert color="warning" className="text-center">
+            <h4 className="alert-heading">Modo de Devolução</h4>
+            <p>Processando devolução para a Venda ID: <strong>#{returnMode}</strong>.</p>
+            <Button color="danger" outline onClick={handleClearSale}>Cancelar Devolução</Button>
+          </Alert>
+        )}
+        
+        <Row className="g-3" style={{ filter: isCartDisabled ? 'blur(2px)' : 'none', pointerEvents: isCartDisabled ? 'none' : 'auto' }}>
+          {/* Coluna da Esquerda: Busca e Ações */}
+          <Col lg={3}>
+            <SearchColumn
+              isPdvDisabled={isPdvDisabled}
+              selectedCustomer={selectedCustomer}
+              customerSearch={customerSearch}
+              setCustomerSearch={setCustomerSearch}
+              setSelectedCustomer={setSelectedCustomer}
+              setCustomerModalOpen={setCustomerModalOpen}
+              productSearch={productSearch}
+              setProductSearch={setProductSearch}
+              searchProducts={searchProducts}
+              barcodeSearch={barcodeSearch}
+              setBarcodeSearch={setBarcodeSearch}
+              barcodeSearchInputRef={barcodeSearchInputRef}
+              productSearchInputRef={productSearchInputRef}
+            />
+          </Col>
+
+          {/* Coluna Central: Grid de Produtos */}
+          <Col lg={5}>
+            <ProductGrid
+              products={productResults}
+              addToCart={addToCart}
+              isPdvDisabled={isPdvDisabled}
+            />
+          </Col>
+
+          {/* Coluna da Direita: Venda Atual */}
+          <div ref={saleColumnRef} className="col-lg-4">
+            <SaleColumn
+              cart={cart}
+              returnMode={returnMode}
+              handleUpdateQuantity={handleUpdateQuantity}
+              handleUpdateItemDiscount={handleUpdateItemDiscount}
+              calculateItemTotal={calculateItemTotal}
+              handleRemoveItem={handleRemoveItem}
+              isCartDisabled={isCartDisabled}
+              subtotal={subtotal}
+              calculateTotalDiscount={calculateTotalDiscount}
+              totalAmount={totalAmount()}
+              paymentMethods={paymentMethods}
+              handleFinalizeSale={togglePaymentModal}
+              handleSuspendSale={handleSuspendSale}
+              handleClearSale={handleClearSale}
+            />
+          </div>
+        </Row>
+      </>
+    );
+  };
+
   return (
     <React.Fragment>
       <Toaster position="top-right" reverseOrder={false} />
       <div className="page-content" style={{ padding: '15px' }}>
         <Container fluid>
-          {!isCashierOpen ? (
-            <div className="text-center my-5">
-              <p className="font-size-18">O caixa está fechado. Por favor, abra o caixa para iniciar as operações.</p>
-              <Button color="primary" onClick={toggleCashierModal}>
-                <i className="bx bx-wallet-alt me-1"></i> Abrir Caixa
-              </Button>
-            </div>
-          ) : (
-            <>
-              {returnMode && (
-                <Alert color="warning" className="text-center">
-                  <h4 className="alert-heading">Modo de Devolução</h4>
-                  <p>Processando devolução para a Venda ID: <strong>#{returnMode}</strong>.</p>
-                  <Button color="danger" outline onClick={handleClearSale}>Cancelar Devolução</Button>
-                </Alert>
-              )}
-              
-              <Row className="g-3" style={{ filter: isCartDisabled ? 'blur(2px)' : 'none', pointerEvents: isCartDisabled ? 'none' : 'auto' }}>
-                {/* Coluna da Esquerda: Busca e Ações */}
-                <Col lg={3}>
-                  <SearchColumn
-                    isPdvDisabled={isPdvDisabled}
-                    selectedCustomer={selectedCustomer}
-                    customerSearch={customerSearch}
-                    setCustomerSearch={setCustomerSearch}
-                    setSelectedCustomer={setSelectedCustomer}
-                    setCustomerModalOpen={setCustomerModalOpen}
-                    productSearch={productSearch}
-                    setProductSearch={setProductSearch}
-                    searchProducts={searchProducts}
-                    barcodeSearch={barcodeSearch}
-                    setBarcodeSearch={setBarcodeSearch}
-                    barcodeSearchInputRef={barcodeSearchInputRef}
-                    productSearchInputRef={productSearchInputRef}
-                  />
-                </Col>
-
-                {/* Coluna Central: Grid de Produtos */}
-                <Col lg={5}>
-                  <ProductGrid
-                    products={productResults}
-                    addToCart={addToCart}
-                    isPdvDisabled={isPdvDisabled}
-                  />
-                </Col>
-
-                {/* Coluna da Direita: Venda Atual */}
-                <div ref={saleColumnRef} className="col-lg-4">
-                  <SaleColumn
-                    cart={cart}
-                    returnMode={returnMode}
-                    handleUpdateQuantity={handleUpdateQuantity}
-                    handleUpdateItemDiscount={handleUpdateItemDiscount}
-                    calculateItemTotal={calculateItemTotal}
-                    handleRemoveItem={handleRemoveItem}
-                    isCartDisabled={isCartDisabled}
-                    subtotal={subtotal}
-                    calculateTotalDiscount={calculateTotalDiscount}
-                    totalAmount={totalAmount()}
-                    // A lógica de pagamento foi movida para o modal
-                    // payments={payments} 
-                    // handleRemovePayment={handleRemovePayment}
-                    // totalPaid={totalPaid}
-                    // calculateChangeDue={calculateChangeDue}
-                    paymentMethods={paymentMethods}
-                    // handleAddPayment={handleAddPayment}
-                    handleFinalizeSale={togglePaymentModal} // Agora abre o modal
-                    handleSuspendSale={handleSuspendSale}
-                    handleClearSale={handleClearSale}
-                  />
-                </div>
-              </Row>
-            </>
-          )}
+          {renderContent()}
         </Container>
       </div>
       

@@ -3,14 +3,25 @@ import PropTypes from 'prop-types';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useScrollDirection } from '../../../hooks/useScrollDirection';
-import { useTheme } from '../../../context/ThemeContext';
+import { useThemeStore } from '../../../store/themeStore';
 import './FloatingActionButton.scss';
+
+const predefinedColors = [
+  '#556ee6', // Primary
+  '#34c38f', // Success
+  '#f1b44c', // Warning
+  '#f46a6a', // Danger
+  '#50a5f1', // Info
+  '#FF6F00', // Custom Orange
+];
 
 const FloatingActionButton = ({ availableWidgets, onAddWidget, onResetLayout }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
   const scrollDirection = useScrollDirection();
-  const { theme, toggleTheme, setPrimaryColor, predefinedColors } = useTheme();
+  const themeMode = useThemeStore((state) => state.theme.mode);
+  const setPrimaryColor = useThemeStore((state) => state.setPrimaryColor);
+  const setThemeMode = useThemeStore((state) => state.setThemeMode);
 
   const isDisabled = availableWidgets.length === 0;
 
@@ -52,8 +63,8 @@ const FloatingActionButton = ({ availableWidgets, onAddWidget, onResetLayout }) 
   };
 
   const handleThemeToggle = () => {
-    toggleTheme();
-    const newTheme = theme === 'light' ? 'Escuro' : 'Claro';
+    setThemeMode(themeMode === 'light' ? 'dark' : 'light');
+    const newTheme = themeMode === 'light' ? 'Escuro' : 'Claro';
     toast.success(`Tema alterado para ${newTheme}`);
   };
 
@@ -77,7 +88,7 @@ const FloatingActionButton = ({ availableWidgets, onAddWidget, onResetLayout }) 
             <motion.div className="fab-menu-item" variants={itemVariants}>
               <span className="fab-label">Mudar Tema</span>
               <button onClick={handleThemeToggle}>
-                <i className={theme === 'light' ? 'bx bx-moon' : 'bx bx-sun'}></i>
+                <i className={themeMode === 'light' ? 'bx bx-moon' : 'bx bx-sun'}></i>
               </button>
             </motion.div>
 
@@ -90,11 +101,12 @@ const FloatingActionButton = ({ availableWidgets, onAddWidget, onResetLayout }) 
               <div className="fab-submenu">
                 <div className="color-picker">
                   {predefinedColors.map(color => (
-                    <div 
+                    <button 
                       key={color} 
                       className="color-swatch" 
                       style={{ backgroundColor: color }}
                       onClick={() => handleColorChange(color)}
+                      tabIndex={0}
                     />
                   ))}
                 </div>
@@ -119,9 +131,14 @@ const FloatingActionButton = ({ availableWidgets, onAddWidget, onResetLayout }) 
                  <div className="fab-submenu">
                    <ul>
                      {availableWidgets.map(widget => (
-                       <li key={widget.id} onClick={() => { onAddWidget(widget.id); setIsOpen(false); }}>
+                       <button 
+                         key={widget.id} 
+                         onClick={() => { onAddWidget(widget.id); setIsOpen(false); }}
+                         className="widget-item-button"
+                         tabIndex={0}
+                       >
                          {widget.title}
-                       </li>
+                       </button>
                      ))}
                    </ul>
                  </div>

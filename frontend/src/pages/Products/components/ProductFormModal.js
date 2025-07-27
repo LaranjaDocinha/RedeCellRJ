@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 import useApi from '../../../hooks/useApi';
 import { get, post, put } from '../../../helpers/api_helper';
 
-const ProductFormModal = ({ isOpen, toggle, product, onSave }) => {
+const ProductFormModal = ({ isOpen, toggle, product, onSuccess }) => {
   const [formData, setFormData] = useState({});
   const [categories, setCategories] = useState([]);
   
@@ -22,23 +22,23 @@ const ProductFormModal = ({ isOpen, toggle, product, onSave }) => {
   const { request: fetchCategories } = useApi(get);
 
   useEffect(() => {
-    fetchCategories('/categories?limit=1000').then(data => {
+    fetchCategories('/api/categories?limit=1000').then(data => {
       setCategories(data.categories || []);
     });
   }, [fetchCategories]);
 
   useEffect(() => {
     if (isOpen) {
-      const initialVariations = [{ id: Date.now(), color: '', price: '', cost_price: '', stock_quantity: '', alert_threshold: 5, image_url: '', status: 'active' }];
+      const initialVariations = [{ id: Date.now(), color: '', price: '', costPrice: '', stockQuantity: '', alertThreshold: 5, imageUrl: '', status: 'active' }];
       if (isEditing) {
-        const isService = product.product_type === 'service';
+        const isService = product.productType === 'service';
         setFormData({
           name: product.name || '',
           description: product.description || '',
-          category_id: product.category_id || '',
-          product_type: product.product_type || 'physical',
+          categoryId: product.categoryId || '',
+          productType: product.productType || 'physical',
           price: isService && product.variations.length > 0 ? product.variations[0].price : '',
-          cost_price: isService && product.variations.length > 0 ? product.variations[0].cost_price : '',
+          costPrice: isService && product.variations.length > 0 ? product.variations[0].cost_price : '',
           variations: !isService && product.variations && product.variations.length > 0
             ? product.variations.map(v => ({ ...v }))
             : initialVariations
@@ -47,10 +47,10 @@ const ProductFormModal = ({ isOpen, toggle, product, onSave }) => {
         setFormData({
           name: '',
           description: '',
-          category_id: '',
-          product_type: 'physical',
+          categoryId: '',
+          productType: 'physical',
           price: '',
-          cost_price: '',
+          costPrice: '',
           variations: initialVariations
         });
       }
@@ -75,7 +75,7 @@ const ProductFormModal = ({ isOpen, toggle, product, onSave }) => {
   const handleAddVariation = useCallback(() => {
     setFormData(prevData => ({
       ...prevData,
-      variations: [...prevData.variations, { id: Date.now(), color: '', price: '', cost_price: '', stock_quantity: '', alert_threshold: 5, image_url: '', status: 'active' }]
+      variations: [...prevData.variations, { id: Date.now(), color: '', price: '', costPrice: '', stockQuantity: '', alertThreshold: 5, imageUrl: '', status: 'active' }]
     }));
   }, []);
 
@@ -86,25 +86,44 @@ const ProductFormModal = ({ isOpen, toggle, product, onSave }) => {
     }));
   }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    
-    let submissionData = { ...formData };
-    if (formData.product_type === 'service') {
-      submissionData.variations = []; // Backend expects empty variations for services
+
+    const payload = {
+      name: formData.name,
+      description: formData.description,
+      ['category_id']: formData.categoryId,
+      ['product_type']: formData.productType,
+    };
+
+    if (formData.productType === 'service') {
+      payload.price = parseFloat(formData.price) || 0;
+      payload['cost_price'] = parseFloat(formData.costPrice) || 0;
+      payload.variations = [];
+    } else {
+      payload.variations = formData.variations.map(v => ({
+        id: v.id,
+        color: v.color,
+        price: parseFloat(v.price) || 0,
+        ['cost_price']: parseFloat(v.costPrice) || 0,
+        ['stock_quantity']: parseInt(v.stockQuantity, 10) || 0,
+        ['alert_threshold']: parseInt(v.alertThreshold, 10) || 5,
+        ['image_url']: v.imageUrl,
+        status: v.status || 'active',
+      }));
     }
 
-    const url = isEditing ? `/products/${product.id}` : '/products';
+    const url = isEditing ? `/api/products/${product.id}` : '/api/products';
 
-    try {
-      await saveProduct(url, submissionData);
-      toast.success(`Produto ${isEditing ? 'atualizado' : 'criado'} com sucesso!`);
-      onSave();
-      toggle();
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || `Erro ao salvar produto.`;
-      toast.error(errorMessage);
-    }
+    saveProduct(url, payload)
+      .then(() => {
+        toast.success(`Produto ${isEditing ? 'atualizado' : 'criado'} com sucesso!`);
+        onSuccess();
+      })
+      .catch((error) => {
+        const errorMessage = error?.message || error?.msg || 'Erro ao salvar produto.';
+        toast.error(errorMessage);
+      });
   };
 
   const categoryOptions = categories.map(cat => ({ value: cat.id, label: cat.name }));
@@ -124,7 +143,7 @@ const ProductFormModal = ({ isOpen, toggle, product, onSave }) => {
                 <Col md={6}>
                   <FormGroup>
                     <Label for="product_type">Tipo de Produto</Label>
-                    <Input type="select" name="product_type" id="product_type" value={formData.product_type || 'physical'} onChange={handleChange}>
+                    <Input type="select" name="productType" id="product_type" value={formData.productType || 'physical'} onChange={handleChange}>
                       <option value="physical">Físico (com estoque)</option>
                       <option value="service">Serviço (sem estoque)</option>
                     </Input>
@@ -135,10 +154,10 @@ const ProductFormModal = ({ isOpen, toggle, product, onSave }) => {
                     <Label for="category_id">Categoria</Label>
                     <Select
                       id="category_id"
-                      name="category_id"
+                      name="categoryId"
                       options={categoryOptions}
-                      value={categoryOptions.find(c => c.value === formData.category_id) || null}
-                      onChange={(selectedOption) => handleChange({ target: { name: 'category_id', value: selectedOption ? selectedOption.value : '' }})}
+                      value={categoryOptions.find(c => c.value === formData.categoryId) || null}
+                      onChange={(selectedOption) => handleChange({ target: { name: 'categoryId', value: selectedOption ? selectedOption.value : '' }})}
                       classNamePrefix="select2-selection"
                       placeholder="Selecione..."
                     />
@@ -155,7 +174,7 @@ const ProductFormModal = ({ isOpen, toggle, product, onSave }) => {
                 />
               </FormGroup>
 
-              {formData.product_type === 'physical' ? (
+              {formData.productType === 'physical' ? (
                 <>
                   <h5 className="mt-4 mb-3">Variações do Produto</h5>
                   {formData.variations?.map((variation, index) => (
@@ -171,9 +190,9 @@ const ProductFormModal = ({ isOpen, toggle, product, onSave }) => {
                         <Col md={6}><FormGroup><Label>Preço de Venda</Label><NumericFormat name="price" value={variation.price} onValueChange={(values) => handleVariationChange(variation.id, { target: { name: 'price', value: values.floatValue || '' } })} thousandSeparator="." decimalSeparator="," prefix="R$ " className="form-control" required /></FormGroup></Col>
                       </Row>
                       <Row>
-                        <Col md={4}><FormGroup><Label>Preço de Custo</Label><NumericFormat name="cost_price" value={variation.cost_price} onValueChange={(values) => handleVariationChange(variation.id, { target: { name: 'cost_price', value: values.floatValue || '' } })} thousandSeparator="." decimalSeparator="," prefix="R$ " className="form-control" /></FormGroup></Col>
-                        <Col md={4}><FormGroup><Label>Estoque</Label><Input type="number" name="stock_quantity" value={variation.stock_quantity} onChange={(e) => handleVariationChange(variation.id, e)} required /></FormGroup></Col>
-                        <Col md={4}><FormGroup><Label>Alerta de Estoque</Label><Input type="number" name="alert_threshold" value={variation.alert_threshold} onChange={(e) => handleVariationChange(variation.id, e)} /></FormGroup></Col>
+                        <Col md={4}><FormGroup><Label>Preço de Custo</Label><NumericFormat name="costPrice" value={variation.costPrice} onValueChange={(values) => handleVariationChange(variation.id, { target: { name: 'costPrice', value: values.floatValue || '' } })} thousandSeparator="." decimalSeparator="," prefix="R$ " className="form-control" /></FormGroup></Col>
+                        <Col md={4}><FormGroup><Label>Estoque</Label><Input type="number" name="stockQuantity" value={variation.stockQuantity} onChange={(e) => handleVariationChange(variation.id, e)} required /></FormGroup></Col>
+                        <Col md={4}><FormGroup><Label>Alerta de Estoque</Label><Input type="number" name="alertThreshold" value={variation.alertThreshold} onChange={(e) => handleVariationChange(variation.id, e)} /></FormGroup></Col>
                       </Row>
                     </Card>
                   ))}
@@ -190,7 +209,7 @@ const ProductFormModal = ({ isOpen, toggle, product, onSave }) => {
                     <Col md={6}>
                         <FormGroup>
                             <Label for="service_cost_price">Custo do Serviço (Opcional)</Label>
-                            <NumericFormat name="cost_price" id="service_cost_price" value={formData.cost_price} onValueChange={(values) => handleChange({target: {name: 'cost_price', value: values.floatValue || ''}})} thousandSeparator="." decimalSeparator="," prefix="R$ " className="form-control" />
+                            <NumericFormat name="costPrice" id="service_cost_price" value={formData.costPrice} onValueChange={(values) => handleChange({target: {name: 'costPrice', value: values.floatValue || ''}})} thousandSeparator="." decimalSeparator="," prefix="R$ " className="form-control" />
                         </FormGroup>
                     </Col>
                 </Row>
@@ -199,8 +218,8 @@ const ProductFormModal = ({ isOpen, toggle, product, onSave }) => {
             <Col md={4} className="d-flex flex-column align-items-center justify-content-center bg-light p-3 rounded">
               <Label className="mb-3 fw-bold">Pré-visualização da Imagem</Label>
               <div style={{ width: '100%', maxWidth: '250px', height: '250px', border: '1px solid #ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '8px', backgroundColor: '#fff' }}>
-                {formData.product_type === 'physical' && formData.variations?.[0]?.image_url ? (
-                  <img src={formData.variations[0].image_url} alt="Pré-visualização" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                {formData.productType === 'physical' && formData.variations?.[0]?.imageUrl ? (
+                  <img src={formData.variations[0].imageUrl} alt="Pré-visualização" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 ) : (
                   <i className="bx bx-image fa-5x text-muted"></i>
                 )}

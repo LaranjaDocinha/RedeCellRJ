@@ -30,14 +30,14 @@ const StockMovementModal = ({ isOpen, toggle, variation, mode, onSuccess }) => {
 
     const url = isAddMode ? `${API_URL}/api/products/stock/add` : `${API_URL}/api/products/stock/adjust`;
     const payload = {
-      variation_id: variation.id,
+      variationId: variation.id,
       reason: reason,
     };
 
     if (isAddMode) {
-      payload.quantity_added = parseInt(quantity, 10);
+      payload.quantityAdded = parseInt(quantity, 10);
     } else {
-      payload.new_quantity = parseInt(quantity, 10);
+      payload.newQuantity = parseInt(quantity, 10);
     }
 
     try {

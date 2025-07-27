@@ -1,18 +1,50 @@
 .advanced-table-container {
   .table-controls {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 1rem;
 
     .form-control-sm {
-      max-width: 300px;
+      background-color: var(--bs-tertiary-bg);
+      color: var(--bs-body-color);
+      border-color: var(--bs-border-color);
     }
   }
 
   .table-responsive {
-    th {
-      cursor: pointer;
-      user-select: none;
+    .table {
+      background-color: var(--bs-card-bg);
+      color: var(--bs-body-color);
+      border-collapse: separate;
+      border-spacing: 0;
+
+      th {
+        cursor: pointer;
+        user-select: none;
+        background-color: var(--bs-tertiary-bg);
+        color: var(--bs-heading-color);
+        border-bottom: 2px solid var(--bs-border-color);
+      }
+
+      td {
+        color: var(--bs-body-color);
+        vertical-align: middle;
+        border-top: 1px solid var(--bs-border-color-translucent);
+      }
+
+      tbody tr:hover {
+        td {
+          background-color: var(--bs-tertiary-bg);
+        }
+      }
+
+      .card {
+        background-color: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color);
+        box-shadow: none;
+        color: var(--bs-body-color); // Garante a cor do texto dentro do card
+      }
     }
   }
 
@@ -25,7 +57,11 @@
 
     .pagination-info {
       font-size: 0.875rem;
-      color: #6c757d;
+      color: var(--bs-secondary-color);
     }
   }
 }
+
+
+
+

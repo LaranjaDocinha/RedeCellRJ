@@ -20,7 +20,7 @@ const UserFormModal = ({ isOpen, toggle, user, onSave }) => {
           name: user.name,
           email: user.email,
           role: user.role,
-          is_active: user.is_active,
+          isActive: formData.is_active,
           password: '',
           confirmPassword: ''
         });
@@ -50,7 +50,7 @@ const UserFormModal = ({ isOpen, toggle, user, onSave }) => {
     const userPayload = {
       name: formData.name,
       role: formData.role,
-      is_active: formData.is_active,
+      isActive: formData.is_active,
     };
     
     if (!isEditing) {

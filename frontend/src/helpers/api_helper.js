@@ -2,7 +2,8 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 // A URL base da API será lida das variáveis de ambiente
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+console.log("Frontend API_URL:", API_URL);
 
 // --- Eventos de Carregamento Global ---
 const dispatchStartLoading = () => window.dispatchEvent(new CustomEvent('start-loading'));
@@ -57,9 +58,15 @@ axiosApi.interceptors.response.use(
       }
 
       if (error.response.status === 401) {
-        localStorage.removeItem("auth-storage");
-        window.location.href = '/login';
-        toast.error("Sua sessão expirou. Por favor, faça login novamente.");
+        // Se for a rota de login, não redirecionar ou mostrar toast de sessão expirada
+        if (error.config.url === '/api/users/login') {
+          // Apenas rejeita a Promise para que o componente possa tratar
+          return Promise.reject(error);
+        } else {
+          localStorage.removeItem("auth-storage");
+          window.location.href = '/login';
+          toast.error("Sua sessão expirou. Por favor, faça login novamente.");
+        }
       } else {
         toast.error(errorMessage, { 
           style: { 
@@ -72,9 +79,11 @@ axiosApi.interceptors.response.use(
     } else if (error.request) {
       errorMessage = "Não foi possível se conectar ao servidor. Verifique sua conexão de rede.";
       toast.error(errorMessage);
+      console.error("Network Error:", error);
     } else {
       errorMessage = error.message;
       toast.error(errorMessage);
+      console.error("General Error:", error);
     }
     
     return Promise.reject(error);

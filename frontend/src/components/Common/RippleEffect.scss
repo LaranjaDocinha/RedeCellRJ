@@ -1,0 +1,23 @@
+
+.ripple-container {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  display: inline-block; // Para que o container se ajuste ao tamanho do botão
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.7); // Cor do ripple
+  transform: scale(0);
+  animation: ripple-animation 0.6s linear;
+  pointer-events: none; // Garante que o ripple não interfira com cliques
+}
+
+@keyframes ripple-animation {
+  to {
+    transform: scale(4); // Aumenta o tamanho do ripple
+    opacity: 0;
+  }
+}

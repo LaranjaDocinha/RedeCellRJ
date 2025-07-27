@@ -30,7 +30,7 @@
     border-radius: 12px;
     box-shadow: 0 10px 40px var(--shadow-color);
     animation: fadeInScaleModal 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-    background-color: var(--body-bg);
+    background-color: var(--color-component-bg); // Usar variável de cor de fundo de componente
   }
 
   .modal-body {

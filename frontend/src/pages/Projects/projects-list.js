@@ -258,6 +258,7 @@ const ProjectsList = () => {
                       <UncontrolledTooltip
                         placement="right"
                         target={`UncontrolledTooltipExample-${member.id}`}
+                        transition={{ timeout: 300 }}
                       >
                         {member.fullname}
                       </UncontrolledTooltip>
@@ -271,6 +272,7 @@ const ProjectsList = () => {
                       <UncontrolledTooltip
                         placement="right"
                         target={`UncontrolledTooltipExample-${member.id}`}
+                        transition={{ timeout: 300 }}
                       >
                         {member.name}
                       </UncontrolledTooltip>

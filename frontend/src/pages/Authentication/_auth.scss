@@ -6,159 +6,335 @@
   justify-content: center;
   min-height: 100vh;
   background-color: var(--color-body-bg);
+  background-image: linear-gradient(45deg, var(--gradient-color-1) 0%, var(--gradient-color-2) 25%, var(--gradient-color-3) 50%, var(--gradient-color-4) 75%, var(--gradient-color-1) 100%);
+  background-size: 400% 400%;
+  animation: gradient-animation 15s ease infinite, background-entry-animation 1s ease-out forwards;
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d; // Para o efeito Parallax
+  transition: background-color 0.5s ease, background-image 0.5s ease; // Transição de tema suave
 
-  .auth-full-bg {
-    background-color: var(--color-primary);
-    background-image: linear-gradient(to right, rgba(85, 110, 230, 0.8), rgba(85, 110, 230, 0.6)), url("https://images.unsplash.com/photo-1504868584819-f8ed6d2edc74?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"); // Imagem de fundo de alta qualidade com overlay de gradiente
+  .parallax-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    // background-image: url('../assets/images/parallax-bg.png'); // Exemplo de imagem de fundo
     background-size: cover;
     background-position: center;
+    transform-origin: center center;
+    will-change: transform;
+  }
+
+  .parallax-layer-back {
+    transform: translateZ(-2px) scale(3); // Mais distante, se move mais rápido
+    opacity: 0.2;
+  }
+
+  .parallax-layer-middle {
+    transform: translateZ(-1px) scale(2); // Meio
+    opacity: 0.4;
+  }
+
+  .parallax-layer-front {
+    transform: translateZ(0px) scale(1); // Mais próximo
+    opacity: 0.6;
+  }
+
+  .particles-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
     height: 100%;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
+    overflow: hidden;
+    z-index: 0; // Garante que as partículas fiquem atrás do conteúdo
+  }
 
-    &::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.4); // Overlay escuro para contraste
+  .particle {
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.3); // Partículas brancas semi-transparentes
+    border-radius: 50%;
+    animation: float-up 15s infinite ease-in-out; // Animação de flutuação
+    opacity: 0; // Começa invisível
+  }
+
+  @keyframes float-up {
+    0% {
+      transform: translateY(100vh) scale(0);
+      opacity: 0;
     }
-
-    .auth-logo {
-      position: relative;
-      z-index: 1;
-      animation: logo-fade-in 1s ease-out forwards;
-      transform: scale(0.9); // Começa um pouco menor
+    50% {
+      opacity: 1;
     }
-
-    @keyframes logo-fade-in {
-      to {
-        opacity: 1;
-        transform: scale(1);
-      }
-    }
-
-    .auth-logo-dark {
-      filter: brightness(0) invert(1); // Torna o logo branco para contraste
-    }
-
-    .text-white,
-    .text-white-50 {
-      position: relative;
-      z-index: 1;
+    100% {
+      transform: translateY(-100vh) scale(1.2);
+      opacity: 0;
     }
   }
 
-  .auth-full-page-content {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-height: 100vh;
+  @keyframes gradient-animation {
+    0% { background-position: 0% 50%; }
+    25% { background-position: 50% 100%; }
+    50% { background-position: 100% 50%; }
+    75% { background-position: 50% 0%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes background-entry-animation {
+    from {
+      opacity: 0;
+      transform: scale(1.1);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .auth-card {
     background-color: var(--glass-bg); // Usar a variável de glassmorphism
     backdrop-filter: blur(10px); // Efeito de desfoque
     border: 1px solid rgba(255, 255, 255, 0.18); // Borda sutil
-    border-radius: 10px; // Cantos arredondados
+    border-radius: 0 !important; // Cantos quadrados
+    box-sizing: border-box; // Incluir padding e border no tamanho total
     box-shadow: var(--shadow-lg); // Sombra existente
     position: relative;
     z-index: 2;
+    animation: fade-in-up 0.8s ease-out forwards; // Animação de entrada
+    transform: translateZ(0); // Garante que o card seja renderizado de forma plana
 
-    .card {
-      background-color: transparent !important; // Tornar o card transparente
-      box-shadow: none; // Remover sombra do card interno
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px) translateZ(0);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) translateZ(0);
+    }
+  }
+    max-width: 400px; // Definir largura máxima
+    width: 100%; // Garantir que ocupe a largura disponível
+    margin: auto; // Centralizar o card
+    height: auto; // Altura automática para se ajustar ao conteúdo
+    min-width: 0; // Garantir que não haja um tamanho mínimo
+    min-height: 0; // Garantir que não haja um tamanho mínimo
+    flex-shrink: 0; // Prevenir que o card encolha
+    flex-grow: 0; // Prevenir que o card cresça
+  }
+
+  [data-theme="dark"] {
+    .auth-logo-dark {
+      filter: invert(1);
+    }
+  }
+
+    .card-body {
+      background-color: transparent !important; // Tornar o card-body transparente
+      box-shadow: none; // Remover sombra do card-body interno
       border: none;
+      border-radius: 0 !important; // Cantos quadrados
+      box-sizing: border-box; // Incluir padding e border no tamanho total
+      min-width: 0; // Garantir que não haja um tamanho mínimo
+      min-height: 0; // Garantir que não haja um tamanho mínimo
+      padding: 0 !important; // Remover padding para garantir o tamanho
     }
 
-    .form-floating-custom {
-      position: relative;
+  .auth-card-body {
+    padding: 1.5rem; // Adicionar padding interno ao conteúdo do formulário
+  }
 
-      .form-control {
-        padding-top: 1.625rem;
-        padding-bottom: 0.625rem;
-      }
+  .auth-form-content {
+    padding: 1.5rem; // Adicionar padding interno ao conteúdo do formulário
+  }
 
-      > label {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 100%;
-        padding: 1rem 0.75rem;
-        overflow: hidden;
-        text-align: start;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        pointer-events: none;
-        border: 1px solid transparent;
-        transform-origin: 0 0;
-        transition: opacity 0.1s ease-in-out, transform 0.1s ease-in-out;
-      }
+  .form-floating-custom {
+    .form-control {
+      padding-top: 1.625rem;
+      padding-bottom: 0.625rem;
+      transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; // Adiciona transição
 
-      .form-control:focus ~ label,
-      .form-control:not(:placeholder-shown) ~ label,
-      .form-control:-webkit-autofill ~ label {
-        opacity: 0.65;
-        transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
-      }
-
-      .form-control:focus {
-        border-color: var(--color-primary); // Cor da borda ao focar
-        box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25); // Sombra sutil ao focar
-      }
-
-      .password-addon {
-        position: absolute;
-        right: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: 10;
-        border: none;
-        background: transparent;
-        padding: 0.375rem 0.75rem;
-        cursor: pointer;
-        color: var(--color-text-muted);
-
-        &:hover {
-          color: var(--color-primary);
-        }
-      }
-
-      .validation-icon {
-        position: absolute;
-        right: 35px; // Ajuste para não sobrepor o ícone de olho
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: 10;
-        font-size: 1.2rem;
+      &:-webkit-autofill,
+      &:-webkit-autofill:hover,
+      &:-webkit-autofill:focus,
+      &:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0px 1000px var(--color-component-bg) inset !important;
+        -webkit-text-fill-color: var(--color-body-text) !important;
+        border-color: var(--color-primary) !important;
       }
     }
 
-    .shake-animation {
-      animation: shake 0.5s;
+    > label {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      padding: 1rem 0.75rem;
+      overflow: hidden;
+      text-align: start;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      pointer-events: none;
+      border: 1px solid transparent;
+      transform-origin: 0 0;
+      transition: opacity 0.1s ease-in-out, transform 0.1s ease-in-out, color 0.2s ease-in-out; // Adiciona transição de cor
     }
 
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
-      20%, 40%, 60%, 80% { transform: translateX(10px); }
+    .form-control:focus ~ label,
+    .form-control:not(:placeholder-shown) ~ label,
+    .form-control:-webkit-autofill ~ label {
+      opacity: 1; // Torna o label totalmente opaco
+      transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+      color: var(--color-primary); // Cor do label quando em foco/preenchido
     }
+
+    .form-control:focus {
+      border-color: var(--color-primary); // Cor da borda ao focar
+      box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25); // Sombra sutil ao focar
+    }
+
+    .form-control:focus-visible {
+      outline: 2px solid var(--color-primary); // Foco visual aprimorado
+      outline-offset: 2px;
+    }
+
+    .password-addon {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      border: none !important;
+      box-shadow: none !important;
+      background: none !important; // Garante fundo transparente
+      padding: 0 !important; // Remove padding do botão
+      cursor: pointer;
+      color: var(--color-body-text) !important; // Cor do ícone que se adapta ao tema
+      transition: color 0.2s ease-in-out; // Adiciona transição de cor
+      border-radius: 0 8px 8px 0; // Bordas arredondadas para o botão do olho
+      display: flex; // Adiciona flexbox
+      align-items: center; // Centraliza verticalmente
+      justify-content: center; // Centraliza horizontalmente
+      width: 40px; // Define uma largura fixa para o botão
+      height: 40px; // Define uma altura fixa para o botão
+
+      &:hover {
+        color: var(--color-primary);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--color-primary); // Foco visual aprimorado
+        outline-offset: 2px;
+      }
+
+      i {
+        font-size: 1.25rem !important; // Ajusta o tamanho do ícone para 20px e força a aplicação
+        color: var(--color-body-text) !important; // Força a cor do ícone
+      }
+    }
+
+    .validation-icon {
+      position: absolute;
+      right: 45px; // Ajuste para posicionar à esquerda do PasswordToggle
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10; // Garante que o ícone esteja acima do input
+      font-size: 1.5rem; // Aumenta o tamanho do ícone
+    }
+  }
+
+  .btn-liquid-effect {
+    position: relative;
+    overflow: hidden;
+    transform: translate3d(0, 0, 0);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.6); // Cor do efeito
+      border-radius: 50%;
+      opacity: 0;
+      transform: scale(1) translate(-50%, -50%);
+      transition: all 0.5s ease-out;
+    }
+
+    &:active::before {
+      transform: scale(20) translate(-50%, -50%);
+      opacity: 1;
+      transition: all 0.5s ease-out;
+    }
+  }
+
+  .btn-login-custom-width {
+    max-width: 200px; // Defina a largura máxima desejada
+    width: 100%; // Garante que ocupe a largura disponível até o max-width
+  }
+
+  .btn-pulse-effect {
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(var(--bs-primary-rgb), 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(var(--bs-primary-rgb), 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(var(--bs-primary-rgb), 0);
+    }
+  }
+
+  .shake-animation {
+    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  @keyframes shake {
+    10%, 90% {
+      transform: translate3d(-1px, 0, 0);
+    }
+    20%, 80% {
+      transform: translate3d(1px, 0, 0);
+    }
+    30%, 50%, 70% {
+      transform: translate3d(-2px, 0, 0);
+    }
+    40%, 60% {
+      transform: translate3d(2px, 0, 0);
+    }
+  }
+
+  .animated-link {
+    display: inline-flex;
+    align-items: center;
+    transition: transform 0.3s ease;
+
+    &:hover {
+      transform: translateX(5px);
+    }
+  }
+
+  .animated-icon {
+    transition: transform 0.3s ease;
+  }
+
+  .animated-link:hover .animated-icon {
+    transform: rotate(10deg);
   }
 }
 
-// Ajustes para telas menores
-@media (max-width: 767.98px) {
-  .auth-page {
-    .auth-full-bg {
-      display: none; // Esconder a coluna de branding em telas pequenas
-    }
 
-    .auth-full-page-content {
-      width: 100%;
-      padding: var(--spacing-4);
-      box-shadow: none;
-    }
-  }
-}
+
+    
+  
+

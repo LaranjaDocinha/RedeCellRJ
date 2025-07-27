@@ -19,6 +19,14 @@ export const useAuthStore = create(
       // Ação de Logout (sem alterações)
       logout: () => {
         set({ user: null, token: null });
+        
+      },
+
+      // Ação para atualizar o perfil do usuário
+      updateUserProfile: (newProfileData) => {
+        set((state) => ({
+          user: { ...state.user, ...newProfileData },
+        }));
       },
 
       // --- Seletores (sem alterações, já eram perfeitos) ---

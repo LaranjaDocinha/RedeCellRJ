@@ -1,16 +1,24 @@
 // _buttons.scss
 
 .btn {
+  border-radius: var(--btn-border-radius);
+  padding: var(--btn-padding-y) var(--btn-padding-x);
+  box-shadow: var(--btn-box-shadow);
   transition: all 0.2s ease-in-out;
 
   &:not(:disabled):hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--btn-hover-box-shadow);
   }
 
   &:not(:disabled):active {
     transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--btn-active-box-shadow);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary); // Foco visual aprimorado
+    outline-offset: 2px;
   }
 }
 
@@ -28,5 +36,17 @@
   }
   100% {
     box-shadow: 0 0 0 0 rgba(var(--bs-primary-rgb), 0);
+  }
+}
+
+// Estilo dedicado para botões de ação em cards/listas de produtos
+.themed-action-btn {
+  background-color: var(--color-component-bg) !important;
+  color: var(--color-body-text) !important;
+  border: 1px solid var(--color-border) !important;
+
+  &:hover {
+    background-color: var(--color-body-bg) !important;
+    border-color: var(--color-border) !important;
   }
 }

@@ -717,6 +717,7 @@ const Chat = () => {
                                       <UncontrolledTooltip
                                         placement="top"
                                         target="Emojitooltip"
+                                        transition={{ timeout: 300 }}
                                       >
                                         Emojis
                                       </UncontrolledTooltip>
@@ -725,7 +726,7 @@ const Chat = () => {
                                   <li className="list-inline-item">
                                     <label htmlFor="imageInput" style={{ color: "#556ee6", fontSize: 16 }}>
                                       <i className="mdi mdi-file-image-outline me-1" id="Imagetooltip" />
-                                      <UncontrolledTooltip placement="top" target="Imagetooltip">
+                                      <UncontrolledTooltip placement="top" target="Imagetooltip" transition={{ timeout: 300 }}>
                                         Images
                                       </UncontrolledTooltip>
                                     </label>
@@ -734,7 +735,7 @@ const Chat = () => {
                                   <li className="list-inline-item">
                                     <Link to="#">
                                       <i className="mdi mdi-file-document-outline" id="Filetooltip" />
-                                      <UncontrolledTooltip placement="top" target="Filetooltip">
+                                      <UncontrolledTooltip placement="top" target="Filetooltip" transition={{ timeout: 300 }}>
                                         Add Files
                                       </UncontrolledTooltip>
                                     </Link>

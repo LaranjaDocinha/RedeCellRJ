@@ -3,11 +3,12 @@ import {
   Modal, ModalHeader, ModalBody, ModalFooter, Button, Form, FormGroup, Label, Input, InputGroup,
   Spinner, Alert, Row, Col
 } from 'reactstrap';
-import axios from 'axios';
-import config from '../../../config';
+import { useAuthStore } from '../../../store/authStore';
+import { post } from '../../../helpers/api_helper';
+import toast from 'react-hot-toast';
 
 const CashierModal = ({ isOpen, toggle, cashierStatus, onCashierUpdate }) => {
-  const API_URL = config.api.API_URL;
+  const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [openingBalance, setOpeningBalance] = useState('');
@@ -29,13 +30,17 @@ const CashierModal = ({ isOpen, toggle, cashierStatus, onCashierUpdate }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post(`${API_URL}/api/cashier/open`, {
-        opening_balance: parseFloat(openingBalance)
-      });
-      onCashierUpdate(response.data.session);
-      toggle();
+      const payload = {
+        ['opening_balance']: parseFloat(openingBalance),
+        userId: user.id,
+      };
+      const response = await post('/api/cashier/open', payload);
+      onCashierUpdate(response.session);
+      toast.success('Caixa aberto com sucesso!');
     } catch (err) {
-      setError(err.response?.data?.msg || 'Erro ao abrir o caixa.');
+      const errorMessage = err.response?.data?.msg || 'Erro ao abrir o caixa.';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -46,14 +51,18 @@ const CashierModal = ({ isOpen, toggle, cashierStatus, onCashierUpdate }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post(`${API_URL}/api/cashier/close`, {
-        closing_balance: parseFloat(closingBalance),
-        notes: notes
-      });
+      const payload = {
+        ['closing_balance']: parseFloat(closingBalance),
+        notes,
+        userId: user.id,
+      };
+      const response = await post('/api/cashier/close', payload);
       onCashierUpdate(null); // Indica que o caixa foi fechado
-      toggle();
+      toast.success('Caixa fechado com sucesso!');
     } catch (err) {
-      setError(err.response?.data?.msg || 'Erro ao fechar o caixa.');
+      const errorMessage = err.response?.data?.msg || 'Erro ao fechar o caixa.';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -75,7 +84,7 @@ const CashierModal = ({ isOpen, toggle, cashierStatus, onCashierUpdate }) => {
                 <Col>
                   <div className="text-center p-3 border rounded mb-3">
                     <h5>Saldo de Abertura</h5>
-                    <p className="h4">R$ {parseFloat(cashierStatus.session.opening_balance).toFixed(2)}</p>
+                    <p className="h4">R$ {parseFloat(cashierStatus.session.openingBalance).toFixed(2)}</p>
                   </div>
                 </Col>
               </Row>

@@ -5,22 +5,22 @@ const Receipt = React.forwardRef(({ saleData }, ref) => {
   if (!saleData) return null;
 
   const {
-    sale_id,
-    total_amount,
-    total_paid,
+    saleId,
+    totalAmount,
+    totalPaid,
     change,
     items,
     customer,
     timestamp,
-    sale_discount,
+    saleDiscount,
     notes
   } = saleData;
 
   const subtotal = items.reduce((acc, item) => {
-    return acc + (item.unit_price * item.quantity);
+    return acc + (item.unitPrice * item.quantity);
   }, 0);
 
-  const totalDiscount = subtotal - total_amount;
+  const totalDiscount = subtotal - totalAmount;
 
   return (
     <div ref={ref} className="receipt-container">
@@ -32,7 +32,7 @@ const Receipt = React.forwardRef(({ saleData }, ref) => {
       </div>
 
       <div className="receipt-info">
-        <p><strong>Venda ID:</strong> {sale_id}</p>
+        <p><strong>Venda ID:</strong> {saleId}</p>
         <p><strong>Data:</strong> {new Date(timestamp).toLocaleString('pt-BR')}</p>
         {customer && <p><strong>Cliente:</strong> {customer.name}</p>}
       </div>
@@ -48,11 +48,11 @@ const Receipt = React.forwardRef(({ saleData }, ref) => {
         </thead>
         <tbody>
           {items.map(item => (
-            <tr key={item.variation_id}>
-              <td>{item.product_name} ({item.color})</td>
+            <tr key={item.variationId}>
+              <td>{item.productName} ({item.color})</td>
               <td>{item.quantity}</td>
-              <td>R$ {parseFloat(item.unit_price).toFixed(2)}</td>
-              <td>R$ {(item.quantity * item.unit_price).toFixed(2)}</td>
+              <td>R$ {parseFloat(item.unitPrice).toFixed(2)}</td>
+              <td>R$ {(item.quantity * item.unitPrice).toFixed(2)}</td>
             </tr>
           ))}
         </tbody>
@@ -61,9 +61,9 @@ const Receipt = React.forwardRef(({ saleData }, ref) => {
       <div className="receipt-totals">
         <p><strong>Subtotal:</strong> R$ {subtotal.toFixed(2)}</p>
         {totalDiscount > 0 && <p><strong>Descontos:</strong> - R$ {totalDiscount.toFixed(2)}</p>}
-        <p className="total-amount"><strong>Total:</strong> R$ {parseFloat(total_amount).toFixed(2)}</p>
+        <p className="total-amount"><strong>Total:</strong> R$ {parseFloat(totalAmount).toFixed(2)}</p>
         <hr />
-        <p><strong>Total Pago:</strong> R$ {parseFloat(total_paid).toFixed(2)}</p>
+        <p><strong>Total Pago:</strong> R$ {parseFloat(totalPaid).toFixed(2)}</p>
         <p><strong>Troco:</strong> R$ {parseFloat(change).toFixed(2)}</p>
       </div>
 

@@ -11,9 +11,9 @@ const router = express.Router();
 
 // Rate Limiter para a rota de login
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
+  windowMs: 3 * 60 * 1000, // 3 minutos
   max: 10, // Limita cada IP a 10 requisições por janela
-  message: 'Muitas tentativas de login a partir deste IP, por favor, tente novamente após 15 minutos.',
+  message: 'Muitas tentativas de login a partir deste IP, por favor, tente novamente após 3 minutos.',
   standardHeaders: true, // Retorna informações do limite nos cabeçalhos `RateLimit-*`
   legacyHeaders: false, // Desabilita os cabeçalhos `X-RateLimit-*`
 });
@@ -85,6 +85,7 @@ router.post('/', [authenticateToken, authorizeRoles('admin')], async (req, res) 
     try {
         const salt = await bcrypt.genSalt(10);
         const password_hash = await bcrypt.hash(password, salt);
+        // Novos usuários são sempre 'seller' por padrão via registro público
         const newUser = await db.query(
             'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role, is_active',
             [name, email, password_hash, role]
@@ -163,12 +164,6 @@ router.delete('/:id', [authenticateToken, authorizeRoles('admin')], async (req, 
 });
 
 // --- ROTAS DE AUTENTICAÇÃO PÚBLICA ---
-
-const { validatePassword } = require('../utils/validation');
-
-const { validatePassword } = require('../utils/validation');
-
-const { validatePassword } = require('../utils/validation');
 
 // Rota para registrar um novo usuário (pode ser pública ou restrita)
 // Por enquanto, vamos manter pública, mas poderia ser protegida também.

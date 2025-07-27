@@ -17,7 +17,7 @@ const SalesHistory = () => {
   const fetchSalesHistory = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await get('/sales/history?_sort=sale_date&_order=desc');
+      const data = await get('/api/sales/history?_sort=sale_date&_order=desc');
       setSales(data.sales);
     } catch (err) {
       setError('Falha ao carregar o histórico de vendas.');
@@ -58,7 +58,7 @@ const SalesHistory = () => {
       <div className="page-content">
         <Container fluid>
           <Breadcrumbs title="Vendas" breadcrumbItem="Histórico de Vendas" />
-          {error && <Alert color="danger">{error}</Alert>}
+          {error && <Alert color="danger" timeout={0}>{error}</Alert>}
           <Row>
             <Col>
               <Card>

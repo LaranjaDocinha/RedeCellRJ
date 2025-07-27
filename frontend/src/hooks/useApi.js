@@ -13,8 +13,10 @@ const useApi = (apiFunc) => {
       setData(result);
       return result;
     } catch (err) {
-      setError(err.response ? err.response.data : { message: err.message });
-      throw err;
+      const errorData = err.response ? err.response.data : { message: err.message };
+      setError(errorData);
+      // Não relance o erro, o componente que usa o hook deve verificar o estado de 'error'.
+      return Promise.reject(errorData);
     } finally {
       setLoading(false);
     }

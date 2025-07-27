@@ -1,0 +1,27 @@
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+
+.category-list {
+  max-height: 250px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+
+.category-list .list-group-item {
+  padding-left: 0;
+  padding-right: 0;
+  border-bottom: 1px solid var(--#{$prefix}border-color);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .btn-link {
+    padding: 0.25rem 0.5rem;
+    text-decoration: none;
+
+    &:focus {
+      box-shadow: 0 0 0 2px rgba(var(--#{$prefix}primary-rgb), 0.5);
+    }
+  }
+}

@@ -9,7 +9,7 @@ const SaleDetailsForReturn = ({ sale, onProcessReturn, loading }) => {
   useEffect(() => {
     // Inicializa o estado com os itens da venda, com quantidade 0 para devolução
     if (sale && sale.items) {
-      setItemsToReturn(sale.items.map(item => ({ ...item, return_quantity: 0 })));
+      setItemsToReturn(sale.items.map(item => ({ ...item, returnQuantity: 0 })));
     }
   }, [sale]);
 
@@ -17,18 +17,19 @@ const SaleDetailsForReturn = ({ sale, onProcessReturn, loading }) => {
     const newItems = [...itemsToReturn];
     const maxQuantity = newItems[index].quantity;
     const newQuantity = Math.max(0, Math.min(Number(value), maxQuantity));
-    newItems[index].return_quantity = newQuantity;
+    newItems[index].returnQuantity = newQuantity;
     setItemsToReturn(newItems);
   };
 
   const handleSubmit = () => {
-    const itemsPayload = itemsToReturn
-      .filter(item => item.return_quantity > 0)
-      .map(item => ({
-        variation_id: item.variation_id, // Precisamos do variation_id
-        quantity: item.return_quantity,
-        unit_price: item.unit_price,
-      }));
+    const itemsPayload =
+      itemsToReturn
+        .filter(item => item.returnQuantity > 0)
+        .map(item => ({
+          variationId: item.variation_id, // Precisamos do variation_id
+          quantity: item.returnQuantity,
+          unitPrice: item.unit_price,
+        }));
     onProcessReturn(itemsPayload);
   };
 
@@ -65,7 +66,7 @@ const SaleDetailsForReturn = ({ sale, onProcessReturn, loading }) => {
                     type="number"
                     min="0"
                     max={item.quantity}
-                    value={item.return_quantity}
+                    value={item.returnQuantity}
                     onChange={e => handleQuantityChange(index, e.target.value)}
                   />
                 </td>

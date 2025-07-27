@@ -22,7 +22,8 @@ DROP TABLE IF EXISTS
     accounts_receivable,
     purchase_orders,
     purchase_order_items,
-    migrations
+    migrations,
+    store_settings
 CASCADE;
 
 -- Tabela de Usuários (Funcionários)
@@ -36,11 +37,8 @@ CREATE TABLE users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insere um usuário admin padrão para facilitar o desenvolvimento inicial.
--- A senha é 'admin123' (lembre-se de trocar em produção).
 INSERT INTO users (name, email, password_hash, role) VALUES
 ('Admin', 'admin@pdv.com', '$2a$10$f5.iP9Xw2qE3C3a.pA.cdeUROL.tV22j5WJvj.S2a.xWjYJ5JzL2S', 'admin');
-
 
 -- Tabela de Clientes
 CREATE TABLE customers (
@@ -70,18 +68,18 @@ CREATE TABLE categories (
     description TEXT
 );
 
--- Tabela de Produtos (informações principais)
+-- Tabela de Produtos
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     category_id INTEGER REFERENCES categories(id),
-    product_type VARCHAR(50) DEFAULT 'Produto', -- 'Produto' ou 'Serviço'
+    product_type VARCHAR(50) DEFAULT 'physical' CHECK (product_type IN ('physical', 'service')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabela de Variações de Produtos (cores, preços, estoque)
+-- Tabela de Variações de Produtos
 CREATE TABLE product_variations (
     id SERIAL PRIMARY KEY,
     product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
@@ -90,24 +88,27 @@ CREATE TABLE product_variations (
     cost_price DECIMAL(10, 2) DEFAULT 0.00,
     stock_quantity INTEGER NOT NULL DEFAULT 0,
     barcode VARCHAR(255) UNIQUE,
-    status VARCHAR(50) NOT NULL DEFAULT 'active', -- active, inactive, out_of_stock
-    stock_alert_threshold INTEGER,
+    status VARCHAR(50) NOT NULL DEFAULT 'active',
+    alert_threshold INTEGER DEFAULT 5,
+    image_url TEXT, -- CORREÇÃO: Adicionada coluna image_url
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (product_id, color)
 );
 
--- Tabela de Vendas (PDV)
+-- Tabela de Vendas
 CREATE TABLE sales (
     id SERIAL PRIMARY KEY,
     customer_id INTEGER REFERENCES customers(id),
     user_id INTEGER NOT NULL REFERENCES users(id),
     sale_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     subtotal DECIMAL(10, 2) NOT NULL,
-    discount_type VARCHAR(20), -- 'percentage' ou 'fixed'
+    discount_type VARCHAR(20),
     discount_value DECIMAL(10, 2) DEFAULT 0.00,
     total_amount DECIMAL(10, 2) NOT NULL,
-    notes TEXT
+    notes TEXT,
+    sale_type VARCHAR(20) DEFAULT 'sale' CHECK (sale_type IN ('sale', 'return')),
+    original_sale_id INTEGER REFERENCES sales(id)
 );
 
 -- Tabela de Itens da Venda
@@ -132,7 +133,7 @@ CREATE TABLE payment_methods (
 CREATE TABLE sale_payments (
     id SERIAL PRIMARY KEY,
     sale_id INTEGER NOT NULL REFERENCES sales(id) ON DELETE CASCADE,
-    payment_method_id INTEGER REFERENCES payment_methods(id),
+    payment_method VARCHAR(100) NOT NULL, -- CORREÇÃO: Alterado de payment_method_id para payment_method
     amount DECIMAL(10, 2) NOT NULL
 );
 
@@ -150,11 +151,13 @@ CREATE TABLE repairs (
     service_cost DECIMAL(10, 2) DEFAULT 0.00,
     parts_cost DECIMAL(10, 2) DEFAULT 0.00,
     final_cost DECIMAL(10, 2) DEFAULT 0.00,
+    priority VARCHAR(50) DEFAULT 'Normal', -- CORREÇÃO: Adicionada coluna priority
+    tags TEXT[], -- CORREÇÃO: Adicionada coluna tags
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabela de Peças Utilizadas nos Reparos (vincula ao estoque)
+-- Tabela de Peças Utilizadas nos Reparos
 CREATE TABLE repair_parts (
     id SERIAL PRIMARY KEY,
     repair_id INTEGER NOT NULL REFERENCES repairs(id) ON DELETE CASCADE,
@@ -175,106 +178,48 @@ CREATE TABLE repair_history (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabela de Imagens (para Produtos e Reparos)
-CREATE TABLE images (
-    id SERIAL PRIMARY KEY,
-    related_id INTEGER NOT NULL,
-    entity_type VARCHAR(50) NOT NULL, -- 'product' ou 'repair'
-    image_url VARCHAR(255) NOT NULL,
-    description VARCHAR(255),
-    uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (related_id, entity_type, image_url)
-);
-
 -- Tabela de Histórico de Estoque
 CREATE TABLE stock_history (
     id SERIAL PRIMARY KEY,
     variation_id INTEGER NOT NULL REFERENCES product_variations(id),
     user_id INTEGER REFERENCES users(id),
-    change_type VARCHAR(50) NOT NULL, -- 'venda', 'compra', 'ajuste_manual', 'reparo'
+    change_type VARCHAR(50) NOT NULL,
     quantity_change INTEGER NOT NULL,
     reason TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Tabela de Devoluções
-CREATE TABLE returns (
-    id SERIAL PRIMARY KEY,
-    sale_id INTEGER NOT NULL REFERENCES sales(id),
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    return_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    reason TEXT,
-    total_returned_amount DECIMAL(10, 2) NOT NULL
-);
-
--- Tabela de Itens Devolvidos
-CREATE TABLE return_items (
-    id SERIAL PRIMARY KEY,
-    return_id INTEGER NOT NULL REFERENCES returns(id) ON DELETE CASCADE,
-    sale_item_id INTEGER NOT NULL REFERENCES sale_items(id),
-    quantity_returned INTEGER NOT NULL
 );
 
 -- Tabela de Sessões de Caixa
 CREATE TABLE cash_sessions (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id),
-    start_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    end_time TIMESTAMP WITH TIME ZONE,
     opening_balance DECIMAL(10, 2) NOT NULL,
     closing_balance DECIMAL(10, 2),
+    calculated_balance DECIMAL(10, 2), -- CORREÇÃO: Adicionada
+    difference DECIMAL(10, 2), -- CORREÇÃO: Adicionada
+    status VARCHAR(20) NOT NULL DEFAULT 'open', -- CORREÇÃO: Adicionada
+    opened_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, -- CORREÇÃO: Renomeada e ajustada
+    closed_at TIMESTAMP WITH TIME ZONE, -- CORREÇÃO: Adicionada
     notes TEXT
 );
 
--- Tabela de Contas a Pagar
-CREATE TABLE accounts_payable (
-    id SERIAL PRIMARY KEY,
-    description VARCHAR(255) NOT NULL,
-    amount DECIMAL(10, 2) NOT NULL,
-    due_date DATE NOT NULL,
-    payment_date DATE,
-    status VARCHAR(50) DEFAULT 'Pendente', -- Pendente, Pago, Atrasado
-    supplier_id INTEGER,
-    notes TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+-- Tabela de Configurações da Loja
+CREATE TABLE store_settings (
+    key VARCHAR(255) PRIMARY KEY,
+    value TEXT,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabela de Contas a Receber
-CREATE TABLE accounts_receivable (
-    id SERIAL PRIMARY KEY,
-    description VARCHAR(255) NOT NULL,
-    amount DECIMAL(10, 2) NOT NULL,
-    due_date DATE NOT NULL,
-    payment_date DATE,
-    status VARCHAR(50) DEFAULT 'Pendente', -- Pendente, Recebido, Atrasado
-    customer_id INTEGER REFERENCES customers(id),
-    sale_id INTEGER REFERENCES sales(id),
-    notes TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+-- Inserção dos dados de configuração
+INSERT INTO store_settings (key, value) VALUES ('store_name', 'Minha Loja PDV') ON CONFLICT (key) DO NOTHING;
+INSERT INTO store_settings (key, value) VALUES ('store_address', 'Rua Exemplo, 123') ON CONFLICT (key) DO NOTHING;
+INSERT INTO store_settings (key, value) VALUES ('store_phone', '(99) 99999-9999') ON CONFLICT (key) DO NOTHING;
+INSERT INTO store_settings (key, value) VALUES ('store_cnpj', '00.000.000/0001-00') ON CONFLICT (key) DO NOTHING;
+INSERT INTO store_settings (key, value) VALUES ('store_logo_url', '') ON CONFLICT (key) DO NOTHING;
 
--- Tabela de Ordens de Compra
-CREATE TABLE purchase_orders (
-    id SERIAL PRIMARY KEY,
-    supplier_id INTEGER NOT NULL REFERENCES suppliers(id),
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    order_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    expected_delivery_date DATE,
-    status VARCHAR(50) NOT NULL DEFAULT 'Pendente', -- Pendente, Recebido Parcialmente, Recebido, Cancelado
-    total_amount DECIMAL(10, 2) NOT NULL,
-    notes TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Tabela de Itens da Ordem de Compra
-CREATE TABLE purchase_order_items (
-    id SERIAL PRIMARY KEY,
-    purchase_order_id INTEGER NOT NULL REFERENCES purchase_orders(id) ON DELETE CASCADE,
-    variation_id INTEGER NOT NULL REFERENCES product_variations(id),
-    quantity INTEGER NOT NULL,
-    cost_price DECIMAL(10, 2) NOT NULL, -- Preço de custo no momento da compra
-    quantity_received INTEGER DEFAULT 0
-);
+-- Inserção de métodos de pagamento padrão
+INSERT INTO payment_methods (name, is_active) VALUES
+('Dinheiro', TRUE),
+('Cartão de Crédito', TRUE),
+('Cartão de Débito', TRUE),
+('PIX', TRUE);

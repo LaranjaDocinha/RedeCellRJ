@@ -1,0 +1,17 @@
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+
+.product-toolbar {
+  .form-control, .form-select, .btn {
+    &:focus {
+      border-color: var(--#{$prefix}primary);
+      box-shadow: 0 0 0 0.25rem rgba(var(--#{$prefix}primary-rgb), 0.25);
+    }
+  }
+
+  #select-all-checkbox {
+    &:focus {
+      box-shadow: 0 0 0 0.25rem rgba(var(--#{$prefix}primary-rgb), 0.25);
+    }
+  }
+}

@@ -43,12 +43,12 @@ const PurchaseOrderDetail = () => {
       const toReceive = items
         .filter(item => item.quantity > item.quantity_received)
         .map(item => ({
-          item_id: item.id,
-          product_name: item.product_name,
+          itemId: item.id,
+          productName: item.product_name,
           color: item.color,
-          quantity_ordered: item.quantity,
-          quantity_received_total: item.quantity_received,
-          quantity_to_receive: item.quantity - item.quantity_received, // Sugere a quantidade máxima
+          quantityOrdered: item.quantity,
+          quantityReceivedTotal: item.quantity_received,
+          quantityToReceive: item.quantity - item.quantityReceived, // Sugere a quantidade máxima
         }));
       setItemsToReceive(toReceive);
     }
@@ -60,7 +60,7 @@ const PurchaseOrderDetail = () => {
     const maxQuantity = updatedItems[index].quantity_ordered - updatedItems[index].quantity_received_total;
     // Garante que o valor não seja negativo nem maior que o pendente
     const newQuantity = Math.max(0, Math.min(Number(value), maxQuantity));
-    updatedItems[index].quantity_to_receive = newQuantity;
+    updatedItems[index].quantityToReceive = newQuantity;
     setItemsToReceive(updatedItems);
   };
 
@@ -68,8 +68,8 @@ const PurchaseOrderDetail = () => {
     const itemsPayload = itemsToReceive
       .filter(item => item.quantity_to_receive > 0)
       .map(item => ({
-        item_id: item.item_id,
-        quantity: item.quantity_to_receive,
+        itemId: item.itemId,
+        quantity: item.quantityToReceive,
       }));
 
     if (itemsPayload.length === 0) {
@@ -174,16 +174,16 @@ const PurchaseOrderDetail = () => {
             </thead>
             <tbody>
               {itemsToReceive.map((item, index) => (
-                <tr key={item.item_id}>
-                  <td>{item.product_name} ({item.color || 'Padrão'})</td>
-                  <td>{item.quantity_ordered - item.quantity_received_total}</td>
+                <tr key={item.itemId}>
+                  <td>{item.productName} ({item.color || 'Padrão'})</td>
+                  <td>{item.quantityOrdered - item.quantityReceivedTotal}</td>
                   <td>
                     <Input
                       type="number"
-                      value={item.quantity_to_receive}
+                      value={item.quantityToReceive}
                       onChange={(e) => handleReceiveQuantityChange(index, e.target.value)}
                       min="0"
-                      max={item.quantity_ordered - item.quantity_received_total}
+                      max={item.quantityOrdered - item.quantityReceivedTotal}
                     />
                   </td>
                 </tr>

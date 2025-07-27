@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, ModalBody } from 'reactstrap';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, NavLink } from 'react-router-dom';
 import Fuse from 'fuse.js';
 import './CommandBar.scss';
 
@@ -31,14 +31,17 @@ const fuseOptions = {
   threshold: 0.4,
 };
 
-const CommandBar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState('');
+const CommandBar = ({ isOpen, toggle, initialQuery = '' }) => {
+  const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const navigate = useNavigate();
   const inputRef = useRef(null);
   const fuse = new Fuse(searchData, fuseOptions);
+
+  useEffect(() => {
+    setQuery(initialQuery);
+  }, [initialQuery]);
 
   useEffect(() => {
     if (query.length > 0) {
@@ -50,27 +53,11 @@ const CommandBar = () => {
     setActiveIndex(0);
   }, [query]);
 
-  const toggleModal = () => {
-    setIsOpen(!isOpen);
-    setQuery('');
-  };
-
   const handleResultClick = (item) => {
-    toggleModal();
+    toggle();
     // Aqui você poderia adicionar lógica para 'action'
     navigate(item.path);
   };
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        toggleModal();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -94,45 +81,41 @@ const CommandBar = () => {
   };
 
   return (
-    <>
-      <button onClick={toggleModal} className="command-bar-search-icon" aria-label="Abrir busca (Ctrl+K)">
-        <i className="bx bx-search"></i>
-        <span className="command-bar-shortcut">Ctrl+K</span>
-      </button>
-
-      <Modal isOpen={isOpen} toggle={toggleModal} centered className="command-bar-modal" onKeyDown={handleKeyDown}>
-        <ModalBody>
-          <div className="search-input-wrapper">
-            <i className="bx bx-search"></i>
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder="Buscar páginas ou ações..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-          <ul className="search-results">
-            {results.length > 0 ? (
-              results.map((item, index) => (
-                <li 
-                  key={`${item.path}-${item.name}`}
+    <Modal isOpen={isOpen} toggle={toggle} centered className="command-bar-modal" onKeyDown={handleKeyDown}>
+      <ModalBody>
+        <div className="search-input-wrapper">
+          <i className="bx bx-search"></i>
+          <input
+            ref={inputRef}
+            type="text"
+            placeholder="Buscar páginas ou ações..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+        <ul className="search-results">
+          {results.length > 0 ? (
+            results.map((item, index) => (
+              <li key={`${item.path}-${item.name}`}>
+                <NavLink
+                  to={item.path}
                   className={`result-item ${index === activeIndex ? 'active' : ''}`}
                   onClick={() => handleResultClick(item)}
                   onMouseEnter={() => setActiveIndex(index)}
+                  tabIndex={0}
                 >
                   <i className={`bx ${item.icon || 'bx-file'}`}></i>
                   <span>{item.name}</span>
                   <span className="result-item-type">{item.type}</span>
-                </li>
-              ))
-            ) : (
-              <div className="no-results">Nenhum resultado encontrado para "{query}".</div>
-            )}
-          </ul>
-        </ModalBody>
-      </Modal>
-    </>
+                </NavLink>
+              </li>
+            ))
+          ) : (
+            <div className="no-results">Nenhum resultado encontrado para &quot;{query}&quot;.</div>
+          )}
+        </ul>
+      </ModalBody>
+    </Modal>
   );
 };
 

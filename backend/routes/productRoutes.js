@@ -20,61 +20,70 @@ const idValidationRules = () => [
   param('id').isInt({ gt: 0 }).withMessage('O ID do produto deve ser um número inteiro válido.'),
 ];
 
-// Get all products with their variations
+// Get all products with their variations (FINAL, EXPLICIT VERSION)
 router.get('/', async (req, res) => {
   try {
     const { limit = 10, offset = 0, search = '' } = req.query;
-    const queryParams = [];
-    
-    let baseQuery = `
+
+    const selectClause = `
       SELECT
         p.id,
         p.name,
         p.description,
         p.category_id,
-        p.product_type, -- Adicionado product_type
+        p.product_type,
         json_agg(
-          json_build_object(
-            'id', pv.id,
-            'color', pv.color,
-            'price', pv.price,
-            'stock_quantity', pv.stock_quantity,
-            'barcode', pv.barcode,
-            'status', pv.status,
-            'image_url', pv.image_url
-          )
-        ) as variations
+          CASE 
+            WHEN pv.id IS NULL THEN NULL
+            ELSE json_build_object(
+              'id', pv.id,
+              'color', pv.color,
+              'price', pv.price,
+              'stock_quantity', pv.stock_quantity,
+              'barcode', pv.barcode,
+              'status', pv.status,
+              'image_url', pv.image_url
+            )
+          END
+        ) FILTER (WHERE pv.id IS NOT NULL) as variations
       FROM products p
       LEFT JOIN product_variations pv ON p.id = pv.product_id
     `;
 
-    let countQuery = 'SELECT COUNT(DISTINCT p.id) FROM products p LEFT JOIN product_variations pv ON p.id = pv.product_id';
-    let whereClause = '';
+    const countSelectClause = `
+      SELECT COUNT(DISTINCT p.id) 
+      FROM products p 
+      LEFT JOIN product_variations pv ON p.id = pv.product_id
+    `;
+
+    let total;
+    let productsResult;
 
     if (search) {
-      if (/^\d+$/.test(search) && search.length >= 8 && search.length <= 14) {
-        whereClause = 'WHERE pv.barcode = $3';
-        queryParams.push(search);
-      } else {
-        whereClause = 'WHERE p.name ILIKE $3 OR p.description ILIKE $3';
-        queryParams.push(`%${search}%`);
-      }
-      countQuery += ` ${whereClause}`;
-    }
-    
-    baseQuery += ` ${whereClause} GROUP BY p.id ORDER BY p.name LIMIT $1 OFFSET $2`;
-    queryParams.unshift(limit, offset);
+      const whereClause = `WHERE (p.name ILIKE $1 OR p.description ILIKE $1 OR pv.barcode ILIKE $1)`;
+      const searchParam = [`%${search}%`];
+      
+      const totalResult = await db.query(`${countSelectClause} ${whereClause}`, searchParam);
+      total = parseInt(totalResult.rows[0].count, 10);
 
-    const productsResult = await db.query(baseQuery, queryParams);
-    const totalProductsResult = await db.query(countQuery, search ? [queryParams[2]] : []);
+      const query = `${selectClause} ${whereClause} GROUP BY p.id ORDER BY p.name LIMIT $2 OFFSET $3`;
+      productsResult = await db.query(query, [...searchParam, limit, offset]);
+
+    } else {
+      const totalResult = await db.query(countSelectClause, []);
+      total = parseInt(totalResult.rows[0].count, 10);
+
+      const query = `${selectClause} GROUP BY p.id ORDER BY p.name LIMIT $1 OFFSET $2`;
+      productsResult = await db.query(query, [limit, offset]);
+    }
 
     res.json({
       products: productsResult.rows,
-      total: parseInt(totalProductsResult.rows[0].count),
+      total: total,
     });
 
   } catch (err) {
-    console.error(err.message);
+    console.error("Erro ao listar produtos:", err.stack);
     res.status(500).send('Server Error');
   }
 });

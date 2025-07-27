@@ -1,10 +1,10 @@
 import React from 'react';
 import ReactApexChart from 'react-apexcharts';
-import { useTheme } from '../../../context/ThemeContext';
+import { useThemeStore } from '../../../store/themeStore';
 import { useDashboard } from '../../../context/DashboardContext';
 
 const DailyRevenueChart = () => {
-  const { theme } = useTheme();
+  const themeMode = useThemeStore((state) => state.theme.mode);
   const { dashboardData } = useDashboard();
 
   const chartData = dashboardData?.widgets?.dailyRevenueAndProfit || [];
@@ -25,7 +25,7 @@ const DailyRevenueChart = () => {
       type: 'area',
       height: '100%',
       toolbar: { show: false },
-      foreColor: theme === 'dark' ? '#f0f2f5' : '#333',
+      foreColor: themeMode === 'dark' ? '#f0f2f5' : '#333',
     },
     dataLabels: { enabled: false },
     stroke: { curve: 'smooth', width: 2 },
@@ -52,7 +52,7 @@ const DailyRevenueChart = () => {
     },
     colors: ['#556ee6', '#34c38f'],
     grid: {
-      borderColor: theme === 'dark' ? '#404040' : '#e0e0e0',
+      borderColor: themeMode === 'dark' ? '#404040' : '#e0e0e0',
       strokeDashArray: 4,
     },
   };

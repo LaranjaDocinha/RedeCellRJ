@@ -72,6 +72,80 @@
   .topbar-center {
     flex: 2;
     justify-content: center;
+    position: relative; /* Para posicionar o ícone de pesquisa */
+    min-height: 40px; // Adicionado para garantir altura mínima
+
+    .search-input-container {
+      position: relative;
+      width: 100%;
+      max-width: 400px; /* Limitar a largura para não ocupar muito espaço */
+
+      .global-search-input {
+        width: 100%;
+        padding: 8px 12px 8px 40px; /* Espaço para o ícone */
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        background-color: var(--color-component-bg);
+        color: var(--color-body-text);
+        transition: all 0.2s ease;
+
+        &:focus {
+          border-color: var(--color-primary);
+          box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.2);
+          outline: none;
+        }
+
+        &::placeholder {
+          color: var(--color-text-muted);
+        }
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--color-text-muted);
+        font-size: 1.2rem;
+      }
+    }
+  }
+
+  .quick-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centraliza o conteúdo */
+    padding: 8px 16px; /* Padding padrão */
+    white-space: nowrap; /* Garante que o texto não quebre */
+    flex-shrink: 0; /* Impede que o botão encolha */
+
+    i {
+      margin-right: 8px; /* Espaçamento entre ícone e texto */
+    }
+
+    span {
+      display: inline; /* Garante que o span seja visível */
+    }
+  }
+
+  @media (max-width: 992px) {
+    .quick-action-btn {
+      padding: 8px; /* Reduz o padding em telas menores */
+
+      span {
+        display: none; /* Esconde o texto em telas menores */
+      }
+
+      i {
+        margin-right: 0; /* Remove o espaçamento do ícone quando o texto está escondido */
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    .topbar-center {
+      display: none; /* Esconde a barra de pesquisa em telas muito pequenas */
+    }
   }
 
   .topbar-right {
@@ -85,6 +159,7 @@
     gap: 16px;
     margin-left: 16px;
     overflow: hidden;
+    min-height: 40px; // Adicionado para garantir altura mínima
 
     .separator-icon {
       font-size: 24px;
@@ -103,6 +178,11 @@
   }
 
   .greeting-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+    padding: 4px 0; // Adicionado para ajustar o preenchimento vertical
     .greeting-title {
       font-size: 18px;
       font-weight: 600;

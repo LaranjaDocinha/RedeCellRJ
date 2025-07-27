@@ -15,6 +15,7 @@ const AdvancedTable = ({
   data, 
   columns, 
   loading, 
+  actions, // Adicionar actions
   onRowClick,
   emptyStateIcon,
   emptyStateTitle,
@@ -49,6 +50,9 @@ const AdvancedTable = ({
           className="form-control-sm"
           placeholder="Pesquisar em todas as colunas..."
         />
+        <div className="table-actions">
+          {actions}
+        </div>
       </div>
 
       <div className="table-responsive">

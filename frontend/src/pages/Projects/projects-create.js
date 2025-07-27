@@ -134,7 +134,7 @@ const ProjectsCreate = () => {
                                 </div>
                               </div>
                             </Label>
-                            <UncontrolledTooltip placement="right" target="projectImageInput">
+                            <UncontrolledTooltip placement="right" target="projectImageInput" transition={{ timeout: 300 }}>
                               Select Image
                             </UncontrolledTooltip>
                             <input className="form-control d-none" id="project-image-input" type="file" accept="image/png, image/gif, image/jpeg" onChange={handleImageChange} />
@@ -175,7 +175,7 @@ const ProjectsCreate = () => {
                               <Link to="#" className="avatar-group-item mb-2" id={`assignee-member${idx}`}>
                                 <img src={item.imageSrc} alt="" className="rounded-circle avatar-xs" />
                               </Link>
-                              <UncontrolledTooltip placement="top" target={`assignee-member${idx}`}>
+                              <UncontrolledTooltip placement="top" target={`assignee-member${idx}`} transition={{ timeout: 300 }}>
                                 {item.name}
                               </UncontrolledTooltip>
                             </React.Fragment>

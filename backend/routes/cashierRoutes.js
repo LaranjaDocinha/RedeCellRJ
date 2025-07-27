@@ -2,16 +2,11 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// Middleware para simular um usuário autenticado (substituir por autenticação real)
-const authenticateMock = (req, res, next) => {
-  req.user = { id: 1 }; // Simulando que o usuário com ID 1 está logado
-  next();
-};
+
 
 // Rota para abrir um novo caixa
-router.post('/open', authenticateMock, async (req, res) => {
-  const { opening_balance } = req.body;
-  const userId = req.user.id;
+router.post('/open', async (req, res) => {
+  const { opening_balance, userId } = req.body;
 
   if (opening_balance === undefined || isNaN(parseFloat(opening_balance))) {
     return res.status(400).json({ msg: 'Saldo de abertura é obrigatório e deve ser um número.' });
@@ -45,8 +40,11 @@ router.post('/open', authenticateMock, async (req, res) => {
 });
 
 // Rota para verificar o status do caixa do usuário logado
-router.get('/status', authenticateMock, async (req, res) => {
-  const userId = req.user.id;
+router.get('/status', async (req, res) => {
+  const { userId } = req.query; // Recebe o ID do usuário pela query string
+  if (!userId) {
+    return res.status(400).json({ msg: 'ID do usuário é obrigatório.' });
+  }
   try {
     const session = await db.query(
       'SELECT * FROM cash_sessions WHERE user_id = $1 AND status = $2 ORDER BY opened_at DESC LIMIT 1',
@@ -65,44 +63,38 @@ router.get('/status', authenticateMock, async (req, res) => {
 });
 
 // Rota para fechar o caixa
-router.post('/close', authenticateMock, async (req, res) => {
-  const { closing_balance, notes } = req.body; // Valor contado na gaveta
-  const userId = req.user.id;
+router.post('/close', async (req, res) => {
+  const { closing_balance, notes, userId } = req.body; // Valor contado na gaveta
 
   if (closing_balance === undefined || isNaN(parseFloat(closing_balance))) {
     return res.status(400).json({ msg: 'Saldo de fechamento é obrigatório.' });
   }
 
-  const client = await db.getClient();
   try {
-    await client.query('BEGIN');
-
-    // 1. Encontrar a sessão aberta
-    const sessionRes = await client.query(
-      'SELECT * FROM cash_sessions WHERE user_id = $1 AND status = $2 FOR UPDATE',
+    // Usando db.query que gerencia o cliente implicitamente
+    const sessionRes = await db.query(
+      'SELECT * FROM cash_sessions WHERE user_id = $1 AND status = $2 ORDER BY opened_at DESC LIMIT 1',
       [userId, 'open']
     );
+
     if (sessionRes.rows.length === 0) {
-      throw new Error('Nenhum caixa aberto encontrado para este usuário.');
+      return res.status(404).json({ msg: 'Nenhum caixa aberto encontrado para este usuário.' });
     }
     const session = sessionRes.rows[0];
 
-    // 2. Calcular o total de vendas desde a abertura do caixa
-    const salesTotalRes = await client.query(
+    const salesTotalRes = await db.query(
       `SELECT COALESCE(SUM(total_amount), 0) AS total_sales
        FROM sales
-       WHERE created_at >= $1`,
-      [session.opened_at]
+       WHERE sale_date >= $1 AND user_id = $2`,
+      [session.opened_at, userId]
     );
     const totalSales = parseFloat(salesTotalRes.rows[0].total_sales);
 
-    // 3. Calcular o valor esperado no caixa
     const openingBalance = parseFloat(session.opening_balance);
-    const calculatedBalance = openingBalance + totalSales; // Futuramente, subtrair despesas
+    const calculatedBalance = openingBalance + totalSales;
     const difference = parseFloat(closing_balance) - calculatedBalance;
 
-    // 4. Atualizar a sessão de caixa com os valores de fechamento
-    const updatedSession = await client.query(
+    const updatedSession = await db.query(
       `UPDATE cash_sessions
        SET closing_balance = $1,
            calculated_balance = $2,
@@ -115,17 +107,13 @@ router.post('/close', authenticateMock, async (req, res) => {
       [closing_balance, calculatedBalance, difference, notes, session.id]
     );
 
-    await client.query('COMMIT');
     res.json({
       msg: 'Caixa fechado com sucesso!',
       session: updatedSession.rows[0],
     });
   } catch (err) {
-    await client.query('ROLLBACK');
     console.error('Erro ao fechar o caixa:', err);
     res.status(500).json({ msg: err.message || 'Erro interno do servidor.' });
-  } finally {
-    client.release();
   }
 });
 

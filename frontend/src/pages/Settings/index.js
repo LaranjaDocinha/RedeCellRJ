@@ -15,7 +15,7 @@ const SettingsPage = () => {
   const { loading: savingSettings, request: saveSettings } = useApi(put);
 
   const loadSettings = useCallback(() => {
-    fetchSettings('/settings')
+    fetchSettings('/api/settings')
       .then(data => {
         setSettings(data);
         setInitialSettings(data);
@@ -43,7 +43,7 @@ const SettingsPage = () => {
       return;
     }
     try {
-      await saveSettings('/settings', settings);
+      await saveSettings('/api/settings', settings);
       toast.success('Configurações salvas com sucesso!');
       loadSettings(); // Recarrega para atualizar o estado 'initialSettings'
     } catch (err) {
@@ -113,7 +113,7 @@ const SettingsPage = () => {
                     {settings.store_logo_url ? (
                         <img src={settings.store_logo_url} alt="Logo da loja" style={{ maxWidth: '100%', height: 'auto', marginTop: '10px' }} />
                     ) : (
-                        <Alert color="secondary">
+                        <Alert color="secondary" fade={false}>
                             Nenhuma URL de logo definida.
                         </Alert>
                     )}

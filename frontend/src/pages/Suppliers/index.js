@@ -14,7 +14,7 @@ const Suppliers = () => {
   // States para UI e Modal
   const [modal, setModal] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
-  const [formData, setFormData] = useState({ name: '', contact_person: '', email: '', phone: '', address: '' });
+  const [formData, setFormData] = useState({ name: '', contactPerson: '', email: '', phone: '', address: '' });
   const [formErrors, setFormErrors] = useState({});
 
   // Hooks da API
@@ -26,7 +26,7 @@ const Suppliers = () => {
   const suppliers = suppliersData?.suppliers || [];
 
   const fetchSuppliers = useCallback(() => {
-    fetchSuppliersApi('/suppliers'); 
+    fetchSuppliersApi('/api/suppliers'); 
   }, [fetchSuppliersApi]);
 
   useEffect(() => {
@@ -37,7 +37,7 @@ const Suppliers = () => {
     setModal(!modal);
     if (modal) {
       setSelectedSupplier(null);
-      setFormData({ name: '', contact_person: '', email: '', phone: '', address: '' });
+      setFormData({ name: '', contactPerson: '', email: '', phone: '', address: '' });
       setFormErrors({});
     }
   };
@@ -48,7 +48,7 @@ const Suppliers = () => {
   };
 
   const validateForm = () => {
-    let errors = {};
+    const errors = {};
     if (!formData.name) errors.name = 'Nome é obrigatório.';
     if (formData.email && !/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.email)) {
       errors.email = 'Email inválido.';
@@ -59,7 +59,7 @@ const Suppliers = () => {
 
   const handleAddClick = () => {
     setSelectedSupplier(null);
-    setFormData({ name: '', contact_person: '', email: '', phone: '', address: '' });
+    setFormData({ name: '', contactPerson: '', email: '', phone: '', address: '' });
     setFormErrors({});
     toggle();
   };
@@ -76,8 +76,8 @@ const Suppliers = () => {
     if (!validateForm()) return;
 
     const promise = selectedSupplier
-      ? updateSupplierApi(`/suppliers/${selectedSupplier.id}`, formData)
-      : addSupplierApi('/suppliers', formData);
+      ? updateSupplierApi(`/api/suppliers/${selectedSupplier.id}`, formData)
+      : addSupplierApi('/api/suppliers', formData);
 
     try {
       await promise;
@@ -92,7 +92,7 @@ const Suppliers = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir este fornecedor?')) {
       try {
-        await deleteSupplierApi(`/suppliers/${id}`);
+        await deleteSupplierApi(`/api/suppliers/${id}`);
         fetchSuppliers();
         toast.success('Fornecedor excluído com sucesso!');
       } catch (err) {
@@ -104,7 +104,7 @@ const Suppliers = () => {
   const columns = useMemo(() => [
     { accessorKey: 'id', header: '#' },
     { accessorKey: 'name', header: 'Nome' },
-    { accessorKey: 'contact_person', header: 'Contato' },
+    { accessorKey: 'contactPerson', header: 'Contato' },
     { accessorKey: 'email', header: 'Email' },
     { accessorKey: 'phone', header: 'Telefone' },
     {
@@ -132,15 +132,17 @@ const Suppliers = () => {
             <Col lg="12">
               <Card>
                 <CardBody>
-                  <div className="d-flex justify-content-between align-items-center mb-4">
-                    <CardTitle className="h4 mb-0">Gerenciamento de Fornecedores</CardTitle>
-                    <Button color="primary" onClick={handleAddClick}>Adicionar Novo Fornecedor</Button>
-                  </div>
-                  
                   <AdvancedTable
                     columns={columns}
                     data={suppliers}
                     loading={loadingSuppliers}
+                    actions={
+                      <Button color="primary" onClick={handleAddClick}>Adicionar Novo Fornecedor</Button>
+                    }
+                    emptyStateTitle="Nenhum Fornecedor Encontrado"
+                    emptyStateMessage="Cadastre seu primeiro fornecedor para começar."
+                    emptyStateActionText="Adicionar Fornecedor"
+                    onEmptyStateActionClick={handleAddClick}
                   />
 
                 </CardBody>
@@ -160,8 +162,8 @@ const Suppliers = () => {
               <FormFeedback>{formErrors.name}</FormFeedback>
             </FormGroup>
             <FormGroup>
-              <Label for="contact_person">Pessoa de Contato</Label>
-              <Input type="text" name="contact_person" id="contact_person" value={formData.contact_person} onChange={handleInputChange} />
+              <Label for="contactPerson">Pessoa de Contato</Label>
+              <Input type="text" name="contactPerson" id="contactPerson" value={formData.contactPerson} onChange={handleInputChange} />
             </FormGroup>
             <FormGroup>
               <Label for="email">Email</Label>

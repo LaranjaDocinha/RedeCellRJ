@@ -36,7 +36,7 @@ const CardProject = ({ projects }) => {
                             <Link to="#" className="d-inline-block" id={"member" + team.id} >
                               <img src={team.img} className="rounded-circle avatar-xs" alt="" />
 
-                              <UncontrolledTooltip placement="top" target={"member" + team.id}>{team.fullname}</UncontrolledTooltip>
+                              <UncontrolledTooltip placement="top" target={"member" + team.id} transition={{ timeout: 300 }}>{team.fullname}</UncontrolledTooltip>
                             </Link>
                           </div>
                         </React.Fragment>
@@ -46,7 +46,7 @@ const CardProject = ({ projects }) => {
                             <Link to="#" className="d-inline-block" id={"member" + team.id}>
                               <div className="avatar-xs">
                                 <span className={`avatar-title rounded-circle bg-${team.color} text-white font-size-16`} >{team.name}  </span>
-                                <UncontrolledTooltip placement="top" target={"member" + team.id} >{team.fullname}</UncontrolledTooltip>
+                                <UncontrolledTooltip placement="top" target={"member" + team.id} transition={{ timeout: 300 }} >{team.fullname}</UncontrolledTooltip>
                               </div>
                             </Link>
                           </div>
@@ -64,11 +64,11 @@ const CardProject = ({ projects }) => {
                 </li>
                 <li className="list-inline-item me-3" id="dueDate">
                   <i className="bx bx-calendar me-1" /> {project.dueDate}
-                  <UncontrolledTooltip placement="top" target="dueDate"> Due Date </UncontrolledTooltip>
+                  <UncontrolledTooltip placement="top" target="dueDate" transition={{ timeout: 300 }}> Due Date </UncontrolledTooltip>
                 </li>
                 <li className="list-inline-item me-3" id="comments">
                   <i className="bx bx-comment-dots me-1" />{project.commentsCount}
-                  <UncontrolledTooltip placement="top" target="comments">  Comments </UncontrolledTooltip>
+                  <UncontrolledTooltip placement="top" target="comments" transition={{ timeout: 300 }}>  Comments </UncontrolledTooltip>
                 </li>
               </ul>
             </div>

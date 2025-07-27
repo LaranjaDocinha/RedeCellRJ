@@ -57,7 +57,7 @@ export const DashboardProvider = ({ children }) => {
   const [focusModeWidget, setFocusModeWidget] = useState(null);
 
   const loadDashboardData = useCallback(() => {
-    fetchDashboardData(`/dashboard/summary?period=${globalPeriod}`)
+    fetchDashboardData(`/api/dashboard/summary?period=${globalPeriod}`)
       .then(data => setDashboardData(data))
       .catch(err => {
         toast.error('Falha ao carregar dados do dashboard.');

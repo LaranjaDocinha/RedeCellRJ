@@ -63,14 +63,14 @@ router.get('/summary', async (req, res) => {
         const kpiQuery = `
             SELECT
                 COALESCE(SUM(s.total_amount), 0) as "revenue",
-                COALESCE(SUM(s.total_amount - si.total_cost), 0) as "profit",
+                COALESCE(SUM(COALESCE(s.total_amount, 0) - COALESCE(si.total_cost, 0)), 0) as "profit",
                 COUNT(DISTINCT s.id) as "salesCount",
                 COALESCE(SUM(s.total_amount) / NULLIF(COUNT(DISTINCT s.id), 0), 0) as "averageTicket"
             FROM sales s
             LEFT JOIN (
                 SELECT 
                     si.sale_id, 
-                    SUM(si.quantity * pv.cost_price) as total_cost
+                    SUM(si.quantity * COALESCE(pv.cost_price, 0)) as total_cost
                 FROM sale_items si
                 JOIN product_variations pv ON si.variation_id = pv.id
                 GROUP BY si.sale_id
@@ -96,11 +96,11 @@ router.get('/summary', async (req, res) => {
         const prevKpiQuery = `
             SELECT
                 COALESCE(SUM(s.total_amount), 0) as "revenue",
-                COALESCE(SUM(s.total_amount - si.total_cost), 0) as "profit",
+                COALESCE(SUM(COALESCE(s.total_amount, 0) - COALESCE(si.total_cost, 0)), 0) as "profit",
                 COUNT(DISTINCT s.id) as "salesCount"
             FROM sales s
             LEFT JOIN (
-                SELECT si.sale_id, SUM(si.quantity * pv.cost_price) as total_cost
+                SELECT si.sale_id, SUM(si.quantity * COALESCE(pv.cost_price, 0)) as total_cost
                 FROM sale_items si JOIN product_variations pv ON si.variation_id = pv.id
                 GROUP BY si.sale_id
             ) si ON s.id = si.sale_id
@@ -109,11 +109,11 @@ router.get('/summary', async (req, res) => {
 
         // --- Consultas de Widgets (não dependem do período anterior) ---
         const paymentMethodsQuery = `
-            SELECT payment_method, SUM(amount) as total
+            SELECT sp.payment_method, SUM(sp.amount) as total
             FROM sale_payments sp
             JOIN sales s ON sp.sale_id = s.id
             WHERE s.sale_date BETWEEN $1 AND $2
-            GROUP BY payment_method ORDER BY total DESC;
+            GROUP BY sp.payment_method ORDER BY total DESC;
         `;
 
         const stockStatusQuery = `
@@ -124,11 +124,14 @@ router.get('/summary', async (req, res) => {
         `;
         
         const activityFeedQuery = `
-            (SELECT 'Venda' as type, s.id, u.name as user_name, s.total_amount::text as value, s.sale_date as date FROM sales s JOIN users u ON s.user_id = u.id ORDER BY s.sale_date DESC LIMIT 3)
-            UNION ALL
-            (SELECT 'Reparo' as type, r.id, c.name as user_name, r.status as value, r.updated_at as date FROM repairs r JOIN customers c ON r.customer_id = c.id ORDER BY r.updated_at DESC LIMIT 3)
-            UNION ALL
-            (SELECT 'Cliente' as type, c.id, c.name as user_name, '' as value, c.created_at as date FROM customers c ORDER BY c.created_at DESC LIMIT 2)
+            SELECT type, id, user_name, value, date
+            FROM (
+                SELECT 'Venda' as type, s.id, u.name::text as user_name, s.total_amount::text as value, s.sale_date as date FROM sales s JOIN users u ON s.user_id = u.id
+                UNION ALL
+                SELECT 'Reparo' as type, r.id, c.name::text as user_name, r.status::text as value, r.updated_at as date FROM repairs r JOIN customers c ON r.customer_id = c.id
+                UNION ALL
+                SELECT 'Cliente' as type, c.id, c.name::text as user_name, ''::text as value, c.created_at as date FROM customers c
+            ) AS combined_feed
             ORDER BY date DESC LIMIT 8;
         `;
 
@@ -144,12 +147,12 @@ router.get('/summary', async (req, res) => {
             SELECT
                 DATE(s.sale_date) as date,
                 SUM(s.total_amount) as revenue,
-                SUM(s.total_amount - si.total_cost) as profit
+                SUM(COALESCE(s.total_amount, 0) - COALESCE(si.total_cost, 0)) as profit
             FROM sales s
             LEFT JOIN (
                 SELECT 
                     si.sale_id, 
-                    SUM(si.quantity * pv.cost_price) as total_cost
+                    SUM(si.quantity * COALESCE(pv.cost_price, 0)) as total_cost
                 FROM sale_items si
                 JOIN product_variations pv ON si.variation_id = pv.id
                 GROUP BY si.sale_id
@@ -228,7 +231,11 @@ router.get('/summary', async (req, res) => {
         });
 
     } catch (err) {
-        console.error("Erro ao buscar dados do dashboard:", err.stack);
+        console.error("Erro ao buscar dados do dashboard:", err.message);
+        if (err.detail) {
+            console.error("Detalhes do erro:", err.detail);
+        }
+        console.error("Stack do erro:", err.stack);
         res.status(500).send('Erro do Servidor');
     }
 });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useBreadcrumb } from '../../context/BreadcrumbContext';
 import './Header.scss';
@@ -14,6 +14,27 @@ const Header = ({ onToggleSidebar, onToggleMobileMenu }) => {
   const navigate = useNavigate();
   const { breadcrumbTitle } = useBreadcrumb();
   const userName = "Usuário"; // Mock user name
+
+  const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const toggleCommandBar = () => {
+    setIsCommandBarOpen(!isCommandBarOpen);
+    if (!isCommandBarOpen) {
+      setSearchQuery(''); // Limpa a pesquisa ao abrir
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        toggleCommandBar();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isCommandBarOpen]);
 
   const handleQuickActionClick = (e) => {
     // Ripple effect logic
@@ -71,7 +92,26 @@ const Header = ({ onToggleSidebar, onToggleMobileMenu }) => {
 
       <div className="topbar-center">
         {breadcrumbTitle === 'Dashboard' && <GlobalPeriodFilter />}
-        <CommandBar />
+        <div
+          className="search-input-container"
+          onClick={() => setIsCommandBarOpen(true)}
+          role="button"
+          tabIndex={0}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              setIsCommandBarOpen(true);
+            }
+          }}
+        >
+          <i className="bx bx-search search-icon"></i>
+          <input
+            type="text"
+            placeholder="Pesquisa global (Ctrl+K)"
+            className="global-search-input"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
       </div>
 
       <div className="topbar-right">
@@ -83,6 +123,7 @@ const Header = ({ onToggleSidebar, onToggleMobileMenu }) => {
         <NotificationCenter />
         <ProfileMenu />
       </div>
+      <CommandBar isOpen={isCommandBarOpen} toggle={toggleCommandBar} initialQuery={searchQuery} />
     </header>
   );
 };
