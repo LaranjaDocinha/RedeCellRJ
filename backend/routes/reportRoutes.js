@@ -48,11 +48,11 @@ router.get('/sales', authenticateToken, async (req, res) => { // Uso corrigido
     const summaryQuery = `
       SELECT
         COALESCE(SUM(total_amount), 0) AS "totalRevenue",
-        COUNT(DISTINCT sale_id) AS "totalSales",
+        COUNT(DISTINCT s.id) AS "totalSales",
         COALESCE(AVG(total_amount), 0) AS "averageTicket",
         COALESCE(SUM(quantity), 0) AS "totalProductsSold"
       FROM sales s
-      JOIN sale_items si ON s.sale_id = si.sale_id
+      JOIN sale_items si ON s.id = si.sale_id
       WHERE s.sale_date >= $1;
     `;
     const summaryResult = await db.query(summaryQuery, [startDate]);
@@ -70,11 +70,11 @@ router.get('/sales', authenticateToken, async (req, res) => { // Uso corrigido
 
     const salesDetailQuery = `
       SELECT
-        s.sale_id,
+        s.id AS sale_id,
         s.sale_date,
         c.name AS customer_name,
         s.total_amount,
-        (SELECT SUM(quantity) FROM sale_items WHERE sale_id = s.sale_id) as total_items,
+        (SELECT SUM(quantity) FROM sale_items WHERE sale_id = s.id) as total_items,
         pm.name AS payment_method
       FROM sales s
       LEFT JOIN customers c ON s.customer_id = c.customer_id
@@ -105,15 +105,16 @@ router.get('/profitability', authenticateToken, async (req, res) => { // Uso cor
         const profitabilityQuery = `
             WITH sales_data AS (
                 SELECT
-                    si.product_id,
+                    p.id AS product_id,
                     p.name,
-                    p.cost_price,
+                    pv.cost_price,
                     si.quantity,
                     si.unit_price,
                     s.sale_date
                 FROM sale_items si
-                JOIN sales s ON si.sale_id = s.sale_id
-                JOIN products p ON si.product_id = p.product_id
+                JOIN sales s ON si.sale_id = s.id
+                JOIN product_variations pv ON si.variation_id = pv.id
+                JOIN products p ON pv.product_id = p.id
                 WHERE s.sale_date >= $1
             )
             SELECT
@@ -146,10 +147,10 @@ router.get('/profitability', authenticateToken, async (req, res) => { // Uso cor
             SELECT
                 DATE(s.sale_date) AS date,
                 SUM(si.quantity * si.unit_price) AS total_revenue,
-                SUM(si.quantity * p.cost_price) AS total_cost
+                SUM(si.quantity * pv.cost_price) AS total_cost
             FROM sale_items si
-            JOIN sales s ON si.sale_id = s.sale_id
-            JOIN products p ON si.product_id = p.product_id
+            JOIN sales s ON si.sale_id = s.id
+            JOIN product_variations pv ON si.variation_id = pv.id
             WHERE s.sale_date >= $1
             GROUP BY DATE(s.sale_date)
             ORDER BY date ASC;
@@ -181,7 +182,7 @@ router.get('/customers', authenticateToken, async (req, res) => { // Uso corrigi
                 c.email,
                 c.phone,
                 SUM(s.total_amount) as total_spent,
-                COUNT(s.sale_id) as total_purchases,
+                COUNT(s.id) as total_purchases,
                 MAX(s.sale_date) as last_purchase_date
             FROM customers c
             JOIN sales s ON c.customer_id = s.customer_id
@@ -202,7 +203,7 @@ router.get('/customers', authenticateToken, async (req, res) => { // Uso corrigi
             CROSS JOIN (
                 SELECT
                     SUM(s_inner.total_amount) as total_spent,
-                    COUNT(s_inner.sale_id) as total_purchases
+                    COUNT(s_inner.id) as total_purchases
                 FROM sales s_inner
                 WHERE s_inner.sale_date >= $1 AND s_inner.customer_id IS NOT NULL
                 GROUP BY s_inner.customer_id
@@ -219,6 +220,55 @@ router.get('/customers', authenticateToken, async (req, res) => { // Uso corrigi
     } catch (error) {
         console.error('Error fetching customer report:', error);
         res.status(500).json({ message: 'Error fetching customer report' });
+    }
+});
+
+// GET /api/reports/sales-by-category
+router.get('/sales-by-category', authenticateToken, async (req, res) => {
+    const { period } = req.query;
+    const startDate = getStartDate(period);
+
+    try {
+        const query = `
+            SELECT
+                c.name AS category_name,
+                SUM(si.quantity * si.unit_price) AS total_sales
+            FROM sale_items si
+            JOIN sales s ON si.sale_id = s.id
+            JOIN product_variations pv ON si.variation_id = pv.id
+            JOIN products p ON pv.product_id = p.id
+            JOIN categories c ON p.category_id = c.id
+            WHERE s.sale_date >= $1
+            GROUP BY c.name
+            ORDER BY total_sales DESC;
+        `;
+        const result = await db.query(query, [startDate]);
+        res.json(result.rows.map(row => ({ name: row.category_name, value: parseFloat(row.total_sales) })));
+    } catch (error) {
+        console.error('Error fetching sales by category report:', error);
+        res.status(500).json({ message: 'Error fetching sales by category report' });
+    }
+});
+
+// GET /api/reports/low-stock-products
+router.get('/low-stock-products', authenticateToken, async (req, res) => {
+    try {
+        const query = `
+            SELECT
+                p.id AS id,
+                p.name,
+                pv.stock_quantity AS stock,
+                pv.color
+            FROM products p
+            JOIN product_variations pv ON p.id = pv.product_id
+            WHERE pv.stock_quantity <= pv.alert_threshold
+            ORDER BY pv.stock_quantity ASC;
+        `;
+        const result = await db.query(query);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching low stock products report:', error);
+        res.status(500).json({ message: 'Error fetching low stock products report' });
     }
 });
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Container, Row, Col, Card, CardBody, CardTitle } from 'reactstrap';
+import { Container } from 'reactstrap';
 import { motion } from 'framer-motion';
 
 import DateRangePicker from '../../components/Common/DateRangePicker';
@@ -7,140 +7,92 @@ import { useDashboard } from '../../context/DashboardContext';
 
 // Importar os novos componentes de gráfico
 import MonthlySalesChart from './components/charts/MonthlySalesChart';
-import TopProductsChart from './components/charts/TopProductsChart';
 import SalesByPaymentMethodChart from './components/charts/SalesByPaymentMethodChart';
 import DashboardSkeleton from './components/DashboardSkeleton';
 import RecentActivityFeed from './components/RecentActivityFeed';
+import DonutChart from '../../components/Dashboard/DonutChart';
+import LowStockProducts from '../../components/Dashboard/LowStockProducts';
+
+import KpiWidget from '../../components/Dashboard/KpiWidget';
+import ChartWidget from '../../components/Dashboard/ChartWidget';
+import useTopProductsData from '../../hooks/useTopProductsData';
+import useSalesByCategoryData from '../../hooks/useSalesByCategoryData';
+import useLowStockProductsData from '../../hooks/useLowStockProductsData';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+
+import './DashboardV2.scss';
 
 const DashboardV2 = () => {
   const { loading, dashboardData, startDate, endDate, setDateRange } = useDashboard();
+  const { data: topProductsData, isLoading: topProductsLoading, error: topProductsError } = useTopProductsData();
+  const { data: salesByCategoryData, isLoading: salesByCategoryLoading, error: salesByCategoryError } = useSalesByCategoryData();
+  const { data: lowStockProductsData, isLoading: lowStockProductsLoading, error: lowStockProductsError } = useLowStockProductsData();
 
   if (loading) {
     return <DashboardSkeleton />;
   }
 
-  const { kpis, widgets } = dashboardData;
+  const { widgets } = dashboardData;
 
   return (
     <div className='page-content'>
       <Container fluid>
         <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          initial={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.5 }}
+          initial="hidden"
+          animate="visible"
+          variants={{
+            visible: {
+              transition: {
+                staggerChildren: 0.1,
+              },
+            },
+          }}
         >
-          <Row className='mb-4 align-items-center'>
-            <Col>
-              <h4 className='mb-0'>Visão Geral do Dashboard</h4>
-            </Col>
-            <Col xs='auto'>
-              <DateRangePicker
-                initialEndDate={endDate}
-                initialStartDate={startDate}
-                onDateChange={setDateRange}
-              />
-            </Col>
-          </Row>
-
-          {/* Seção de KPIs */}
-          <Row className='mb-4'>
-            <Col lg={3} md={6} sm={12}>
-              <Card className='dashboard-kpi-card'>
-                <CardBody>
-                  <CardTitle className='h6 text-muted'>Vendas Hoje</CardTitle>
-                  <h3 className='mb-0'>
-                    R$ {kpis?.todaySales?.toFixed(2) || '0.00'}
-                    {kpis?.todaySalesTrend !== undefined && (
-                      <span
-                        className={`font-size-12 ms-2 ${kpis.todaySalesTrend >= 0 ? 'text-success' : 'text-danger'}`}
-                      >
-                        {kpis.todaySalesTrend >= 0 ? (
-                          <i className='bx bx-up-arrow-alt'></i>
-                        ) : (
-                          <i className='bx bx-down-arrow-alt'></i>
-                        )}
-                        {Math.abs(kpis.todaySalesTrend).toFixed(2)}%
-                      </span>
-                    )}
-                  </h3>
-                </CardBody>
-              </Card>
-            </Col>
-            <Col lg={3} md={6} sm={12}>
-              <Card className='dashboard-kpi-card'>
-                <CardBody>
-                  <CardTitle className='h6 text-muted'>Lucro Mês</CardTitle>
-                  <h3 className='mb-0'>
-                    R$ {kpis?.monthlyProfit?.toFixed(2) || '0.00'}
-                    {kpis?.monthlyProfitTrend !== undefined && (
-                      <span
-                        className={`font-size-12 ms-2 ${kpis.monthlyProfitTrend >= 0 ? 'text-success' : 'text-danger'}`}
-                      >
-                        {kpis.monthlyProfitTrend >= 0 ? (
-                          <i className='bx bx-up-arrow-alt'></i>
-                        ) : (
-                          <i className='bx bx-down-arrow-alt'></i>
-                        )}
-                        {Math.abs(kpis.monthlyProfitTrend).toFixed(2)}%
-                      </span>
-                    )}
-                  </h3>
-                </CardBody>
-              </Card>
-            </Col>
-            <Col lg={3} md={6} sm={12}>
-              <Card className='dashboard-kpi-card'>
-                <CardBody>
-                  <CardTitle className='h6 text-muted'>Novos Clientes</CardTitle>
-                  <h3 className='mb-0'>{kpis?.newCustomers || 0}</h3>
-                </CardBody>
-              </Card>
-            </Col>
-            <Col lg={3} md={6} sm={12}>
-              <Card className='dashboard-kpi-card'>
-                <CardBody>
-                  <CardTitle className='h6 text-muted'>Estoque Baixo</CardTitle>
-                  <h3 className='mb-0'>{kpis?.lowStockItems || 0} Itens</h3>
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
-
-          {/* Seção de Gráficos */}
-          <Row>
-            <Col lg={6}>
-              <Card className='dashboard-chart-card'>
-                <CardBody>
-                  <CardTitle className='h5'>Vendas Mensais</CardTitle>
-                  <MonthlySalesChart data={widgets?.monthlySales} />
-                </CardBody>
-              </Card>
-            </Col>
-            <Col lg={6}>
-              <Card className='dashboard-chart-card'>
-                <CardBody>
-                  <CardTitle className='h5'>Produtos Mais Vendidos</CardTitle>
-                  <TopProductsChart data={widgets?.topProducts} />
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
-
-          {/* Seção de Vendas por Método de Pagamento */}
-          <Row className='mt-4'>
-            <Col lg={6}>
-              <Card className='dashboard-chart-card'>
-                <CardBody>
-                  <CardTitle className='h5'>Vendas por Método de Pagamento</CardTitle>
-                  <SalesByPaymentMethodChart data={widgets?.salesByPayment} />
-                </CardBody>
-              </Card>
-            </Col>
-            {/* Placeholder para outros widgets ou atividades recentes */}
-            <Col lg={6}>
+          <div className="dashboard-grid">
+            <div className="grid-item-kpis">
+              <KpiWidget />
+            </div>
+            <div className="grid-item-main-chart">
+              <ChartWidget title="Vendas Mensais">
+                <MonthlySalesChart data={widgets?.monthlySales} />
+              </ChartWidget>
+            </div>
+            <div className="grid-item-side-widget-1">
+              <ChartWidget
+                title="Produtos Mais Vendidos"
+                data={topProductsData}
+                isLoading={topProductsLoading}
+                error={topProductsError}
+              >
+                {(data) => (
+                  <BarChart data={data} layout="vertical" margin={{ left: 30 }}>
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={100} />
+                    <Tooltip wrapperStyle={{ zIndex: 1000 }} />
+                    <Legend />
+                    <Bar dataKey="Vendas" fill="#007BFF" />
+                  </BarChart>
+                )}
+              </ChartWidget>
+            </div>
+            <div className="grid-item-side-widget-2">
+              <DonutChart data={salesByCategoryData} title="Vendas por Categoria" />
+            </div>
+            <div className="grid-item-side-widget-3">
+              <LowStockProducts products={lowStockProductsData} />
+            </div>
+            <div className="grid-item-side-widget-4">
               <RecentActivityFeed activities={widgets?.recentActivity} />
-            </Col>
-          </Row>
+            </div>
+          </div>
+
+          <div className="dashboard-footer">
+            <DateRangePicker
+              initialEndDate={endDate}
+              initialStartDate={startDate}
+              onDateChange={setDateRange}
+            />
+          </div>
         </motion.div>
       </Container>
     </div>

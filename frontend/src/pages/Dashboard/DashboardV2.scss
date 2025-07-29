@@ -1,0 +1,38 @@
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: auto;
+  grid-gap: 24px;
+  grid-template-areas:
+    "kpis kpis kpis kpis kpis kpis"
+    "main-chart main-chart main-chart side-widget-1 side-widget-2 side-widget-2"
+    "main-chart main-chart main-chart side-widget-3 side-widget-4 side-widget-4";
+}
+
+.grid-item-kpis { grid-area: kpis; }
+.grid-item-main-chart { grid-area: main-chart; }
+.grid-item-side-widget-1 { grid-area: side-widget-1; }
+.grid-item-side-widget-2 { grid-area: side-widget-2; }
+.grid-item-side-widget-3 { grid-area: side-widget-3; }
+.grid-item-side-widget-4 { grid-area: side-widget-4; }
+
+.dashboard-footer {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.dashboard-footer {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.recharts-legend-item {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px; /* Ajuste este valor conforme necessário */
+}

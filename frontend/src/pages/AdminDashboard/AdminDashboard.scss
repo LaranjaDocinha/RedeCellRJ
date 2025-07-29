@@ -1,0 +1,148 @@
+// Variáveis para cores (tons profissionais)
+$primary-color: #007bff; // Azul
+$secondary-color: #6c757d; // Cinza
+$light-bg: #f8f9fa; // Fundo cinza claro/branco
+$card-bg: #ffffff; // Fundo do card branco
+$text-color: #343a40; // Texto escuro
+$border-color: #dee2e6; // Borda clara
+
+.admin-dashboard {
+  display: flex;
+  min-height: 100vh; // Garante que ocupe a altura total da viewport
+
+  .main-content {
+    flex-grow: 1;
+    padding: 30px;
+    background-color: $light-bg;
+    color: $text-color;
+
+    .dashboard-title {
+      margin-bottom: 30px;
+      font-size: 2rem;
+      color: $primary-color;
+      font-weight: 600;
+    }
+
+    .kpi-section {
+      margin-bottom: 30px;
+
+      .kpi-card {
+        border: none;
+        border-radius: 8px;
+        background-color: $card-bg;
+        transition: transform 0.2s ease-in-out;
+
+        &:hover {
+          transform: translateY(-5px);
+        }
+
+        .kpi-icon {
+          font-size: 2.5rem;
+          color: $primary-color;
+        }
+
+        .kpi-title {
+          font-size: 0.9rem;
+          letter-spacing: 0.05em;
+        }
+
+        .kpi-value {
+          font-size: 1.8rem;
+          font-weight: 700;
+          color: $text-color;
+        }
+      }
+    }
+
+    .chart-search-section {
+      .card {
+        border: none;
+        border-radius: 8px;
+        background-color: $card-bg;
+        padding: 15px; // Adiciona padding dentro do corpo do card
+      }
+
+      .card-title {
+        font-size: 1.25rem;
+        margin-bottom: 15px;
+        color: $text-color;
+      }
+    }
+
+    .recent-orders-section {
+      .card {
+        border: none;
+        border-radius: 8px;
+        background-color: $card-bg;
+        padding: 15px; // Adiciona padding dentro do corpo do card
+      }
+
+      .card-title {
+        font-size: 1.25rem;
+        margin-bottom: 15px;
+        color: $text-color;
+      }
+
+      .table {
+        th, td {
+          vertical-align: middle;
+          padding: 12px 15px;
+          border-top: 1px solid $border-color;
+        }
+        th {
+          font-weight: 600;
+          color: $secondary-color;
+          text-transform: uppercase;
+          font-size: 0.85rem;
+        }
+        tbody tr:last-child td {
+          border-bottom: none;
+        }
+      }
+
+      .status-badge {
+        display: inline-block;
+        padding: 0.3em 0.6em;
+        border-radius: 0.25rem;
+        font-size: 0.75em;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        color: #fff;
+
+        &.status-em-andamento { background-color: #ffc107; color: #343a40; } // Amarelo para em andamento
+        &.status-pronto { background-color: #28a745; } // Verde para pronto
+        &.status-aguardando-peca { background-color: #dc3545; } // Vermelho para aguardando peça
+        &.status-finalizado { background-color: #007bff; } // Azul para finalizado
+      }
+    }
+  }
+}
+
+// Ajustes responsivos
+@media (max-width: 991.98px) { // Dispositivos médios e menores
+  .admin-dashboard .main-content {
+    padding: 20px;
+  }
+  .admin-dashboard .kpi-section .col-lg-3 {
+    flex: 0 0 50%; // Duas colunas por linha
+    max-width: 50%;
+  }
+}
+
+@media (max-width: 767.98px) { // Dispositivos pequenos e menores
+  .admin-dashboard .main-content {
+    padding: 15px;
+  }
+  .admin-dashboard .kpi-section .col-lg-3 {
+    flex: 0 0 100%; // Uma coluna por linha
+    max-width: 100%;
+  }
+  .admin-dashboard .chart-search-section .col-lg-8,
+  .admin-dashboard .chart-search-section .col-lg-4 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}

@@ -24,7 +24,7 @@ function App() {
                 duration: 4000,
               }}
             />
-            <RouterProvider router={router} />
+            <RouterProvider router={router} fallbackElement={<LoadingBar />} />
             <LoadingBar />
           </BreadcrumbProvider>
         </GlobalFilterProvider>

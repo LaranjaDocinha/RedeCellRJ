@@ -1,13 +1,23 @@
 import React from 'react';
 import { Card, CardBody, CardTitle } from 'reactstrap';
 import { motion } from 'framer-motion';
+import styled from 'styled-components';
+
+const StyledCard = styled(Card)`
+  height: 100%;
+`;
+
+const ActivityFeedWrapper = styled.div`
+  height: calc(100% - 40px); // Subtrai a altura do título
+  overflow-y: auto;
+`;
 
 const RecentActivityFeed = ({ activities }) => {
   return (
-    <Card className='dashboard-activity-card'>
+    <StyledCard className='dashboard-activity-card'>
       <CardBody>
         <CardTitle className='h5'>Atividade Recente</CardTitle>
-        <div className='activity-feed' style={{ maxHeight: '300px', overflowY: 'auto' }}>
+        <ActivityFeedWrapper className='activity-feed'>
           {activities && activities.length > 0 ? (
             activities.map((activity, index) => (
               <motion.div
@@ -28,9 +38,9 @@ const RecentActivityFeed = ({ activities }) => {
           ) : (
             <div className='text-center text-muted py-4'>Nenhuma atividade recente.</div>
           )}
-        </div>
+        </ActivityFeedWrapper>
       </CardBody>
-    </Card>
+    </StyledCard>
   );
 };
 
