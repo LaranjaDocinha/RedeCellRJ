@@ -1,49 +1,43 @@
-import React from "react";
-import { Label, Input, FormFeedback, FormGroup } from "reactstrap";
-import { motion } from "framer-motion";
+import React from 'react';
+import { Label, Input, FormFeedback, FormGroup } from 'reactstrap';
 
 const iconMap = {
-  email: "bx-user",
-  password: "bx-lock-alt",
+  email: 'bx-user',
+  password: 'bx-lock-alt',
   // Adicione outros mapeamentos de ícones aqui
 };
 
-const FormField = ({ name, label, type = "text", placeholder, formik }) => {
+const FormField = ({ name, label, type = 'text', placeholder, formik }) => {
   const hasError = !!(formik.touched[name] && formik.errors[name]);
   const isValid = formik.touched[name] && !formik.errors[name];
-  const icon = iconMap[name] || "bx-info-circle";
+  const icon = iconMap[name] || 'bx-info-circle';
 
   return (
-    <FormGroup className="mb-3">
-      <Label className="form-label" htmlFor={name}>{label}</Label>
+    <FormGroup className='mb-3'>
+      <Label className='form-label' htmlFor={name}>
+        {label}
+      </Label>
       <div className={`input-group ${hasError ? 'has-error' : isValid ? 'has-success' : ''}`}>
-        <span className="input-group-text"><i className={`bx ${icon}`}></i></span>
+        <span className='input-group-text'>
+          <i className={`bx ${icon}`}></i>
+        </span>
         <Input
+          aria-describedby={hasError ? `${name}-feedback` : undefined}
+          aria-invalid={hasError ? 'true' : 'false'}
+          className={hasError ? 'is-invalid' : isValid ? 'is-valid' : ''}
           id={name}
           name={name}
-          type={type}
           placeholder={placeholder}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
+          type={type}
           value={formik.values[name]}
-          className={hasError ? 'is-invalid' : isValid ? 'is-valid' : ''}
-          aria-invalid={hasError ? "true" : "false"}
-          aria-describedby={hasError ? `${name}-feedback` : undefined}
+          onBlur={formik.handleBlur}
+          onChange={formik.handleChange}
         />
-        {isValid && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            className="validation-icon"
-          >
-            <i className="bx bx-check-circle text-success"></i>
-          </motion.div>
-        )}
-        
       </div>
       {hasError && (
-        <FormFeedback type="invalid" className="d-block" id={`${name}-feedback`}>{formik.errors[name]}</FormFeedback>
+        <FormFeedback className='d-block' id={`${name}-feedback`} type='invalid'>
+          {formik.errors[name]}
+        </FormFeedback>
       )}
     </FormGroup>
   );

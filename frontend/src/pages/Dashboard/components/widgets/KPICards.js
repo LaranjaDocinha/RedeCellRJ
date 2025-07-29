@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import CountUp from 'react-countup';
+
 import { useDashboard } from '../../../../context/DashboardContext';
 import './KPICards.scss';
 
@@ -20,24 +21,31 @@ TrendIndicator.propTypes = {
 };
 
 const KPICard = ({ title, value, prefix = '', icon, color, change }) => (
-  <div className="kpi-card">
-    <div className="kpi-card-header">
-      <div className="kpi-card-icon" style={{ backgroundColor: `rgba(${color}, 0.2)`, color: `rgb(${color})` }}>
+  <div className='kpi-card'>
+    <div className='kpi-card-header'>
+      <div
+        className='kpi-card-icon'
+        style={{ backgroundColor: `rgba(${color}, 0.2)`, color: `rgb(${color})` }}
+      >
         <i className={`bx ${icon}`}></i>
       </div>
     </div>
-    <div className="kpi-card-body">
-      <h5 className="kpi-title">{title}</h5>
-      <div className="kpi-value-container">
-        <p className="kpi-value">
+    <div className='kpi-card-body'>
+      <h5 className='kpi-title'>{title}</h5>
+      <div className='kpi-value-container'>
+        <p className='kpi-value'>
           <CountUp
-            start={0}
-            end={value || 0}
+            decimal=','
+            decimals={
+              title.includes('Vendas') || title.includes('Reparos') || title.includes('Clientes')
+                ? 0
+                : 2
+            }
             duration={1.5}
-            separator="."
-            decimal=","
-            decimals={title.includes('Vendas') || title.includes('Reparos') || title.includes('Clientes') ? 0 : 2}
+            end={value || 0}
             prefix={prefix}
+            separator='.'
+            start={0}
           />
         </p>
         <TrendIndicator value={change} />
@@ -62,25 +70,42 @@ const KPICards = () => {
   if (!kpis) return null;
 
   const kpiConfig = [
-    { id: 'revenue', title: 'Faturamento', prefix: 'R$ ', icon: 'bx-dollar-circle', color: '85, 110, 230' },
+    {
+      id: 'revenue',
+      title: 'Faturamento',
+      prefix: 'R$ ',
+      icon: 'bx-dollar-circle',
+      color: '85, 110, 230',
+    },
     { id: 'profit', title: 'Lucro', prefix: 'R$ ', icon: 'bx-line-chart', color: '52, 195, 143' },
     { id: 'salesCount', title: 'Nº de Vendas', icon: 'bx-receipt', color: '241, 180, 76' },
-    { id: 'averageTicket', title: 'Ticket Médio', prefix: 'R$ ', icon: 'bx-purchase-tag-alt', color: '244, 106, 106' },
+    {
+      id: 'averageTicket',
+      title: 'Ticket Médio',
+      prefix: 'R$ ',
+      icon: 'bx-purchase-tag-alt',
+      color: '244, 106, 106',
+    },
     { id: 'newRepairsCount', title: 'Novos Reparos', icon: 'bx-wrench', color: '80, 165, 241' },
-    { id: 'newCustomersCount', title: 'Novos Clientes', icon: 'bx-user-plus', color: '116, 120, 141' },
+    {
+      id: 'newCustomersCount',
+      title: 'Novos Clientes',
+      icon: 'bx-user-plus',
+      color: '116, 120, 141',
+    },
   ];
 
   return (
-    <div className="kpi-cards-container">
-      {kpiConfig.map(config => (
-        <KPICard 
+    <div className='kpi-cards-container'>
+      {kpiConfig.map((config) => (
+        <KPICard
           key={config.id}
+          change={kpis[config.id]?.change}
+          color={config.color}
+          icon={config.icon}
+          prefix={config.prefix}
           title={config.title}
           value={kpis[config.id]?.value}
-          prefix={config.prefix}
-          icon={config.icon}
-          color={config.color}
-          change={kpis[config.id]?.change}
         />
       ))}
     </div>

@@ -1,33 +1,39 @@
 import React from 'react';
 import { Container, Row, Col } from 'reactstrap';
+
 import { useGlobalFilter } from '../../../context/GlobalFilterContext';
 import useApi from '../../../hooks/useApi';
 
 // Components
 import ReportKPI from '../components/ReportKPI';
-import SalesDetailTable from './components/SalesDetailTable';
-import SalesChart from './components/SalesChart';
 import Breadcrumb from '../../../components/Common/Breadcrumb';
 
+import SalesDetailTable from './components/SalesDetailTable';
+import SalesChart from './components/SalesChart';
+
 const SalesReport = () => {
-  document.title = "Relatório de Vendas | PDV Web";
+  document.title = 'Relatório de Vendas | PDV Web';
   const { globalPeriod } = useGlobalFilter();
 
-  const { data: reportData, loading, error } = useApi('GET', `/reports/sales?period=${globalPeriod}`, null, {
+  const {
+    data: reportData,
+    loading,
+    error,
+  } = useApi('GET', `/reports/sales?period=${globalPeriod}`, null, {
     keepPreviousData: true,
   });
 
   const kpis = [
-    { title: "Receita Total", value: reportData?.summary?.totalRevenue, format: 'currency' },
-    { title: "Total de Vendas", value: reportData?.summary?.totalSales, format: 'number' },
-    { title: "Ticket Médio", value: reportData?.summary?.averageTicket, format: 'currency' },
-    { title: "Produtos Vendidos", value: reportData?.summary?.totalProductsSold, format: 'number' },
+    { title: 'Receita Total', value: reportData?.summary?.totalRevenue, format: 'currency' },
+    { title: 'Total de Vendas', value: reportData?.summary?.totalSales, format: 'number' },
+    { title: 'Ticket Médio', value: reportData?.summary?.averageTicket, format: 'currency' },
+    { title: 'Produtos Vendidos', value: reportData?.summary?.totalProductsSold, format: 'number' },
   ];
 
   return (
-    <div className="page-content">
+    <div className='page-content'>
       <Container fluid>
-        <Breadcrumb title="Relatório de Vendas" />
+        <Breadcrumb title='Relatório de Vendas' />
         <Row>
           {kpis.map((kpi, index) => (
             <Col key={index} md={3}>
@@ -42,7 +48,7 @@ const SalesReport = () => {
         </Row>
         <Row>
           <Col lg={12}>
-            <SalesDetailTable data={reportData?.sales} loading={loading} error={error} />
+            <SalesDetailTable data={reportData?.sales} error={error} loading={loading} />
           </Col>
         </Row>
       </Container>

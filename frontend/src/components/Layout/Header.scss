@@ -11,11 +11,7 @@
   z-index: 1000;
   
   // Modern Glassmorphism Effect
-  background-color: rgba(255, 255, 255, 0.8);
-  backdrop-filter: saturate(180%) blur(10px);
-  -webkit-backdrop-filter: saturate(180%) blur(10px);
-  
-  border-bottom: 1px solid var(--topbar-border-color);
+  background-color: var(--topbar-bg);
   box-shadow: 0 2px 10px var(--shadow-color);
   transition: background-color 0.3s ease, border-color 0.3s ease;
 
@@ -202,7 +198,6 @@
 .topbar-right > button, .topbar-center > button, .theme-toggle-btn {
   position: relative;
   overflow: hidden;
-  color: var(--text-color);
   background-color: transparent;
   border: none;
   border-radius: 8px;
@@ -248,15 +243,26 @@
 }
 
 // Dark Theme Adjustments
-[data-theme="dark"] .topbar {
-  background-color: rgba(44, 44, 46, 0.7); // Dark glassmorphism
-  
-  .topbar-right > button:not(.quick-action-btn):hover, 
+[data-bs-theme="dark"] .topbar {
+  background-color: var(--glass-bg); // Using the variable from _colors.scss
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+  .topbar-right > button:not(.quick-action-btn):hover,
   .topbar-center > button:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .quick-action-btn {
+    color: #fff !important; // Ensure text is white on primary background
   }
 }
 
+// Light Theme Adjustments
+[data-bs-theme="light"] .quick-action-btn {
+  color: var(--color-body-bg) !important;
+}
 
 // --- Responsividade ---
 @media (max-width: 992px) {

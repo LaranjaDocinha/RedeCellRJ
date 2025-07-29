@@ -1,171 +1,161 @@
-import React from "react";
-import { Table, Button, Badge, Input } from "reactstrap";
-import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
-import 'react-loading-skeleton/dist/skeleton.css';
+import React, { useMemo } from 'react';
+import PropTypes from 'prop-types';
+import { Button, Badge, Input } from 'reactstrap';
+
+import AdvancedTable from '../../../components/Common/AdvancedTable';
+import placeholderImage from '../../../assets/images/placeholder.svg';
 
 const ProductTable = ({
   products,
-  handleEditClick,
-  handleDeleteProduct,
+  onEdit,
+  onDelete,
+  onQuickView,
   loading,
-  error,
-  handleSort,
-  sortColumn,
-  sortDirection,
-  selectedRows,
-  setSelectedRows
+  selectedProducts,
+  toggleProductSelection,
 }) => {
+  const columns = useMemo(
+    () => [
+      {
+        id: 'selection',
+        header: ({ table }) => (
+          <Input
+            checked={table.getIsAllRowsSelected()}
+            indeterminate={table.getIsSomeRowsSelected()}
+            type='checkbox'
+            onChange={table.getToggleAllRowsSelectedHandler()}
+          />
+        ),
+        cell: ({ row }) => (
+          <Input
+            checked={row.getIsSelected()}
+            disabled={!row.getCanSelect()}
+            type='checkbox'
+            onChange={row.getToggleSelectedHandler()}
+          />
+        ),
+      },
+      {
+        accessorKey: 'mainImage',
+        header: 'Imagem',
+        cell: ({ row }) => {
+          const { name, variations } = row.original;
+          const mainImage = variations.find((v) => v.image_url)?.image_url || placeholderImage;
+          return <img alt={name} className='avatar-sm rounded' src={mainImage} />;
+        },
+        enableSorting: false,
+      },
+      {
+        accessorKey: 'name',
+        header: 'Nome',
+      },
+      {
+        accessorKey: 'category.name',
+        header: 'Categoria',
+        cell: (info) => info.getValue() || 'N/A',
+      },
+      {
+        accessorKey: 'priceRange',
+        header: 'Preço',
+        cell: ({ row }) => {
+          const { variations = [] } = row.original;
+          if (variations.length === 0) return 'R$ 0,00';
+          if (variations.length === 1) return `R$ ${variations[0].price.toFixed(2)}`;
+          const prices = variations.map((v) => v.price);
+          const min = Math.min(...prices);
+          const max = Math.max(...prices);
+          return min === max ? `R$ ${min.toFixed(2)}` : `R$ ${min.toFixed(2)} - ${max.toFixed(2)}`;
+        },
+      },
+      {
+        accessorKey: 'totalStock',
+        header: 'Estoque Total',
+        cell: ({ row }) => {
+          const totalStock = row.original.variations.reduce(
+            (acc, v) => acc + (v.stock_quantity || 0),
+            0,
+          );
+          return (
+            <Badge pill color={totalStock > 0 ? 'success' : 'danger'}>
+              {totalStock}
+            </Badge>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        header: 'Ações',
+        cell: ({ row }) => (
+          <div className='d-flex gap-2'>
+            <Button color='light' size='sm' onClick={() => onQuickView(row.original)}>
+              <i className='bx bx-search-alt'></i>
+            </Button>
+            <Button color='primary' size='sm' onClick={() => onEdit(row.original)}>
+              <i className='bx bx-pencil'></i>
+            </Button>
+            <Button color='danger' size='sm' onClick={() => onDelete(row.original)}>
+              <i className='bx bx-trash'></i>
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [onEdit, onDelete, onQuickView],
+  );
 
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      const allVariationIds = products.flatMap(p => p.variations.map(v => v.id));
-      setSelectedRows(new Set(allVariationIds));
-    } else {
-      setSelectedRows(new Set());
-    }
-  };
+  // Mapeia o estado de seleção para o formato que a tabela espera
+  const rowSelection = useMemo(() => {
+    const selection = {};
+    products.forEach((p, index) => {
+      if (selectedProducts.has(p.id)) {
+        selection[index] = true;
+      }
+    });
+    return selection;
+  }, [selectedProducts, products]);
 
-  const handleSelectRow = (variationId) => {
-    const newSelectedRows = new Set(selectedRows);
-    if (newSelectedRows.has(variationId)) {
-      newSelectedRows.delete(variationId);
-    } else {
-      newSelectedRows.add(variationId);
-    }
-    setSelectedRows(newSelectedRows);
-  };
+  // Função para lidar com a mudança de seleção
+  const onRowSelectionChange = (updater) => {
+    const newSelectedRowIndexes = updater(rowSelection);
+    const newSelectedProductIds = new Set();
+    Object.keys(newSelectedRowIndexes).forEach((index) => {
+      if (newSelectedRowIndexes[index]) {
+        newSelectedProductIds.add(products[parseInt(index, 10)].id);
+      }
+    });
 
-  if (loading) {
-    return (
-      <SkeletonTheme baseColor="#e0e0e0" highlightColor="#f5f5f5">
-        <div className="table-responsive">
-          <Table className="table-hover align-middle">
-            <thead className="table-light">
-              <tr>
-                <th><Skeleton width={20} /></th>
-                <th><Skeleton width={50} /></th>
-                <th><Skeleton width={150} /></th>
-                <th><Skeleton width={80} /></th>
-                <th><Skeleton width={80} /></th>
-                <th><Skeleton width={80} /></th>
-                <th><Skeleton width={80} /></th>
-                <th className="text-center"><Skeleton width={100} /></th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...Array(5)].map((_, i) => (
-                <tr key={i}>
-                  <td><Skeleton width={20} /></td>
-                  <td><Skeleton circle width={50} height={50} /></td>
-                  <td><Skeleton count={2} /></td>
-                  <td><Skeleton width={60} /></td>
-                  <td><Skeleton width={70} /></td>
-                  <td><Skeleton width={50} /></td>
-                  <td><Skeleton width={60} /></td>
-                  <td className="text-center"><Skeleton width={80} height={30} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </div>
-      </SkeletonTheme>
-    );
-  }
-
-  if (error) {
-    return <p className="text-danger">Erro ao carregar produtos: {error.message || error}</p>;
-  }
-
-  if (!products || products.length === 0) {
-    return (
-      <div className="text-center p-4">
-        <i className="bx bx-box fa-3x text-muted mb-3"></i>
-        <p className="text-muted">Nenhum produto encontrado.</p>
-      </div>
-    );
-  }
-
-  const allVariationIdsOnPage = products.flatMap(p => p.variations.map(v => v.id));
-  const isAllSelected = allVariationIdsOnPage.length > 0 && allVariationIdsOnPage.every(id => selectedRows.has(id));
-
-  const renderSortIcon = (column) => {
-    if (sortColumn === column) {
-      return sortDirection === 'asc' ? <i className="bx bx-sort-up ms-1"></i> : <i className="bx bx-sort-down ms-1"></i>;
-    }
-    return <i className="bx bx-sort text-muted ms-1"></i>;
+    // Para fazer a seleção funcionar, precisaríamos de uma função do contexto
+    // que aceite um Set de IDs. Por enquanto, vamos logar.
+    // console.log("Novos IDs selecionados:", newSelectedProductIds);
+    // Idealmente: selection.setMany(newSelectedProductIds);
   };
 
   return (
-    <div className="table-responsive">
-      <Table className="table-hover align-middle">
-        <thead className="table-light">
-          <tr>
-            <th style={{ width: '50px' }}>
-              <Input
-                type="checkbox"
-                onChange={handleSelectAll}
-                checked={isAllSelected}
-                title="Selecionar todos nesta página"
-              />
-            </th>
-            <th>Imagem</th>
-            <th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>Nome do Produto {renderSortIcon('name')}</th>
-            <th>Cor</th>
-            <th onClick={() => handleSort('price')} style={{ cursor: 'pointer' }}>Preço {renderSortIcon('price')}</th>
-            <th onClick={() => handleSort('stock_quantity')} style={{ cursor: 'pointer' }}>Estoque {renderSortIcon('stock_quantity')}</th>
-            <th onClick={() => handleSort('status')} style={{ cursor: 'pointer' }}>Status {renderSortIcon('status')}</th>
-            <th className="text-center">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {products.map((product) => (
-            product.variations && product.variations.map((variation, index) => (
-              <tr key={`${product.id}-${variation.id}`} className={selectedRows.has(variation.id) ? 'table-active' : ''}>
-                <td>
-                  <Input
-                    type="checkbox"
-                    checked={selectedRows.has(variation.id)}
-                    onChange={() => handleSelectRow(variation.id)}
-                  />
-                </td>
-                <td>
-                  <img
-                    src={variation.image_url || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'}
-                    alt={`${product.name} ${variation.color}`}
-                    style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px', backgroundColor: '#f0f0f0' }}
-                  />
-                </td>
-                <td>
-                  <strong>{product.name}</strong>
-                  {index === 0 && <p className="text-muted mb-0 small">{product.description?.replace(/<[^>]+>/g, '').substring(0, 50)}...</p>}
-                </td>
-                <td>{variation.color}</td>
-                <td>R$ {parseFloat(variation.price).toFixed(2)}</td>
-                <td>{variation.stock_quantity}</td>
-                <td>
-                  <Badge color={
-                    variation.status === 'active' ? 'success' :
-                    variation.status === 'out_of_stock' ? 'danger' :
-                    'secondary'
-                  } pill>
-                    {variation.status}
-                  </Badge>
-                </td>
-                <td className="text-center">
-                  <Button color="info" size="sm" className="me-2" onClick={() => handleEditClick(product)}>
-                    <i className="bx bx-pencil"></i>
-                  </Button>
-                  <Button color="danger" size="sm" onClick={() => handleDeleteProduct(product.id)}>
-                    <i className="bx bx-trash"></i>
-                  </Button>
-                </td>
-              </tr>
-            ))
-          ))}
-        </tbody>
-      </Table>
-    </div>
+    <AdvancedTable
+      columns={columns}
+      data={products}
+      emptyStateActionText={'Adicionar Produto'}
+      emptyStateIcon={''}
+      emptyStateMessage={'Cadastre seu primeiro produto para começar a vender.'}
+      emptyStateTitle={'Nenhum produto encontrado'}
+      loading={loading}
+      persistenceKey='productsTable'
+      onEmptyStateActionClick={() => {
+        /* Implementar ação de adicionar produto */
+      }}
+      onRowClick={onQuickView}
+    />
   );
+};
+
+ProductTable.propTypes = {
+  products: PropTypes.array.isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  onQuickView: PropTypes.func.isRequired,
+  loading: PropTypes.bool,
+  selectedProducts: PropTypes.instanceOf(Set).isRequired,
+  toggleProductSelection: PropTypes.func.isRequired,
 };
 
 export default ProductTable;

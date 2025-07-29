@@ -3,8 +3,8 @@ import './WidgetStates.scss';
 
 const WidgetEmpty = () => {
   return (
-    <div className="widget-state-container">
-      <i className="ri-inbox-2-line empty-icon"></i>
+    <div className='widget-state-container'>
+      <i className='ri-inbox-2-line empty-icon'></i>
       <p>Não há dados para exibir.</p>
     </div>
   );

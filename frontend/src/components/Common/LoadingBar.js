@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import './LoadingBar.scss';
 
@@ -46,8 +45,8 @@ const LoadingBar = () => {
   if (!visible) return null;
 
   return (
-    <div className="loading-bar-container">
-      <div className="loading-bar" style={{ width: `${progress}%` }}></div>
+    <div className='loading-bar-container'>
+      <div className='loading-bar' style={{ width: `${progress}%` }}></div>
     </div>
   );
 };

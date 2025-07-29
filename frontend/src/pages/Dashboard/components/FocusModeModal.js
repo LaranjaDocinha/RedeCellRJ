@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { motion, AnimatePresence } from 'framer-motion';
+
 import { useDashboard } from '../../../context/DashboardContext';
 import './FocusModeModal.scss';
 
@@ -15,22 +16,22 @@ const FocusModeModal = ({ children }) => {
     <AnimatePresence>
       {focusModeWidget && (
         <motion.div
-          className="focus-mode-backdrop"
-          initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
+          className='focus-mode-backdrop'
           exit={{ opacity: 0 }}
+          initial={{ opacity: 0 }}
           onClick={handleClose}
         >
           <motion.div
-            className="focus-mode-content"
-            initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
+            className='focus-mode-content'
             exit={{ scale: 0.9, opacity: 0 }}
+            initial={{ scale: 0.9, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
           >
-            <button className="close-btn" onClick={handleClose}>
-              <i className="bx bx-x"></i>
+            <button className='close-btn' onClick={handleClose}>
+              <i className='bx bx-x'></i>
             </button>
             {children}
           </motion.div>

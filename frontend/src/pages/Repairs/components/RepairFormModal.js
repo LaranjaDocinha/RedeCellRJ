@@ -1,9 +1,29 @@
-import React from "react";
+import React from 'react';
 import moment from 'moment';
-import { Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, FormFeedback, Row, Col, Nav, NavItem, NavLink, TabContent, TabPane, Button, Spinner } from "reactstrap";
+import {
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Form,
+  FormGroup,
+  Label,
+  Input,
+  FormFeedback,
+  Row,
+  Col,
+  Nav,
+  NavItem,
+  NavLink,
+  TabContent,
+  TabPane,
+  Button,
+} from 'reactstrap';
 import { NumericFormat } from 'react-number-format';
 import Select from 'react-select';
-import { validateRepairForm } from "../utils/repairFormValidation";
+
+import LoadingSpinner from '../../../components/Common/LoadingSpinner';
+import { validateRepairForm } from '../utils/repairFormValidation';
 
 const RepairFormModal = ({
   modal,
@@ -19,10 +39,9 @@ const RepairFormModal = ({
   handleSubmitRepair,
   submitting,
 }) => {
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevData => {
+    setFormData((prevData) => {
       const newData = { ...prevData, [name]: value };
       setFormErrors(validateRepairForm(newData)); // Validate specific field
       return newData;
@@ -38,8 +57,10 @@ const RepairFormModal = ({
   };
 
   return (
-    <Modal isOpen={modal} toggle={toggle} size="lg">
-      <ModalHeader toggle={toggle}>{selectedRepair ? 'Editar Reparo' : 'Adicionar Novo Reparo'}</ModalHeader>
+    <Modal isOpen={modal} size='lg' toggle={toggle}>
+      <ModalHeader toggle={toggle}>
+        {selectedRepair ? 'Editar Reparo' : 'Adicionar Novo Reparo'}
+      </ModalHeader>
       <Form onSubmit={handleSubmitRepair}>
         <ModalBody>
           <Nav tabs>
@@ -68,50 +89,57 @@ const RepairFormModal = ({
               </NavLink>
             </NavItem>
           </Nav>
-          <TabContent activeTab={activeTab} className="py-3">
-            <TabPane tabId="1">
+          <TabContent activeTab={activeTab} className='py-3'>
+            <TabPane tabId='1'>
               <Row form>
                 <Col md={6}>
                   <FormGroup>
-                    <Label for="customer_id">Cliente <span className="text-danger">*</span></Label>
+                    <Label for='customer_id'>
+                      Cliente <span className='text-danger'>*</span>
+                    </Label>
                     <Select
-                      name="customer_id"
-                      id="customer_id"
-                      value={customers.find(c => c.id === parseInt(formData.customer_id))}
+                      className={formErrors.customer_id ? 'is-invalid' : ''}
+                      classNamePrefix='select2-selection'
+                      getOptionLabel={(option) => `${option.name} (${option.phone})`}
+                      getOptionValue={(option) => option.id}
+                      id='customer_id'
+                      name='customer_id'
+                      options={customers}
+                      placeholder='Selecione um Cliente'
+                      value={customers.find((c) => c.id === parseInt(formData.customer_id))}
                       onChange={(selectedOption) => {
-                        setFormData(prevData => {
-                          const newData = { ...prevData, customer_id: selectedOption ? selectedOption.id : '' };
+                        setFormData((prevData) => {
+                          const newData = {
+                            ...prevData,
+                            customer_id: selectedOption ? selectedOption.id : '',
+                          };
                           setFormErrors(validateRepairForm(newData));
                           return newData;
                         });
                       }}
-                      options={customers}
-                      getOptionLabel={(option) => `${option.name} (${option.phone})`}
-                      getOptionValue={(option) => option.id}
-                      placeholder="Selecione um Cliente"
-                      classNamePrefix="select2-selection"
-                      className={formErrors.customer_id ? 'is-invalid' : ''}
                     />
                     <FormFeedback>{formErrors.customer_id}</FormFeedback>
                   </FormGroup>
                 </Col>
                 <Col md={6}>
                   <FormGroup>
-                    <Label for="device_type">Tipo de Dispositivo <span className="text-danger">*</span></Label>
+                    <Label for='device_type'>
+                      Tipo de Dispositivo <span className='text-danger'>*</span>
+                    </Label>
                     <Input
-                      type="select"
-                      name="device_type"
-                      id="device_type"
+                      required
+                      id='device_type'
+                      invalid={!!formErrors.device_type}
+                      name='device_type'
+                      type='select'
                       value={formData.device_type}
                       onChange={handleInputChange}
-                      invalid={!!formErrors.device_type}
-                      required
                     >
-                      <option value="">Selecione</option>
-                      <option value="smartphone">Smartphone</option>
-                      <option value="tablet">Tablet</option>
-                      <option value="notebook">Notebook</option>
-                      <option value="other">Outro</option>
+                      <option value=''>Selecione</option>
+                      <option value='smartphone'>Smartphone</option>
+                      <option value='tablet'>Tablet</option>
+                      <option value='notebook'>Notebook</option>
+                      <option value='other'>Outro</option>
                     </Input>
                     <FormFeedback>{formErrors.device_type}</FormFeedback>
                   </FormGroup>
@@ -120,12 +148,12 @@ const RepairFormModal = ({
               <Row form>
                 <Col md={6}>
                   <FormGroup>
-                    <Label for="brand">Marca</Label>
+                    <Label for='brand'>Marca</Label>
                     <Input
-                      type="text"
-                      name="brand"
-                      id="brand"
-                      placeholder="Marca do Dispositivo"
+                      id='brand'
+                      name='brand'
+                      placeholder='Marca do Dispositivo'
+                      type='text'
                       value={formData.brand}
                       onChange={handleInputChange}
                     />
@@ -133,12 +161,12 @@ const RepairFormModal = ({
                 </Col>
                 <Col md={4}>
                   <FormGroup>
-                    <Label for="model">Modelo</Label>
+                    <Label for='model'>Modelo</Label>
                     <Input
-                      type="text"
-                      name="model"
-                      id="model"
-                      placeholder="Modelo do Dispositivo"
+                      id='model'
+                      name='model'
+                      placeholder='Modelo do Dispositivo'
+                      type='text'
                       value={formData.model}
                       onChange={handleInputChange}
                     />
@@ -146,12 +174,12 @@ const RepairFormModal = ({
                 </Col>
                 <Col md={4}>
                   <FormGroup>
-                    <Label for="device_color">Cor</Label>
+                    <Label for='device_color'>Cor</Label>
                     <Input
-                      type="text"
-                      name="device_color"
-                      id="device_color"
-                      placeholder="Cor do aparelho"
+                      id='device_color'
+                      name='device_color'
+                      placeholder='Cor do aparelho'
+                      type='text'
                       value={formData.device_color}
                       onChange={handleInputChange}
                     />
@@ -161,12 +189,12 @@ const RepairFormModal = ({
               <Row form>
                 <Col md={6}>
                   <FormGroup>
-                    <Label for="imei_serial">IMEI/Número de Série</Label>
+                    <Label for='imei_serial'>IMEI/Número de Série</Label>
                     <Input
-                      type="text"
-                      name="imei_serial"
-                      id="imei_serial"
-                      placeholder="IMEI ou Número de Série"
+                      id='imei_serial'
+                      name='imei_serial'
+                      placeholder='IMEI ou Número de Série'
+                      type='text'
                       value={formData.imei_serial}
                       onChange={handleInputChange}
                     />
@@ -174,61 +202,67 @@ const RepairFormModal = ({
                 </Col>
               </Row>
               <FormGroup>
-                <Label for="visual_condition">Condição Visual</Label>
+                <Label for='visual_condition'>Condição Visual</Label>
                 <Input
-                  type="textarea"
-                  name="visual_condition"
-                  id="visual_condition"
-                  placeholder="Ex: Tela trincada, arranhões na traseira"
+                  id='visual_condition'
+                  name='visual_condition'
+                  placeholder='Ex: Tela trincada, arranhões na traseira'
+                  type='textarea'
                   value={formData.visual_condition}
                   onChange={handleInputChange}
                 />
               </FormGroup>
             </TabPane>
-            <TabPane tabId="2">
+            <TabPane tabId='2'>
               <FormGroup>
-                <Label for="problem_description">Descrição do Problema <span className="text-danger">*</span></Label>
+                <Label for='problem_description'>
+                  Descrição do Problema <span className='text-danger'>*</span>
+                </Label>
                 <Input
-                  type="textarea"
-                  name="problem_description"
-                  id="problem_description"
-                  placeholder="Descreva o problema do dispositivo"
+                  required
+                  id='problem_description'
+                  invalid={!!formErrors.problem_description}
+                  name='problem_description'
+                  placeholder='Descreva o problema do dispositivo'
+                  type='textarea'
                   value={formData.problem_description}
                   onChange={handleInputChange}
-                  invalid={!!formErrors.problem_description}
-                  required
                 />
                 <FormFeedback>{formErrors.problem_description}</FormFeedback>
               </FormGroup>
               <Row form>
                 <Col md={6}>
                   <FormGroup>
-                    <Label for="initial_quote">Orçamento Inicial</Label>
+                    <Label for='initial_quote'>Orçamento Inicial</Label>
                     <NumericFormat
-                      name="initial_quote"
-                      id="initial_quote"
-                      placeholder="Valor do orçamento inicial"
+                      className='form-control'
+                      decimalScale={2}
+                      decimalSeparator=','
+                      fixedDecimalScale={true}
+                      id='initial_quote'
+                      name='initial_quote'
+                      placeholder='Valor do orçamento inicial'
+                      prefix='R$ '
+                      thousandSeparator='.'
                       value={formData.initial_quote}
                       onValueChange={(values) => {
                         setFormData({ ...formData, initial_quote: values.floatValue });
                       }}
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      prefix="R$ "
-                      decimalScale={2}
-                      fixedDecimalScale={true}
-                      className="form-control"
                     />
                   </FormGroup>
                 </Col>
                 <Col md={6}>
                   <FormGroup>
-                    <Label for="promised_date">Data Prometida</Label>
+                    <Label for='promised_date'>Data Prometida</Label>
                     <Input
-                      type="date"
-                      name="promised_date"
-                      id="promised_date"
-                      value={formData.promised_date ? moment(formData.promised_date).format('YYYY-MM-DD') : ''}
+                      id='promised_date'
+                      name='promised_date'
+                      type='date'
+                      value={
+                        formData.promised_date
+                          ? moment(formData.promised_date).format('YYYY-MM-DD')
+                          : ''
+                      }
                       onChange={handleInputChange}
                     />
                   </FormGroup>
@@ -237,65 +271,71 @@ const RepairFormModal = ({
               <Row form>
                 <Col md={6}>
                   <FormGroup>
-                    <Label for="service_cost">Custo do Serviço (Final) <span className="text-danger">*</span></Label>
+                    <Label for='service_cost'>
+                      Custo do Serviço (Final) <span className='text-danger'>*</span>
+                    </Label>
                     <NumericFormat
-                      name="service_cost"
-                      id="service_cost"
-                      placeholder="Custo do Serviço"
+                      required
+                      className={`form-control ${formErrors.service_cost ? 'is-invalid' : ''}`}
+                      decimalScale={2}
+                      decimalSeparator=','
+                      fixedDecimalScale={true}
+                      id='service_cost'
+                      name='service_cost'
+                      placeholder='Custo do Serviço'
+                      prefix='R$ '
+                      thousandSeparator='.'
                       value={formData.service_cost}
                       onValueChange={(values) => {
                         setFormData({ ...formData, service_cost: values.floatValue });
                       }}
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      prefix="R$ "
-                      decimalScale={2}
-                      fixedDecimalScale={true}
-                      className={`form-control ${formErrors.service_cost ? 'is-invalid' : ''}`}
-                      required
                     />
                     <FormFeedback>{formErrors.service_cost}</FormFeedback>
                   </FormGroup>
                 </Col>
                 <Col md={6}>
                   <FormGroup>
-                    <Label for="parts_cost">Custo das Peças (Final) <span className="text-danger">*</span></Label>
+                    <Label for='parts_cost'>
+                      Custo das Peças (Final) <span className='text-danger'>*</span>
+                    </Label>
                     <NumericFormat
-                      name="parts_cost"
-                      id="parts_cost"
-                      placeholder="Custo das Peças"
+                      required
+                      className={`form-control ${formErrors.parts_cost ? 'is-invalid' : ''}`}
+                      decimalScale={2}
+                      decimalSeparator=','
+                      fixedDecimalScale={true}
+                      id='parts_cost'
+                      name='parts_cost'
+                      placeholder='Custo das Peças'
+                      prefix='R$ '
+                      thousandSeparator='.'
                       value={formData.parts_cost}
                       onValueChange={(values) => {
                         setFormData({ ...formData, parts_cost: values.floatValue });
                       }}
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      prefix="R$ "
-                      decimalScale={2}
-                      fixedDecimalScale={true}
-                      className={`form-control ${formErrors.parts_cost ? 'is-invalid' : ''}`}
-                      required
                     />
                     <FormFeedback>{formErrors.parts_cost}</FormFeedback>
                   </FormGroup>
                 </Col>
               </Row>
             </TabPane>
-            <TabPane tabId="3">
-              <FormGroup tag="fieldset">
-                <Label>Status <span className="text-danger">*</span></Label>
-                <div className="d-flex flex-wrap">
+            <TabPane tabId='3'>
+              <FormGroup tag='fieldset'>
+                <Label>
+                  Status <span className='text-danger'>*</span>
+                </Label>
+                <div className='d-flex flex-wrap'>
                   {Object.entries(statusTranslations).map(([key, value]) => (
-                    <FormGroup check className="me-3" key={key}>
+                    <FormGroup key={key} check className='me-3'>
                       <Input
-                        type="radio"
-                        name="status"
-                        id={`status-${key}`}
-                        value={key}
                         checked={formData.status === key}
-                        onChange={handleInputChange}
-                        invalid={!!formErrors.status}
                         disabled={submitting}
+                        id={`status-${key}`}
+                        invalid={!!formErrors.status}
+                        name='status'
+                        type='radio'
+                        value={key}
+                        onChange={handleInputChange}
                       />{' '}
                       <Label check for={`status-${key}`}>
                         {value}
@@ -306,23 +346,23 @@ const RepairFormModal = ({
                 <FormFeedback>{formErrors.status}</FormFeedback>
               </FormGroup>
               <FormGroup>
-                <Label for="warranty_period">Garantia do Serviço</Label>
+                <Label for='warranty_period'>Garantia do Serviço</Label>
                 <Input
-                  type="text"
-                  name="warranty_period"
-                  id="warranty_period"
-                  placeholder="Ex: 90 dias, 1 ano"
+                  id='warranty_period'
+                  name='warranty_period'
+                  placeholder='Ex: 90 dias, 1 ano'
+                  type='text'
                   value={formData.warranty_period}
                   onChange={handleInputChange}
                 />
               </FormGroup>
               <FormGroup>
-                <Label for="notes">Notas Internas</Label>
+                <Label for='notes'>Notas Internas</Label>
                 <Input
-                  type="textarea"
-                  name="notes"
-                  id="notes"
-                  placeholder="Adicione notas internas sobre o reparo (não visível para o cliente)"
+                  id='notes'
+                  name='notes'
+                  placeholder='Adicione notas internas sobre o reparo (não visível para o cliente)'
+                  type='textarea'
                   value={formData.notes}
                   onChange={handleInputChange}
                 />
@@ -331,10 +371,20 @@ const RepairFormModal = ({
           </TabContent>
         </ModalBody>
         <ModalFooter>
-          <Button color="primary" type="submit" disabled={submitting}>
-            {submitting ? <><Spinner size="sm"> </Spinner> Salvando...</> : (selectedRepair ? 'Salvar Alterações' : 'Adicionar')}
+          <Button color='primary' disabled={submitting} type='submit'>
+            {submitting ? (
+              <>
+                <LoadingSpinner size='sm'> </LoadingSpinner> Salvando...
+              </>
+            ) : selectedRepair ? (
+              'Salvar Alterações'
+            ) : (
+              'Adicionar'
+            )}
           </Button>{' '}
-          <Button color="secondary" onClick={toggle} disabled={submitting}>Cancelar</Button>
+          <Button color='secondary' disabled={submitting} onClick={toggle}>
+            Cancelar
+          </Button>
         </ModalFooter>
       </Form>
     </Modal>

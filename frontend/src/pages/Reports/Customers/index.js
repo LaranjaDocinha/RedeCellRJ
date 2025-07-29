@@ -1,32 +1,46 @@
 import React from 'react';
 import { Container, Row, Col } from 'reactstrap';
+
 import { useGlobalFilter } from '../../../context/GlobalFilterContext';
 import useApi from '../../../hooks/useApi';
 
 // Components
 import ReportKPI from '../components/ReportKPI';
-import TopCustomersTable from './components/TopCustomersTable';
 import Breadcrumb from '../../../components/Common/Breadcrumb';
 
+import TopCustomersTable from './components/TopCustomersTable';
+
 const CustomerReport = () => {
-  document.title = "Relatório de Clientes | PDV Web";
+  document.title = 'Relatório de Clientes | PDV Web';
   const { globalPeriod } = useGlobalFilter();
 
-  const { data: reportData, loading, error } = useApi('GET', `/reports/customers?period=${globalPeriod}`, null, {
+  const {
+    data: reportData,
+    loading,
+    error,
+  } = useApi('GET', `/reports/customers?period=${globalPeriod}`, null, {
     keepPreviousData: true,
   });
 
   const kpis = [
-    { title: "Clientes Ativos", value: reportData?.summary?.activeCustomers, format: 'number' },
-    { title: "Novos Clientes", value: reportData?.summary?.newCustomers, format: 'number' },
-    { title: "Total Gasto por Cliente (Média)", value: reportData?.summary?.averageSpentPerCustomer, format: 'currency' },
-    { title: "Total de Compras (Média)", value: reportData?.summary?.averagePurchasesPerCustomer, format: 'number' },
+    { title: 'Clientes Ativos', value: reportData?.summary?.activeCustomers, format: 'number' },
+    { title: 'Novos Clientes', value: reportData?.summary?.newCustomers, format: 'number' },
+    {
+      title: 'Total Gasto por Cliente (Média)',
+      value: reportData?.summary?.averageSpentPerCustomer,
+      format: 'currency',
+    },
+    {
+      title: 'Total de Compras (Média)',
+      value: reportData?.summary?.averagePurchasesPerCustomer,
+      format: 'number',
+    },
   ];
 
   return (
-    <div className="page-content">
+    <div className='page-content'>
       <Container fluid>
-        <Breadcrumb title="Relatório de Clientes" />
+        <Breadcrumb title='Relatório de Clientes' />
         <Row>
           {kpis.map((kpi, index) => (
             <Col key={index} md={3}>
@@ -36,7 +50,7 @@ const CustomerReport = () => {
         </Row>
         <Row>
           <Col lg={12}>
-            <TopCustomersTable data={reportData?.topCustomers} loading={loading} error={error} />
+            <TopCustomersTable data={reportData?.topCustomers} error={error} loading={loading} />
           </Col>
         </Row>
       </Container>

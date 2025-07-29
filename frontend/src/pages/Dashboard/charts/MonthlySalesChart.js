@@ -1,10 +1,11 @@
 import React from 'react';
 import ReactApexChart from 'react-apexcharts';
-import { useThemeStore } from '../../../store/themeStore';
+
+import { useTheme } from '../../../context/ThemeContext';
 import { useDashboard } from '../../../context/DashboardContext';
 
 const DailyRevenueChart = () => {
-  const themeMode = useThemeStore((state) => state.theme.mode);
+  const { theme } = useTheme();
   const { dashboardData } = useDashboard();
 
   const chartData = dashboardData?.widgets?.dailyRevenueAndProfit || [];
@@ -12,12 +13,12 @@ const DailyRevenueChart = () => {
   const series = [
     {
       name: 'Faturamento',
-      data: chartData.map(item => ({ x: new Date(item.date).getTime(), y: item.revenue }))
+      data: chartData.map((item) => ({ x: new Date(item.date).getTime(), y: item.revenue })),
     },
     {
       name: 'Lucro',
-      data: chartData.map(item => ({ x: new Date(item.date).getTime(), y: item.profit }))
-    }
+      data: chartData.map((item) => ({ x: new Date(item.date).getTime(), y: item.profit })),
+    },
   ];
 
   const options = {
@@ -25,7 +26,7 @@ const DailyRevenueChart = () => {
       type: 'area',
       height: '100%',
       toolbar: { show: false },
-      foreColor: themeMode === 'dark' ? '#f0f2f5' : '#333',
+      foreColor: theme === 'dark' ? '#f0f2f5' : '#333',
     },
     dataLabels: { enabled: false },
     stroke: { curve: 'smooth', width: 2 },
@@ -37,7 +38,12 @@ const DailyRevenueChart = () => {
     },
     yaxis: {
       labels: {
-        formatter: (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 }),
+        formatter: (value) =>
+          value.toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+            minimumFractionDigits: 0,
+          }),
       },
     },
     tooltip: {
@@ -52,14 +58,14 @@ const DailyRevenueChart = () => {
     },
     colors: ['#556ee6', '#34c38f'],
     grid: {
-      borderColor: themeMode === 'dark' ? '#404040' : '#e0e0e0',
+      borderColor: theme === 'dark' ? '#404040' : '#e0e0e0',
       strokeDashArray: 4,
     },
   };
 
   return (
-    <div className="chart-container">
-      <ReactApexChart options={options} series={series} type="area" height="100%" />
+    <div className='chart-container'>
+      <ReactApexChart height='100%' options={options} series={series} type='area' />
     </div>
   );
 };

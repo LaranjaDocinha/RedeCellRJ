@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { authenticateToken } = require('../middleware/authMiddleware');
 
-
+// Aplicar middleware de autenticação a todas as rotas de reparo
+router.use(authenticateToken);
 
 // --- ROTAS PRINCIPAIS DE ORDENS DE SERVIÇO ---
 

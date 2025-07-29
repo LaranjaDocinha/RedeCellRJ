@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Table, Spinner, Alert, Badge } from 'reactstrap';
+import {
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  Table,
+  Alert,
+  Badge,
+} from 'reactstrap';
 import toast from 'react-hot-toast';
+
+import LoadingSpinner from '../../../components/Common/LoadingSpinner';
 import useApi from '../../../hooks/useApi';
 import { get } from '../../../helpers/api_helper';
 
@@ -11,11 +22,11 @@ const StockHistoryModal = ({ isOpen, toggle, variation }) => {
   useEffect(() => {
     if (isOpen && variation) {
       fetchHistory(`/products/stock-history/${variation.id}`)
-        .then(data => {
+        .then((data) => {
           setHistory(data);
         })
-        .catch(err => {
-          toast.error("Falha ao carregar o histórico de estoque.");
+        .catch((err) => {
+          toast.error('Falha ao carregar o histórico de estoque.');
           console.error(err);
         });
     }
@@ -23,29 +34,61 @@ const StockHistoryModal = ({ isOpen, toggle, variation }) => {
 
   const getChangeTypeLabel = (type) => {
     switch (type) {
-      case 'sale': return <Badge color="danger" pill>Venda</Badge>;
-      case 'return': return <Badge color="warning" pill className="text-dark">Devolução</Badge>;
-      case 'entry': return <Badge color="success" pill>Entrada</Badge>;
-      case 'adjustment': return <Badge color="info" pill>Ajuste</Badge>;
-      case 'initial': return <Badge color="secondary" pill>Inicial</Badge>;
-      default: return <Badge color="light" pill className="text-dark">{type}</Badge>;
+      case 'sale':
+        return (
+          <Badge pill color='danger'>
+            Venda
+          </Badge>
+        );
+      case 'return':
+        return (
+          <Badge pill className='text-dark' color='warning'>
+            Devolução
+          </Badge>
+        );
+      case 'entry':
+        return (
+          <Badge pill color='success'>
+            Entrada
+          </Badge>
+        );
+      case 'adjustment':
+        return (
+          <Badge pill color='info'>
+            Ajuste
+          </Badge>
+        );
+      case 'initial':
+        return (
+          <Badge pill color='secondary'>
+            Inicial
+          </Badge>
+        );
+      default:
+        return (
+          <Badge pill className='text-dark' color='light'>
+            {type}
+          </Badge>
+        );
     }
   };
 
   return (
-    <Modal isOpen={isOpen} toggle={toggle} size="lg" centered>
+    <Modal centered isOpen={isOpen} size='lg' toggle={toggle}>
       <ModalHeader toggle={toggle}>
         Histórico de Estoque: {variation?.product_name} ({variation?.color})
       </ModalHeader>
       <ModalBody>
         {loading ? (
-          <div className="text-center p-5"><Spinner /></div>
+          <div className='text-center p-5'>
+            <LoadingSpinner />
+          </div>
         ) : history.length === 0 ? (
-          <Alert color="info">Nenhum histórico de movimentação encontrado para este item.</Alert>
+          <Alert color='info'>Nenhum histórico de movimentação encontrado para este item.</Alert>
         ) : (
-          <div className="table-responsive">
-            <Table responsive hover className="align-middle">
-              <thead className="table-light">
+          <div className='table-responsive'>
+            <Table hover responsive className='align-middle'>
+              <thead className='table-light'>
                 <tr>
                   <th>Data</th>
                   <th>Tipo</th>
@@ -55,11 +98,13 @@ const StockHistoryModal = ({ isOpen, toggle, variation }) => {
                 </tr>
               </thead>
               <tbody>
-                {history.map(item => (
+                {history.map((item) => (
                   <tr key={item.id}>
                     <td>{new Date(item.created_at).toLocaleString('pt-BR')}</td>
                     <td>{getChangeTypeLabel(item.change_type)}</td>
-                    <td className={`fw-bold ${item.quantity_change > 0 ? 'text-success' : 'text-danger'}`}>
+                    <td
+                      className={`fw-bold ${item.quantity_change > 0 ? 'text-success' : 'text-danger'}`}
+                    >
                       {item.quantity_change > 0 ? `+${item.quantity_change}` : item.quantity_change}
                     </td>
                     <td>{item.reason}</td>
@@ -72,7 +117,9 @@ const StockHistoryModal = ({ isOpen, toggle, variation }) => {
         )}
       </ModalBody>
       <ModalFooter>
-        <Button color="secondary" onClick={toggle}>Fechar</Button>
+        <Button color='secondary' onClick={toggle}>
+          Fechar
+        </Button>
       </ModalFooter>
     </Modal>
   );

@@ -4,10 +4,14 @@ import './WidgetStates.scss';
 
 const WidgetError = ({ onRetry = () => {} }) => {
   return (
-    <div className="widget-state-container">
-      <i className="ri-error-warning-line error-icon"></i>
+    <div className='widget-state-container'>
+      <i className='ri-error-warning-line error-icon'></i>
       <p>Ocorreu um erro ao carregar os dados.</p>
-      {onRetry && <button onClick={onRetry} className="retry-btn">Tentar Novamente</button>}
+      {onRetry && (
+        <button className='retry-btn' onClick={onRetry}>
+          Tentar Novamente
+        </button>
+      )}
     </div>
   );
 };

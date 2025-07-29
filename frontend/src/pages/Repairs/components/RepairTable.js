@@ -1,7 +1,9 @@
 import React from 'react';
 import moment from 'moment';
-import { Table, Input, Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Spinner } from "reactstrap";
-import { Link } from "react-router-dom"; // Import Link for customer details
+import { Table, Input, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
+import { Link } from 'react-router-dom'; // Import Link for customer details
+
+import LoadingSpinner from '../../../components/Common/LoadingSpinner';
 
 const RepairTable = ({
   repairs,
@@ -27,33 +29,35 @@ const RepairTable = ({
   handleDeleteRepair,
 }) => {
   return (
-    <div className="table-responsive">
-      <Table className="table mb-0">
+    <div className='table-responsive'>
+      <Table className='table mb-0'>
         <thead>
           <tr>
             <th>
               <Input
-                type="checkbox"
-                onChange={handleSelectAllRepairs}
                 checked={repairs.length > 0 && selectedRepairIds.length === repairs.length}
+                type='checkbox'
+                onChange={handleSelectAllRepairs}
               />
             </th>
-            <th onClick={() => handleSort('customer_name')} style={{ cursor: 'pointer' }}>
+            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('customer_name')}>
               Cliente {sortColumn === 'customer_name' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
             </th>
-            <th onClick={() => handleSort('device_type')} style={{ cursor: 'pointer' }}>
-              Tipo Dispositivo {sortColumn === 'device_type' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('device_type')}>
+              Tipo Dispositivo{' '}
+              {sortColumn === 'device_type' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
             </th>
-            <th onClick={() => handleSort('brand')} style={{ cursor: 'pointer' }}>
+            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('brand')}>
               Marca {sortColumn === 'brand' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
             </th>
-            <th onClick={() => handleSort('model')} style={{ cursor: 'pointer' }}>
+            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('model')}>
               Modelo {sortColumn === 'model' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
             </th>
-            <th onClick={() => handleSort('created_at')} style={{ cursor: 'pointer' }}>
-              Data do Reparo {sortColumn === 'created_at' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('created_at')}>
+              Data do Reparo{' '}
+              {sortColumn === 'created_at' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
             </th>
-            <th onClick={() => handleSort('status')} style={{ cursor: 'pointer' }}>
+            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('status')}>
               Status {sortColumn === 'status' && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
             </th>
             <th>Ações</th>
@@ -64,21 +68,24 @@ const RepairTable = ({
             <tr key={repair.id} className={getRepairRowClass(repair)}>
               <td>
                 <Input
-                  type="checkbox"
                   checked={selectedRepairIds.includes(repair.id)}
+                  type='checkbox'
                   onChange={() => handleSelectRepair(repair.id)}
                 />
               </td>
               <td>
-                <a href="#" onClick={(e) => {
-                  e.preventDefault();
-                  const customer = customers.find(c => c.id === repair.customer_id);
-                  if (customer) {
-                    handleCustomerDetailsClick(customer);
-                  }
-                }}>
+                <button
+                  className='btn btn-link p-0 border-0 align-baseline' // Adiciona classes para parecer um link
+                  type='button'
+                  onClick={() => {
+                    const customer = customers.find((c) => c.id === repair.customer_id);
+                    if (customer) {
+                      handleCustomerDetailsClick(customer);
+                    }
+                  }}
+                >
                   {repair.customer_name}
-                </a>
+                </button>
               </td>
               <td>{repair.device_type}</td>
               <td>{repair.brand}</td>
@@ -86,14 +93,18 @@ const RepairTable = ({
               <td>{moment(repair.created_at).format('DD/MM/YYYY')}</td>
               <td>
                 <Input
-                  type="select"
-                  name="status"
+                  className={`text-${statusColors[repair.status]}`}
+                  disabled={updatingStatusId === repair.id}
                   id={`status-${repair.id}`}
+                  name='status'
+                  style={{
+                    width: 'auto',
+                    display: 'inline-block',
+                    marginRight: updatingStatusId === repair.id ? '5px' : '0',
+                  }}
+                  type='select'
                   value={repair.status}
                   onChange={(e) => handleStatusChange(repair.id, e.target.value)}
-                  disabled={updatingStatusId === repair.id}
-                  className={`text-${statusColors[repair.status]}`}
-                  style={{ width: 'auto', display: 'inline-block', marginRight: updatingStatusId === repair.id ? '5px' : '0' }}
                 >
                   {Object.entries(statusTranslations).map(([key, value]) => (
                     <option key={key} value={key}>
@@ -101,18 +112,24 @@ const RepairTable = ({
                     </option>
                   ))}
                 </Input>
-                {updatingStatusId === repair.id && <Spinner size="sm" className="ms-2" />}
+                {updatingStatusId === repair.id && <LoadingSpinner className='ms-2' size='sm' />}
               </td>
               <td>
-                <Dropdown isOpen={dropdownOpen[repair.id]} toggle={() => toggleDropdown(repair.id)} direction="down">
-                  <DropdownToggle caret color="secondary" size="sm">
+                <Dropdown
+                  direction='down'
+                  isOpen={dropdownOpen[repair.id]}
+                  toggle={() => toggleDropdown(repair.id)}
+                >
+                  <DropdownToggle caret color='secondary' size='sm'>
                     Opções
                   </DropdownToggle>
                   <DropdownMenu>
                     <DropdownItem onClick={() => handleDetailsClick(repair)}>Detalhes</DropdownItem>
                     <DropdownItem onClick={() => handleEditClick(repair)}>Editar</DropdownItem>
                     <DropdownItem divider />
-                    <DropdownItem onClick={() => handleDeleteRepair(repair.id)}>Excluir</DropdownItem>
+                    <DropdownItem onClick={() => handleDeleteRepair(repair.id)}>
+                      Excluir
+                    </DropdownItem>
                   </DropdownMenu>
                 </Dropdown>
               </td>

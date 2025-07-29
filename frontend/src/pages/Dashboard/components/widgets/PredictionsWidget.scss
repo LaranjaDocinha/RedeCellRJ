@@ -1,0 +1,7 @@
+.prediction-item {
+    transition: background-color 0.2s ease-in-out;
+
+    &:hover {
+        background-color: var(--color-component-secondary-bg);
+    }
+}

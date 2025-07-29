@@ -1,3 +1,4 @@
+/*
 -- Renomeia a tabela de "usuarios" para "users" para consistência com o código
 ALTER TABLE usuarios RENAME TO users;
 
@@ -24,3 +25,4 @@ ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT TRUE;
 -- Em um ambiente de produção, isso seria gerenciado de outra forma.
 UPDATE users SET role = 'admin' WHERE id = 1;
 COMMIT;
+*/

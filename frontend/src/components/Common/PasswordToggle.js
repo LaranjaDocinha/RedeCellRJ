@@ -5,14 +5,14 @@ import './PasswordToggle.scss';
 const PasswordToggle = ({ showPassword, togglePasswordVisibility }) => {
   return (
     <button
-      type="button"
+      aria-label='Toggle password visibility'
+      className='password-toggle-btn'
+      type='button'
       onClick={togglePasswordVisibility}
-      className="password-toggle-btn"
-      aria-label="Toggle password visibility"
     >
-      <div className="icon-wrapper">
-        <i className="material-symbols-outlined">
-          {showPassword ? "visibility" : "visibility_off"}
+      <div className='icon-wrapper'>
+        <i className='material-symbols-outlined'>
+          {showPassword ? 'visibility' : 'visibility_off'}
         </i>
       </div>
     </button>

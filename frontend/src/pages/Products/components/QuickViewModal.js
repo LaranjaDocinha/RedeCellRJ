@@ -1,15 +1,8 @@
 import React, { useContext } from 'react';
-import {
-  Modal,
-  ModalHeader,
-  ModalBody,
-  Row,
-  Col,
-  Table,
-  Badge,
-} from 'reactstrap';
-import { ProductContext } from '../../../context/ProductContext';
+import { Modal, ModalHeader, ModalBody, Row, Col, Table, Badge } from 'reactstrap';
 import { NumericFormat } from 'react-number-format';
+
+import { ProductContext } from '../../../context/ProductContext';
 import placeholderImage from '../../../assets/images/placeholder.svg';
 import './QuickViewModal.scss';
 
@@ -24,26 +17,35 @@ const QuickViewModal = () => {
     return null;
   }
 
-  const mainImage = product.variations?.find(v => v.image_url)?.image_url || placeholderImage;
+  const mainImage = product.variations?.find((v) => v.image_url)?.image_url || placeholderImage;
 
   return (
-    <Modal isOpen={isOpen} toggle={toggle} size="lg" centered>
+    <Modal centered isOpen={isOpen} size='lg' toggle={toggle}>
       <ModalHeader toggle={toggle}>{product.name}</ModalHeader>
       <ModalBody>
         <Row>
-          <Col md="5" className="quick-view-image-col">
-            <img src={mainImage} alt={product.name} className="img-fluid rounded" />
-            <div className="mt-2">
-              <p className="mb-1"><strong>Categoria:</strong> {product.category?.name || 'N/A'}</p>
-              <p className="mb-1"><strong>Tipo:</strong> <Badge color={product.productType === 'physical' ? 'info' : 'secondary'}>{product.productType === 'physical' ? 'Físico' : 'Serviço'}</Badge></p>
-              <p className="mb-1"><strong>SKU:</strong> {product.sku || 'N/A'}</p>
+          <Col className='quick-view-image-col' md='5'>
+            <img alt={product.name} className='img-fluid rounded' src={mainImage} />
+            <div className='mt-2'>
+              <p className='mb-1'>
+                <strong>Categoria:</strong> {product.category?.name || 'N/A'}
+              </p>
+              <p className='mb-1'>
+                <strong>Tipo:</strong>{' '}
+                <Badge color={product.productType === 'physical' ? 'info' : 'secondary'}>
+                  {product.productType === 'physical' ? 'Físico' : 'Serviço'}
+                </Badge>
+              </p>
+              <p className='mb-1'>
+                <strong>SKU:</strong> {product.sku || 'N/A'}
+              </p>
             </div>
           </Col>
-          <Col md="7">
+          <Col md='7'>
             <h4>Variações de Produto</h4>
             <p>{product.description || 'Este produto não tem uma descrição detalhada.'}</p>
-            <div className="table-responsive">
-              <Table className="variations-table">
+            <div className='table-responsive'>
+              <Table className='variations-table'>
                 <thead>
                   <tr>
                     <th>Variação</th>
@@ -53,16 +55,30 @@ const QuickViewModal = () => {
                 </thead>
                 <tbody>
                   {product.variations && product.variations.length > 0 ? (
-                    product.variations.map(v => (
+                    product.variations.map((v) => (
                       <tr key={v.id}>
                         <td>{v.name}</td>
-                        <td><NumericFormat value={v.price} displayType={'text'} thousandSeparator="." decimalSeparator="," prefix={'R$ '} /></td>
-                        <td><Badge color={v.stock_quantity > 0 ? 'success' : 'danger'} pill>{v.stock_quantity}</Badge></td>
+                        <td>
+                          <NumericFormat
+                            decimalSeparator=','
+                            displayType={'text'}
+                            prefix={'R$ '}
+                            thousandSeparator='.'
+                            value={v.price}
+                          />
+                        </td>
+                        <td>
+                          <Badge pill color={v.stock_quantity > 0 ? 'success' : 'danger'}>
+                            {v.stock_quantity}
+                          </Badge>
+                        </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="3" className="text-center">Nenhuma variação encontrada.</td>
+                      <td className='text-center' colSpan='3'>
+                        Nenhuma variação encontrada.
+                      </td>
                     </tr>
                   )}
                 </tbody>

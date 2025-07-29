@@ -4,39 +4,9 @@
 
 @import "../../../components/Common/_design_system.scss";
 
-// Animação de entrada
-@keyframes fadeInSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-// Animação de saída
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-    height: 0;
-    padding: 0;
-    margin: 0;
-    border: 0;
-  }
-}
 
-.product-card-col {
-  animation: fadeInSlideUp 0.5s ease-out forwards;
 
-  &.exiting {
-    animation: fadeOut 0.5s ease-out forwards;
-  }
-}
 
 .product-card {
   transition: all 0.3s ease-in-out;

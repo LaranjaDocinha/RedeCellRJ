@@ -1,7 +1,20 @@
-import React, { useState } from "react";
-import { Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, Button, Spinner, Alert } from "reactstrap";
-import axios from "axios";
-import config from "../../../config";
+import React, { useState } from 'react';
+import {
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Form,
+  FormGroup,
+  Label,
+  Input,
+  Button,
+  Alert,
+} from 'reactstrap';
+import axios from 'axios';
+
+import LoadingSpinner from '../../../components/Common/LoadingSpinner';
+import config from '../../../config';
 
 const CustomerFormModal = ({ isOpen, toggle, onSubmitSuccess }) => {
   const API_URL = config.api.API_URL;
@@ -9,14 +22,14 @@ const CustomerFormModal = ({ isOpen, toggle, onSubmitSuccess }) => {
     name: '',
     phone: '',
     email: '',
-    address: ''
+    address: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -30,41 +43,76 @@ const CustomerFormModal = ({ isOpen, toggle, onSubmitSuccess }) => {
       setFormData({ name: '', phone: '', email: '', address: '' }); // Reset form
       toggle(); // Close modal
     } catch (err) {
-      console.error("Erro ao cadastrar cliente:", err);
-      setError(err.response?.data?.msg || "Falha ao cadastrar cliente.");
+      console.error('Erro ao cadastrar cliente:', err);
+      setError(err.response?.data?.msg || 'Falha ao cadastrar cliente.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} toggle={toggle} centered>
+    <Modal centered isOpen={isOpen} toggle={toggle}>
       <ModalHeader toggle={toggle}>Cadastrar Novo Cliente</ModalHeader>
       <Form onSubmit={handleSubmit}>
         <ModalBody>
-          {error && <Alert color="danger">{error}</Alert>}
+          {error && <Alert color='danger'>{error}</Alert>}
           <FormGroup>
-            <Label for="name">Nome <span className="text-danger">*</span></Label>
-            <Input type="text" name="name" id="name" value={formData.name} onChange={handleChange} required />
+            <Label for='name'>
+              Nome <span className='text-danger'>*</span>
+            </Label>
+            <Input
+              required
+              id='name'
+              name='name'
+              type='text'
+              value={formData.name}
+              onChange={handleChange}
+            />
           </FormGroup>
           <FormGroup>
-            <Label for="phone">Telefone</Label>
-            <Input type="text" name="phone" id="phone" value={formData.phone} onChange={handleChange} />
+            <Label for='phone'>Telefone</Label>
+            <Input
+              id='phone'
+              name='phone'
+              type='text'
+              value={formData.phone}
+              onChange={handleChange}
+            />
           </FormGroup>
           <FormGroup>
-            <Label for="email">Email</Label>
-            <Input type="email" name="email" id="email" value={formData.email} onChange={handleChange} />
+            <Label for='email'>Email</Label>
+            <Input
+              id='email'
+              name='email'
+              type='email'
+              value={formData.email}
+              onChange={handleChange}
+            />
           </FormGroup>
           <FormGroup>
-            <Label for="address">Endereço</Label>
-            <Input type="textarea" name="address" id="address" value={formData.address} onChange={handleChange} />
+            <Label for='address'>Endereço</Label>
+            <Input
+              id='address'
+              name='address'
+              type='textarea'
+              value={formData.address}
+              onChange={handleChange}
+            />
           </FormGroup>
         </ModalBody>
         <ModalFooter>
-          <Button color="primary" type="submit" disabled={loading}>
-            {loading ? <><Spinner size="sm" /> Salvando...</> : 'Salvar Cliente'}
+          <Button color='primary' disabled={loading} type='submit'>
+            {loading ? (
+              <>
+                <LoadingSpinner size='sm' /> Salvando...
+              </>
+            ) : (
+              'Salvar Cliente'
+            )}
           </Button>{' '}
-          <Button color="secondary" onClick={toggle} disabled={loading}>Cancelar</Button>
+          <Button color='secondary' disabled={loading} onClick={toggle}>
+            Cancelar
+          </Button>
         </ModalFooter>
       </Form>
     </Modal>

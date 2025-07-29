@@ -1,9 +1,19 @@
 import React, { useState, useContext, useEffect } from 'react';
 import {
-  Modal, ModalHeader, ModalBody, ModalFooter, Button, Input, ListGroup,
-  ListGroupItem, Form, FormGroup, Spinner
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  Input,
+  ListGroup,
+  ListGroupItem,
+  Form,
+  FormGroup,
+  Spinner,
 } from 'reactstrap';
 import PropTypes from 'prop-types';
+
 import { ProductContext } from '../../../context/ProductContext';
 import ConfirmationModal from '../../../components/Common/ConfirmationModal';
 import './CategoryManagerModal.scss';
@@ -15,7 +25,7 @@ const CategoryManagerModal = ({ isOpen, toggle }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editMode, setEditMode] = useState(null); // { id, name }
   const [inputValue, setInputValue] = useState('');
-  
+
   const [deleteConfirmModalOpen, setDeleteConfirmModalOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
 
@@ -63,7 +73,7 @@ const CategoryManagerModal = ({ isOpen, toggle }) => {
 
   const handleDeleteConfirm = async () => {
     if (!categoryToDelete) return;
-    
+
     setIsSubmitting(true);
     try {
       await deleteCategory(categoryToDelete.id);
@@ -79,19 +89,33 @@ const CategoryManagerModal = ({ isOpen, toggle }) => {
 
   return (
     <>
-      <Modal isOpen={isOpen} toggle={toggle} centered>
+      <Modal centered isOpen={isOpen} toggle={toggle}>
         <ModalHeader toggle={toggle}>Gerenciar Categorias</ModalHeader>
         <ModalBody>
-          <ListGroup flush className="category-list">
-            {categories.map(cat => (
-              <ListGroupItem key={cat.id} className="d-flex justify-content-between align-items-center">
+          <ListGroup flush className='category-list'>
+            {categories.map((cat) => (
+              <ListGroupItem
+                key={cat.id}
+                className='d-flex justify-content-between align-items-center'
+              >
                 <span>{cat.name}</span>
                 <div>
-                  <Button color="link" size="sm" onClick={() => handleEditClick(cat)} aria-label={`Editar ${cat.name}`}>
-                    <i className="bx bx-pencil"></i>
+                  <Button
+                    aria-label={`Editar ${cat.name}`}
+                    color='link'
+                    size='sm'
+                    onClick={() => handleEditClick(cat)}
+                  >
+                    <i className='bx bx-pencil'></i>
                   </Button>
-                  <Button color="link" size="sm" className="text-danger" onClick={() => handleDeleteClick(cat)} aria-label={`Excluir ${cat.name}`}>
-                    <i className="bx bx-trash"></i>
+                  <Button
+                    aria-label={`Excluir ${cat.name}`}
+                    className='text-danger'
+                    color='link'
+                    size='sm'
+                    onClick={() => handleDeleteClick(cat)}
+                  >
+                    <i className='bx bx-trash'></i>
                   </Button>
                 </div>
               </ListGroupItem>
@@ -102,21 +126,21 @@ const CategoryManagerModal = ({ isOpen, toggle }) => {
             <FormGroup>
               <h5>{editMode ? 'Editar Categoria' : 'Adicionar Nova Categoria'}</h5>
               <Input
-                type="text"
+                required
+                placeholder='Nome da categoria'
+                type='text'
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Nome da categoria"
-                required
               />
             </FormGroup>
-            <div className="d-flex justify-content-end">
+            <div className='d-flex justify-content-end'>
               {editMode && (
-                <Button color="secondary" type="button" onClick={handleCancelEdit} className="me-2">
+                <Button className='me-2' color='secondary' type='button' onClick={handleCancelEdit}>
                   Cancelar
                 </Button>
               )}
-              <Button color="primary" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? <Spinner size="sm" /> : (editMode ? 'Salvar' : 'Adicionar')}
+              <Button color='primary' disabled={isSubmitting} type='submit'>
+                {isSubmitting ? <Spinner size='sm' /> : editMode ? 'Salvar' : 'Adicionar'}
               </Button>
             </div>
           </Form>
@@ -125,11 +149,11 @@ const CategoryManagerModal = ({ isOpen, toggle }) => {
 
       <ConfirmationModal
         isOpen={deleteConfirmModalOpen}
+        loading={isSubmitting}
+        message={`Tem certeza que deseja excluir a categoria "${categoryToDelete?.name}"?`}
+        title='Confirmar Exclusão'
         toggle={() => setDeleteConfirmModalOpen(!deleteConfirmModalOpen)}
         onConfirm={handleDeleteConfirm}
-        loading={isSubmitting}
-        title="Confirmar Exclusão"
-        message={`Tem certeza que deseja excluir a categoria "${categoryToDelete?.name}"?`}
       />
     </>
   );

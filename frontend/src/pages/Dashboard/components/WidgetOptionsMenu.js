@@ -24,27 +24,27 @@ const WidgetOptionsMenu = ({ onRemove = () => {}, onExpand = () => {}, onExport 
   };
 
   return (
-    <div className="widget-options-menu" ref={menuRef}>
-      <button className="widget-options-btn" onClick={() => setIsOpen(!isOpen)}>
-        <i className="ri-more-2-fill"></i>
+    <div ref={menuRef} className='widget-options-menu'>
+      <button className='widget-options-btn' onClick={() => setIsOpen(!isOpen)}>
+        <i className='ri-more-2-fill'></i>
       </button>
       {isOpen && (
-        <div className="options-dropdown">
+        <div className='options-dropdown'>
           <ul>
             <li>
-              <button onClick={createHandler(onExpand)} className="dropdown-item">
-                <i className="ri-fullscreen-line"></i> Expandir
+              <button className='dropdown-item' onClick={createHandler(onExpand)}>
+                <i className='ri-fullscreen-line'></i> Expandir
               </button>
             </li>
             <li>
-              <button onClick={createHandler(onExport)} className="dropdown-item">
-                <i className="ri-download-2-line"></i> Exportar
+              <button className='dropdown-item' onClick={createHandler(onExport)}>
+                <i className='ri-download-2-line'></i> Exportar
               </button>
             </li>
-            <li className="separator"></li>
+            <li className='separator'></li>
             <li>
-              <button onClick={createHandler(onRemove)} className="dropdown-item danger">
-                <i className="ri-delete-bin-line"></i> Remover
+              <button className='dropdown-item danger' onClick={createHandler(onRemove)}>
+                <i className='ri-delete-bin-line'></i> Remover
               </button>
             </li>
           </ul>

@@ -1,12 +1,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Container, Row, Col, Card, CardBody, CardTitle,
-  Button, Table, Badge, Input, Modal, ModalHeader, ModalBody, ModalFooter, Spinner
+  Container,
+  Row,
+  Col,
+  Card,
+  CardBody,
+  CardTitle,
+  Button,
+  Table,
+  Badge,
+  Input,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
 } from 'reactstrap';
+import toast from 'react-hot-toast';
+
+import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import useApi from '../../hooks/useApi';
 import { get, post } from '../../helpers/api_helper';
-import toast from 'react-hot-toast';
 
 const PurchaseOrderDetail = () => {
   const { id } = useParams();
@@ -41,8 +55,8 @@ const PurchaseOrderDetail = () => {
     if (!modal) {
       // Ao abrir o modal, preenche os itens a receber com a quantidade pendente
       const toReceive = items
-        .filter(item => item.quantity > item.quantity_received)
-        .map(item => ({
+        .filter((item) => item.quantity > item.quantity_received)
+        .map((item) => ({
           itemId: item.id,
           productName: item.product_name,
           color: item.color,
@@ -57,7 +71,8 @@ const PurchaseOrderDetail = () => {
 
   const handleReceiveQuantityChange = (index, value) => {
     const updatedItems = [...itemsToReceive];
-    const maxQuantity = updatedItems[index].quantity_ordered - updatedItems[index].quantity_received_total;
+    const maxQuantity =
+      updatedItems[index].quantity_ordered - updatedItems[index].quantity_received_total;
     // Garante que o valor não seja negativo nem maior que o pendente
     const newQuantity = Math.max(0, Math.min(Number(value), maxQuantity));
     updatedItems[index].quantityToReceive = newQuantity;
@@ -66,63 +81,82 @@ const PurchaseOrderDetail = () => {
 
   const handleReceiveSubmit = async () => {
     const itemsPayload = itemsToReceive
-      .filter(item => item.quantity_to_receive > 0)
-      .map(item => ({
+      .filter((item) => item.quantity_to_receive > 0)
+      .map((item) => ({
         itemId: item.itemId,
         quantity: item.quantityToReceive,
       }));
 
     if (itemsPayload.length === 0) {
-      toast.error("Nenhuma quantidade especificada para recebimento.");
+      toast.error('Nenhuma quantidade especificada para recebimento.');
       return;
     }
 
     try {
       await receiveItemsApi(`/purchase-orders/${id}/receive`, { itemsToReceive: itemsPayload });
-      toast.success("Itens recebidos com sucesso!");
+      toast.success('Itens recebidos com sucesso!');
       fetchDetails(); // Re-fetch para atualizar o status e quantidades
       toggleModal();
     } catch (error) {
       toast.error(`Erro ao receber itens: ${error.message || 'Erro desconhecido'}`);
     }
   };
-  
+
   const getStatusBadge = (status) => {
     const statusMap = {
-      'Pendente': 'warning',
+      Pendente: 'warning',
       'Recebido Parcialmente': 'info',
-      'Recebido': 'success',
-      'Cancelado': 'danger',
+      Recebido: 'success',
+      Cancelado: 'danger',
     };
     return <Badge color={statusMap[status] || 'secondary'}>{status}</Badge>;
   };
 
   if (loading || !order) {
-    return <div className="page-content"><Container fluid><Spinner>Loading...</Spinner></Container></div>;
+    return (
+      <div className='page-content'>
+        <Container fluid>
+          <LoadingSpinner>Loading...</LoadingSpinner>
+        </Container>
+      </div>
+    );
   }
 
   return (
-    <div className="page-content">
+    <div className='page-content'>
       <Container fluid>
         <Card>
           <CardBody>
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <CardTitle className="h4">Detalhes da Ordem de Compra #{order.id}</CardTitle>
-                <Button color="secondary" onClick={() => navigate('/purchase-orders')}>Voltar</Button>
+            <div className='d-flex justify-content-between align-items-center mb-4'>
+              <CardTitle className='h4'>Detalhes da Ordem de Compra #{order.id}</CardTitle>
+              <Button color='secondary' onClick={() => navigate('/purchase-orders')}>
+                Voltar
+              </Button>
             </div>
 
-            <Row className="mb-3">
-                <Col md={4}><strong>Fornecedor:</strong> {order.supplier_name || 'N/A'}</Col>
-                <Col md={4}><strong>Data do Pedido:</strong> {new Date(order.order_date).toLocaleDateString('pt-BR')}</Col>
-                <Col md={4}><strong>Status:</strong> {getStatusBadge(order.status)}</Col>
+            <Row className='mb-3'>
+              <Col md={4}>
+                <strong>Fornecedor:</strong> {order.supplier_name || 'N/A'}
+              </Col>
+              <Col md={4}>
+                <strong>Data do Pedido:</strong>{' '}
+                {new Date(order.order_date).toLocaleDateString('pt-BR')}
+              </Col>
+              <Col md={4}>
+                <strong>Status:</strong> {getStatusBadge(order.status)}
+              </Col>
             </Row>
             <Row>
-                <Col md={4}><strong>Valor Total:</strong> R$ {parseFloat(order.total_amount).toFixed(2)}</Col>
-                <Col md={8}><strong>Observações:</strong> {order.notes || 'Nenhuma'}</Col>
+              <Col md={4}>
+                <strong>Valor Total:</strong> R$ {parseFloat(order.total_amount).toFixed(2)}
+              </Col>
+              <Col md={8}>
+                <strong>Observações:</strong> {order.notes || 'Nenhuma'}
+              </Col>
             </Row>
 
             <hr />
-            <h5 className="font-size-16 mb-3">Itens</h5>
+            <h5 className='font-size-16 mb-3'>Itens</h5>
             <Table bordered responsive>
               <thead>
                 <tr>
@@ -135,7 +169,7 @@ const PurchaseOrderDetail = () => {
                 </tr>
               </thead>
               <tbody>
-                {items.map(item => (
+                {items.map((item) => (
                   <tr key={item.id}>
                     <td>{item.product_name}</td>
                     <td>{item.color || 'Padrão'}</td>
@@ -149,18 +183,18 @@ const PurchaseOrderDetail = () => {
             </Table>
 
             {order.status !== 'Recebido' && order.status !== 'Cancelado' && (
-                <div className="d-flex justify-content-end mt-4">
-                    <Button color="success" onClick={toggleModal}>
-                        Registrar Recebimento de Itens
-                    </Button>
-                </div>
+              <div className='d-flex justify-content-end mt-4'>
+                <Button color='success' onClick={toggleModal}>
+                  Registrar Recebimento de Itens
+                </Button>
+              </div>
             )}
           </CardBody>
         </Card>
       </Container>
 
       {/* Modal de Recebimento */}
-      <Modal isOpen={modal} toggle={toggleModal} size="lg" fade={false}>
+      <Modal fade={false} isOpen={modal} size='lg' toggle={toggleModal}>
         <ModalHeader toggle={toggleModal}>Registrar Recebimento de Itens</ModalHeader>
         <ModalBody>
           <p>Especifique a quantidade de cada item que está sendo recebido agora.</p>
@@ -175,15 +209,17 @@ const PurchaseOrderDetail = () => {
             <tbody>
               {itemsToReceive.map((item, index) => (
                 <tr key={item.itemId}>
-                  <td>{item.productName} ({item.color || 'Padrão'})</td>
+                  <td>
+                    {item.productName} ({item.color || 'Padrão'})
+                  </td>
                   <td>{item.quantityOrdered - item.quantityReceivedTotal}</td>
                   <td>
                     <Input
-                      type="number"
+                      max={item.quantityOrdered - item.quantityReceivedTotal}
+                      min='0'
+                      type='number'
                       value={item.quantityToReceive}
                       onChange={(e) => handleReceiveQuantityChange(index, e.target.value)}
-                      min="0"
-                      max={item.quantityOrdered - item.quantityReceivedTotal}
                     />
                   </td>
                 </tr>
@@ -192,9 +228,11 @@ const PurchaseOrderDetail = () => {
           </Table>
         </ModalBody>
         <ModalFooter>
-          <Button color="secondary" onClick={toggleModal}>Cancelar</Button>
-          <Button color="primary" onClick={handleReceiveSubmit} disabled={receivingItems}>
-            {receivingItems ? <Spinner size="sm" /> : 'Confirmar Recebimento'}
+          <Button color='secondary' onClick={toggleModal}>
+            Cancelar
+          </Button>
+          <Button color='primary' disabled={receivingItems} onClick={handleReceiveSubmit}>
+            {receivingItems ? <LoadingSpinner size='sm' /> : 'Confirmar Recebimento'}
           </Button>
         </ModalFooter>
       </Modal>

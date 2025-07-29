@@ -1,7 +1,8 @@
-import React from "react";
-import ReactApexChart from "react-apexcharts";
-import "./dashboard.scss";
-import getChartColorsArray from "../../components/Common/ChartsDynamicColor";
+import React from 'react';
+import ReactApexChart from 'react-apexcharts';
+
+import './dashboard.scss';
+import getChartColorsArray from '../../components/Common/ChartsDynamicColor';
 const ApexRadial = ({ dataColors }) => {
   const apexRadialChartColors = getChartColorsArray(dataColors);
   const series = [67];
@@ -12,16 +13,16 @@ const ApexRadial = ({ dataColors }) => {
         endAngle: 135,
         dataLabels: {
           name: {
-            fontSize: "13px",
+            fontSize: '13px',
             color: void 0,
             offsetY: 60,
           },
           value: {
             offsetY: 22,
-            fontSize: "16px",
+            fontSize: '16px',
             color: void 0,
             formatter: function (e) {
-              return e + "%";
+              return e + '%';
             },
           },
         },
@@ -29,9 +30,9 @@ const ApexRadial = ({ dataColors }) => {
     },
     colors: apexRadialChartColors,
     fill: {
-      type: "gradient",
+      type: 'gradient',
       gradient: {
-        shade: "dark",
+        shade: 'dark',
         shadeIntensity: 0.15,
         inverseColors: !1,
         opacityFrom: 1,
@@ -42,15 +43,15 @@ const ApexRadial = ({ dataColors }) => {
     stroke: {
       dashArray: 4,
     },
-    labels: ["Series A"],
+    labels: ['Series A'],
   };
   return (
     <ReactApexChart
+      className='apex-charts'
+      height='200'
       options={options}
       series={series}
-      type="radialBar"
-      height="200"
-      className="apex-charts"
+      type='radialBar'
     />
   );
 };

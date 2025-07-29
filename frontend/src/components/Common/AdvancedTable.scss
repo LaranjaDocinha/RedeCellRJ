@@ -1,4 +1,9 @@
 .advanced-table-container {
+  background-color: var(--color-component-bg);
+  padding: 1.5rem;
+  border-radius: var(--card-border-radius);
+  box-shadow: var(--shadow-md);
+  
   .table-controls {
     display: flex;
     justify-content: space-between;
@@ -6,44 +11,49 @@
     margin-bottom: 1rem;
 
     .form-control-sm {
-      background-color: var(--bs-tertiary-bg);
-      color: var(--bs-body-color);
-      border-color: var(--bs-border-color);
+      background-color: var(--table-header-bg);
+      color: var(--table-text-color);
+      border-color: var(--table-border-color);
     }
   }
 
   .table-responsive {
     .table {
-      background-color: var(--bs-card-bg);
-      color: var(--bs-body-color);
+      background-color: var(--table-bg);
+      color: var(--table-text-color);
       border-collapse: separate;
       border-spacing: 0;
 
       th {
         cursor: pointer;
         user-select: none;
-        background-color: var(--bs-tertiary-bg);
-        color: var(--bs-heading-color);
-        border-bottom: 2px solid var(--bs-border-color);
+        background-color: var(--table-header-bg);
+        color: var(--table-text-color);
+        border-bottom: 2px solid var(--table-border-color);
       }
 
       td {
-        color: var(--bs-body-color);
+        color: var(--table-text-color);
         vertical-align: middle;
-        border-top: 1px solid var(--bs-border-color-translucent);
+        border-top: 1px solid var(--table-border-color);
+      }
+
+      tbody tr {
+        background-color: var(--table-bg) !important; // Garante que o fundo da linha seja do tema
+        color: var(--table-text-color) !important; // Garante que o texto da linha seja do tema
       }
 
       tbody tr:hover {
         td {
-          background-color: var(--bs-tertiary-bg);
+          background-color: var(--table-hover-bg) !important;
         }
       }
 
       .card {
-        background-color: var(--bs-body-bg);
-        border: 1px solid var(--bs-border-color);
+        background-color: var(--table-bg);
+        border: 1px solid var(--table-border-color);
         box-shadow: none;
-        color: var(--bs-body-color); // Garante a cor do texto dentro do card
+        color: var(--table-text-color); // Garante a cor do texto dentro do card
       }
     }
   }
@@ -57,7 +67,7 @@
 
     .pagination-info {
       font-size: 0.875rem;
-      color: var(--bs-secondary-color);
+      color: var(--table-text-color);
     }
   }
 }

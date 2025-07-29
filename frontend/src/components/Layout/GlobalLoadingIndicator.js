@@ -19,7 +19,7 @@ const GlobalLoadingIndicator = () => {
 
   return (
     <div className={`global-loading-indicator ${loading ? 'visible' : ''}`}>
-      <div className="bar"></div>
+      <div className='bar'></div>
     </div>
   );
 };

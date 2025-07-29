@@ -22,7 +22,6 @@ Thumbs.db
 # =========================================================================
 
 # Diretórios de dependências (essencial para projetos Node.js)
-**/node_modules/
 node_modules/
 
 # Arquivos do Yarn PnP
@@ -87,3 +86,7 @@ secrets.json
 
 # Pasta de arquivos de design, conforme original
 /Design-Files/
+
+# Arquivos temporários e de utilidade
+commit_message.txt
+rename_env.js

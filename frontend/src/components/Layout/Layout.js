@@ -3,11 +3,14 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Particles from '@tsparticles/react';
 import { loadSlim } from '@tsparticles/slim';
+
+import ErrorBoundary from '../Common/ErrorBoundary'; // Importar o ErrorBoundary
+import { useTheme } from '../../context/ThemeContext';
+
 import Header from './Header';
 import Sidebar from './Sidebar';
 import GlobalLoadingIndicator from './GlobalLoadingIndicator';
 import FullPageLoader from './FullPageLoader'; // Importar o loader
-import { useThemeStore } from '../../store/themeStore'; // Importar o themeStore
 import './Layout.scss';
 
 const Layout = () => {
@@ -23,18 +26,12 @@ const Layout = () => {
     setMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const applyCssVariables = useThemeStore((state) => state.applyCssVariables);
-  const themeMode = useThemeStore((state) => state.theme.mode);
+  const { theme } = useTheme();
 
   useEffect(() => {
     // Fecha o menu mobile ao navegar para uma nova página
     setMobileMenuOpen(false);
   }, [location]);
-
-  useEffect(() => {
-    applyCssVariables();
-    document.documentElement.setAttribute('data-theme', themeMode);
-  }, [applyCssVariables, themeMode]);
 
   const particlesInit = useCallback(async (engine) => {
     await loadSlim(engine);
@@ -44,18 +41,18 @@ const Layout = () => {
     // console.log("Particles container loaded", container);
   }, []);
 
-  
-
   return (
-    <div className={`app-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
+    <div
+      className={`app-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}
+    >
       <Particles
-        id="tsparticles"
+        id='tsparticles'
         init={particlesInit}
         loaded={particlesLoaded}
         options={{
           background: {
             color: {
-              value: "transparent",
+              value: 'transparent',
             },
           },
           fpsLimit: 60,
@@ -63,11 +60,11 @@ const Layout = () => {
             events: {
               onClick: {
                 enable: true,
-                mode: "push",
+                mode: 'push',
               },
               onHover: {
                 enable: true,
-                mode: "repulse",
+                mode: 'repulse',
               },
               resize: true,
             },
@@ -83,20 +80,20 @@ const Layout = () => {
           },
           particles: {
             color: {
-              value: "#ffffff",
+              value: '#ffffff',
             },
             links: {
-              color: "#ffffff",
+              color: '#ffffff',
               distance: 150,
               enable: true,
               opacity: 0.5,
               width: 1,
             },
             move: {
-              direction: "none",
+              direction: 'none',
               enable: true,
               outModes: {
-                default: "bounce",
+                default: 'bounce',
               },
               random: false,
               speed: 2,
@@ -113,7 +110,7 @@ const Layout = () => {
               value: 0.5,
             },
             shape: {
-              type: "circle",
+              type: 'circle',
             },
             size: {
               value: { min: 1, max: 5 },
@@ -124,17 +121,41 @@ const Layout = () => {
       />
       <GlobalLoadingIndicator />
       <Sidebar isCollapsed={isSidebarCollapsed} isMobileOpen={isMobileMenuOpen} />
-      
-      {isMobileMenuOpen && <div className="overlay" onClick={toggleMobileMenu} role="button" tabIndex={0} onKeyPress={(e) => { if (e.key === 'Enter' || e.key === ' ') { toggleMobileMenu(); } }}></div>}
 
-      <div className="main-content">
-        <Header onToggleSidebar={toggleSidebar} onToggleMobileMenu={toggleMobileMenu} />
-        <div className="content-page">
-          <div style={{ width: '100%', height: '100%' }}>
-              <Suspense fallback={<FullPageLoader />}>
-                <Outlet />
+      {isMobileMenuOpen && (
+        <div
+          className='overlay'
+          role='button'
+          style={{ zIndex: isMobileMenuOpen ? 1000 : -1 }}
+          tabIndex={0}
+          onClick={toggleMobileMenu}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              toggleMobileMenu();
+            }
+          }}
+        ></div>
+      )}
+
+      <div className='main-content'>
+        <Header onToggleMobileMenu={toggleMobileMenu} onToggleSidebar={toggleSidebar} />
+        <div className='content-page'>
+          <AnimatePresence mode='wait'>
+            <motion.div
+              key={location.pathname}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: 20 }}
+              style={{ width: '100%', height: '100%' }}
+              transition={{ duration: 0.3 }}
+            >
+              <Suspense fallback={null}>
+                <ErrorBoundary>
+                  <Outlet />
+                </ErrorBoundary>
               </Suspense>
-            </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     </div>

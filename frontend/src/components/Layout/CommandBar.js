@@ -1,121 +1,153 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Modal, ModalBody } from 'reactstrap';
-import { useNavigate, NavLink } from 'react-router-dom';
-import Fuse from 'fuse.js';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Command } from 'cmdk';
+
+import { useTheme } from '../../context/ThemeContext';
+import { get } from '../../helpers/api_helper';
+import useDebounce from '../../hooks/useDebounce';
 import './CommandBar.scss';
 
-const searchData = [
-  { type: 'Página', name: 'Dashboard', path: '/dashboard', icon: 'bx-home-alt' },
-  { type: 'Página', name: 'PDV (Ponto de Venda)', path: '/pdv', icon: 'bx-store' },
-  { type: 'Página', name: 'Produtos', path: '/products', icon: 'bx-package' },
-  { type: 'Página', name: 'Serviços e Reparos', path: '/repairs', icon: 'bx-wrench' },
-  { type: 'Página', name: 'Clientes', path: '/customers', icon: 'bx-user' },
-  { type: 'Página', name: 'Fornecedores', path: '/suppliers', icon: 'bx-buildings' },
-  { type: 'Página', name: 'Pedidos de Compra', path: '/purchase-orders', icon: 'bx-file' },
-  { type: 'Página', name: 'Devoluções', path: '/returns', icon: 'bx-log-out-circle' },
-  { type: 'Página', name: 'Caixa', path: '/cashier', icon: 'bx-calculator' },
-  { type: 'Página', name: 'Histórico de Vendas', path: '/sales-history', icon: 'bx-history' },
-  { type: 'Página', name: 'Gestão de Estoque', path: '/stock', icon: 'bx-archive' },
-  { type: 'Página', name: 'Financeiro', path: '/finance', icon: 'bx-dollar-circle' },
-  { type: 'Página', name: 'Relatórios', path: '/reports', icon: 'bx-bar-chart-alt-2' },
-  { type: 'Página', name: 'Usuários', path: '/users', icon: 'bx-group' },
-  { type: 'Página', name: 'Configurações', path: '/settings', icon: 'bx-cog' },
-  { type: 'Ação', name: 'Nova Venda', path: '/pdv', icon: 'bx-plus' },
-  { type: 'Ação', name: 'Novo Reparo', path: '/repairs/new', icon: 'bx-plus' },
-  { type: 'Ação', name: 'Novo Produto', path: '/products', action: 'openAddModal' }, // Exemplo de ação customizada
+const navigationData = [
+  { name: 'Dashboard', path: '/dashboard', icon: 'bx-home-alt' },
+  { name: 'PDV (Ponto de Venda)', path: '/pdv', icon: 'bx-store' },
+  { name: 'Produtos', path: '/products', icon: 'bx-package' },
+  { name: 'Serviços e Reparos', path: '/repairs', icon: 'bx-wrench' },
+  { name: 'Clientes', path: '/customers', icon: 'bx-user' },
+  { name: 'Fornecedores', path: '/suppliers', icon: 'bx-buildings' },
+  { name: 'Histórico de Vendas', path: '/sales-history', icon: 'bx-history' },
+  { name: 'Configurações', path: '/settings', icon: 'bx-cog' },
 ];
 
-const fuseOptions = {
-  keys: ['name', 'type'],
-  includeScore: true,
-  threshold: 0.4,
-};
+const quickActions = [
+  { name: 'Adicionar Novo Produto', path: '/products/new', icon: 'bx-plus-circle' },
+  { name: 'Adicionar Novo Cliente', path: '/customers/new', icon: 'bx-user-plus' },
+  { name: 'Iniciar Nova Venda', path: '/pdv', icon: 'bx-cart-add' },
+];
 
-const CommandBar = ({ isOpen, toggle, initialQuery = '' }) => {
-  const [query, setQuery] = useState(initialQuery);
-  const [results, setResults] = useState([]);
-  const [activeIndex, setActiveIndex] = useState(0);
+const CommandBar = ({ isOpen, toggle }) => {
   const navigate = useNavigate();
-  const inputRef = useRef(null);
-  const fuse = new Fuse(searchData, fuseOptions);
+  const { theme, toggleTheme } = useTheme();
+  const [search, setSearch] = useState('');
+  const [products, setProducts] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const debouncedSearch = useDebounce(search, 300);
 
   useEffect(() => {
-    setQuery(initialQuery);
-  }, [initialQuery]);
-
-  useEffect(() => {
-    if (query.length > 0) {
-      const searchResult = fuse.search(query);
-      setResults(searchResult.map(res => res.item));
-    } else {
-      setResults(searchData.filter(item => item.type === 'Página')); // Mostrar páginas por padrão
-    }
-    setActiveIndex(0);
-  }, [query]);
-
-  const handleResultClick = (item) => {
-    toggle();
-    // Aqui você poderia adicionar lógica para 'action'
-    navigate(item.path);
-  };
-
-  useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isOpen]);
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setActiveIndex((prevIndex) => (prevIndex + 1) % results.length);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setActiveIndex((prevIndex) => (prevIndex - 1 + results.length) % results.length);
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (results[activeIndex]) {
-        handleResultClick(results[activeIndex]);
+    const down = (e) => {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        toggle((open) => !open);
       }
-    }
+    };
+    document.addEventListener('keydown', down);
+    return () => document.removeEventListener('keydown', down);
+  }, [toggle]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (debouncedSearch.length > 1) {
+        try {
+          const [productResults, customerResults] = await Promise.all([
+            get(`/products/search?query=${debouncedSearch}`),
+            get(`/customers?search=${debouncedSearch}`),
+          ]);
+          setProducts(productResults || []);
+          setCustomers(customerResults?.customers || []);
+        } catch (error) {
+          console.error('Erro ao buscar dados:', error);
+          setProducts([]);
+          setCustomers([]);
+        }
+      } else {
+        setProducts([]);
+        setCustomers([]);
+      }
+    };
+    fetchData();
+  }, [debouncedSearch]);
+
+  const runCommand = (command) => {
+    toggle(false);
+    command();
   };
 
   return (
-    <Modal isOpen={isOpen} toggle={toggle} centered className="command-bar-modal" onKeyDown={handleKeyDown}>
-      <ModalBody>
-        <div className="search-input-wrapper">
-          <i className="bx bx-search"></i>
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Buscar páginas ou ações..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
-        <ul className="search-results">
-          {results.length > 0 ? (
-            results.map((item, index) => (
-              <li key={`${item.path}-${item.name}`}>
-                <NavLink
-                  to={item.path}
-                  className={`result-item ${index === activeIndex ? 'active' : ''}`}
-                  onClick={() => handleResultClick(item)}
-                  onMouseEnter={() => setActiveIndex(index)}
-                  tabIndex={0}
-                >
-                  <i className={`bx ${item.icon || 'bx-file'}`}></i>
-                  <span>{item.name}</span>
-                  <span className="result-item-type">{item.type}</span>
-                </NavLink>
-              </li>
-            ))
-          ) : (
-            <div className="no-results">Nenhum resultado encontrado para &quot;{query}&quot;.</div>
-          )}
-        </ul>
-      </ModalBody>
-    </Modal>
+    <Command.Dialog label='Command Menu' open={isOpen} onOpenChange={toggle}>
+      <Command.Input
+        placeholder='Busque produtos, clientes ou comandos...'
+        value={search}
+        onValueChange={setSearch}
+      />
+      <Command.List>
+        <Command.Empty>Nenhum resultado encontrado.</Command.Empty>
+
+        {products.length > 0 && (
+          <Command.Group heading='Produtos'>
+            {products.map((product) => (
+              <Command.Item
+                key={`product-${product.id}`}
+                value={`Produto: ${product.name}`}
+                onSelect={() => runCommand(() => navigate(`/products/view/${product.id}`))}
+              >
+                <i className='bx bx-package'></i>
+                {product.name}
+              </Command.Item>
+            ))}
+          </Command.Group>
+        )}
+
+        {customers.length > 0 && (
+          <Command.Group heading='Clientes'>
+            {customers.map((customer) => (
+              <Command.Item
+                key={`customer-${customer.id}`}
+                value={`Cliente: ${customer.name}`}
+                onSelect={() => runCommand(() => navigate(`/customers/view/${customer.id}`))}
+              >
+                <i className='bx bx-user'></i>
+                {customer.name}
+              </Command.Item>
+            ))}
+          </Command.Group>
+        )}
+
+        <Command.Group heading='Ações Rápidas'>
+          {quickActions.map((item) => (
+            <Command.Item
+              key={item.path}
+              value={item.name}
+              onSelect={() => runCommand(() => navigate(item.path))}
+            >
+              <i className={`bx ${item.icon}`}></i>
+              {item.name}
+            </Command.Item>
+          ))}
+        </Command.Group>
+
+        <Command.Group heading='Navegação'>
+          {navigationData.map((item) => (
+            <Command.Item
+              key={item.path}
+              value={item.name}
+              onSelect={() => runCommand(() => navigate(item.path))}
+            >
+              <i className={`bx ${item.icon}`}></i>
+              {item.name}
+            </Command.Item>
+          ))}
+        </Command.Group>
+
+        <Command.Group heading='Ações do Tema'>
+          <Command.Item
+            value={`Mudar para tema ${theme === 'dark' ? 'claro' : 'escuro'}`}
+            onSelect={() => runCommand(() => toggleTheme())}
+          >
+            <i className={`bx ${theme === 'dark' ? 'bx-sun' : 'bx-moon'}`}></i>
+            Mudar para tema {theme === 'dark' ? 'Claro (Light)' : 'Escuro (Dark)'}
+          </Command.Item>
+        </Command.Group>
+      </Command.List>
+    </Command.Dialog>
   );
 };
 

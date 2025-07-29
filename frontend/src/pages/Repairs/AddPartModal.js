@@ -1,9 +1,20 @@
 import React, { useState, useCallback } from 'react';
-import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Input, ListGroup, ListGroupItem, Spinner } from 'reactstrap';
+import {
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  Input,
+  ListGroup,
+  ListGroupItem,
+} from 'reactstrap';
 import { debounce } from 'lodash';
 import axios from 'axios';
-import config from '../../config';
 import { toast } from 'react-toastify';
+
+import config from '../../config';
+import LoadingSpinner from '../../../components/Common/LoadingSpinner';
 
 const AddPartModal = ({ isOpen, toggle, repairId, onPartAdded }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,13 +28,15 @@ const AddPartModal = ({ isOpen, toggle, repairId, onPartAdded }) => {
     }
     setLoading(true);
     try {
-      const response = await axios.get(`${config.api.API_URL}/api/products?search=${query}&limit=10`);
-      const flattenedVariations = response.data.products.flatMap(p => 
-        p.variations.map(v => ({ ...v, product_name: p.name }))
+      const response = await axios.get(
+        `${config.api.API_URL}/api/products?search=${query}&limit=10`,
+      );
+      const flattenedVariations = response.data.products.flatMap((p) =>
+        p.variations.map((v) => ({ ...v, product_name: p.name })),
       );
       setResults(flattenedVariations);
     } catch (err) {
-      toast.error("Falha ao buscar produtos.");
+      toast.error('Falha ao buscar produtos.');
     } finally {
       setLoading(false);
     }
@@ -38,11 +51,14 @@ const AddPartModal = ({ isOpen, toggle, repairId, onPartAdded }) => {
 
   const handleAddPart = async (variation) => {
     if (variation.stock_quantity <= 0) {
-      toast.warn("Este item está fora de estoque e não pode ser adicionado.");
+      toast.warn('Este item está fora de estoque e não pode ser adicionado.');
       return;
     }
-    
-    const quantity = prompt(`Quantas unidades de "${variation.product_name} (${variation.color})" você deseja usar?`, "1");
+
+    const quantity = prompt(
+      `Quantas unidades de "${variation.product_name} (${variation.color})" você deseja usar?`,
+      '1',
+    );
     if (quantity === null || isNaN(parseInt(quantity)) || parseInt(quantity) <= 0) {
       return; // Cancelado ou inválido
     }
@@ -50,40 +66,44 @@ const AddPartModal = ({ isOpen, toggle, repairId, onPartAdded }) => {
     try {
       await axios.post(`${config.api.API_URL}/api/repairs/${repairId}/parts`, {
         variation_id: variation.id,
-        quantity_used: parseInt(quantity)
+        quantity_used: parseInt(quantity),
       });
-      toast.success("Peça adicionada com sucesso!");
+      toast.success('Peça adicionada com sucesso!');
       onPartAdded(); // Callback para recarregar os detalhes da O.S.
       toggle(); // Fecha o modal
     } catch (err) {
-      const errorMessage = err.response?.data?.message || "Ocorreu um erro ao adicionar a peça.";
+      const errorMessage = err.response?.data?.message || 'Ocorreu um erro ao adicionar a peça.';
       toast.error(errorMessage);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} toggle={toggle} centered>
+    <Modal centered isOpen={isOpen} toggle={toggle}>
       <ModalHeader toggle={toggle}>Adicionar Peça ao Reparo</ModalHeader>
       <ModalBody>
         <Input
-          placeholder="Buscar peça por nome ou código..."
+          placeholder='Buscar peça por nome ou código...'
           value={searchTerm}
           onChange={handleSearchChange}
         />
-        {loading && <div className="text-center my-3"><Spinner /></div>}
-        <ListGroup className="mt-3" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-          {results.map(v => (
-            <ListGroupItem 
-              key={v.id} 
-              action 
-              onClick={() => handleAddPart(v)}
+        {loading && (
+          <div className='text-center my-3'>
+            <LoadingSpinner />
+          </div>
+        )}
+        <ListGroup className='mt-3' style={{ maxHeight: '300px', overflowY: 'auto' }}>
+          {results.map((v) => (
+            <ListGroupItem
+              key={v.id}
+              action
+              className='d-flex justify-content-between align-items-center'
               disabled={v.stock_quantity <= 0}
-              className="d-flex justify-content-between align-items-center"
+              onClick={() => handleAddPart(v)}
             >
               <div>
                 <strong>{v.product_name}</strong> ({v.color})
-                <br/>
-                <small className="text-muted">Estoque: {v.stock_quantity}</small>
+                <br />
+                <small className='text-muted'>Estoque: {v.stock_quantity}</small>
               </div>
               <span>R$ {parseFloat(v.price).toFixed(2)}</span>
             </ListGroupItem>
@@ -91,7 +111,9 @@ const AddPartModal = ({ isOpen, toggle, repairId, onPartAdded }) => {
         </ListGroup>
       </ModalBody>
       <ModalFooter>
-        <Button color="secondary" onClick={toggle}>Cancelar</Button>
+        <Button color='secondary' onClick={toggle}>
+          Cancelar
+        </Button>
       </ModalFooter>
     </Modal>
   );

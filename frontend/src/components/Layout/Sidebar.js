@@ -2,45 +2,51 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Collapse, Tooltip } from 'reactstrap';
 import { motion } from 'framer-motion';
+
 import { useAuthStore } from '../../store/authStore'; // Importa o store do Zustand
-import { useThemeStore } from '../../store/themeStore'; // Importa o themeStore
+import { useTheme } from '../../context/ThemeContext';
 import './Sidebar.scss';
 
 // Definição base dos itens de menu
 const allMenuItems = [
   { path: '/dashboard', icon: 'bxs-dashboard', title: 'Dashboard' },
   { path: '/pdv', icon: 'bx-cart-alt', title: 'PDV' },
+  { type: 'separator', title: 'Operacional' },
   {
-    title: 'Operacional',
+    title: 'Caixa',
     icon: 'bx-slider-alt',
-    children: [
-      { path: '/cashier', icon: 'bx-wallet', title: 'Abrir/Fechar Caixa' },
-    ],
+    children: [{ path: '/cashier', icon: 'bx-wallet', title: 'Abrir/Fechar Caixa' }],
   },
+  { type: 'separator', title: 'Cadastros' },
   {
-    title: 'Cadastros',
+    title: 'Gerenciamento',
     icon: 'bxs-edit',
     children: [
       { path: '/products', icon: 'bxs-package', title: 'Produtos' },
       { path: '/customers', icon: 'bxs-user-detail', title: 'Clientes' },
       { path: '/suppliers', icon: 'bxs-truck', title: 'Fornecedores' },
+      { path: '/technicians', icon: 'bxs-user-plus', title: 'Técnicos' },
       { path: '/purchase-orders', icon: 'bx-notepad', title: 'Ordens de Compra', roles: ['admin'] }, // Protegido
       { path: '/users', icon: 'bxs-user-account', title: 'Usuários', roles: ['admin'] }, // Protegido
     ],
   },
+  { type: 'separator', title: 'Serviços e Vendas' },
   { path: '/repairs', icon: 'bxs-wrench', title: 'Reparos' },
   { path: '/sales-history', icon: 'bx-history', title: 'Histórico de Vendas' },
   { path: '/returns', icon: 'bx-revision', title: 'Devoluções' },
   { path: '/stock', icon: 'bxs-store-alt', title: 'Gerenciar Estoque' },
+  { type: 'separator', title: 'Financeiro e Relatórios' },
   {
     title: 'Financeiro',
     icon: 'bx-money-withdraw',
     roles: ['admin'], // Protegido
     children: [
-      { path: '/finance/receivables', title: 'Contas a Receber' },
+      { path: '/api/finance/receivables', title: 'Contas a Receber' },
       { path: '/finance/payables', title: 'Contas a Pagar' },
     ],
   },
+  { path: '/reports', icon: 'bx-chart', title: 'Relatórios' },
+  { type: 'separator', title: 'Configurações' },
   { path: '/settings', icon: 'bx-cog', title: 'Configurações' },
 ];
 
@@ -66,7 +72,6 @@ const filterMenuByRole = (menuItems, hasRole) => {
   }, []);
 };
 
-
 const SidebarItem = ({ item, isCollapsed }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [tooltipOpen, setTooltipOpen] = useState(false);
@@ -76,7 +81,7 @@ const SidebarItem = ({ item, isCollapsed }) => {
 
   useEffect(() => {
     if (hasChildren) {
-      const isActive = item.children.some(child => location.pathname.startsWith(child.path));
+      const isActive = item.children.some((child) => location.pathname.startsWith(child.path));
       setIsOpen(isActive);
     }
   }, [location, hasChildren, item.children]);
@@ -89,21 +94,27 @@ const SidebarItem = ({ item, isCollapsed }) => {
   if (hasChildren) {
     return (
       <li className={isOpen ? 'menu-item open' : 'menu-item'}>
-        <button className="nav-link" onClick={toggle} id={linkId}>
+        <button className='nav-link' id={linkId} onClick={toggle}>
           {item.icon && <i className={`bx ${item.icon}`}></i>}
           {!isCollapsed && <span>{item.title}</span>}
-          {!isCollapsed && <i className="bx bx-chevron-down arrow"></i>}
+          {!isCollapsed && <i className='bx bx-chevron-down arrow'></i>}
         </button>
         {isCollapsed && (
-          <Tooltip placement="right" isOpen={tooltipOpen} target={linkId} toggle={toggleTooltip} transition={{ timeout: 300 }}>
+          <Tooltip
+            isOpen={tooltipOpen}
+            placement='right'
+            target={linkId}
+            toggle={toggleTooltip}
+            transition={{ timeout: 300 }}
+          >
             {item.title}
           </Tooltip>
         )}
         <Collapse isOpen={isOpen}>
-          <ul className="list-unstyled submenu">
+          <ul className='list-unstyled submenu'>
             {item.children.map((child, index) => (
               <li key={index}>
-                <NavLink to={child.path} className="nav-link">
+                <NavLink className='nav-link' to={child.path}>
                   {child.icon && <i className={`bx ${child.icon}`}></i>}
                   <span>{child.title}</span>
                 </NavLink>
@@ -116,13 +127,19 @@ const SidebarItem = ({ item, isCollapsed }) => {
   }
 
   return (
-    <li className="menu-item">
-      <NavLink to={item.path} className="nav-link" id={linkId}>
+    <li className='menu-item'>
+      <NavLink className='nav-link' id={linkId} to={item.path}>
         {item.icon && <i className={`bx ${item.icon}`}></i>}
         {!isCollapsed && <span>{item.title}</span>}
       </NavLink>
       {isCollapsed && (
-        <Tooltip placement="right" isOpen={tooltipOpen} target={linkId} toggle={toggleTooltip} transition={{ timeout: 300 }}>
+        <Tooltip
+          isOpen={tooltipOpen}
+          placement='right'
+          target={linkId}
+          toggle={toggleTooltip}
+          transition={{ timeout: 300 }}
+        >
           {item.title}
         </Tooltip>
       )}
@@ -132,8 +149,9 @@ const SidebarItem = ({ item, isCollapsed }) => {
 
 const Sidebar = ({ isCollapsed, isMobileOpen }) => {
   const { hasRole, isAuthLoading } = useAuthStore();
-  const getCurrentLogo = useThemeStore((state) => state.getCurrentLogo);
-  const currentLogo = getCurrentLogo();
+  const { theme } = useTheme();
+
+  const logoSrc = theme === 'dark' ? '/Dark-mode-logo.png' : '/redecellrj.png';
 
   // Filtra os itens de menu com base na permissão do usuário.
   // useMemo garante que o filtro não seja re-executado a cada renderização.
@@ -143,17 +161,23 @@ const Sidebar = ({ isCollapsed, isMobileOpen }) => {
   }, [isAuthLoading, hasRole]);
 
   return (
-    <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}>
-      <div className="sidebar-header">
+    <aside
+      className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}
+    >
+      <div className='sidebar-header'>
         <motion.div animate={{ opacity: isCollapsed ? 0 : 1, width: isCollapsed ? 0 : 'auto' }}>
-          {!isCollapsed && <img src={currentLogo} alt="PDV Web Logo" className="sidebar-logo" />}
+          {!isCollapsed && <img alt='PDV Web Logo' className='sidebar-logo' src={logoSrc} />}
         </motion.div>
       </div>
-      <nav className="sidebar-nav">
-        <ul className="list-unstyled">
-          {menuItems.map((item, index) => (
-            <SidebarItem key={index} item={item} isCollapsed={isCollapsed} />
-          ))}
+      <nav className='sidebar-nav'>
+        <ul className='list-unstyled'>
+          {menuItems.map((item, index) =>
+            item.type === 'separator' ? (
+              <li key={index} className='sidebar-separator' />
+            ) : (
+              <SidebarItem key={index} isCollapsed={isCollapsed} item={item} />
+            ),
+          )}
         </ul>
       </nav>
     </aside>

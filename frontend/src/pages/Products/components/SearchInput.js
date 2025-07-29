@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Input, InputGroup, InputGroupText } from 'reactstrap';
+
 import { ProductContext } from '../../../context/ProductContext';
 import useDebounce from '../../../hooks/useDebounce';
 
@@ -15,11 +16,11 @@ const SearchInput = () => {
   return (
     <InputGroup>
       <InputGroupText>
-        <i className="bx bx-search-alt-2"></i>
+        <i className='bx bx-search-alt-2'></i>
       </InputGroupText>
       <Input
-        type="text"
-        placeholder="Buscar por nome ou SKU..."
+        placeholder='Buscar por nome ou SKU...'
+        type='text'
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
       />

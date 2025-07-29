@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+
 import { useBreadcrumb } from '../../context/BreadcrumbContext';
 
 const Breadcrumb = ({ breadcrumbItem = '' }) => {
@@ -6,7 +7,7 @@ const Breadcrumb = ({ breadcrumbItem = '' }) => {
 
   useEffect(() => {
     setBreadcrumbTitle(breadcrumbItem);
-    
+
     // Cleanup function to clear the title when the component unmounts
     return () => {
       setBreadcrumbTitle('');

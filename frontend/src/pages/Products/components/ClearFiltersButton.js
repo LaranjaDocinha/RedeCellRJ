@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { Button } from 'reactstrap';
+
 import { ProductContext } from '../../../context/ProductContext';
 
 const ClearFiltersButton = () => {
@@ -11,13 +12,13 @@ const ClearFiltersButton = () => {
 
   return (
     <Button
-      color="secondary"
       outline
-      onClick={clearFilters}
+      color='secondary'
       disabled={activeFilters.length === 0}
-      title="Limpar todos os filtros"
+      title='Limpar todos os filtros'
+      onClick={clearFilters}
     >
-      <i className="bx bx-x-circle me-1"></i>
+      <i className='bx bx-x-circle me-1'></i>
       Limpar Filtros
     </Button>
   );

@@ -13,12 +13,16 @@
 
   .notification-badge {
     position: absolute;
-    top: -2px;
-    right: -4px;
-    width: 10px;
-    height: 10px;
-    background-color: var(--color-danger);
+    top: -8px;
+    right: -8px;
+    padding: 2px 6px;
     border-radius: 50%;
+    background-color: var(--color-danger);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: bold;
+    min-width: 20px; /* Garante que o badge não fique muito pequeno */
+    text-align: center;
     border: 2px solid var(--color-component-bg);
     animation: pulse-danger 1.5s infinite;
   }
@@ -55,6 +59,7 @@
     padding: 1rem;
     border-bottom: 1px solid var(--color-border);
     transition: background-color 0.2s ease;
+    cursor: pointer;
 
     &:last-child {
       border-bottom: none;
@@ -62,6 +67,26 @@
 
     &:hover {
       background-color: var(--color-component-secondary-bg);
+    }
+
+    &.unread {
+      background-color: var(--color-unread-notification-bg); /* Cor para notificações não lidas */
+      font-weight: bold;
+    }
+
+    .item-icon {
+      font-size: 1.2rem;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    .flex-1 {
+      h6 {
+        color: var(--color-body-text);
+      }
+      p {
+        color: var(--color-muted-text);
+      }
     }
   }
 

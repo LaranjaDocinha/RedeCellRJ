@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { motion, AnimatePresence } from 'framer-motion';
+
 import useWidgetData from '../../../hooks/useWidgetData';
 
 import WidgetError from './WidgetError';
@@ -17,7 +18,15 @@ const SKELETON_MAP = {
   list: ListSkeleton,
 };
 
-const DashboardWidget = ({ title, widgetId, skeletonType = 'list', children, onRemove = () => {}, onExpand, isFocused = false }) => {
+const DashboardWidget = ({
+  title,
+  widgetId,
+  skeletonType = 'list',
+  children,
+  onRemove = () => {},
+  onExpand,
+  isFocused = false,
+}) => {
   const { data, isLoading, error } = useWidgetData(widgetId);
 
   const renderContent = () => {
@@ -39,31 +48,31 @@ const DashboardWidget = ({ title, widgetId, skeletonType = 'list', children, onR
   return (
     <motion.div
       layout
-      className={`dashboard-widget ${isFocused ? 'is-focused' : ''}`}
-      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      className={`dashboard-widget ${isFocused ? 'is-focused' : ''}`}
       exit={{ opacity: 0 }}
+      initial={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.5 }}
       whileHover={!isFocused ? { scale: 1.02, y: -5, zIndex: 10 } : {}}
     >
-      <div className="widget-header">
-        <div className="widget-header-left">
-          {!isFocused && <i className="bx bx-move drag-handle-icon"></i>}
+      <div className='widget-header'>
+        <div className='widget-header-left'>
+          {!isFocused && <i className='bx bx-move drag-handle-icon'></i>}
           <h3>{title}</h3>
         </div>
         {!isFocused && (
-          <div className="widget-header-right">
-            <WidgetOptionsMenu onRemove={onRemove} onExpand={onExpand} />
+          <div className='widget-header-right'>
+            <WidgetOptionsMenu onExpand={onExpand} onRemove={onRemove} />
           </div>
         )}
       </div>
-      <div className="widget-body">
-        <AnimatePresence mode="wait">
+      <div className='widget-body'>
+        <AnimatePresence mode='wait'>
           <motion.div
             key={`${widgetId}-${isLoading}-${!!error}`}
-            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
             {renderContent()}

@@ -4,12 +4,13 @@ import toast from 'react-hot-toast';
 
 import Breadcrumbs from '../../components/Common/Breadcrumb';
 import AdvancedTable from '../../components/Common/AdvancedTable';
-import UserFormModal from './UserFormModal';
 import { get, del } from '../../helpers/api_helper';
 import useApi from '../../hooks/useApi';
 
+import UserFormModal from './UserFormModal';
+
 const UserManagement = () => {
-  document.title = "Gestão de Usuários | PDV Web";
+  document.title = 'Gestão de Usuários | PDV Web';
 
   const [users, setUsers] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -19,14 +20,16 @@ const UserManagement = () => {
   const { request: toggleUserStatus } = useApi(del);
 
   const loadUsers = () => {
-    fetchUsers('/users?limit=1000').then(response => {
+    fetchUsers('/api/users?limit=1000')
+      .then((response) => {
         if (response.users) {
-            setUsers(response.users);
+          setUsers(response.users);
         }
-    }).catch(err => {
-        toast.error("Falha ao carregar usuários.");
+      })
+      .catch((err) => {
+        toast.error('Falha ao carregar usuários.');
         console.error(err);
-    });
+      });
   };
 
   useEffect(() => {
@@ -37,7 +40,7 @@ const UserManagement = () => {
     const action = user.is_active ? 'desativar' : 'ativar';
     if (window.confirm(`Tem certeza que deseja ${action} o usuário ${user.name}?`)) {
       try {
-        await toggleUserStatus(`/users/${user.id}`);
+        await toggleUserStatus(`/api/users/${user.id}`);
         toast.success(`Usuário ${action} com sucesso!`);
         loadUsers();
       } catch (err) {
@@ -53,85 +56,84 @@ const UserManagement = () => {
     setSelectedUser(user);
     toggleModal();
   };
-  
+
   const handleNewClick = () => {
     setSelectedUser(null);
     toggleModal();
   };
 
-  const columns = useMemo(() => [
-    {
-      header: 'Nome',
-      accessorKey: 'name',
-    },
-    {
-      header: 'Email',
-      accessorKey: 'email',
-    },
-    {
-      header: 'Status',
-      accessorKey: 'is_active',
-      cell: info => (
-        <Badge color={info.getValue() ? 'success' : 'danger'}>
-          {info.getValue() ? 'Ativo' : 'Inativo'}
-        </Badge>
-      ),
-    },
-    {
+  const columns = useMemo(
+    () => [
+      {
+        header: 'Nome',
+        accessorKey: 'name',
+      },
+      {
+        header: 'Email',
+        accessorKey: 'email',
+      },
+      {
+        header: 'Status',
+        accessorKey: 'is_active',
+        cell: (info) => (
+          <Badge color={info.getValue() ? 'success' : 'danger'}>
+            {info.getValue() ? 'Ativo' : 'Inativo'}
+          </Badge>
+        ),
+      },
+      {
         header: 'Permissão',
         accessorKey: 'role',
-        cell: info => (
-            <span className="text-capitalize">{info.getValue()}</span>
-        )
-    },
-    {
-      header: 'Ações',
-      cell: ({ row }) => {
-        const user = row.original;
-        return (
-          <div className="d-flex gap-2">
-            <Button color="primary" size="sm" onClick={() => handleEditClick(user)}>
-              <i className="bx bx-pencil me-1"></i> Editar
-            </Button>
-            <Button 
-              color={user.is_active ? "danger" : "success"} 
-              size="sm"
-              onClick={() => handleStatusToggle(user)}
-            >
-              {user.is_active ? 'Desativar' : 'Ativar'}
-            </Button>
-          </div>
-        );
+        cell: (info) => <span className='text-capitalize'>{info.getValue()}</span>,
       },
-    },
-  ], []);
+      {
+        header: 'Ações',
+        cell: ({ row }) => {
+          const user = row.original;
+          return (
+            <div className='d-flex gap-2'>
+              <Button color='primary' size='sm' onClick={() => handleEditClick(user)}>
+                <i className='bx bx-pencil me-1'></i> Editar
+              </Button>
+              <Button
+                color={user.is_active ? 'danger' : 'success'}
+                size='sm'
+                onClick={() => handleStatusToggle(user)}
+              >
+                {user.is_active ? 'Desativar' : 'Ativar'}
+              </Button>
+            </div>
+          );
+        },
+      },
+    ],
+    [],
+  );
 
   return (
     <React.Fragment>
-      <div className="page-content">
+      <div className='page-content'>
         <Container fluid>
-          <Breadcrumbs title="Sistema" breadcrumbItem="Usuários" />
+          <Breadcrumbs breadcrumbItem='Usuários' title='Sistema' />
           <AdvancedTable
-            data={users}
             columns={columns}
+            data={users}
+            emptyStateActionText={'Adicionar Usuário'}
+            emptyStateIcon={''}
+            emptyStateMessage={'Cadastre seu primeiro usuário.'}
+            emptyStateTitle={'Nenhum usuário encontrado'}
             loading={loading}
-            actions={
-              <Button color="success" onClick={handleNewClick}>
-                <i className="bx bx-plus me-1"></i> Novo Usuário
-              </Button>
-            }
-            emptyStateTitle="Nenhum Usuário Encontrado"
-            emptyStateMessage="Cadastre novos usuários para começar a gerenciar sua equipe."
-            emptyStateActionText="Adicionar Usuário"
+            persistenceKey='usersTable'
             onEmptyStateActionClick={handleNewClick}
+            onRowClick={handleEditClick}
           />
         </Container>
       </div>
-      <UserFormModal 
-        isOpen={modalOpen} 
-        toggle={toggleModal} 
-        user={selectedUser} 
-        onSave={loadUsers} 
+      <UserFormModal
+        isOpen={modalOpen}
+        toggle={toggleModal}
+        user={selectedUser}
+        onSave={loadUsers}
       />
     </React.Fragment>
   );

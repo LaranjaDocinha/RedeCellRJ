@@ -4,27 +4,32 @@ import { Toaster } from 'react-hot-toast';
 
 import { BreadcrumbProvider } from './context/BreadcrumbContext';
 import { GlobalFilterProvider } from './context/GlobalFilterContext';
+import { FeatureFlagProvider } from './context/FeatureFlagContext';
+import { ThemeProvider } from './context/ThemeContext'; // Import ThemeProvider
 import router from './router';
 import LoadingBar from './components/Common/LoadingBar';
 
-// O Zustand não precisa de um Provider no topo da árvore de componentes.
-// O store é importado e usado diretamente nos componentes.
-
 function App() {
   return (
-    <GlobalFilterProvider>
-      <BreadcrumbProvider>
-        <Toaster 
-          position="top-right"
-          toastOptions={{
-            className: 'react-hot-toast',
-            duration: 4000,
-          }}
-        />
-        <RouterProvider router={router} />
-        <LoadingBar />
-      </BreadcrumbProvider>
-    </GlobalFilterProvider>
+    <ThemeProvider>
+      {' '}
+      {/* Wrap with ThemeProvider */}
+      <FeatureFlagProvider>
+        <GlobalFilterProvider>
+          <BreadcrumbProvider>
+            <Toaster
+              position='top-right'
+              toastOptions={{
+                className: 'react-hot-toast',
+                duration: 4000,
+              }}
+            />
+            <RouterProvider router={router} />
+            <LoadingBar />
+          </BreadcrumbProvider>
+        </GlobalFilterProvider>
+      </FeatureFlagProvider>
+    </ThemeProvider>
   );
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Row,
@@ -11,33 +11,31 @@ import {
   Input,
   FormFeedback,
   Form,
-} from "reactstrap";
+} from 'reactstrap';
 
 // Formik Validation
-import * as Yup from "yup";
-import { useFormik } from "formik";
+import * as Yup from 'yup';
+import { useFormik } from 'formik';
 
 //redux
-import { useSelector, useDispatch } from "react-redux";
-import { createSelector } from "reselect";
-import withRouter from "components/Common/withRouter";
+import { useSelector, useDispatch } from 'react-redux';
+import { createSelector } from 'reselect';
+import withRouter from 'components/Common/withRouter';
 
 //Import Breadcrumb
-import Breadcrumb from "../../components/Common/Breadcrumb";
-
-import avatar from "../../assets/images/users/avatar-1.jpg";
+import Breadcrumb from '../../components/Common/Breadcrumb';
+import avatar from '../../assets/images/users/avatar-1.jpg';
 // actions
-import { editProfile, resetProfileFlag } from "../../store/actions";
+import { editProfile, resetProfileFlag } from '../../store/actions';
 
 const UserProfile = () => {
-
   //meta title
-  document.title = "Profile | Skote - React Admin & Dashboard Template";
+  document.title = 'Profile | RedeCellRJ - React Admin & Dashboard Template';
 
   const dispatch = useDispatch();
 
-  const [email, setemail] = useState("");
-  const [name, setname] = useState("");
+  const [email, setemail] = useState('');
+  const [name, setname] = useState('');
   const [idx, setidx] = useState(1);
 
   const ProfileProperties = createSelector(
@@ -45,24 +43,21 @@ const UserProfile = () => {
     (profile) => ({
       error: profile.error,
       success: profile.success,
-    })
+    }),
   );
 
-  const {
-    error,
-    success
-  } = useSelector(ProfileProperties);
+  const { error, success } = useSelector(ProfileProperties);
 
   useEffect(() => {
-    if (localStorage.getItem("authUser")) {
-      const obj = JSON.parse(localStorage.getItem("authUser"));
-      if (process.env.REACT_APP_DEFAULTAUTH === "firebase") {
+    if (localStorage.getItem('authUser')) {
+      const obj = JSON.parse(localStorage.getItem('authUser'));
+      if (process.env.REACT_APP_DEFAULTAUTH === 'firebase') {
         setname(obj.displayName);
         setemail(obj.email);
         setidx(obj.uid);
       } else if (
-        process.env.REACT_APP_DEFAULTAUTH === "fake" ||
-        process.env.REACT_APP_DEFAULTAUTH === "jwt"
+        process.env.REACT_APP_DEFAULTAUTH === 'fake' ||
+        process.env.REACT_APP_DEFAULTAUTH === 'jwt'
       ) {
         setname(obj.username);
         setemail(obj.email);
@@ -83,41 +78,36 @@ const UserProfile = () => {
       idx: idx || '',
     },
     validationSchema: Yup.object({
-      username: Yup.string().required("Please Enter Your UserName"),
+      username: Yup.string().required('Please Enter Your UserName'),
     }),
     onSubmit: (values) => {
       dispatch(editProfile(values));
-    }
+    },
   });
-
 
   return (
     <React.Fragment>
-      <div className="page-content">
+      <div className='page-content'>
         <Container fluid>
           {/* Render Breadcrumb */}
-          <Breadcrumb title="Skote" breadcrumbItem="Profile" />
+          <Breadcrumb breadcrumbItem='Profile' title='RedeCellRJ' />
 
           <Row>
-            <Col lg="12">
-              {error && error ? <Alert color="danger">{error}</Alert> : null}
-              {success ? <Alert color="success">{success}</Alert> : null}
+            <Col lg='12'>
+              {error && error ? <Alert color='danger'>{error}</Alert> : null}
+              {success ? <Alert color='success'>{success}</Alert> : null}
 
               <Card>
                 <CardBody>
-                  <div className="d-flex">
-                    <div className="ms-3">
-                      <img
-                        src={avatar}
-                        alt=""
-                        className="avatar-md rounded-circle img-thumbnail"
-                      />
+                  <div className='d-flex'>
+                    <div className='ms-3'>
+                      <img alt='' className='avatar-md rounded-circle img-thumbnail' src={avatar} />
                     </div>
-                    <div className="flex-grow-1 align-self-center">
-                      <div className="text-muted">
+                    <div className='flex-grow-1 align-self-center'>
+                      <div className='text-muted'>
                         <h5>{name}</h5>
-                        <p className="mb-1">{email}</p>
-                        <p className="mb-0">Id no: #{idx}</p>
+                        <p className='mb-1'>{email}</p>
+                        <p className='mb-0'>Id no: #{idx}</p>
                       </div>
                     </div>
                   </div>
@@ -126,40 +116,40 @@ const UserProfile = () => {
             </Col>
           </Row>
 
-          <h4 className="card-title mb-4">Change User Name</h4>
+          <h4 className='card-title mb-4'>Change User Name</h4>
 
           <Card>
             <CardBody>
               <Form
-                className="form-horizontal"
+                className='form-horizontal'
                 onSubmit={(e) => {
                   e.preventDefault();
                   validation.handleSubmit();
                   return false;
                 }}
               >
-                <div className="form-group">
-                  <Label className="form-label">User Name</Label>
+                <div className='form-group'>
+                  <Label className='form-label'>User Name</Label>
                   <Input
-                    name="username"
-                    // value={name}
-                    className="form-control"
-                    placeholder="Enter User Name"
-                    type="text"
-                    onChange={validation.handleChange}
-                    onBlur={validation.handleBlur}
-                    value={validation.values.username || ""}
                     invalid={
                       validation.touched.username && validation.errors.username ? true : false
                     }
+                    placeholder="Enter User Name"
+                    type="text"
+                    value={validation.values.username || ""}
+                    onBlur={validation.handleBlur}
+                    onChange={validation.handleChange}
+                    name="username"
+                    // value={name}
+                    className="form-control"
                   />
                   {validation.touched.username && validation.errors.username ? (
-                    <FormFeedback type="invalid">{validation.errors.username}</FormFeedback>
+                    <FormFeedback type='invalid'>{validation.errors.username}</FormFeedback>
                   ) : null}
-                  <Input name="idx" value={idx} type="hidden" />
+                  <Input name='idx' type='hidden' value={idx} />
                 </div>
-                <div className="text-center mt-4">
-                  <Button type="submit" color="danger">
+                <div className='text-center mt-4'>
+                  <Button color='danger' type='submit'>
                     Update User Name
                   </Button>
                 </div>

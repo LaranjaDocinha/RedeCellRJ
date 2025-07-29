@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+
 import { useScrollDirection } from '../../../hooks/useScrollDirection';
-import { useThemeStore } from '../../../store/themeStore';
+import { useTheme } from '../../../context/ThemeContext';
 import './FloatingActionButton.scss';
 
 const predefinedColors = [
@@ -19,9 +20,7 @@ const FloatingActionButton = ({ availableWidgets, onAddWidget, onResetLayout }) 
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
   const scrollDirection = useScrollDirection();
-  const themeMode = useThemeStore((state) => state.theme.mode);
-  const setPrimaryColor = useThemeStore((state) => state.setPrimaryColor);
-  const setThemeMode = useThemeStore((state) => state.setThemeMode);
+  const { theme, toggleTheme, setPrimaryColor } = useTheme();
 
   const isDisabled = availableWidgets.length === 0;
 
@@ -30,7 +29,7 @@ const FloatingActionButton = ({ availableWidgets, onAddWidget, onResetLayout }) 
       setIsOpen(false);
     }
   }, [scrollDirection]);
-  
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -63,50 +62,50 @@ const FloatingActionButton = ({ availableWidgets, onAddWidget, onResetLayout }) 
   };
 
   const handleThemeToggle = () => {
-    setThemeMode(themeMode === 'light' ? 'dark' : 'light');
-    const newTheme = themeMode === 'light' ? 'Escuro' : 'Claro';
+    toggleTheme();
+    const newTheme = theme === 'light' ? 'Escuro' : 'Claro';
     toast.success(`Tema alterado para ${newTheme}`);
   };
 
   return (
-    <motion.div 
-      className="fab-container" 
+    <motion.div
       ref={menuRef}
       animate={{ y: scrollDirection === 'down' ? 150 : 0 }}
+      className='fab-container'
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
     >
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fab-menu"
+            animate='visible'
+            className='fab-menu'
+            exit='hidden'
+            initial='hidden'
             variants={menuVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
           >
             {/* Theme Toggle */}
-            <motion.div className="fab-menu-item" variants={itemVariants}>
-              <span className="fab-label">Mudar Tema</span>
+            <motion.div className='fab-menu-item' variants={itemVariants}>
+              <span className='fab-label'>Mudar Tema</span>
               <button onClick={handleThemeToggle}>
-                <i className={themeMode === 'light' ? 'bx bx-moon' : 'bx bx-sun'}></i>
+                <i className={theme === 'light' ? 'bx bx-moon' : 'bx bx-sun'}></i>
               </button>
             </motion.div>
 
             {/* Color Picker */}
-            <motion.div className="fab-menu-item" variants={itemVariants}>
-              <span className="fab-label">Cor do Tema</span>
+            <motion.div className='fab-menu-item' variants={itemVariants}>
+              <span className='fab-label'>Cor do Tema</span>
               <button>
-                <i className="bx bx-palette"></i>
+                <i className='bx bx-palette'></i>
               </button>
-              <div className="fab-submenu">
-                <div className="color-picker">
-                  {predefinedColors.map(color => (
-                    <button 
-                      key={color} 
-                      className="color-swatch" 
+              <div className='fab-submenu'>
+                <div className='color-picker'>
+                  {predefinedColors.map((color) => (
+                    <button
+                      key={color}
+                      className='color-swatch'
                       style={{ backgroundColor: color }}
-                      onClick={() => handleColorChange(color)}
                       tabIndex={0}
+                      onClick={() => handleColorChange(color)}
                     />
                   ))}
                 </div>
@@ -114,49 +113,60 @@ const FloatingActionButton = ({ availableWidgets, onAddWidget, onResetLayout }) 
             </motion.div>
 
             {/* Reset Layout Button */}
-            <motion.div className="fab-menu-item" variants={itemVariants}>
-              <span className="fab-label">Resetar Layout</span>
-              <button onClick={() => { onResetLayout(); setIsOpen(false); }}>
-                <i className="bx bx-reset"></i>
+            <motion.div className='fab-menu-item' variants={itemVariants}>
+              <span className='fab-label'>Resetar Layout</span>
+              <button
+                onClick={() => {
+                  onResetLayout();
+                  setIsOpen(false);
+                }}
+              >
+                <i className='bx bx-reset'></i>
               </button>
             </motion.div>
 
             {/* Add Widget Submenu */}
-            <motion.div className="fab-menu-item" variants={itemVariants}>
-               <span className="fab-label">Adicionar Widget</span>
-               <button disabled={isDisabled} title={isDisabled ? "Todos os widgets já estão no dashboard" : "Adicionar widget"}>
-                 <i className="bx bx-plus"></i>
-               </button>
-               {!isDisabled && (
-                 <div className="fab-submenu">
-                   <ul>
-                     {availableWidgets.map(widget => (
-                       <button 
-                         key={widget.id} 
-                         onClick={() => { onAddWidget(widget.id); setIsOpen(false); }}
-                         className="widget-item-button"
-                         tabIndex={0}
-                       >
-                         {widget.title}
-                       </button>
-                     ))}
-                   </ul>
-                 </div>
-               )}
+            <motion.div className='fab-menu-item' variants={itemVariants}>
+              <span className='fab-label'>Adicionar Widget</span>
+              <button
+                disabled={isDisabled}
+                title={isDisabled ? 'Todos os widgets já estão no dashboard' : 'Adicionar widget'}
+              >
+                <i className='bx bx-plus'></i>
+              </button>
+              {!isDisabled && (
+                <div className='fab-submenu'>
+                  <ul>
+                    {availableWidgets.map((widget) => (
+                      <button
+                        key={widget.id}
+                        className='widget-item-button'
+                        tabIndex={0}
+                        onClick={() => {
+                          onAddWidget(widget.id);
+                          setIsOpen(false);
+                        }}
+                      >
+                        {widget.title}
+                      </button>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
       <motion.button
-        className="fab-main-button"
-        onClick={() => setIsOpen(!isOpen)}
+        className='fab-main-button'
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
+        onClick={() => setIsOpen(!isOpen)}
       >
-        <motion.i 
-          className={isOpen ? 'bx bx-x' : 'bx bxs-magic-wand'}
+        <motion.i
           animate={{ rotate: isOpen ? 360 : 0 }}
+          className={isOpen ? 'bx bx-x' : 'bx bxs-magic-wand'}
           transition={{ duration: 0.3 }}
         />
       </motion.button>
@@ -165,13 +175,14 @@ const FloatingActionButton = ({ availableWidgets, onAddWidget, onResetLayout }) 
 };
 
 FloatingActionButton.propTypes = {
-  availableWidgets: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
-  })).isRequired,
+  availableWidgets: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+    }),
+  ).isRequired,
   onAddWidget: PropTypes.func.isRequired,
   onResetLayout: PropTypes.func.isRequired,
 };
 
 export default FloatingActionButton;
-

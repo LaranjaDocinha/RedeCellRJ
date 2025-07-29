@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { Badge, Button } from 'reactstrap';
+
 import { ProductContext } from '../../../context/ProductContext';
 import './ActiveFilters.scss';
 
@@ -11,27 +12,17 @@ const ActiveFilters = () => {
   }
 
   return (
-    <div className="active-filters-container">
-      <div className="filters-pills">
-        {activeFilters.map(filter => (
-          <Badge key={filter.type} color="secondary" className="filter-pill">
+    <div className='active-filters-container'>
+      <div className='filters-pills'>
+        {activeFilters.map((filter) => (
+          <Badge key={filter.type} className='filter-pill' color='secondary'>
             {filter.label}
-            <Button
-              close
-              className="filter-close-btn"
-              onClick={() => removeFilter(filter.type)}
-            />
+            <Button close className='filter-close-btn' onClick={() => removeFilter(filter.type)} />
           </Badge>
         ))}
       </div>
-      <Button
-        outline
-        color="danger"
-        size="sm"
-        className="clear-filters-btn"
-        onClick={clearFilters}
-      >
-        <i className="bx bx-x me-1"></i>
+      <Button outline className='clear-filters-btn' color='danger' size='sm' onClick={clearFilters}>
+        <i className='bx bx-x me-1'></i>
         Limpar Tudo
       </Button>
     </div>

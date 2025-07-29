@@ -1,0 +1,70 @@
+// frontend/src/pages/Dashboard/_dashboard-v2.scss
+
+.dashboard-kpi-card,
+.dashboard-chart-card,
+.dashboard-activity-card {
+  border-radius: var(--card-border-radius);
+  background-color: var(--card-background-color);
+  box-shadow: var(--card-box-shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  .card-title {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  h3 {
+    color: var(--color-heading);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+  }
+}
+
+.dashboard-chart-card,
+.dashboard-activity-card {
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+  }
+}
+
+.page-content {
+  background-color: var(--color-body-bg);
+  transition: background-color 0.3s ease;
+}
+
+.dashboard-kpi-card {
+  .card-body {
+    padding: var(--spacing-md);
+  }
+}
+
+.dashboard-chart-card,
+.dashboard-activity-card {
+  .card-body {
+    padding: var(--spacing-md);
+  }
+}
+
+.dashboard-kpi-card {
+  .card-title {
+    color: var(--color-text-muted);
+  }
+  h3 {
+    color: var(--color-heading);
+  }
+}
+
+.dashboard-chart-card,
+.dashboard-activity-card {
+  .card-title {
+    color: var(--color-heading);
+  }
+}

@@ -10,11 +10,7 @@ export const GlobalFilterProvider = ({ children }) => {
     setGlobalPeriod,
   };
 
-  return (
-    <GlobalFilterContext.Provider value={value}>
-      {children}
-    </GlobalFilterContext.Provider>
-  );
+  return <GlobalFilterContext.Provider value={value}>{children}</GlobalFilterContext.Provider>;
 };
 
 export const useGlobalFilter = () => {

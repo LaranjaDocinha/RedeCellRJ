@@ -1,5 +1,5 @@
 -- Tabela para Contas a Pagar
-CREATE TABLE contas_a_pagar (
+CREATE TABLE IF NOT EXISTS contas_a_pagar (
     id SERIAL PRIMARY KEY,
     descricao VARCHAR(255) NOT NULL,
     valor DECIMAL(10, 2) NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE contas_a_pagar (
 );
 
 -- Tabela para Contas a Receber
-CREATE TABLE contas_a_receber (
+CREATE TABLE IF NOT EXISTS contas_a_receber (
     id SERIAL PRIMARY KEY,
     descricao VARCHAR(255) NOT NULL,
     valor DECIMAL(10, 2) NOT NULL,
@@ -34,7 +34,8 @@ CREATE TABLE contas_a_receber (
 
 -- Adicionar um campo para controlar o saldo devedor na tabela de clientes
 ALTER TABLE customers
-ADD COLUMN saldo_devedor DECIMAL(10, 2) NOT NULL DEFAULT 0.00;
+ADD COLUMN IF NOT EXISTS saldo_devedor DECIMAL(10, 2) NOT NULL DEFAULT 0.00;
+
 
 -- Comentário sobre a decisão de usar a tabela customers para fornecedores:
 -- Para simplificar o sistema inicial, podemos cadastrar fornecedores como um tipo de cliente.

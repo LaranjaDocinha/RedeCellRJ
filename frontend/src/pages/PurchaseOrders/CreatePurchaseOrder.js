@@ -1,14 +1,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container, Row, Col, Card, CardBody, CardTitle,
-  Form, FormGroup, Label, Input, Button,
-  Table, FormFeedback, Spinner
+  Container,
+  Row,
+  Col,
+  Card,
+  CardBody,
+  CardTitle,
+  Form,
+  FormGroup,
+  Label,
+  Input,
+  Button,
+  Table,
+  FormFeedback,
 } from 'reactstrap';
 import Select from 'react-select';
+import toast from 'react-hot-toast';
+
+import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import useApi from '../../hooks/useApi';
 import { get, post } from '../../helpers/api_helper';
-import toast from 'react-hot-toast';
 
 const CreatePurchaseOrder = () => {
   const navigate = useNavigate();
@@ -35,13 +47,16 @@ const CreatePurchaseOrder = () => {
   }, [fetchSuppliers, fetchProducts]);
 
   const handleAddItem = (product) => {
-    if (items.find(i => i.variation_id === product.value)) return; // Evita duplicados
-    setItems([...items, {
-      variationId: product.value,
-      productName: product.label,
-      quantity: 1,
-      costPrice: product.costPrice || 0,
-    }]);
+    if (items.find((i) => i.variation_id === product.value)) return; // Evita duplicados
+    setItems([
+      ...items,
+      {
+        variationId: product.value,
+        productName: product.label,
+        quantity: 1,
+        costPrice: product.costPrice || 0,
+      },
+    ]);
     setProductSearch(''); // Limpa a busca
   };
 
@@ -96,40 +111,46 @@ const CreatePurchaseOrder = () => {
     }
   };
 
-  const productOptions = products.flatMap(p => 
-    p.variations.map(v => ({
+  const productOptions = products.flatMap((p) =>
+    p.variations.map((v) => ({
       value: v.id,
       label: `${p.name} (${v.color || 'Padrão'})`,
-      costPrice: v.cost_price
-    }))
+      costPrice: v.cost_price,
+    })),
   );
 
   return (
-    <div className="page-content">
+    <div className='page-content'>
       <Container fluid>
         <Card>
           <CardBody>
-            <CardTitle className="h4 mb-4">Criar Nova Ordem de Compra</CardTitle>
+            <CardTitle className='h4 mb-4'>Criar Nova Ordem de Compra</CardTitle>
             <Form onSubmit={handleSubmit}>
               <Row>
                 <Col md={6}>
                   <FormGroup>
                     <Label>Fornecedor</Label>
                     <Select
-                      options={suppliers.map(s => ({ value: s.id, label: s.name }))}
-                      onChange={setSupplier}
-                      value={supplier}
-                      placeholder="Selecione um fornecedor..."
-                      isLoading={loadingSuppliers}
                       isInvalid={!!formErrors.supplier}
+                      isLoading={loadingSuppliers}
+                      options={suppliers.map((s) => ({ value: s.id, label: s.name }))}
+                      placeholder='Selecione um fornecedor...'
+                      value={supplier}
+                      onChange={setSupplier}
                     />
-                    {formErrors.supplier && <div className="invalid-feedback d-block">{formErrors.supplier}</div>}
+                    {formErrors.supplier && (
+                      <div className='invalid-feedback d-block'>{formErrors.supplier}</div>
+                    )}
                   </FormGroup>
                 </Col>
                 <Col md={6}>
                   <FormGroup>
                     <Label>Data de Entrega Prevista</Label>
-                    <Input type="date" value={expectedDate} onChange={e => setExpectedDate(e.target.value)} />
+                    <Input
+                      type='date'
+                      value={expectedDate}
+                      onChange={(e) => setExpectedDate(e.target.value)}
+                    />
                   </FormGroup>
                 </Col>
               </Row>
@@ -137,33 +158,37 @@ const CreatePurchaseOrder = () => {
                 <Col>
                   <FormGroup>
                     <Label>Observações</Label>
-                    <Input type="textarea" value={notes} onChange={e => setNotes(e.target.value)} />
+                    <Input
+                      type='textarea'
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                    />
                   </FormGroup>
                 </Col>
               </Row>
 
               <hr />
-              <h5 className="font-size-16 mb-3">Itens do Pedido</h5>
+              <h5 className='font-size-16 mb-3'>Itens do Pedido</h5>
 
               <FormGroup>
                 <Label>Adicionar Produto</Label>
                 <Select
-                  options={productOptions}
-                  onChange={handleAddItem}
-                  placeholder="Digite para buscar um produto..."
                   isLoading={loadingProducts}
+                  options={productOptions}
+                  placeholder='Digite para buscar um produto...'
                   value={null} // Controlado externamente
+                  onChange={handleAddItem}
                 />
-                 {formErrors.items && <div className="text-danger mt-2">{formErrors.items}</div>}
+                {formErrors.items && <div className='text-danger mt-2'>{formErrors.items}</div>}
               </FormGroup>
 
               <Table bordered responsive>
                 <thead>
                   <tr>
                     <th>Produto</th>
-                    <th style={{width: '120px'}}>Quantidade</th>
-                    <th style={{width: '150px'}}>Custo (R$)</th>
-                    <th style={{width: '80px'}}>Ação</th>
+                    <th style={{ width: '120px' }}>Quantidade</th>
+                    <th style={{ width: '150px' }}>Custo (R$)</th>
+                    <th style={{ width: '80px' }}>Ação</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -171,36 +196,42 @@ const CreatePurchaseOrder = () => {
                     <tr key={item.variationId}>
                       <td>{item.productName}</td>
                       <td>
-                        <Input 
-                          type="number" 
-                          value={item.quantity} 
-                          onChange={e => handleItemChange(index, 'quantity', e.target.value)}
+                        <Input
                           invalid={!!formErrors[`item_quantity_${index}`]}
+                          type='number'
+                          value={item.quantity}
+                          onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
                         />
                       </td>
                       <td>
-                        <Input 
-                          type="number" 
-                          step="0.01"
-                          value={item.costPrice} 
-                          onChange={e => handleItemChange(index, 'costPrice', e.target.value)}
+                        <Input
                           invalid={!!formErrors[`item_cost_${index}`]}
+                          step='0.01'
+                          type='number'
+                          value={item.costPrice}
+                          onChange={(e) => handleItemChange(index, 'costPrice', e.target.value)}
                         />
                       </td>
                       <td>
-                        <Button color="danger" size="sm" onClick={() => handleRemoveItem(index)}>Remover</Button>
+                        <Button color='danger' size='sm' onClick={() => handleRemoveItem(index)}>
+                          Remover
+                        </Button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </Table>
 
-              <div className="d-flex justify-content-end mt-4">
-                <Button color="secondary" className="me-2" onClick={() => navigate('/purchase-orders')}>
+              <div className='d-flex justify-content-end mt-4'>
+                <Button
+                  className='me-2'
+                  color='secondary'
+                  onClick={() => navigate('/purchase-orders')}
+                >
                   Cancelar
                 </Button>
-                <Button color="primary" type="submit" disabled={creatingOrder}>
-                  {creatingOrder ? <Spinner size="sm" /> : 'Salvar Ordem de Compra'}
+                <Button color='primary' disabled={creatingOrder} type='submit'>
+                  {creatingOrder ? <LoadingSpinner size='sm' /> : 'Salvar Ordem de Compra'}
                 </Button>
               </div>
             </Form>

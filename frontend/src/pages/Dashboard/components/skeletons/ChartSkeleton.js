@@ -5,10 +5,10 @@ import './Skeletons.scss';
 
 const ChartSkeleton = ({ type = 'donut' }) => {
   return (
-    <div className="skeleton-container chart-skeleton">
-      {type === 'donut' && <Skeleton circle width={180} height={180} />}
+    <div className='skeleton-container chart-skeleton'>
+      {type === 'donut' && <Skeleton circle height={180} width={180} />}
       {type === 'bar' && (
-        <div className="bar-chart-skeleton">
+        <div className='bar-chart-skeleton'>
           <Skeleton height={180} width={40} />
           <Skeleton height={120} width={40} />
           <Skeleton height={160} width={40} />

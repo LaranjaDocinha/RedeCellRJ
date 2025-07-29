@@ -1,29 +1,19 @@
-import React, { useEffect } from 'react';
-import { useThemeStore } from '../../store/themeStore';
+import React from 'react';
+
+import { useTheme } from '../../context/ThemeContext';
 import './ThemeToggle.scss';
 
 const ThemeToggle = () => {
-  const setThemeMode = useThemeStore((state) => state.setThemeMode);
-  const themeMode = useThemeStore((state) => state.theme.mode);
-
-  const toggleTheme = () => {
-    setThemeMode(themeMode === 'light' ? 'dark' : 'light');
-  };
-
-  useEffect(() => {
-    document.body.classList.remove('light-mode', 'dark-mode');
-    document.body.classList.add(`${themeMode}-mode`);
-  }, [themeMode]);
+  const { theme, toggleTheme } = useTheme();
 
   return (
-    <button
-      onClick={toggleTheme}
-      className="theme-toggle-btn"
-      aria-label="Toggle theme"
-    >
-      <div className="icon-wrapper">
-        <i className="sun bx bx-sun"></i>
-        <i className="moon bx bx-moon"></i>
+    <button aria-label='Toggle theme' className='theme-toggle-btn' onClick={toggleTheme}>
+      <div className='icon-wrapper'>
+        {theme === 'light' ? (
+          <i className='sun bx bx-sun'></i>
+        ) : (
+          <i className='moon bx bx-moon'></i>
+        )}
       </div>
     </button>
   );

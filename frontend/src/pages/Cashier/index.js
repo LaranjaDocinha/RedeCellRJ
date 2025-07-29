@@ -1,20 +1,35 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Container, Row, Col, Card, CardBody, CardTitle,
-  Button, Form, FormGroup, Label, Input, Spinner, Alert
+  Container,
+  Row,
+  Col,
+  Card,
+  CardBody,
+  CardTitle,
+  Button,
+  Form,
+  FormGroup,
+  Label,
+  Input,
+  Alert,
 } from 'reactstrap';
+import toast from 'react-hot-toast';
+
+import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import useApi from '../../hooks/useApi';
 import { get, post } from '../../helpers/api_helper';
-import toast from 'react-hot-toast';
 import { useAuthStore } from '../../store/authStore';
 
+import BlindCloseoutModal from './components/BlindCloseoutModal'; // Importa o novo modal
+
+// Formulário para abrir o caixa (permanece o mesmo)
 const OpenCashierForm = ({ onCashierOpened, loading }) => {
   const [openingBalance, setOpeningBalance] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!openingBalance || isNaN(parseFloat(openingBalance))) {
-      toast.error("Por favor, insira um saldo de abertura válido.");
+      toast.error('Por favor, insira um saldo de abertura válido.');
       return;
     }
     onCashierOpened({ openingBalance: parseFloat(openingBalance) });
@@ -22,75 +37,50 @@ const OpenCashierForm = ({ onCashierOpened, loading }) => {
 
   return (
     <Form onSubmit={handleSubmit}>
-      <CardTitle className="h4 mb-4">Abrir Caixa</CardTitle>
+      <CardTitle className='h4 mb-4'>Abrir Caixa</CardTitle>
       <FormGroup>
-        <Label for="openingBalance">Saldo Inicial (Fundo de Troco)</Label>
+        <Label for='openingBalance'>Saldo Inicial (Fundo de Troco)</Label>
         <Input
-          type="number"
-          step="0.01"
-          id="openingBalance"
+          required
+          id='openingBalance'
+          placeholder='Ex: 150.00'
+          step='0.01'
+          type='number'
           value={openingBalance}
           onChange={(e) => setOpeningBalance(e.target.value)}
-          placeholder="Ex: 150.00"
-          required
         />
       </FormGroup>
-      <Button color="primary" type="submit" disabled={loading}>
-        {loading ? <Spinner size="sm" /> : 'Abrir Caixa'}
+      <Button color='primary' disabled={loading} type='submit'>
+        {loading ? <LoadingSpinner size='sm' /> : 'Abrir Caixa'}
       </Button>
     </Form>
   );
 };
 
-const CloseCashierForm = ({ session, onCashierClosed, loading }) => {
-  const [closingBalance, setClosingBalance] = useState('');
-  const [notes, setNotes] = useState('');
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!closingBalance || isNaN(parseFloat(closingBalance))) {
-      toast.error("Por favor, insira o valor total contado no caixa.");
-      return;
-    }
-    // Passa para cima o valor em camelCase
-    onCashierClosed({ 
-      closingBalance: parseFloat(closingBalance),
-      notes 
-    });
-  };
-
+// Componente para exibir o status do caixa aberto
+const CashierOpenStatus = ({ session, onStartCloseout }) => {
   return (
-    <Form onSubmit={handleSubmit}>
-      <CardTitle className="h4 mb-4">Fechar Caixa</CardTitle>
-      <Alert color="info" fade={false}>
-        O caixa foi aberto com <strong>R$ {parseFloat(session.opening_balance).toFixed(2)}</strong> em {new Date(session.opened_at).toLocaleString('pt-BR')}.
+    <div>
+      <CardTitle className='h4 mb-4'>Caixa Aberto</CardTitle>
+      <Alert className='text-center' color='success' fade={false}>
+        <i className='bx bx-check-circle font-size-24 align-middle me-2'></i>O caixa está aberto.
       </Alert>
-      <FormGroup>
-        <Label for="closingBalance">Valor Total em Caixa (Contado)</Label>
-        <Input
-          type="number"
-          step="0.01"
-          id="closingBalance"
-          value={closingBalance}
-          onChange={(e) => setClosingBalance(e.target.value)}
-          placeholder="Digite o valor total contado na gaveta"
-          required
-        />
-      </FormGroup>
-      <FormGroup>
-        <Label for="notes">Observações</Label>
-        <Input
-          type="textarea"
-          id="notes"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Alguma observação sobre o fechamento?"
-        />
-      </FormGroup>
-      <Button color="danger" type="submit" disabled={loading}>
-        {loading ? <Spinner size="sm" /> : 'Fechar Caixa'}
-      </Button>
-    </Form>
+      <div className='text-center'>
+        <p className='mb-2'>
+          Aberto por: <strong>{useAuthStore.getState().user?.name}</strong>
+        </p>
+        <p className='mb-2'>
+          Saldo Inicial: <strong>R$ {parseFloat(session.openingBalance).toFixed(2)}</strong>
+        </p>
+        <p className='text-muted'>
+          Aberto em: {new Date(session.opened_at).toLocaleString('pt-BR')}
+        </p>
+        <Button className='mt-3' color='danger' size='lg' onClick={onStartCloseout}>
+          <i className='bx bx-lock-alt me-2'></i>
+          Iniciar Fechamento de Caixa
+        </Button>
+      </div>
+    </div>
   );
 };
 
@@ -98,7 +88,10 @@ const CashierPage = () => {
   const { user } = useAuthStore();
   const { data: statusData, loading: loadingStatus, request: fetchStatus } = useApi(get);
   const { loading: opening, request: openCashier } = useApi(post);
-  const { loading: closing, request: closeCashier } = useApi(post);
+
+  const [isCloseoutModalOpen, setCloseoutModalOpen] = useState(false);
+
+  const toggleCloseoutModal = () => setCloseoutModalOpen(!isCloseoutModalOpen);
 
   const refreshStatus = useCallback(() => {
     if (user?.id) {
@@ -108,68 +101,58 @@ const CashierPage = () => {
 
   useEffect(() => {
     refreshStatus();
-  }, [refreshStatus, user]);
+  }, [refreshStatus]);
 
   const handleOpenCashier = async (payload) => {
     try {
-      // Converte para o formato da API aqui
       const apiPayload = {
-        ['opening_balance']: payload.openingBalance,
-        userId: user.id
+        openingBalance: payload.openingBalance,
+        userId: user.id,
       };
       await openCashier('/api/cashier/open', apiPayload);
       toast.success('Caixa aberto com sucesso!');
       refreshStatus();
     } catch (err) {
-      toast.error(`Erro ao abrir caixa: ${err.message}`);
-    }
-  };
-
-  const handleCloseCashier = async (payload) => {
-    try {
-      // Converte para o formato da API aqui
-      const apiPayload = {
-        ['closing_balance']: payload.closingBalance,
-        notes: payload.notes,
-        userId: user.id
-      };
-      const result = await closeCashier('/api/cashier/close', apiPayload);
-      toast.success('Caixa fechado com sucesso!');
-      // Aqui você pode mostrar um resumo do fechamento se desejar
-      
-      refreshStatus();
-    } catch (err) {
-      toast.error(`Erro ao fechar caixa: ${err.message}`);
+      // O helper já mostra o toast de erro
     }
   };
 
   return (
-    <div className="page-content">
-      <Container fluid>
-        <Row>
-          <Col md={{ size: 8, offset: 2 }} lg={{ size: 6, offset: 3 }}>
-            <Card>
-              <CardBody>
-                {loadingStatus ? (
-                  <div className="text-center"><Spinner /></div>
-                ) : statusData?.isOpen ? (
-                  <CloseCashierForm 
-                    session={statusData.session}
-                    onCashierClosed={handleCloseCashier}
-                    loading={closing}
-                  />
-                ) : (
-                  <OpenCashierForm 
-                    onCashierOpened={handleOpenCashier}
-                    loading={opening}
-                  />
-                )}
-              </CardBody>
-            </Card>
-          </Col>
-        </Row>
-      </Container>
-    </div>
+    <>
+      <div className='page-content'>
+        <Container fluid>
+          <Row>
+            <Col lg={{ size: 6, offset: 3 }} md={{ size: 8, offset: 2 }}>
+              <Card>
+                <CardBody>
+                  {loadingStatus ? (
+                    <div className='text-center'>
+                      <LoadingSpinner />
+                    </div>
+                  ) : statusData?.isOpen ? (
+                    <CashierOpenStatus
+                      session={statusData.session}
+                      onStartCloseout={toggleCloseoutModal}
+                    />
+                  ) : (
+                    <OpenCashierForm loading={opening} onCashierOpened={handleOpenCashier} />
+                  )}
+                </CardBody>
+              </Card>
+            </Col>
+          </Row>
+        </Container>
+      </div>
+
+      {statusData?.session && (
+        <BlindCloseoutModal
+          isOpen={isCloseoutModalOpen}
+          session={statusData.session}
+          toggle={toggleCloseoutModal}
+          onFinish={refreshStatus}
+        />
+      )}
+    </>
   );
 };
 

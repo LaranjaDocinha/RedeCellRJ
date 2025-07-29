@@ -6,15 +6,25 @@ const DrillDownModal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="drill-down-modal-overlay" onClick={onClose}>
-      <div className="drill-down-modal-content" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
+    <div
+      className='drill-down-modal-overlay'
+      role='button'
+      tabIndex='0'
+      onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          onClose();
+        }
+      }}
+    >
+      <div className='drill-down-modal-content' role='none' onClick={(e) => e.stopPropagation()}>
+        <div className='modal-header'>
           <h3>{title}</h3>
-          <button onClick={onClose} className="close-btn">&times;</button>
+          <button className='close-btn' onClick={onClose}>
+            &times;
+          </button>
         </div>
-        <div className="modal-body">
-          {children}
-        </div>
+        <div className='modal-body'>{children}</div>
       </div>
     </div>
   );

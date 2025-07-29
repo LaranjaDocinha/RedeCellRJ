@@ -12,19 +12,19 @@ const EmptyState = ({
 }) => {
   return (
     <motion.div
-      className="empty-state-container text-center"
-      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      className='empty-state-container text-center'
+      initial={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="empty-state-icon">
+      <div className='empty-state-icon'>
         <i className={icon}></i>
       </div>
-      <h4 className="mt-4">{title}</h4>
-      <p className="text-muted">{message}</p>
+      <h4 className='mt-4'>{title}</h4>
+      <p className='text-muted'>{message}</p>
       {actionText && onActionClick && (
-        <Button color="primary" onClick={onActionClick}>
-          <i className="bx bx-plus me-1"></i>
+        <Button color='primary' onClick={onActionClick}>
+          <i className='bx bx-plus me-1'></i>
           {actionText}
         </Button>
       )}

@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Card, CardBody, CardTitle, Table, Button, Input, Label, FormGroup, Alert
+  Card,
+  CardBody,
+  CardTitle,
+  Table,
+  Button,
+  Input,
+  Label,
+  FormGroup,
+  Alert,
 } from 'reactstrap';
 
 const SaleDetailsForReturn = ({ sale, onProcessReturn, loading }) => {
@@ -9,7 +17,7 @@ const SaleDetailsForReturn = ({ sale, onProcessReturn, loading }) => {
   useEffect(() => {
     // Inicializa o estado com os itens da venda, com quantidade 0 para devolução
     if (sale && sale.items) {
-      setItemsToReturn(sale.items.map(item => ({ ...item, returnQuantity: 0 })));
+      setItemsToReturn(sale.items.map((item) => ({ ...item, returnQuantity: 0 })));
     }
   }, [sale]);
 
@@ -22,30 +30,31 @@ const SaleDetailsForReturn = ({ sale, onProcessReturn, loading }) => {
   };
 
   const handleSubmit = () => {
-    const itemsPayload =
-      itemsToReturn
-        .filter(item => item.returnQuantity > 0)
-        .map(item => ({
-          variationId: item.variation_id, // Precisamos do variation_id
-          quantity: item.returnQuantity,
-          unitPrice: item.unit_price,
-        }));
+    const itemsPayload = itemsToReturn
+      .filter((item) => item.returnQuantity > 0)
+      .map((item) => ({
+        variationId: item.variation_id, // Precisamos do variation_id
+        quantity: item.returnQuantity,
+        unitPrice: item.unit_price,
+      }));
     onProcessReturn(itemsPayload);
   };
 
   if (!sale) return null;
 
   return (
-    <Card className="mt-4">
+    <Card className='mt-4'>
       <CardBody>
-        <CardTitle className="h5">Detalhes da Venda #{sale.id}</CardTitle>
-        <p><strong>Cliente:</strong> {sale.customer_name || 'Não informado'}</p>
-        <p><strong>Data:</strong> {new Date(sale.sale_date).toLocaleString('pt-BR')}</p>
-        
-        <h6 className="mt-4">Itens para Devolução</h6>
-        <Alert color="info">
-          Selecione a quantidade de cada item a ser devolvido.
-        </Alert>
+        <CardTitle className='h5'>Detalhes da Venda #{sale.id}</CardTitle>
+        <p>
+          <strong>Cliente:</strong> {sale.customer_name || 'Não informado'}
+        </p>
+        <p>
+          <strong>Data:</strong> {new Date(sale.sale_date).toLocaleString('pt-BR')}
+        </p>
+
+        <h6 className='mt-4'>Itens para Devolução</h6>
+        <Alert color='info'>Selecione a quantidade de cada item a ser devolvido.</Alert>
         <Table bordered responsive>
           <thead>
             <tr>
@@ -58,16 +67,18 @@ const SaleDetailsForReturn = ({ sale, onProcessReturn, loading }) => {
           <tbody>
             {itemsToReturn.map((item, index) => (
               <tr key={item.item_id}>
-                <td>{item.product_name} ({item.color || 'Padrão'})</td>
+                <td>
+                  {item.product_name} ({item.color || 'Padrão'})
+                </td>
                 <td>{item.quantity}</td>
                 <td>R$ {parseFloat(item.unit_price).toFixed(2)}</td>
                 <td>
                   <Input
-                    type="number"
-                    min="0"
                     max={item.quantity}
+                    min='0'
+                    type='number'
                     value={item.returnQuantity}
-                    onChange={e => handleQuantityChange(index, e.target.value)}
+                    onChange={(e) => handleQuantityChange(index, e.target.value)}
                   />
                 </td>
               </tr>
@@ -75,8 +86,8 @@ const SaleDetailsForReturn = ({ sale, onProcessReturn, loading }) => {
           </tbody>
         </Table>
 
-        <div className="d-flex justify-content-end mt-3">
-          <Button color="primary" onClick={handleSubmit} disabled={loading}>
+        <div className='d-flex justify-content-end mt-3'>
+          <Button color='primary' disabled={loading} onClick={handleSubmit}>
             {loading ? 'Processando...' : 'Confirmar Devolução'}
           </Button>
         </div>

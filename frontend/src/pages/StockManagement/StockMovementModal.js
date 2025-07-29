@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Form, FormGroup, Label, Input, Spinner, Alert } from 'reactstrap';
+import {
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  Form,
+  FormGroup,
+  Label,
+  Input,
+  Alert,
+} from 'reactstrap';
 import axios from 'axios';
+
+import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import config from '../../config';
 
 const StockMovementModal = ({ isOpen, toggle, variation, mode, onSuccess }) => {
@@ -28,7 +41,9 @@ const StockMovementModal = ({ isOpen, toggle, variation, mode, onSuccess }) => {
     setLoading(true);
     setError(null);
 
-    const url = isAddMode ? `${API_URL}/api/products/stock/add` : `${API_URL}/api/products/stock/adjust`;
+    const url = isAddMode
+      ? `${API_URL}/api/products/stock/add`
+      : `${API_URL}/api/products/stock/adjust`;
     const payload = {
       variationId: variation.id,
       reason: reason,
@@ -45,7 +60,9 @@ const StockMovementModal = ({ isOpen, toggle, variation, mode, onSuccess }) => {
       onSuccess();
       toggle();
     } catch (err) {
-      setError(err.response?.data?.msg || `Erro ao ${isAddMode ? 'adicionar' : 'ajustar'} estoque.`);
+      setError(
+        err.response?.data?.msg || `Erro ao ${isAddMode ? 'adicionar' : 'ajustar'} estoque.`,
+      );
     } finally {
       setLoading(false);
     }
@@ -54,40 +71,46 @@ const StockMovementModal = ({ isOpen, toggle, variation, mode, onSuccess }) => {
   if (!variation) return null;
 
   return (
-    <Modal isOpen={isOpen} toggle={toggle} centered>
-      <ModalHeader toggle={toggle}>{modalTitle}: {variation.product_name} ({variation.color})</ModalHeader>
+    <Modal centered isOpen={isOpen} toggle={toggle}>
+      <ModalHeader toggle={toggle}>
+        {modalTitle}: {variation.product_name} ({variation.color})
+      </ModalHeader>
       <Form onSubmit={handleSubmit}>
         <ModalBody>
-          {error && <Alert color="danger">{error}</Alert>}
-          <p>Estoque atual: <strong>{variation.stock_quantity}</strong></p>
+          {error && <Alert color='danger'>{error}</Alert>}
+          <p>
+            Estoque atual: <strong>{variation.stock_quantity}</strong>
+          </p>
           <FormGroup>
-            <Label for="quantity">{labelText}</Label>
+            <Label for='quantity'>{labelText}</Label>
             <Input
-              type="number"
-              id="quantity"
+              required
+              id='quantity'
+              min='0'
+              placeholder='0'
+              type='number'
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              placeholder="0"
-              min="0"
-              required
             />
           </FormGroup>
           <FormGroup>
-            <Label for="reason">Motivo</Label>
+            <Label for='reason'>Motivo</Label>
             <Input
-              type="text"
-              id="reason"
+              required
+              id='reason'
+              placeholder={isAddMode ? 'Ex: Compra de fornecedor' : 'Ex: Contagem de inventário'}
+              type='text'
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder={isAddMode ? 'Ex: Compra de fornecedor' : 'Ex: Contagem de inventário'}
-              required
             />
           </FormGroup>
         </ModalBody>
         <ModalFooter>
-          <Button color="secondary" onClick={toggle} disabled={loading}>Cancelar</Button>
-          <Button color="primary" type="submit" disabled={loading}>
-            {loading ? <Spinner size="sm" /> : buttonText}
+          <Button color='secondary' disabled={loading} onClick={toggle}>
+            Cancelar
+          </Button>
+          <Button color='primary' disabled={loading} type='submit'>
+            {loading ? <LoadingSpinner size='sm' /> : buttonText}
           </Button>
         </ModalFooter>
       </Form>

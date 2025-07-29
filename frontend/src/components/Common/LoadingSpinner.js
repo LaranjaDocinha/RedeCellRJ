@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import './LoadingSpinner.scss';
@@ -20,10 +19,10 @@ const LoadingSpinner = ({ size = 24, color = '#fff' }) => {
 
   return (
     <motion.div
-      className="loading-spinner"
+      animate='end'
+      className='loading-spinner'
       style={{ width: size, height: size, borderColor: color, borderTopColor: 'transparent' }}
       variants={spinnerVariants}
-      animate="end"
     />
   );
 };

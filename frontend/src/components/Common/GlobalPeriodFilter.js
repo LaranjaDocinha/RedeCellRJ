@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button, ButtonGroup } from 'reactstrap';
+
 import { useGlobalFilter } from '../../context/GlobalFilterContext';
 
 const GlobalPeriodFilter = () => {
@@ -14,14 +15,14 @@ const GlobalPeriodFilter = () => {
   ];
 
   return (
-    <ButtonGroup className="d-none d-md-block">
-      {periods.map(period => (
+    <ButtonGroup className='d-none d-md-block'>
+      {periods.map((period) => (
         <Button
           key={period.key}
-          color="primary"
+          color='primary'
           outline={globalPeriod !== period.key}
+          size='sm'
           onClick={() => setGlobalPeriod(period.key)}
-          size="sm"
         >
           {period.label}
         </Button>

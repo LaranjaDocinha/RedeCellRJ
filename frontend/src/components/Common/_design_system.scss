@@ -1,7 +1,7 @@
 // frontend/src/components/Common/_design_system.scss
 
 // 1. Cores e Temas
-@import 'colors';
+@import '_colors';
 
 // 2. Tipografia
 @import 'typography';
@@ -20,9 +20,9 @@
   --btn-border-radius: 0.4rem;
   --btn-padding-y: 0.6rem;
   --btn-padding-x: 1.2rem;
-  --btn-box-shadow: none;
-  --btn-hover-box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  --btn-active-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --btn-box-shadow: var(--shadow-sm);
+  --btn-hover-box-shadow: var(--shadow-md);
+  --btn-active-box-shadow: var(--shadow);
 
 // Variáveis de Cards
   --card-border-radius: 0.5rem;

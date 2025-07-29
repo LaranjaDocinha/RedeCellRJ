@@ -1,11 +1,25 @@
 import React, { useState } from 'react';
 import {
-  Container, Row, Col, Card, CardBody, CardTitle,
-  Form, FormGroup, Label, Input, Button, InputGroup, Spinner, Alert
+  Container,
+  Row,
+  Col,
+  Card,
+  CardBody,
+  CardTitle,
+  Form,
+  FormGroup,
+  Label,
+  Input,
+  Button,
+  InputGroup,
+  Alert,
 } from 'reactstrap';
+import toast from 'react-hot-toast';
+
+import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import useApi from '../../hooks/useApi';
 import { get, post } from '../../helpers/api_helper';
-import toast from 'react-hot-toast';
+
 import SaleDetailsForReturn from './SaleDetailsForReturn';
 
 const ReturnsPage = () => {
@@ -35,21 +49,21 @@ const ReturnsPage = () => {
 
   const handleProcessReturn = async (itemsToReturn) => {
     if (itemsToReturn.length === 0) {
-      toast.error("Selecione pelo menos um item para devolver.");
+      toast.error('Selecione pelo menos um item para devolver.');
       return;
     }
 
     const returnPayload = {
       originalSaleId: saleDetails.id,
       customerId: saleDetails.customer_id,
-      items: itemsToReturn.map(item => ({
+      items: itemsToReturn.map((item) => ({
         variationId: item.variation_id,
         quantity: item.quantity,
         unitPrice: item.unit_price, // O preço do item na devolução
       })),
       // Pagamentos podem ser tratados de forma diferente (crédito, etc.)
       // Por agora, vamos focar em reverter o estoque.
-      payments: [], 
+      payments: [],
       notes: `Devolução referente à venda #${saleDetails.id}`,
     };
 
@@ -64,42 +78,45 @@ const ReturnsPage = () => {
   };
 
   return (
-    <div className="page-content">
+    <div className='page-content'>
       <Container fluid>
         <Row>
           <Col>
             <Card>
               <CardBody>
-                <CardTitle className="h4 mb-4">Processar Devolução</CardTitle>
-                
+                <CardTitle className='h4 mb-4'>Processar Devolução</CardTitle>
+
                 <Form onSubmit={handleSearch}>
                   <FormGroup>
-                    <Label for="saleId">ID da Venda Original</Label>
+                    <Label for='saleId'>ID da Venda Original</Label>
                     <InputGroup>
                       <Input
-                        type="text"
-                        id="saleId"
+                        id='saleId'
+                        placeholder='Digite o número da venda'
+                        type='text'
                         value={saleId}
                         onChange={(e) => setSaleId(e.target.value)}
-                        placeholder="Digite o número da venda"
                       />
-                      <Button color="primary" type="submit" disabled={searching}>
-                        {searching ? <Spinner size="sm" /> : 'Buscar Venda'}
+                      <Button color='primary' disabled={searching} type='submit'>
+                        {searching ? <LoadingSpinner size='sm' /> : 'Buscar Venda'}
                       </Button>
                     </InputGroup>
                   </FormGroup>
                 </Form>
 
-                {error && <Alert color="danger" className="mt-3">{error}</Alert>}
+                {error && (
+                  <Alert className='mt-3' color='danger'>
+                    {error}
+                  </Alert>
+                )}
 
                 {saleDetails && (
                   <SaleDetailsForReturn
+                    loading={processing}
                     sale={saleDetails}
                     onProcessReturn={handleProcessReturn}
-                    loading={processing}
                   />
                 )}
-
               </CardBody>
             </Card>
           </Col>

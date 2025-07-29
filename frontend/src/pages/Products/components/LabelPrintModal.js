@@ -43,34 +43,35 @@ const LabelPrintModal = ({ isOpen, toggle, selectedVariations }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} toggle={toggle} size="lg" fade={false}>
+    <Modal fade={false} isOpen={isOpen} size='lg' toggle={toggle}>
       <ModalHeader toggle={toggle}>Imprimir Etiquetas</ModalHeader>
       <ModalBody>
         <p>As seguintes etiquetas serão impressas. Verifique e clique em "Imprimir".</p>
-        
+
         {/* Componente que será impresso */}
         <div ref={componentRef} style={{ padding: '20px' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
-            {selectedVariations.map(variation => (
+            {(selectedVariations || []).map((variation) => (
               <div key={variation.id} style={labelStyle}>
                 <p style={productNameStyle}>{variation.product_name}</p>
-                <Barcode 
-                  value={variation.barcode || `P${variation.product_id}V${variation.id}`} 
-                  height={25}
+                <Barcode
                   fontSize={10}
+                  height={25}
                   margin={2}
+                  value={variation.barcode || 'P' + variation.product_id + 'V' + variation.id}
                 />
                 <p style={priceStyle}>R$ {parseFloat(variation.price).toFixed(2)}</p>
               </div>
             ))}
           </div>
         </div>
-
       </ModalBody>
       <ModalFooter>
-        <Button color="secondary" onClick={toggle}>Cancelar</Button>
-        <Button color="primary" onClick={handlePrint}>
-          <i className="bx bx-printer me-1"></i>
+        <Button color='secondary' onClick={toggle}>
+          Cancelar
+        </Button>
+        <Button color='primary' onClick={handlePrint}>
+          <i className='bx bx-printer me-1'></i>
           Imprimir
         </Button>
       </ModalFooter>

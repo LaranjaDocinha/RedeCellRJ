@@ -13,7 +13,7 @@ const SalesChart = ({ data, loading }) => {
     stroke: { curve: 'smooth', width: 3 },
     xaxis: {
       type: 'datetime',
-      categories: data?.map(d => d.date),
+      categories: (data || []).map((d) => d.date),
     },
     yaxis: {
       title: { text: 'Receita (R$)' },
@@ -21,8 +21,8 @@ const SalesChart = ({ data, loading }) => {
     tooltip: {
       x: { format: 'dd/MM/yyyy' },
       y: {
-        formatter: (val) => `R$ ${val.toFixed(2)}`
-      }
+        formatter: (val) => `R$ ${val.toFixed(2)}`,
+      },
     },
     fill: {
       type: 'gradient',
@@ -30,24 +30,26 @@ const SalesChart = ({ data, loading }) => {
         shadeIntensity: 1,
         opacityFrom: 0.7,
         opacityTo: 0.9,
-        stops: [0, 90, 100]
-      }
-    }
+        stops: [0, 90, 100],
+      },
+    },
   };
 
-  const series = [{
-    name: 'Receita',
-    data: data?.map(d => d.total_revenue) || [],
-  }];
+  const series = [
+    {
+      name: 'Receita',
+      data: (data || []).map((d) => d.total_revenue),
+    },
+  ];
 
   return (
     <Card>
       <CardBody>
-        <CardTitle className="h5 mb-4">Vendas ao Longo do Tempo</CardTitle>
+        <CardTitle className='h5 mb-4'>Vendas ao Longo do Tempo</CardTitle>
         {loading ? (
           <Skeleton height={350} />
         ) : (
-          <Chart options={options} series={series} type="area" height={350} />
+          <Chart height={350} options={options} series={series} type='area' />
         )}
       </CardBody>
     </Card>

@@ -10,28 +10,31 @@ const ReportKPI = ({ title, value, format = 'number', loading }) => {
     if (format === 'currency') {
       return (
         <NumericFormat
-          value={val}
-          displayType={'text'}
-          thousandSeparator={'.'}
-          decimalSeparator={','}
-          prefix={'R$ '}
-          decimalScale={2}
           fixedDecimalScale
+          decimalScale={2}
+          decimalSeparator={','}
+          displayType={'text'}
+          prefix={'R$ '}
+          thousandSeparator={'.'}
+          value={val}
         />
       );
     }
-    return <NumericFormat value={val} displayType={'text'} thousandSeparator={'.'} decimalSeparator={','} />;
+    return (
+      <NumericFormat
+        decimalSeparator={','}
+        displayType={'text'}
+        thousandSeparator={'.'}
+        value={val}
+      />
+    );
   };
 
   return (
-    <Card className="kpi-card">
+    <Card className='kpi-card'>
       <CardBody>
-        {loading ? (
-          <Skeleton height={30} />
-        ) : (
-          <h4 className="kpi-value">{formatValue(value)}</h4>
-        )}
-        <p className="text-muted mb-0 kpi-title">{title}</p>
+        {loading ? <Skeleton height={30} /> : <h4 className='kpi-value'>{formatValue(value)}</h4>}
+        <p className='text-muted mb-0 kpi-title'>{title}</p>
       </CardBody>
     </Card>
   );

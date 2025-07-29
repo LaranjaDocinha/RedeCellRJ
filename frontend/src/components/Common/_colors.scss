@@ -1,92 +1,159 @@
 // frontend/src/components/Common/_colors.scss
 
-// Variáveis base que serão definidas pelo JavaScript
 :root {
-  --theme-color-primary: #556ee6;
-  --theme-color-secondary: #74788d;
-  --theme-color-success: #34c38f;
-  --theme-color-info: #FF6F00;
-  --theme-color-warning: #f1b44c;
-  --theme-color-danger: #f46a6a;
-  --theme-color-primary-rgb: 85, 110, 230; // RGB para sombras e opacidades
-  // Adicione outras cores do tema aqui que serão controladas pelo JS
+  // Light theme colors
+  --color-primary: #007bff;
+  --color-primary-rgb: 0, 123, 255;
+  --color-secondary: #6c757d;
+  --color-info: #17a2b8;
+  --color-danger: #dc3545;
+  --color-success: #28a745;
+  --color-warning: #ffc107;
+  --color-light: #f8f9fa;
+  --color-dark: #343a40;
 
-  // Variáveis de fonte
-  --font-family-primary: 'Inter', sans-serif;
-  --font-family-secondary: 'Roboto', sans-serif;
-}
+  --color-body-bg: #f4f7f6;
+  --color-body-text: #343a40;
+  --color-body-text-rgb: 52, 58, 64;
+  --color-text-muted: #6c757d;
 
-// Mapeamento semântico para as variáveis do tema
-:root, [data-theme="light"] {
-  --color-primary: var(--theme-color-primary);
-  --color-secondary: var(--theme-color-secondary);
-  --color-success: var(--theme-color-success);
-  --color-info: var(--theme-color-info);
-  --color-warning: var(--theme-color-warning);
-  --color-danger: var(--theme-color-danger);
-  --gradient-primary: linear-gradient(to right, var(--color-primary), #7a8ee6); // Usar var(--color-primary)
-
-  // Cores de UI
-  --color-body-bg: #f8f9fa;
-  --color-body-text: #212529;
   --color-component-bg: #ffffff;
   --color-component-secondary-bg: #f8f9fa;
   --color-border: #dee2e6;
-  --color-text-muted: #74788d;
+  --shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --shadow-color: rgba(0, 0, 0, 0.075);
 
-  // Cores para estados
-  --color-disabled-bg: #e9ecef;
-  --color-disabled-border: #dee2e6;
-  --color-disabled-text: #6c757d;
-  --color-active-menu-bg: rgba(var(--theme-color-primary-rgb), 0.15);
-  --color-active-menu-text: var(--color-primary);
+  --color-active-menu-bg: rgba(var(--color-primary-rgb), 0.15);
+  --text-hover-color: color-mix(in srgb, var(--color-primary), #000 10%);
 
-  // Sombras e Efeitos
-  --shadow-color: rgba(0, 0, 0, 0.1);
-  --glass-bg: rgba(255, 255, 255, 0.8);
-  --color-glow: rgba(var(--theme-color-primary-rgb), 0.3);
-
-  // Tons de Cinza
-  --gray-100: #f8f9fa;
-  --gray-200: #e9ecef;
-  --gray-300: #dee2e6;
-  --gray-400: #ced4da;
-  --gray-500: #adb5bd;
-  --gray-600: #6c757d;
-  --gray-700: #495057;
-  --gray-800: #343a40;
-  --gray-900: #212529;
-  --white: #ffffff;
-  --black: #000000;
+  
 }
 
-[data-theme="dark"] {
+[data-bs-theme="dark"] {
   // Paleta de Cores Semântica
   --color-secondary: #a6b0cf;
   --color-success: #34c38f;
-  --color-info: #FF6F00;
+  --color-info: #00BFFF; // Ajustado para tema escuro
   --color-warning: #f1b44c;
-  --color-danger: #f46a6a;
+  --color-danger: #DC143C; // Ajustado para tema escuro
 
   // Cores de UI
   --color-body-bg: #2c2c2e;
   --color-body-text: #f0f2f5;
-  --color-component-bg: #3a3a3c;
+  --color-body-text-rgb: 240, 242, 245;
+  --color-text-muted: #a6b0cf;
+
+  --color-component-bg: #353537;
   --color-component-secondary-bg: #2c2c2e;
   --color-border: #4a4a4c;
-  --color-text-muted: #a6b0cf;
+
+  // Sombras para o tema escuro
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.15);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2), 0 1px 2px 0 rgba(0, 0, 0, 0.16);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.16);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.14);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.16);
+  --shadow-color: rgba(0, 0, 0, 0.2);
+
+  --color-active-menu-bg: rgba(var(--color-primary-rgb), 0.15);
+  --color-active-menu-text: var(--color-primary);
+  --glass-bg: rgba(44, 44, 46, 0.7);
+
+  --bs-body-color-rgb: var(--color-body-text-rgb);
+  --bs-body-bg-rgb: 44, 44, 46;
+
+  --bs-body-color: var(--color-body-text);
+  --bs-body-bg: var(--color-body-bg);
+
+  --bs-border-color: var(--color-border);
+  --bs-border-color-rgb: 74, 74, 76;
+
+  --bs-heading-color: var(--color-body-text);
+
+  --bs-link-color: var(--color-primary);
+  --bs-link-hover-color: var(--text-hover-color);
+
+  // Form colors
+  --form-background-color: var(--color-component-bg);
+  --form-border-color: var(--color-border);
+  --form-focus-border-color: var(--color-primary);
+  --form-focus-box-shadow: 0 0 0 0.25rem rgba(var(--color-primary-rgb), 0.25);
 
   // Cores para estados
   --color-disabled-bg: #3a3a3c;
   --color-disabled-border: #4a4a4c;
   --color-disabled-text: #8e8e93;
-  --color-active-menu-bg: rgba(var(--theme-color-primary-rgb), 0.15);
-  --color-active-menu-text: var(--color-primary);
 
-  // Sombras e Efeitos
-  --shadow-color: rgba(0, 0, 0, 0.25);
-  --glass-bg: rgba(44, 44, 46, 0.7);
+  // Variáveis Bootstrap mapeadas para o tema escuro
+  --bs-tertiary-bg: #3a3a3c;
+  --bs-border-color-translucent: rgba(255, 255, 255, 0.175);
+
+  --bs-table-accent-bg: var(--table-hover-bg);
+
+  --bs-component-bg: var(--color-component-bg);
+  --bs-component-active-bg: var(--color-active-menu-bg);
+
+  .badge {
+    &.bg-secondary {
+      color: var(--color-body-text) !important; // Texto escuro para badge secundário no tema
+    }
+    &.bg-warning {
+      color: var(--color-body-text) !important; // Texto escuro para badge warning no tema
+    }
+    &.bg-info {
+      color: var(--color-body-text) !important;
+    }
+  }
+
+  .btn-light {
+    background-color: var(--color-component-secondary-bg);
+    color: var(--color-body-text);
+    border-color: var(--color-border);
+
+    &:hover {
+      background-color: var(--color-body-bg);
+    }
+  }
+
+  .btn-dark {
+    background-color: var(--color-body-text);
+    color: var(--color-body-bg);
+    border-color: var(--color-body-text);
+
+    &:hover {
+      background-color: color-mix(in srgb, var(--color-body-text), #fff 10%);
+    }
+  }
+
+  .input-group-text {
+    background-color: var(--color-component-secondary-bg);
+    border-color: var(--color-border);
+    color: var(--color-text-muted);
+  }
+
+  .form-control {
+    background-color: var(--form-background-color);
+    color: var(--color-body-text);
+    border-color: var(--form-border-color);
+
+    &:focus {
+      background-color: var(--form-background-color);
+      color: var(--color-body-text);
+      border-color: var(--form-focus-border-color);
+      box-shadow: var(--form-focus-box-shadow);
+    }
+
+    &.is-invalid, &.is-valid {
+      border-color: var(--form-border-color);
+    }
+  }
+
+  .has-error .form-control {
+    border-color: var(--color-danger);
+  }
+
+  .has-success .form-control {
+    border-color: var(--color-success);
+  }
 }
-
-// Cores para gráficos (podem ser usadas diretamente ou via variáveis CSS se a troca de tema for necessária)
-$chart-colors: #556ee6, #34c38f, #f1b44c, #f46a6a, #50a5f1, #ff6f00, #74788d, #a6b0cf;

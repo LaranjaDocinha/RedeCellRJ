@@ -5,6 +5,7 @@
     display: flex; /* Adicionado para usar flexbox */
     align-items: center; /* Centraliza verticalmente */
     justify-content: center; /* Centraliza horizontalmente */
+    gap: 8px; /* Adiciona espaçamento entre os itens */
 
     &::after {
       display: none;

@@ -3,41 +3,42 @@ import { Container, Button, Row, Col } from 'reactstrap';
 import toast from 'react-hot-toast';
 
 import { ProductContext } from '../../context/ProductContext';
-
 import Breadcrumbs from '../../components/Common/Breadcrumb';
-import ProductCard from './components/ProductCard';
-import ProductListItem from './components/ProductListItem';
-import ProductFormModal from './components/ProductFormModal';
 import ConfirmationModal from '../../components/Common/ConfirmationModal';
+import useApi from '../../hooks/useApi';
+import { del } from '../../helpers/api_helper';
+
+import ProductCard from './components/ProductCard';
+import ProductTable from './components/ProductTable'; // Importa a nova tabela
+import ProductFormModal from './components/ProductFormModal';
+import LabelPrintModal from './components/LabelPrintModal';
 import ProductPageSkeleton from './components/ProductPageSkeleton';
 import ProductToolbar from './components/ProductToolbar';
 import QuickViewModal from './components/QuickViewModal';
 import BulkActionsToolbar from './components/BulkActionsToolbar';
 import CategoryManagerModal from './components/CategoryManagerModal';
-import useApi from '../../hooks/useApi';
-import { del } from '../../helpers/api_helper';
-
 import ActiveFilters from './components/ActiveFilters';
 
 const Products = () => {
-  document.title = "Produtos | PDV Web";
+  document.title = 'Produtos | PDV Web';
 
-  const { 
-    filteredProducts, 
-    loading, 
-    reloadProducts, 
-    products, 
+  const {
+    filteredProducts,
+    loading,
+    reloadProducts,
+    products,
     ui,
     selection,
-    setQuickViewProduct 
+    setQuickViewProduct,
   } = useContext(ProductContext);
   const { viewMode } = ui;
-  const { selectedProducts, deleteSelected } = selection;
+  const { selectedProducts, deleteSelected, toggleProductSelection } = selection;
 
   const [modalOpen, setModalOpen] = useState(false);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [labelPrintModalOpen, setLabelPrintModalOpen] = useState(false); // Novo estado
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const { request: deleteProductApi, loading: isDeleting } = useApi(del);
@@ -46,6 +47,7 @@ const Products = () => {
   const toggleCategoryModal = () => setCategoryModalOpen(!categoryModalOpen);
   const toggleDeleteModal = () => setDeleteModalOpen(!deleteModalOpen);
   const toggleBulkDeleteModal = () => setBulkDeleteModalOpen(!bulkDeleteModalOpen);
+  const toggleLabelPrintModal = () => setLabelPrintModalOpen(!labelPrintModalOpen); // Nova função
 
   const handleNewClick = () => {
     setSelectedProduct(null);
@@ -61,7 +63,7 @@ const Products = () => {
     setSelectedProduct(product);
     toggleDeleteModal();
   };
-  
+
   const handleQuickViewClick = (product) => {
     setQuickViewProduct(product);
   };
@@ -70,12 +72,12 @@ const Products = () => {
     if (!selectedProduct) return;
     deleteProductApi(`/api/products/${selectedProduct.id}`)
       .then(() => {
-        toast.success("Produto excluído com sucesso!");
+        toast.success('Produto excluído com sucesso!');
         toggleDeleteModal();
         reloadProducts();
       })
       .catch(() => {
-        toast.error("Falha ao excluir o produto.");
+        toast.error('Falha ao excluir o produto.');
       });
   };
 
@@ -91,19 +93,19 @@ const Products = () => {
 
     if (!hasFilteredProducts && hasProducts) {
       return (
-        <Col xs="12" className="text-center mt-5">
+        <Col className='text-center mt-5' xs='12'>
           <h4>Nenhum Produto Encontrado</h4>
-          <p>Tente ajustar seus filtros de busca ou clique em "Limpar Tudo".</p>
+          <p>Tente ajustar seus filtros de busca ou clique em &quot;Limpar Tudo&quot;.</p>
         </Col>
       );
     }
 
     if (!hasProducts) {
       return (
-        <Col xs="12" className="text-center mt-5">
+        <Col className='text-center mt-5' xs='12'>
           <h4>Você ainda não tem produtos</h4>
           <p>Cadastre seu primeiro produto para começar a vender.</p>
-          <Button color="primary" onClick={handleNewClick}>
+          <Button color='primary' onClick={handleNewClick}>
             Adicionar Produto
           </Button>
         </Col>
@@ -113,97 +115,109 @@ const Products = () => {
     return null;
   };
 
-  if (loading) {
+  if (loading && products.length === 0) {
     return <ProductPageSkeleton />;
   }
 
   return (
     <React.Fragment>
-      <div className="page-content">
+      <div className='page-content'>
         <Container fluid>
-          <Row className="align-items-center mb-4">
+          <Row className='align-items-center mb-4'>
             <Col>
-              <Breadcrumbs title="Catálogo" breadcrumbItem="Produtos" />
+              <Breadcrumbs breadcrumbItem='Produtos' title='Catálogo' />
             </Col>
-            <Col className="text-end">
-              <Button color="success" onClick={handleNewClick}>
-                <i className="bx bx-plus me-1"></i> Novo Produto
+            <Col className='text-end'>
+              <Button color='success' onClick={handleNewClick}>
+                <i className='bx bx-plus me-1'></i> Novo Produto
               </Button>
             </Col>
           </Row>
 
-          <ProductToolbar onManageCategories={toggleCategoryModal} />
+          <ProductToolbar
+            onManageCategories={toggleCategoryModal}
+            onPrintLabels={toggleLabelPrintModal}
+          />
           <ActiveFilters />
 
-          <div className="d-flex justify-content-end mb-2">
-            <small className="text-muted">
+          <div className='d-flex justify-content-end mb-2'>
+            <small className='text-muted'>
               Exibindo {filteredProducts.length} de {products.length} produtos
             </small>
           </div>
-          
-          <Row className="g-4">
-            {filteredProducts.length > 0
-              ? filteredProducts.map(product =>
-                  viewMode === 'grid' ? (
+
+          <Row className='g-4'>
+            {viewMode === 'grid' ? (
+              filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => (
+                  <Col key={product.id} lg={3} md={4} sm={6} xs={12}>
                     <ProductCard
-                      key={product.id}
                       product={product}
-                      onEdit={handleEditClick}
                       onDelete={handleDeleteClick}
+                      onEdit={handleEditClick}
                       onQuickView={handleQuickViewClick}
                     />
-                  ) : (
-                    <Col xs="12" key={product.id}>
-                      <ProductListItem
-                        product={product}
-                        onEdit={handleEditClick}
-                        onDelete={handleDeleteClick}
-                        onQuickView={handleQuickViewClick}
-                      />
-                    </Col>
-                  )
-                )
-              : renderEmptyState()}
+                  </Col>
+                ))
+              ) : (
+                renderEmptyState()
+              )
+            ) : (
+              <Col xs='12'>
+                <ProductTable
+                  loading={loading}
+                  products={filteredProducts}
+                  selectedProducts={selectedProducts}
+                  toggleProductSelection={toggleProductSelection}
+                  onDelete={handleDeleteClick}
+                  onEdit={handleEditClick}
+                  onQuickView={handleQuickViewClick}
+                />
+              </Col>
+            )}
           </Row>
         </Container>
       </div>
-      
+
       <ConfirmationModal
         isOpen={deleteModalOpen}
+        loading={isDeleting}
+        message={`Tem certeza que deseja excluir o produto "${selectedProduct?.name}"? Esta ação não pode ser desfeita.`}
+        title='Confirmar Exclusão'
         toggle={toggleDeleteModal}
         onConfirm={onDeleteConfirm}
-        loading={isDeleting}
-        title="Confirmar Exclusão"
-        message={`Tem certeza que deseja excluir o produto "${selectedProduct?.name}"? Esta ação não pode ser desfeita.`}
       />
 
       <ConfirmationModal
         isOpen={bulkDeleteModalOpen}
+        loading={isDeleting}
+        message={`Tem certeza que deseja excluir os ${selectedProducts.size} produtos selecionados? Esta ação não pode ser desfeita.`}
+        title='Confirmar Exclusão em Massa'
         toggle={toggleBulkDeleteModal}
         onConfirm={onBulkDeleteConfirm}
-        loading={isDeleting}
-        title="Confirmar Exclusão em Massa"
-        message={`Tem certeza que deseja excluir os ${selectedProducts.size} produtos selecionados? Esta ação não pode ser desfeita.`}
       />
 
       <ProductFormModal
         isOpen={modalOpen}
-        toggle={toggleModal}
         product={selectedProduct}
+        toggle={toggleModal}
         onSuccess={() => {
           toggleModal();
           reloadProducts();
         }}
       />
-      
-      <CategoryManagerModal 
-        isOpen={categoryModalOpen}
-        toggle={toggleCategoryModal}
-      />
+
+      <CategoryManagerModal isOpen={categoryModalOpen} toggle={toggleCategoryModal} />
 
       <QuickViewModal />
 
       <BulkActionsToolbar onBulkDelete={toggleBulkDeleteModal} />
+
+      <LabelPrintModal
+        isOpen={labelPrintModalOpen}
+        selectedVariations={Array.from(selectedProducts)}
+        toggle={toggleLabelPrintModal}
+      />
     </React.Fragment>
   );
 };

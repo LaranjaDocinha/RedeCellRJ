@@ -1,5 +1,5 @@
 export const validateProductForm = (formData) => {
-  let errors = {};
+  const errors = {};
 
   if (!formData.name) {
     errors.name = 'Nome do Produto é obrigatório.';

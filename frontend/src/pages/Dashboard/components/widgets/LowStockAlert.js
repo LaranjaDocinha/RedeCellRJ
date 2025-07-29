@@ -19,21 +19,25 @@ const StockLevel = ({ current, min }) => {
     colorClass = 'warning';
   }
 
-  return <span className={`stock-value ${colorClass}`}>{current}/{min}</span>;
+  return (
+    <span className={`stock-value ${colorClass}`}>
+      {current}/{min}
+    </span>
+  );
 };
 
 const LowStockAlert = () => {
   return (
-    <div className="low-stock-container">
-      <ul className="low-stock-list">
-        {lowStockData.map(item => (
-          <li key={item.id} className="low-stock-item">
-            <div className="item-info">
-              <span className="item-name">{item.name}</span>
-              <span className="item-sku">{item.sku}</span>
+    <div className='low-stock-container'>
+      <ul className='low-stock-list'>
+        {lowStockData.map((item) => (
+          <li key={item.id} className='low-stock-item'>
+            <div className='item-info'>
+              <span className='item-name'>{item.name}</span>
+              <span className='item-sku'>{item.sku}</span>
             </div>
-            <div className="item-stock">
-              <span className="stock-label">Estoque:</span>
+            <div className='item-stock'>
+              <span className='stock-label'>Estoque:</span>
               <StockLevel current={item.current} min={item.min} />
             </div>
           </li>

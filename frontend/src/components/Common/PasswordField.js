@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Label, Input, FormFeedback, FormGroup, InputGroup, Tooltip } from 'reactstrap';
-import { motion } from "framer-motion";
-import PasswordToggle from './PasswordToggle';
 
+import PasswordToggle from './PasswordToggle';
 
 const PasswordField = ({ name, label, placeholder, formik }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -29,68 +28,79 @@ const PasswordField = ({ name, label, placeholder, formik }) => {
 
   const getStrengthClassName = () => {
     switch (passwordStrength) {
-      case 0: return '';
-      case 1: return 'bg-danger';
-      case 2: return 'bg-warning';
-      case 3: return 'bg-info';
-      case 4: return 'bg-success';
-      case 5: return 'bg-success fw-bold';
-      default: return '';
+      case 0:
+        return '';
+      case 1:
+        return 'bg-danger';
+      case 2:
+        return 'bg-warning';
+      case 3:
+        return 'bg-info';
+      case 4:
+        return 'bg-success';
+      case 5:
+        return 'bg-success fw-bold';
+      default:
+        return '';
     }
   };
 
   const getStrengthText = () => {
     switch (passwordStrength) {
-      case 0: return '';
-      case 1: return 'Muito Fraca';
-      case 2: return 'Fraca';
-      case 3: return 'Boa';
-      case 4: return 'Forte';
-      case 5: return 'Muito Forte';
-      default: return '';
+      case 0:
+        return '';
+      case 1:
+        return 'Muito Fraca';
+      case 2:
+        return 'Fraca';
+      case 3:
+        return 'Boa';
+      case 4:
+        return 'Forte';
+      case 5:
+        return 'Muito Forte';
+      default:
+        return '';
     }
   };
 
   return (
-    <FormGroup className="mb-3">
-      <Label className="form-label" htmlFor={name}>{label}</Label>
+    <FormGroup className='mb-3'>
+      <Label className='form-label' htmlFor={name}>
+        {label}
+      </Label>
       <InputGroup className={`${hasError ? 'has-error' : isValid ? 'has-success' : ''}`}>
-        <span className="input-group-text"><i className="bx bx-lock"></i></span>
+        <span className='input-group-text'>
+          <i className='bx bx-lock'></i>
+        </span>
         <Input
+          aria-describedby={hasError ? `${name}-feedback` : undefined}
+          aria-invalid={hasError ? 'true' : 'false'}
+          className={hasError ? 'is-invalid' : isValid ? 'is-valid' : ''}
           id={name}
           name={name}
-          type={showPassword ? "text" : "password"}
           placeholder={placeholder}
-          onChange={handlePasswordChange}
+          type={showPassword ? 'text' : 'password'}
+          value={formik.values[name]}
           onBlur={(e) => {
             formik.handleBlur(e);
             setTooltipOpen(false);
           }}
+          onChange={handlePasswordChange}
           onFocus={() => setTooltipOpen(true)}
-          value={formik.values[name]}
-          className={hasError ? 'is-invalid' : isValid ? 'is-valid' : ''}
-          aria-invalid={hasError ? "true" : "false"}
-          aria-describedby={hasError ? `${name}-feedback` : undefined}
         />
-        <PasswordToggle showPassword={showPassword} togglePasswordVisibility={() => setShowPassword(!showPassword)} />
-        
-        {isValid && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            className="validation-icon"
-          >
-            <i className="bx bx-check-circle text-success"></i>
-          </motion.div>
-        )}
-        
+        <PasswordToggle
+          showPassword={showPassword}
+          togglePasswordVisibility={() => setShowPassword(!showPassword)}
+        />
+
         <Tooltip
-          placement="right"
+          fade={false}
           isOpen={tooltipOpen}
+          placement='right'
           target={name}
+          timeout={0}
           toggle={() => setTooltipOpen(!tooltipOpen)}
-          transition={{ timeout: 300 }}
         >
           A senha deve conter:
           <ul>
@@ -103,19 +113,23 @@ const PasswordField = ({ name, label, placeholder, formik }) => {
         </Tooltip>
       </InputGroup>
       {formik.values[name] && (
-        <div className="progress mt-1" style={{ height: '5px' }}>
+        <div className='progress mt-3 password-strength-bar' style={{ height: '5px' }}>
           <div
-            className={`progress-bar ${getStrengthClassName()}`}
-            role="progressbar"
-            style={{ width: `${passwordStrength * 20}%` }}
+            aria-valuemax='100'
+            aria-valuemin='0'
             aria-valuenow={passwordStrength * 20}
-            aria-valuemin="0"
-            aria-valuemax="100"
+            className={`progress-bar ${getStrengthClassName()}`}
+            role='progressbar'
+            style={{ width: `${passwordStrength * 20}%` }}
           ></div>
         </div>
       )}
-      {formik.values[name] && <small className="text-muted">{getStrengthText()}</small>}
-      {hasError && <FormFeedback type="invalid" style={{ display: 'block' }} id={`${name}-feedback`}>{formik.errors[name]}</FormFeedback>}
+      {formik.values[name] && <small className='text-muted'>{getStrengthText()}</small>}
+      {hasError && (
+        <FormFeedback id={`${name}-feedback`} style={{ display: 'block' }} type='invalid'>
+          {formik.errors[name]}
+        </FormFeedback>
+      )}
     </FormGroup>
   );
 };

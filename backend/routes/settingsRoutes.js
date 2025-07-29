@@ -1,8 +1,22 @@
 const express = require('express');
+const fs = require('fs').promises;
+const path = require('path');
 const db = require('../db');
 const { authenticateToken, authorizeRoles } = require('../middleware/authMiddleware');
 
 const router = express.Router();
+
+// Rota para obter as feature flags
+router.get('/features', async (req, res) => {
+  try {
+    const flagsPath = path.join(__dirname, '..', 'feature-flags.json');
+    const flagsData = await fs.readFile(flagsPath, 'utf8');
+    res.json(JSON.parse(flagsData));
+  } catch (err) {
+    console.error('Erro ao ler feature flags:', err.message);
+    res.status(500).send('Erro do Servidor');
+  }
+});
 
 // Proteger todas as rotas de configurações para administradores
 

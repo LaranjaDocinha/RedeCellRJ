@@ -1,24 +1,49 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { 
-  Container, Row, Col, Card, CardBody, CardTitle, 
-  Alert, Button, Modal, ModalHeader, ModalBody, ModalFooter, 
-  Form, FormGroup, Label, Input, FormFeedback, Spinner 
-} from "reactstrap";
-
-import useApi from "../../hooks/useApi";
-import { get, post, put, del } from "../../helpers/api_helper";
-import AdvancedTable from "../../components/Common/AdvancedTable";
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  CardBody,
+  CardTitle,
+  Alert,
+  Button,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Form,
+  FormGroup,
+  Label,
+  Input,
+  FormFeedback,
+} from 'reactstrap';
 import toast from 'react-hot-toast';
+
+import LoadingSpinner from '../../components/Common/LoadingSpinner';
+import useApi from '../../hooks/useApi';
+import { get, post, put, del } from '../../helpers/api_helper';
+import AdvancedTable from '../../components/Common/AdvancedTable';
 
 const Suppliers = () => {
   // States para UI e Modal
   const [modal, setModal] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
-  const [formData, setFormData] = useState({ name: '', contactPerson: '', email: '', phone: '', address: '' });
+  const [formData, setFormData] = useState({
+    name: '',
+    contactPerson: '',
+    email: '',
+    phone: '',
+    address: '',
+  });
   const [formErrors, setFormErrors] = useState({});
 
   // Hooks da API
-  const { data: suppliersData, loading: loadingSuppliers, request: fetchSuppliersApi } = useApi(get);
+  const {
+    data: suppliersData,
+    loading: loadingSuppliers,
+    request: fetchSuppliersApi,
+  } = useApi(get);
   const { request: addSupplierApi, loading: addingSupplier } = useApi(post);
   const { request: updateSupplierApi, loading: updatingSupplier } = useApi(put);
   const { request: deleteSupplierApi, loading: deletingSupplier } = useApi(del);
@@ -26,7 +51,7 @@ const Suppliers = () => {
   const suppliers = suppliersData?.suppliers || [];
 
   const fetchSuppliers = useCallback(() => {
-    fetchSuppliersApi('/api/suppliers'); 
+    fetchSuppliersApi('/api/suppliers');
   }, [fetchSuppliersApi]);
 
   useEffect(() => {
@@ -101,50 +126,70 @@ const Suppliers = () => {
     }
   };
 
-  const columns = useMemo(() => [
-    { accessorKey: 'id', header: '#' },
-    { accessorKey: 'name', header: 'Nome' },
-    { accessorKey: 'contactPerson', header: 'Contato' },
-    { accessorKey: 'email', header: 'Email' },
-    { accessorKey: 'phone', header: 'Telefone' },
-    {
-      id: 'actions',
-      header: 'Ações',
-      cell: ({ row }) => {
-        const supplier = row.original;
-        return (
-          <div>
-            <Button color="info" size="sm" className="me-2" onClick={(e) => { e.stopPropagation(); handleEditClick(supplier); }}>Editar</Button>
-            <Button color="danger" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(supplier.id); }} disabled={deletingSupplier}>
-              {deletingSupplier ? <Spinner size="sm" /> : 'Excluir'}
-            </Button>
-          </div>
-        );
-      }
-    }
-  ], [deletingSupplier, fetchSuppliers]);
+  const columns = useMemo(
+    () => [
+      { accessorKey: 'id', header: '#' },
+      { accessorKey: 'name', header: 'Nome' },
+      { accessorKey: 'contactPerson', header: 'Contato' },
+      { accessorKey: 'email', header: 'Email' },
+      { accessorKey: 'phone', header: 'Telefone' },
+      {
+        id: 'actions',
+        header: 'Ações',
+        cell: ({ row }) => {
+          const supplier = row.original;
+          return (
+            <div>
+              <Button
+                className='me-2'
+                color='info'
+                size='sm'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditClick(supplier);
+                }}
+              >
+                Editar
+              </Button>
+              <Button
+                color='danger'
+                disabled={deletingSupplier}
+                size='sm'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(supplier.id);
+                }}
+              >
+                {deletingSupplier ? <LoadingSpinner size='sm' /> : 'Excluir'}
+              </Button>
+            </div>
+          );
+        },
+      },
+    ],
+    [deletingSupplier, fetchSuppliers],
+  );
 
   return (
     <React.Fragment>
-      <div className="page-content">
+      <div className='page-content'>
         <Container fluid>
           <Row>
-            <Col lg="12">
+            <Col lg='12'>
               <Card>
                 <CardBody>
                   <AdvancedTable
                     columns={columns}
                     data={suppliers}
+                    emptyStateActionText={'Adicionar Fornecedor'}
+                    emptyStateIcon={''}
+                    emptyStateMessage={'Cadastre seu primeiro fornecedor.'}
+                    emptyStateTitle={'Nenhum fornecedor encontrado'}
                     loading={loadingSuppliers}
-                    actions={
-                      <Button color="primary" onClick={handleAddClick}>Adicionar Novo Fornecedor</Button>
-                    }
-                    emptyStateTitle="Nenhum Fornecedor Encontrado"
-                    emptyStateMessage="Cadastre seu primeiro fornecedor para começar."
-                    emptyStateActionText="Adicionar Fornecedor"
+                    persistenceKey='suppliersTable'
                     onEmptyStateActionClick={handleAddClick}
+                    onRowClick={handleEditClick}
                   />
-
                 </CardBody>
               </Card>
             </Col>
@@ -152,44 +197,81 @@ const Suppliers = () => {
         </Container>
       </div>
 
-      <Modal isOpen={modal} toggle={toggle} fade={false}>
-        <ModalHeader toggle={toggle}>{selectedSupplier ? 'Editar Fornecedor' : 'Adicionar Novo Fornecedor'}</ModalHeader>
+      <Modal fade={false} isOpen={modal} toggle={toggle}>
+        <ModalHeader toggle={toggle}>
+          {selectedSupplier ? 'Editar Fornecedor' : 'Adicionar Novo Fornecedor'}
+        </ModalHeader>
         <Form onSubmit={handleSubmit}>
           <ModalBody>
             <FormGroup>
-              <Label for="name">Nome</Label>
-              <Input type="text" name="name" id="name" value={formData.name} onChange={handleInputChange} invalid={!!formErrors.name} required />
+              <Label for='name'>Nome</Label>
+              <Input
+                required
+                id='name'
+                invalid={!!formErrors.name}
+                name='name'
+                type='text'
+                value={formData.name}
+                onChange={handleInputChange}
+              />
               <FormFeedback>{formErrors.name}</FormFeedback>
             </FormGroup>
             <FormGroup>
-              <Label for="contactPerson">Pessoa de Contato</Label>
-              <Input type="text" name="contactPerson" id="contactPerson" value={formData.contactPerson} onChange={handleInputChange} />
+              <Label for='contactPerson'>Pessoa de Contato</Label>
+              <Input
+                id='contactPerson'
+                name='contactPerson'
+                type='text'
+                value={formData.contactPerson}
+                onChange={handleInputChange}
+              />
             </FormGroup>
             <FormGroup>
-              <Label for="email">Email</Label>
-              <Input type="email" name="email" id="email" value={formData.email} onChange={handleInputChange} invalid={!!formErrors.email} />
+              <Label for='email'>Email</Label>
+              <Input
+                id='email'
+                invalid={!!formErrors.email}
+                name='email'
+                type='email'
+                value={formData.email}
+                onChange={handleInputChange}
+              />
               <FormFeedback>{formErrors.email}</FormFeedback>
             </FormGroup>
             <FormGroup>
-              <Label for="phone">Telefone</Label>
-              <Input type="text" name="phone" id="phone" value={formData.phone} onChange={handleInputChange} />
+              <Label for='phone'>Telefone</Label>
+              <Input
+                id='phone'
+                name='phone'
+                type='text'
+                value={formData.phone}
+                onChange={handleInputChange}
+              />
             </FormGroup>
             <FormGroup>
-              <Label for="address">Endereço</Label>
-              <Input type="textarea" name="address" id="address" value={formData.address} onChange={handleInputChange} />
+              <Label for='address'>Endereço</Label>
+              <Input
+                id='address'
+                name='address'
+                type='textarea'
+                value={formData.address}
+                onChange={handleInputChange}
+              />
             </FormGroup>
           </ModalBody>
           <ModalFooter>
-            <Button color="primary" type="submit" disabled={addingSupplier || updatingSupplier}>
-              {(addingSupplier || updatingSupplier) && <Spinner size="sm" />}
-              {' '}{selectedSupplier ? 'Salvar Alterações' : 'Adicionar'}
+            <Button color='primary' disabled={addingSupplier || updatingSupplier} type='submit'>
+              {(addingSupplier || updatingSupplier) && <LoadingSpinner size='sm' />}{' '}
+              {selectedSupplier ? 'Salvar Alterações' : 'Adicionar'}
             </Button>{' '}
-            <Button color="secondary" onClick={toggle}>Cancelar</Button>
+            <Button color='secondary' onClick={toggle}>
+              Cancelar
+            </Button>
           </ModalFooter>
         </Form>
       </Modal>
     </React.Fragment>
-  )
-}
+  );
+};
 
 export default Suppliers;

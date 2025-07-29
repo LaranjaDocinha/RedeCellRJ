@@ -1,10 +1,10 @@
-import React from "react"
+import React from 'react';
 import PropTypes from 'prop-types';
-import ReactApexChart from "react-apexcharts"
-import getChartColorsArray from "../../components/Common/ChartsDynamicColor";
+import ReactApexChart from 'react-apexcharts';
+
+import getChartColorsArray from '../../components/Common/ChartsDynamicColor';
 
 const StackedColumnChart = ({ dataColors, periodData }) => {
-
   const stackedColumnChartColors = getChartColorsArray(dataColors);
   const options = {
     chart: {
@@ -13,48 +13,61 @@ const StackedColumnChart = ({ dataColors, periodData }) => {
         show: false,
       },
       zoom: {
-        enabled: !0
-      }
+        enabled: !0,
+      },
     },
     plotOptions: {
       bar: {
         horizontal: !1,
-        columnWidth: "15%"
+        columnWidth: '15%',
         // endingShape: "rounded"
-      }
+      },
     },
     dataLabels: {
-      enabled: !1
+      enabled: !1,
     },
     xaxis: {
       show: true,
-      categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+      categories: [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ],
       labels: {
-        show: true
-      }
+        show: true,
+      },
     },
     colors: stackedColumnChartColors,
     legend: {
-      position: "bottom"
+      position: 'bottom',
     },
     fill: {
-      opacity: 1
-    }
-  }
+      opacity: 1,
+    },
+  };
   return (
     <React.Fragment>
       <ReactApexChart
+        className='apex-charts'
+        height='359'
         options={options}
         series={[...periodData]}
-        type="bar"
-        height="359"
-        className="apex-charts"
+        type='bar'
       />
     </React.Fragment>
   );
-}
+};
 
 StackedColumnChart.propTypes = {
-  periodData: PropTypes.any
-}
+  periodData: PropTypes.any,
+};
 export default StackedColumnChart;

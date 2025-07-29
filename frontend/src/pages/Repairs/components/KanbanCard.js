@@ -4,7 +4,6 @@ import classnames from 'classnames';
 import { Badge } from 'reactstrap';
 
 const KanbanCard = ({ item, index }) => {
-
   const getPriorityClass = (priority) => {
     switch (priority) {
       case 'Urgente':
@@ -23,18 +22,24 @@ const KanbanCard = ({ item, index }) => {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className={classnames('kanban-card', getPriorityClass(item.priority), { 'is-dragging': snapshot.isDragging })}
+          className={classnames('kanban-card', getPriorityClass(item.priority), {
+            'is-dragging': snapshot.isDragging,
+          })}
           style={{ ...provided.draggableProps.style }}
         >
-          <div className="d-flex justify-content-between align-items-center">
-            <strong className="mb-0">O.S. #{item.id}</strong>
-            {item.priority && <Badge color={item.priority === 'Urgente' ? 'danger' : 'info'} pill>{item.priority}</Badge>}
+          <div className='d-flex justify-content-between align-items-center'>
+            <strong className='mb-0'>O.S. #{item.id}</strong>
+            {item.priority && (
+              <Badge pill color={item.priority === 'Urgente' ? 'danger' : 'info'}>
+                {item.priority}
+              </Badge>
+            )}
           </div>
-          <p className="mb-1 mt-2">{item.customer_name}</p>
-          <small className="text-muted">{item.device_type}</small>
-          <div className="d-flex justify-content-between align-items-center mt-2">
-            <small className="text-muted">{item.technician_name || 'Não atribuído'}</small>
-            <small className="text-muted">{new Date(item.created_at).toLocaleDateString()}</small>
+          <p className='mb-1 mt-2'>{item.customer_name}</p>
+          <small className='text-muted'>{item.device_type}</small>
+          <div className='d-flex justify-content-between align-items-center mt-2'>
+            <small className='text-muted'>{item.technician_name || 'Não atribuído'}</small>
+            <small className='text-muted'>{new Date(item.created_at).toLocaleDateString()}</small>
           </div>
         </div>
       )}

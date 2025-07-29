@@ -399,5 +399,91 @@ router.get('/stock-history/:variationId', async (req, res) => {
   }
 });
 
+// Generate product suggestions
+router.post('/suggestions/generate', async (req, res) => {
+  const client = await db.getClient();
+  try {
+    await client.query('BEGIN');
+
+    // 1. Clear old suggestions
+    await client.query('TRUNCATE TABLE product_suggestions');
+
+    // 2. Find pairs of products bought together
+    const query = `
+      WITH sale_pairs AS (
+        SELECT
+          si1.variation_id AS product1_id,
+          si2.variation_id AS product2_id
+        FROM sale_items si1
+        JOIN sale_items si2 ON si1.sale_id = si2.sale_id AND si1.variation_id < si2.variation_id
+      )
+      SELECT
+        product1_id,
+        product2_id,
+        COUNT(*) AS frequency
+      FROM sale_pairs
+      GROUP BY product1_id, product2_id
+      HAVING COUNT(*) > 1; -- Only suggest products that have been bought together more than once
+    `;
+    const { rows: pairs } = await client.query(query);
+
+    // 3. Insert new suggestions
+    const insertPromises = pairs.map(pair => {
+      const insertQuery = `
+        INSERT INTO product_suggestions (product_id, suggested_product_id, frequency)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (product_id, suggested_product_id) DO UPDATE SET frequency = product_suggestions.frequency + EXCLUDED.frequency;
+      `;
+      // Insert both A -> B and B -> A
+      const promise1 = client.query(insertQuery, [pair.product1_id, pair.product2_id, pair.frequency]);
+      const promise2 = client.query(insertQuery, [pair.product2_id, pair.product1_id, pair.frequency]);
+      return Promise.all([promise1, promise2]);
+    });
+
+    await Promise.all(insertPromises);
+
+    await client.query('COMMIT');
+    res.status(200).json({ message: `Successfully generated ${pairs.length} product suggestion pairs.` });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error generating product suggestions:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  } finally {
+    client.release();
+  }
+});
+
+// Get suggestions for a product
+router.get('/:id/suggestions', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit = 3 } = req.query;
+
+    const query = `
+      SELECT
+        ps.suggested_product_id,
+        p.name,
+        pv.color,
+        pv.price,
+        pv.image_url
+      FROM product_suggestions ps
+      JOIN product_variations pv ON ps.suggested_product_id = pv.id
+      JOIN products p ON pv.product_id = p.id
+      WHERE ps.product_id = $1
+      ORDER BY ps.frequency DESC
+      LIMIT $2;
+    `;
+
+    const { rows } = await db.query(query, [id, limit]);
+    res.json(rows);
+
+  } catch (error) {
+    console.error('Error fetching product suggestions:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
 module.exports = router;
 

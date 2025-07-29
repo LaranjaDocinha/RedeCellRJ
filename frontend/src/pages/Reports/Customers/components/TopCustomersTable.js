@@ -1,53 +1,54 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Card, CardBody, CardTitle } from 'reactstrap';
+
 import AdvancedTable from '../../../../components/Common/AdvancedTable';
 
 const TopCustomersTable = ({ data, loading, error }) => {
   const columns = useMemo(
     () => [
       {
-        Header: 'Cliente',
-        accessor: 'name',
+        header: 'Cliente',
+        accessorKey: 'name',
       },
       {
-        Header: 'Email',
-        accessor: 'email',
+        header: 'Email',
+        accessorKey: 'email',
       },
       {
-        Header: 'Telefone',
-        accessor: 'phone',
+        header: 'Telefone',
+        accessorKey: 'phone',
       },
       {
-        Header: 'Total Gasto (R$)',
-        accessor: 'total_spent',
-        Cell: ({ value }) => parseFloat(value).toFixed(2),
+        header: 'Total Gasto (R$)',
+        accessorKey: 'total_spent',
+        cell: (info) => parseFloat(info.getValue()).toFixed(2),
       },
       {
-        Header: 'Total de Compras',
-        accessor: 'total_purchases',
+        header: 'Total de Compras',
+        accessorKey: 'total_purchases',
       },
       {
-        Header: 'Última Compra',
-        accessor: 'last_purchase_date',
-        Cell: ({ value }) => new Date(value).toLocaleDateString(),
+        header: 'Última Compra',
+        accessorKey: 'last_purchase_date',
+        cell: (info) => new Date(info.getValue()).toLocaleDateString(),
       },
     ],
-    []
+    [],
   );
 
   return (
     <Card>
       <CardBody>
-        <CardTitle className="h5 mb-4">Top Clientes</CardTitle>
+        <CardTitle className='h5 mb-4'>Top Clientes</CardTitle>
         <AdvancedTable
           columns={columns}
           data={data || []}
-          isLoading={loading}
-          error={error}
-          usePagination
-          useSortBy
-          useGlobalFilter
+          emptyStateIcon={''}
+          emptyStateMessage={'Não há dados de clientes para exibir.'}
+          emptyStateTitle={'Nenhum cliente encontrado'}
+          loading={loading}
+          persistenceKey='topCustomersTable'
         />
       </CardBody>
     </Card>

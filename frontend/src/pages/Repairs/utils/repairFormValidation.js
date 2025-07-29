@@ -1,5 +1,5 @@
 export const validateRepairForm = (formData) => {
-  let errors = {};
+  const errors = {};
 
   if (!formData.customer_id || isNaN(formData.customer_id) || parseInt(formData.customer_id) <= 0) {
     errors.customer_id = 'ID do Cliente é obrigatório e deve ser um número positivo.';

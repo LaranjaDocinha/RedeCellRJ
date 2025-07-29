@@ -1,15 +1,10 @@
 const express = require('express');
 const db = require('../db');
 const router = express.Router();
-
-// Middleware de autenticação (provisório)
-const authMiddleware = (req, res, next) => {
-    req.user = { id: 1 }; // Simula um usuário logado. Substituir por validação de token JWT.
-    next();
-};
+const { authenticateToken } = require('../middleware/authMiddleware');
 
 // Rota para criar uma nova venda ou devolução
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
     const { customer_id, items, payments, sale_discount = { type: null, value: 0 }, notes, original_sale_id } = req.body;
     const user_id = req.user.id;
 
@@ -143,7 +138,7 @@ router.get('/payment-methods', async (req, res) => {
 });
 
 // Rota para obter histórico de vendas
-router.get('/history', authMiddleware, async (req, res) => {
+router.get('/history', authenticateToken, async (req, res) => {
     try {
         const { limit = 10, offset = 0, customer_id, start_date, end_date, _sort = 'sale_date', _order = 'desc' } = req.query;
         let queryParams = [limit, offset];
@@ -231,7 +226,7 @@ router.get('/history', authMiddleware, async (req, res) => {
 });
 
 // Rota para obter detalhes de uma única venda por ID
-router.get('/detail/:id', authMiddleware, async (req, res) => {
+router.get('/detail/:id', authenticateToken, async (req, res) => {
     const client = await db.getClient();
     try {
         const { id } = req.params;
@@ -301,7 +296,7 @@ router.get('/detail/:id', authMiddleware, async (req, res) => {
 });
 
 // Rota para buscar vendas por método de pagamento e período (para drill-down do dashboard)
-router.get('/by-payment-method', authMiddleware, async (req, res) => {
+router.get('/by-payment-method', authenticateToken, async (req, res) => {
     const { paymentMethod, startDate, endDate } = req.query;
 
     if (!paymentMethod || !startDate || !endDate) {
@@ -334,7 +329,7 @@ router.get('/by-payment-method', authMiddleware, async (req, res) => {
 });
 
 // Rota para buscar vendas por usuário e período (para drill-down do dashboard)
-router.get('/by-user', authMiddleware, async (req, res) => {
+router.get('/by-user', authenticateToken, async (req, res) => {
     const { userId, startDate, endDate } = req.query;
 
     if (!userId || !startDate || !endDate) {

@@ -1,52 +1,119 @@
 import React from 'react';
-import { Card, CardBody, CardImg, CardTitle, CardText, Button, Badge } from 'reactstrap';
+import { Card, CardBody, Badge, Col, CardImg } from 'reactstrap';
+import { NumericFormat } from 'react-number-format';
+import PropTypes from 'prop-types';
+import { motion } from 'framer-motion';
 
-const ProductCard = ({ product, onAddToCart, isDisabled }) => {
-  const getStockStatusColor = (stock) => {
-    if (stock > 20) return 'success';
-    if (stock > 0) return 'warning';
-    return 'danger';
+import placeholderImage from '../../../../assets/images/placeholder.svg';
+
+// Importando o SCSS do componente padronizado
+import '../../../Products/components/ProductCard.scss';
+
+const ProductCard = React.memo(({ product, onCardClick, isDisabled }) => {
+  const { name, variations = [], category } = product;
+  const mainImage = variations.find((v) => v.image_url)?.image_url || placeholderImage;
+
+  const getPriceRange = () => {
+    if (!variations || variations.length === 0) return 'R$ 0,00';
+    if (variations.length === 1)
+      return (
+        <NumericFormat
+          decimalSeparator=','
+          displayType={'text'}
+          prefix={'R$ '}
+          thousandSeparator='.'
+          value={variations[0].price}
+        />
+      );
+
+    const prices = variations.map((v) => v.price);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+
+    if (minPrice === maxPrice)
+      return (
+        <NumericFormat
+          decimalSeparator=','
+          displayType={'text'}
+          prefix={'R$ '}
+          thousandSeparator='.'
+          value={minPrice}
+        />
+      );
+
+    return (
+      <>
+        <NumericFormat
+          decimalSeparator=','
+          displayType={'text'}
+          prefix={'R$ '}
+          thousandSeparator='.'
+          value={minPrice}
+        />
+        {' - '}
+        <NumericFormat
+          decimalSeparator=','
+          displayType={'text'}
+          prefix={'R$ '}
+          thousandSeparator='.'
+          value={maxPrice}
+        />
+      </>
+    );
   };
 
-  // Pega o preço e o estoque da primeira variação, se existir.
-  const firstVariation = product.variations?.[0];
-  const displayPrice = firstVariation?.price || 0;
-  const stockQuantity = firstVariation?.stock_quantity || 0;
+  const totalStock = variations.reduce((acc, v) => acc + (v.stock_quantity || 0), 0);
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  };
+
+  const cardClasses = `product-card h-100 ${isDisabled || totalStock <= 0 ? 'disabled' : ''}`;
+  const cardCursor = isDisabled || totalStock <= 0 ? 'not-allowed' : 'pointer';
 
   return (
-    <Card 
-        className={`product-card h-100 ${isDisabled || stockQuantity <= 0 ? 'disabled' : ''}`} 
-        onClick={!isDisabled && stockQuantity > 0 ? onAddToCart : undefined}
-        style={{ cursor: isDisabled || stockQuantity <= 0 ? 'not-allowed' : 'pointer' }}
+    <motion.div
+      className='col-xl-3 col-lg-4 col-md-6 col-sm-12 mb-4 product-card-col'
+      style={{ cursor: cardCursor }}
+      variants={itemVariants}
+      onClick={!isDisabled && totalStock > 0 ? onCardClick : undefined}
     >
-      <div className="position-relative">
-        <CardImg
-          top
-          width="100%"
-          src={product.image_url || firstVariation?.image_url || ''}
-          alt={product.name}
-          className="p-3"
-          style={{ objectFit: 'contain', height: '120px' }}
-        />
-        <Badge 
-            color={getStockStatusColor(stockQuantity)} 
-            className="position-absolute top-0 end-0 m-2"
-            pill
-        >
-            Est: {stockQuantity}
-        </Badge>
-      </div>
-      <CardBody className="text-center d-flex flex-column">
-        <CardTitle tag="h6" className="text-truncate mb-2" title={product.name}>
-          {product.name}
-        </CardTitle>
-        <CardText className="fw-bold font-size-16 mt-auto">
-          R$ {parseFloat(displayPrice).toFixed(2)}
-        </CardText>
-        {/* O botão foi removido para que o card inteiro seja clicável */}
-      </CardBody>
-    </Card>
+      <Card className={cardClasses}>
+        <div className='product-image-container'>
+          <CardImg top alt={name} className='product-image' loading='lazy' src={mainImage} />
+          {/* No PDV, talvez a badge de tipo não seja necessária, mas o estoque é */}
+          <Badge
+            className='product-type-badge'
+            color={totalStock > 10 ? 'success' : totalStock > 0 ? 'warning' : 'danger'}
+          >
+            Estoque: {totalStock}
+          </Badge>
+        </div>
+        <CardBody className='d-flex flex-column'>
+          {category?.name && <p className='text-muted mb-1 fs-12'>{category.name}</p>}
+          <h5 className='card-title flex-grow-1'>{name}</h5>
+
+          <div className='d-flex justify-content-between align-items-center mt-3'>
+            <div className='price-range fw-bold fs-5'>{getPriceRange()}</div>
+          </div>
+        </CardBody>
+      </Card>
+    </motion.div>
   );
+});
+
+ProductCard.displayName = 'ProductCard';
+
+ProductCard.propTypes = {
+  product: PropTypes.object.isRequired,
+  onCardClick: PropTypes.func,
+  isDisabled: PropTypes.bool,
+};
+
+ProductCard.defaultProps = {
+  onCardClick: () => {},
+  isDisabled: false,
 };
 
 export default ProductCard;

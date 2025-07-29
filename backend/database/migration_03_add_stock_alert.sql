@@ -1,6 +1,6 @@
 -- Adiciona o campo de nível de alerta de estoque na tabela de variações de produto
 ALTER TABLE product_variations
-ADD COLUMN alert_threshold INTEGER NOT NULL DEFAULT 5;
+ADD COLUMN IF NOT EXISTS alert_threshold INTEGER NOT NULL DEFAULT 5;
 
 -- Adiciona um comentário na coluna para documentação
 COMMENT ON COLUMN product_variations.alert_threshold IS 'Nível de estoque em que um alerta de "baixo estoque" deve ser gerado.';

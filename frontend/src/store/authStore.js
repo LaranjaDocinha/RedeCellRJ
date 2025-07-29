@@ -7,7 +7,7 @@ export const useAuthStore = create(
       // 1. Estado inicial é mais simples. O `persist` cuidará da reidratação.
       user: null,
       token: null,
-      
+
       // Ação de Login (sem alterações, já estava ótima)
       login: (userData) => {
         set({
@@ -19,7 +19,6 @@ export const useAuthStore = create(
       // Ação de Logout (sem alterações)
       logout: () => {
         set({ user: null, token: null });
-        
       },
 
       // Ação para atualizar o perfil do usuário
@@ -49,6 +48,6 @@ export const useAuthStore = create(
     {
       name: 'auth-storage', // Nome da chave no localStorage
       storage: createJSONStorage(() => localStorage),
-    }
-  )
+    },
+  ),
 );

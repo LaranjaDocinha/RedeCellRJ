@@ -1,47 +1,49 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import './RippleEffect.scss';
 
-const RippleEffect = ({ children }) => {
+const RippleEffect = ({ children, buttonRef, onButtonClick }) => {
   const [ripples, setRipples] = useState([]);
 
-  const handleClick = (event) => {
-    const button = event.currentTarget;
-    const size = Math.max(button.offsetWidth, button.offsetHeight);
-    const rect = button.getBoundingClientRect();
-    const x = event.clientX - rect.left - size / 2;
-    const y = event.clientY - rect.top - size / 2;
+  const handleClick = useCallback(
+    (event) => {
+      if (onButtonClick) {
+        onButtonClick(event); // Propagate the click event
+      }
 
-    const newRipple = {
-      id: Date.now(),
-      size,
-      x,
-      y,
-    };
+      if (!buttonRef || !buttonRef.current) return;
 
-    setRipples((prevRipples) => [...prevRipples, newRipple]);
-  };
+      const button = buttonRef.current;
+      const size = Math.max(button.offsetWidth, button.offsetHeight);
+      const rect = button.getBoundingClientRect();
+      const x = event.clientX - rect.left - size / 2;
+      const y = event.clientY - rect.top - size / 2;
 
-  const handleAnimationEnd = (id) => {
+      const newRipple = {
+        id: Date.now(),
+        size,
+        x,
+        y,
+      };
+
+      setRipples((prevRipples) => [...prevRipples, newRipple]);
+    },
+    [buttonRef, onButtonClick],
+  );
+
+  const handleAnimationEnd = useCallback((id) => {
     setRipples((prevRipples) => prevRipples.filter((ripple) => ripple.id !== id));
-  };
+  }, []);
 
   return (
-    <div
-      className="ripple-container"
-      onClick={handleClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ')
-          handleClick(e);
-      }}
-      role="button"
-      tabIndex={0}
-    >
+    <div className='ripple-container'>
+      {' '}
+      {/* No role, no tabIndex here */}
       {children}
       {ripples.map((ripple) => (
         <span
           key={ripple.id}
-          className="ripple"
+          className='ripple'
           style={{
             width: ripple.size,
             height: ripple.size,
@@ -53,6 +55,15 @@ const RippleEffect = ({ children }) => {
       ))}
     </div>
   );
+};
+
+RippleEffect.propTypes = {
+  children: PropTypes.node,
+  buttonRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]),
+  onButtonClick: PropTypes.func,
 };
 
 export default RippleEffect;
