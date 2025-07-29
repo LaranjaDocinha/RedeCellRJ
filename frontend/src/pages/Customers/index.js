@@ -185,28 +185,23 @@ const Customers = () => {
         cell: ({ row }) => {
           const customer = row.original;
           return (
-            <div>
-              <Button
-                className='me-2'
-                color='info'
-                size='sm'
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleEditClick(customer);
-                }}
-              >
-                Editar
+            <div className='d-flex gap-2'>
+              <Button color='light' size='sm' onClick={(e) => { e.stopPropagation(); handleEditClick(customer); }}>
+                <i className='bx bx-search-alt'></i>
+              </Button>
+              <Button color='primary' size='sm' onClick={(e) => { e.stopPropagation(); handleEditClick(customer); }}>
+                <i className='bx bx-pencil'></i>
               </Button>
               <Button
                 color='danger'
-                disabled={deletingCustomer}
                 size='sm'
+                disabled={deletingCustomer}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDeleteCustomer(customer.id);
                 }}
               >
-                {deletingCustomer ? <LoadingSpinner size='sm' /> : 'Excluir'}
+                {deletingCustomer ? <LoadingSpinner size='sm' /> : <i className='bx bx-trash'></i>}
               </Button>
             </div>
           );

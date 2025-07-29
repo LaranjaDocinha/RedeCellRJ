@@ -139,28 +139,23 @@ const Suppliers = () => {
         cell: ({ row }) => {
           const supplier = row.original;
           return (
-            <div>
-              <Button
-                className='me-2'
-                color='info'
-                size='sm'
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleEditClick(supplier);
-                }}
-              >
-                Editar
+            <div className='d-flex gap-2'>
+              <Button color='light' size='sm' onClick={(e) => { e.stopPropagation(); handleEditClick(supplier); }}>
+                <i className='bx bx-search-alt'></i>
+              </Button>
+              <Button color='primary' size='sm' onClick={(e) => { e.stopPropagation(); handleEditClick(supplier); }}>
+                <i className='bx bx-pencil'></i>
               </Button>
               <Button
                 color='danger'
-                disabled={deletingSupplier}
                 size='sm'
+                disabled={deletingSupplier}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDelete(supplier.id);
                 }}
               >
-                {deletingSupplier ? <LoadingSpinner size='sm' /> : 'Excluir'}
+                {deletingSupplier ? <LoadingSpinner size='sm' /> : <i className='bx bx-trash'></i>}
               </Button>
             </div>
           );
