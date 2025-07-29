@@ -3,14 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@ckeditor/ckeditor5-build-classic": "^39.0.2",
+    "@ckeditor/ckeditor5-build-classic": "^44.3.0",
     "@ckeditor/ckeditor5-react": "^11.0.0",
     "@lottiefiles/react-lottie-player": "^3.6.0",
     "@mdi/font": "^7.4.47",
     "@tanstack/react-table": "^8.21.3",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^14.0.0",
+    "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
     "@tsparticles/react": "^3.0.0",
     "@tsparticles/slim": "^3.0.0",
@@ -48,6 +48,8 @@
     "web-vitals": "^2.1.4",
     "yup": "^1.6.1",
     "zustand": "^5.0.6",
+    "styled-components": "^6.1.19",
+    "react-feather": "^2.0.10",
     "boxicons": "^2.1.4"
   },
   "scripts": {

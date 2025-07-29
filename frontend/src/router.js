@@ -35,6 +35,8 @@ const Login = lazy(() => import('./pages/Authentication/Login'));
 const UserProfile = lazy(() => import('./pages/Users/UserProfile'));
 const TechniciansPage = lazy(() => import('./pages/Technicians'));
 
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard/AdminDashboard'));
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -74,6 +76,7 @@ const router = createBrowserRouter([
           { path: 'reports/customers', element: <CustomerReport /> },
           { path: 'user-profile', element: <UserProfile /> },
           { path: 'technicians', element: <TechniciansPage /> },
+          { path: 'admin-dashboard', element: <AdminDashboard /> },
         ],
       },
     ],

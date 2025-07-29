@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, CardBody, Input, Button, Table } from 'reactstrap';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { motion } from 'framer-motion'; // Para animações sutis
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion'; // Para animações sutis e transições
 import './AdminDashboard.scss'; // Importa o SCSS para estilização
 
 const AdminDashboard = () => {
@@ -22,6 +22,57 @@ const AdminDashboard = () => {
     { name: 'Outros', count: 25 },
   ];
 
+  // Dados de exemplo para o gráfico de faturamento
+  const revenueData = [
+    { name: 'Jan', revenue: 4000 },
+    { name: 'Fev', revenue: 3000 },
+    { name: 'Mar', revenue: 2000 },
+    { name: 'Abr', revenue: 2780 },
+    { name: 'Mai', revenue: 1890 },
+    { name: 'Jun', revenue: 2390 },
+    { name: 'Jul', revenue: 3490 },
+  ];
+
+  const charts = [
+    {
+      title: 'Tipos de Serviços Mais Realizados',
+      component: (
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={serviceData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="count" fill="#007bff" name="Quantidade" />
+          </BarChart>
+        </ResponsiveContainer>
+      ),
+    },
+    {
+      title: 'Faturamento Mensal',
+      component: (
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={revenueData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line type="monotone" dataKey="revenue" stroke="#28a745" name="Faturamento" />
+          </LineChart>
+        </ResponsiveContainer>
+      ),
+    },
+  ];
+
+  const [chartIndex, setChartIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setChartIndex((prevIndex) => (prevIndex + 1) % charts.length);
+    }, 10000); // Troca a cada 10 segundos
+    return () => clearInterval(interval);
+  }, [charts.length]);
+
   // Dados de exemplo para as últimas ordens de serviço
   const recentOrders = [
     { id: 'OS001', client: 'João Silva', device: 'iPhone 12', status: 'Em Andamento', date: '2024-07-25' },
@@ -32,7 +83,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="admin-dashboard">
-      <Container fluid className="main-content">
+      <Container fluid>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -64,16 +115,18 @@ const AdminDashboard = () => {
             <Col lg="8" className="mb-4">
               <Card className="shadow-sm h-100">
                 <CardBody>
-                  <h5 className="card-title">Tipos de Serviços Mais Realizados</h5>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={serviceData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="count" fill="#007bff" name="Quantidade" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={chartIndex}
+                      initial={{ opacity: 0, x: 50 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -50 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <h5 className="card-title">{charts[chartIndex].title}</h5>
+                      {charts[chartIndex].component}
+                    </motion.div>
+                  </AnimatePresence>
                 </CardBody>
               </Card>
             </Col>
