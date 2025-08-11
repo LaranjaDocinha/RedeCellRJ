@@ -59,15 +59,9 @@ const BlindCloseoutModal = ({ isOpen, toggle, session, onFinish }) => {
       countedAmount: parseFloat(value || 0),
     }));
 
-    // Adicionar verificação aqui
-    if (countedValuesPayload.length === 0) {
-      toast.error('Por favor, insira pelo menos um valor contado para fechar o caixa.');
-      return;
-    }
-
     try {
       const result = await closeSession('/api/cashier/close', {
-        userId: session.user_id,
+        userId: session?.user_id, // Adicionado ?
         notes,
         countedValues: countedValuesPayload,
       });

@@ -90,4 +90,4 @@ secrets.json
 # Arquivos temporários e de utilidade
 commit_message.txt
 rename_env.js
-temp/
+temp/"temp/" 

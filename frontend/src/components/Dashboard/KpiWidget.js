@@ -1,7 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
+
 import useDashboardKpis from '../../hooks/useDashboardKpis';
+
 import WidgetContainer from './WidgetContainer';
 import KpiCard from './KpiCard';
 import WidgetEmptyState from './WidgetEmptyState';
@@ -32,7 +34,7 @@ const KpiWidget = () => {
   if (error) {
     return (
       <WidgetContainer>
-        <WidgetEmptyState message="Erro ao carregar dados." />
+        <WidgetEmptyState message='Erro ao carregar dados.' />
       </WidgetContainer>
     );
   }
@@ -72,9 +74,9 @@ const KpiWidget = () => {
         {kpis.map((kpi, index) => (
           <motion.div
             key={kpi.title}
+            animate='visible'
             custom={index}
-            initial="hidden"
-            animate="visible"
+            initial='hidden'
             variants={cardVariants}
           >
             <KpiCard isLoading={isLoading} {...kpi} />

@@ -1,13 +1,35 @@
-import React from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Card, CardBody, CardTitle, Form, FormGroup, Label, Input, Button } from 'reactstrap';
+import useNotification from '../../../hooks/useNotification';
+import useApi from '../../../hooks/useApi';
+import { post } from '../../../helpers/api_helper'; // Assuming POST for saving settings
+import LoadingSpinner from '../../../components/Common/LoadingSpinner';
+import { useReactToPrint } from 'react-to-print';
 
-const PrintSettingsForm = () => {
-  // Mock de estado para as configurações de impressão
-  const [printSettings, setPrintSettings] = React.useState({
+import StandardReceipt from './receipts/StandardReceipt';
+import CompactReceipt from './receipts/CompactReceipt';
+import DetailedReceipt from './receipts/DetailedReceipt';
+
+// Mock Receipt Component for printing
+const MockReceipt = React.forwardRef(({ settings }, ref) => {
+  const ReceiptComponent = {
+    'Padrão': StandardReceipt,
+    'Compacto': CompactReceipt,
+    'Detalhado': DetailedReceipt,
+  }[settings.receiptTemplate] || StandardReceipt;
+
+  return <ReceiptComponent ref={ref} settings={settings} />;
+});
+
+const PrintSettingsForm = ({ generalSettings }) => { // Receive general settings as prop
+  const [printSettings, setPrintSettings] = useState({
     defaultPrinter: 'Nenhuma',
     receiptTemplate: 'Padrão',
     printOnSale: true,
   });
+
+  const { showSuccess, showError, showInfo } = useNotification();
+  const { loading: saving, request: savePrintSettings } = useApi(post);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -17,14 +39,23 @@ const PrintSettingsForm = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Aqui você faria a chamada à API para salvar as configurações
-    alert(
-      'Configurações de Impressão Salvas! (Funcionalidade de salvamento real a ser implementada)',
-    );
+    // Mock de salvamento: em um cenário real, você enviaria printSettings para o backend
+    try {
+      // Simula uma chamada de API
+      await savePrintSettings('/api/settings/print', printSettings); // Endpoint mock
+      showSuccess('Configurações de Impressão salvas com sucesso!');
+    } catch (err) {
+      showError(`Erro ao salvar configurações de impressão: ${err.message}`);
+    }
   };
+
+  const handlePrintTestReceipt = useReactToPrint({
+    content: () => componentRef.current,
+  });
+
+  const componentRef = useRef();
 
   return (
     <Card className='mt-4'>
@@ -74,12 +105,18 @@ const PrintSettingsForm = () => {
           </FormGroup>
 
           <div className='d-flex justify-content-end mt-3'>
-            <Button color='primary' type='submit'>
-              Salvar Configurações de Impressão
+            <Button color='primary' type='submit' disabled={saving} className="me-2">
+              {saving ? <LoadingSpinner size='sm' /> : 'Salvar Configurações de Impressão'}
+            </Button>
+            <Button color='secondary' onClick={handlePrintTestReceipt}>
+              Testar Impressão
             </Button>
           </div>
         </Form>
       </CardBody>
+      <div style={{ display: 'none' }}>
+        <MockReceipt ref={componentRef} settings={{ ...generalSettings, ...printSettings }} />
+      </div>
     </Card>
   );
 };

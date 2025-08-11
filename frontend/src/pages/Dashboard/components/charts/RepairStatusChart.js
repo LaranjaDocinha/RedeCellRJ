@@ -1,29 +1,60 @@
 import React from 'react';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+import ReactApexChart from 'react-apexcharts';
+import { useTheme } from '../../../context/ThemeContext';
 
 const RepairStatusChart = ({ data }) => {
+  const { chartTheme, chartColor1, chartColor2, chartColor3, repairStatusChartType, showChartLegend } = useTheme();
+
+  const series = data.map(item => item.value);
+  const labels = data.map(item => item.name);
+
+  const options = {
+    chart: {
+      type: repairStatusChartType,
+      foreColor: 'var(--color-body-text)',
+    },
+    labels: labels,
+    colors: [chartColor1, chartColor2, chartColor3, '#FF8042', '#AF19FF'], // Usar variáveis de tema
+    legend: {
+      show: showChartLegend,
+      position: 'bottom',
+      labels: { colors: 'var(--color-body-text)' },
+    },
+    responsive: [
+      {
+        breakpoint: 480,
+        options: {
+          chart: {
+            width: 200,
+          },
+          legend: {
+            position: 'bottom',
+          },
+        },
+      },
+    ],
+    plotOptions: {
+      pie: {
+        donut: {
+          labels: {
+            show: true,
+            total: {
+              show: true,
+              label: 'Total',
+              formatter: function (w) {
+                return w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <PieChart>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="50%"
-          labelLine={false}
-          outerRadius={80}
-          fill="#8884d8"
-          dataKey="value"
-        >
-          {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip />
-        <Legend />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className='chart-container'>
+      <ReactApexChart options={options} series={series} type={repairStatusChartType} height={300} />
+    </div>
   );
 };
 

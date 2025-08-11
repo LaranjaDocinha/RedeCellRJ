@@ -1,0 +1,54 @@
+
+/* C:\Users\Dell\OneDrive\Documentos\pdv_web\frontend\src\components\Calendar\CalendarView.scss */
+
+// Importação de variáveis globais de tema (se existirem)
+// @import '../../styles/variables.scss';
+
+.calendar-container {
+  // O FullCalendar injeta suas próprias variáveis CSS, o que facilita a tematização.
+  // Documentação de Theming: https://fullcalendar.io/docs/css-customization
+
+  // --fc-border-color: #ddd;
+  // --fc-daygrid-event-dot-width: 8px;
+  // --fc-list-event-dot-width: 10px;
+  // --fc-event-text-color: #fff;
+
+  // Ajustes para o tema claro (Light Mode)
+  --fc-button-bg-color: #f0f0f0;
+  --fc-button-text-color: #333;
+  --fc-button-border-color: #ccc;
+  --fc-button-hover-bg-color: #e0e0e0;
+  --fc-button-active-bg-color: #d0d0d0;
+  --fc-today-bg-color: rgba(255, 220, 40, 0.15);
+
+  .fc-event {
+    cursor: pointer;
+    border: none !important; // Remove a borda padrão para um look mais limpo
+    padding: 4px 6px;
+    font-size: 0.8rem;
+    border-radius: 4px;
+  }
+
+  .fc-daygrid-day.fc-day-today {
+    background-color: var(--fc-today-bg-color);
+  }
+}
+
+// Estilos para o Modo Noturno (Dark Mode)
+// O ideal é que o tema seja aplicado trocando as variáveis CSS no body ou em um container pai.
+// Exemplo: body.dark-mode .calendar-container { ... }
+
+// [PLACEHOLDER] Adicionar aqui as variáveis para o modo noturno
+// Exemplo:
+// body.dark-mode .calendar-container {
+//   --fc-border-color: #444;
+//   --fc-button-bg-color: #333;
+//   --fc-button-text-color: #eee;
+//   --fc-button-border-color: #555;
+//   --fc-button-hover-bg-color: #444;
+//   --fc-button-active-bg-color: #555;
+//   --fc-today-bg-color: rgba(250, 240, 100, 0.15);
+//   --fc-daygrid-day-bg-color: #2c2c2c; // Fundo dos dias
+//   --fc-list-even-row-bg-color: #333;
+//   --fc-list-odd-row-bg-color: #2c2c2c;
+// }

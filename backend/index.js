@@ -1,18 +1,21 @@
 require('dotenv').config();
-console.log('--- Backend Server Starting... ---');
+console.log('--- Backend Server Starting...');
 console.log('DB_USER:', process.env.DB_USER);
 console.log('DB_HOST:', process.env.DB_HOST);
 console.log('DB_DATABASE:', process.env.DB_NAME);
 console.log('DB_PORT:', process.env.DB_PORT);
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? '*****' : 'Not Set'); // Não logar o segredo em produção
 // console.log('DB_PASSWORD:', process.env.DB_PASSWORD ? '*****' : 'Not Set'); // Não logar a senha em produção
+
 const express = require('express');
-// const cors = require('cors'); // Removido
+const { query, getClient, redisClient } = require('./db');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const { pool } = require('./db');
 const fs = require('fs').promises;
 const path = require('path');
 const { exec } = require('child_process');
+
+// Route imports
 const customerRoutes = require('./routes/customerRoutes');
 const productRoutes = require('./routes/productRoutes');
 const repairRoutes = require('./routes/repairRoutes');
@@ -29,6 +32,87 @@ const purchaseOrderRoutes = require('./routes/purchaseOrderRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const technicianRoutes = require('./routes/technicianRoutes');
+const searchRoutes = require('./routes/searchRoutes');
+const roleRoutes = require('./routes/roleRoutes');
+const leadRoutes = require('./routes/leadRoutes');
+const checklistRoutes = require('./routes/checklistRoutes');
+const stockTransferRoutes = require('./routes/stockTransferRoutes');
+const usedProductRoutes = require('./routes/usedProductRoutes');
+const giftCardRoutes = require('./routes/giftCardRoutes');
+const quotationRoutes = require('./routes/quotationRoutes');
+const appointmentRoutes = require('./routes/appointmentRoutes');
+const marketingRoutes = require('./routes/marketingRoutes');
+const npsRoutes = require('./routes/npsRoutes');
+const commissionRoutes = require('./routes/commissionRoutes');
+const commissionRuleRoutes = require('./routes/commissionRuleRoutes'); // New import
+const cashFlowRoutes = require('./routes/cashFlowRoutes');
+const bankReconciliationRoutes = require('./routes/bankReconciliationRoutes');
+const bankAccountRoutes = require('./routes/bankAccountRoutes'); // New import
+const calendarRoutes = require('./routes/calendarRoutes');
+const expenseRoutes = require('././routes/expenseRoutes');
+const branchRoutes = require('./routes/branchRoutes');
+const loginSettingsRoutes = require('./routes/loginSettingsRoutes');
+
+// Sentry setup
+// const Sentry = require('@sentry/node');
+// const { Integrations } = require('@sentry/tracing'); // For performance monitoring
+
+// Sentry.init({
+//   dsn: process.env.SENTRY_DSN || 'YOUR_SENTRY_DSN_HERE', // Replace with your actual DSN
+//   integrations: [
+//     // Enable HTTP calls tracing
+//     new Sentry.Integrations.Http({ tracing: true }),
+//     // Enable Express.js middleware tracing
+//     new Integrations.Express({ app: app }), // Use the 'app' instance here
+//   ],
+//   // Set tracesSampleRate to 1.0 to capture 100%
+//   // of transactions for performance monitoring.
+//   // We recommend adjusting this value in production.
+//   tracesSampleRate: 1.0,
+// });
+
+// Swagger/OpenAPI setup
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+
+const swaggerOptions = {
+  swaggerDefinition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'PDV Web API',
+      version: '1.0.0',
+      description: 'Documentação da API do sistema PDV Web',
+      contact: {
+        name: 'Seu Nome/Empresa',
+        url: 'http://www.example.com',
+        email: 'info@example.com',
+      },
+    },
+    servers: [
+      {
+        url: 'http://localhost:5000/api',
+        description: 'Servidor de Desenvolvimento',
+      },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+    security: [
+      {
+        bearerAuth: [],
+      },
+    ],
+  },
+  apis: ['./routes/*.js'], // Path to the API docs
+};
+
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
 
 const app = express();
 const port = 5000;
@@ -65,13 +149,40 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
+// The request handler must be the first middleware on the app
+// app.use(Sentry.Handlers.requestHandler());
+// TracingHandler creates a trace for every incoming request
+// app.use(Sentry.Handlers.tracingHandler());
+
+// Configuração do logger de requisições
+const winston = require('winston');
+const expressWinston = require('express-winston');
+app.use(expressWinston.logger({
+  transports: [
+    new winston.transports.Console({
+      json: true,
+      colorize: true
+    }),
+    // Add Sentry transport for Winston
+    // new Sentry.Integrations.Winston({
+    //   level: 'error', // Only send errors to Sentry
+    // }),
+  ],
+  meta: true, // whether to log req, res, and other meta data (default method to log these is using winston.transports.Console)
+  msg: "HTTP {{req.method}} {{req.url}}", // optional: customize the default logging message. 
+  expressFormat: true, // Use the default Express/morgan request formatting. Enabling this will override any msg if true.
+  colorize: true, // Color the text and status code, using the Express/morgan color palette (text: gray, status: green, yellow, red).
+  ignoreRoute: function (req, res) { return false; } // optional: allows to skip some log messages based on request and/or response
+}));
+
+// Basic app.get routes
 app.get('/', (req, res) => {
   res.send('Hello from Backend!');
 });
 
 app.get('/test-db', async (req, res) => {
   try {
-    await pool.query('SELECT NOW()');
+    await query('SELECT NOW()');
     res.status(200).send('Database connected successfully!');
   } catch (err) {
     console.error('Database connection error', err);
@@ -83,7 +194,7 @@ app.get('/init-db', async (req, res) => {
   try {
     const schemaPath = path.join(__dirname, 'database', 'schema_consolidated.sql');
     const schemaSql = await fs.readFile(schemaPath, 'utf8');
-    await pool.query(schemaSql);
+    await query(schemaSql);
     res.status(200).send('Database schema initialized successfully!');
   } catch (err) {
     console.error('Error initializing database schema:', err);
@@ -92,47 +203,76 @@ app.get('/init-db', async (req, res) => {
 });
 
 app.get('/apply-migrations', async (req, res) => {
-  try {
-    const dbUser = process.env.DB_USER || 'postgres';
-    const dbHost = process.env.DB_HOST || 'localhost';
-    const dbName = process.env.DB_NAME || 'pdv_web';
-    const dbPassword = process.env.DB_PASSWORD || 'postgres';
-    const dbPort = process.env.DB_PORT || 5432;
+  console.log('\n[MIGRATION] Starting migration process...');
+  const client = await getClient();
 
+  try {
+    // 1. Garante que a tabela de migrações exista
+    console.log('[MIGRATION] Ensuring schema_migrations table exists.');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        version VARCHAR(255) PRIMARY KEY
+      );
+    `);
+
+    // 2. Pega as migrações já aplicadas
+    const appliedMigrationsResult = await client.query('SELECT version FROM schema_migrations');
+    const appliedVersions = new Set(appliedMigrationsResult.rows.map(r => r.version));
+    console.log('[MIGRATION] Applied versions found:', Array.from(appliedVersions));
+
+    // 3. Lê todos os arquivos de migração da pasta
     const migrationFiles = (await fs.readdir(path.join(__dirname, 'database')))
       .filter(file => file.startsWith('migration_') && file.endsWith('.sql'))
       .sort();
+    console.log('[MIGRATION] All migration files found:', migrationFiles);
 
-    let appliedMigrations = 0;
+    let newMigrationsApplied = 0;
     for (const file of migrationFiles) {
-      const filePath = path.join(__dirname, 'database', file);
-      const command = `psql -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -f ${filePath}`;
-      
-      console.log(`Attempting to apply migration: ${file}`);
-      console.log(`Executing command: ${command}`);
-      const { stdout, stderr, error } = await new Promise((resolve) => {
-        exec(command, { env: { ...process.env, PGPASSWORD: dbPassword } }, (err, stdout, stderr) => {
-          resolve({ stdout, stderr, error: err });
-        });
-      });
-
-      if (error) {
-        console.error(`Error applying migration ${file}:`, error);
-        console.error('stdout:', stdout);
-        console.error('stderr:', stderr);
-        throw new Error(`Failed to apply migration ${file}: ${error.message || stderr}`);
+      if (appliedVersions.has(file)) {
+        continue; // Pula migração já aplicada
       }
-      console.log(`Successfully applied migration: ${file}`);
-      appliedMigrations++;
+
+      console.log(`[MIGRATION] Applying new migration: ${file}...`);
+      const filePath = path.join(__dirname, 'database', file);
+      const sql = await fs.readFile(filePath, 'utf8');
+      // console.log(`[MIGRATION] SQL to be executed for ${file}:\n---\n${sql}\n---`);
+
+      // 4. Executa a nova migração dentro de uma transação
+      try {
+        await client.query('BEGIN');
+        console.log(`[MIGRATION] BEGIN transaction for ${file}`);
+        await client.query(sql);
+        console.log(`[MIGRATION] SQL for ${file} executed successfully.`);
+        await client.query('INSERT INTO schema_migrations (version) VALUES ($1)', [file]);
+        console.log(`[MIGRATION] ${file} registered in schema_migrations.`);
+        await client.query('COMMIT');
+        console.log(`[MIGRATION] COMMIT transaction for ${file}`);
+        newMigrationsApplied++;
+      } catch (err) {
+        await client.query('ROLLBACK');
+        console.error(`[MIGRATION] ROLLBACK transaction for ${file}. Error:`, err);
+        throw err; // Lança o erro para ser pego pelo catch principal
+      }
     }
-    
-    res.status(200).send(`${appliedMigrations} migration(s) applied successfully!`);
+
+    if (newMigrationsApplied > 0) {
+      console.log(`[MIGRATION] Success: ${newMigrationsApplied} new migration(s) applied.`);
+      res.status(200).send(`${newMigrationsApplied} new migration(s) applied successfully!`);
+    } else {
+      console.log('[MIGRATION] Success: Database is already up to date.');
+      res.status(200).send('Database is already up to date.');
+    }
+
   } catch (err) {
-    console.error('Error applying migrations:', err);
-    res.status(500).send('Failed to apply migrations.');
+    console.error('[MIGRATION] A critical error occurred during the migration process:', err);
+    res.status(500).send(`Failed to apply migrations: ${err.message}`); // Include error message
+  } finally {
+    client.release();
+    console.log('[MIGRATION] Client released. Migration process finished.\n');
   }
 });
 
+// app.use routes
 app.use('/api/customers', customerRoutes);
 app.use('/api/products', productRoutes); // Use product routes
 app.use('/api/repairs', repairRoutes);
@@ -149,13 +289,38 @@ app.use('/api/purchase-orders', purchaseOrderRoutes); // Use purchase order rout
 app.use('/api/settings', settingsRoutes); // Use settings routes
 app.use('/api/notifications', notificationRoutes); // Use notification routes
 app.use('/api/technicians', technicianRoutes); // Use technician routes
+app.use('/api/search', searchRoutes); // Use search routes
+app.use('/api/roles', roleRoutes); // Use role routes
+app.use('/api/leads', leadRoutes); // Use lead routes
+app.use('/api/checklists', checklistRoutes); // Use checklist routes
+app.use('/api/stock/transfers', stockTransferRoutes); // Use stock transfer routes
+app.use('/api/used-products', usedProductRoutes); // Use used products routes
+app.use('/api/gift-cards', giftCardRoutes); // Use gift card routes
+app.use('/api/quotations', quotationRoutes); // Use quotation routes
+app.use('/api/appointments', appointmentRoutes); // Use appointment routes
+app.use('/api/marketing', marketingRoutes); // Use marketing routes
+app.use('/api/nps', npsRoutes); // Use NPS routes
+app.use('/api/commissions', commissionRoutes); // Use commission routes
+app.use('/api/commission-rules', commissionRuleRoutes); // Use commission rule routes // New use
+app.use('/api/cash-flow', cashFlowRoutes); // Use cash flow routes
+app.use('/api/bank-reconciliation', bankReconciliationRoutes); // Use bank reconciliation routes
+app.use('/api/bank-accounts', bankAccountRoutes); // Use bank account routes // New use
+app.use('/api/calendar', calendarRoutes); // Use calendar routes
+app.use('/api/expenses', expenseRoutes); // Use expense routes
+app.use('/api/branches', branchRoutes); // Use branch routes
+app.use('/api/settings', loginSettingsRoutes); // Use login settings routes
 
-// Middleware de tratamento de erros global
+// Serve Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+// Global error handler (if needed, add AppError import)
+const AppError = require('./utils/appError');
+const globalErrorHandler = require('./middleware/errorMiddleware');
 app.use((err, req, res, next) => {
-  console.error(err.stack); // Loga o stack trace do erro no console do servidor
+  console.error(err.stack);
   res.status(err.statusCode || 500).json({
     message: err.message || 'Ocorreu um erro inesperado no servidor.',
-    error: process.env.NODE_ENV === 'production' ? {} : err.stack // Não expõe o stack trace em produção
+    error: process.env.NODE_ENV === 'production' ? {} : err.stack
   });
 });
 

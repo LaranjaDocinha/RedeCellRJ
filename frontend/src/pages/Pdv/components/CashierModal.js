@@ -116,7 +116,7 @@ const CashierModal = ({ isOpen, toggle, cashierStatus, onCashierUpdate }) => {
                   <div className='text-center p-3 border rounded mb-3'>
                     <h5>Saldo de Abertura</h5>
                     <p className='h4'>
-                      R$ {parseFloat(cashierStatus.session.openingBalance).toFixed(2)}
+                      R$ {cashierStatus?.session?.opening_balance !== undefined ? parseFloat(cashierStatus.session.opening_balance).toFixed(2) : 'N/A'}
                     </p>
                   </div>
                 </Col>

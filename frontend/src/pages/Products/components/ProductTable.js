@@ -68,17 +68,25 @@ const ProductTable = ({
         },
       },
       {
-        accessorKey: 'totalStock',
-        header: 'Estoque Total',
+        accessorKey: 'availableStock',
+        header: 'Estoque Disponível',
         cell: ({ row }) => {
-          const totalStock = row.original.variations.reduce(
-            (acc, v) => acc + (v.stock_quantity || 0),
-            0,
-          );
+          const { variations = [] } = row.original;
+          const totalStock = variations.reduce((acc, v) => acc + (v.stock_quantity || 0), 0);
+          const totalReserved = variations.reduce((acc, v) => acc + (v.reserved_quantity || 0), 0);
+          const availableStock = totalStock - totalReserved;
+
           return (
-            <Badge pill color={totalStock > 0 ? 'success' : 'danger'}>
-              {totalStock}
-            </Badge>
+            <div className='text-center'>
+              <Badge pill color={availableStock > 0 ? 'success' : 'danger'} style={{ fontSize: '0.9rem' }}>
+                {availableStock}
+              </Badge>
+              {totalReserved > 0 && (
+                <div className='text-muted fst-italic' style={{ fontSize: '0.75rem' }}>
+                  ({totalReserved} reservados)
+                </div>
+              )}
+            </div>
           );
         },
       },

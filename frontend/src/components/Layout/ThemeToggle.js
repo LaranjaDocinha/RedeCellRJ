@@ -9,11 +9,9 @@ const ThemeToggle = () => {
   return (
     <button aria-label='Toggle theme' className='theme-toggle-btn' onClick={toggleTheme}>
       <div className='icon-wrapper'>
-        {theme === 'light' ? (
-          <i className='sun bx bx-sun'></i>
-        ) : (
-          <i className='moon bx bx-moon'></i>
-        )}
+        {theme === 'light' && <i className='sun bx bx-sun'></i>}
+        {theme === 'dark' && <i className='moon bx bx-moon'></i>}
+        {theme === 'contrast' && <i className='contrast bx bx-adjust'></i>}
       </div>
     </button>
   );

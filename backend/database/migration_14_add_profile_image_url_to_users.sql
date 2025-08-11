@@ -1,1 +1,1 @@
-ALTER TABLE users ADD COLUMN profile_image_url VARCHAR(255) DEFAULT '/redecellrj.png';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_image_url VARCHAR(255) DEFAULT '/redecellrj.png';

@@ -140,16 +140,30 @@ const Suppliers = () => {
           const supplier = row.original;
           return (
             <div className='d-flex gap-2'>
-              <Button color='light' size='sm' onClick={(e) => { e.stopPropagation(); handleEditClick(supplier); }}>
+              <Button
+                color='light'
+                size='sm'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditClick(supplier);
+                }}
+              >
                 <i className='bx bx-search-alt'></i>
               </Button>
-              <Button color='primary' size='sm' onClick={(e) => { e.stopPropagation(); handleEditClick(supplier); }}>
+              <Button
+                color='primary'
+                size='sm'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditClick(supplier);
+                }}
+              >
                 <i className='bx bx-pencil'></i>
               </Button>
               <Button
                 color='danger'
-                size='sm'
                 disabled={deletingSupplier}
+                size='sm'
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDelete(supplier.id);

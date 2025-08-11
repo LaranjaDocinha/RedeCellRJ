@@ -83,16 +83,23 @@ const PdvNewView = () => {
     }
 
     return (
-      <PdvUnifiedView
-        cashierStatus={cashierStatus}
-        isPaymentModalOpen={isPaymentModalOpen}
-        isSuccessModalOpen={isSuccessModalOpen}
-        saleSuccessModalData={saleSuccessModalData}
-        setPaymentModalOpen={setPaymentModalOpen}
-        setSaleSuccessModalData={setSaleSuccessModalData}
-        setSuccessModalOpen={setSuccessModalOpen}
-        togglePaymentModal={togglePaymentModal}
-      />
+      <>
+        <PdvUnifiedView
+          cashierStatus={cashierStatus}
+          isPaymentModalOpen={isPaymentModalOpen}
+          isSuccessModalOpen={isSuccessModalOpen}
+          saleSuccessModalData={saleSuccessModalData}
+          setPaymentModalOpen={setPaymentModalOpen}
+          setSaleSuccessModalData={setSaleSuccessModalData}
+          setSuccessModalOpen={setSuccessModalOpen}
+          togglePaymentModal={togglePaymentModal}
+        />
+        <div className='text-end mt-3'>
+          <Button color='danger' outline size='sm' onClick={toggleCashierModal}>
+            <i className='bx bx-power-off me-1'></i> Fechar Caixa
+          </Button>
+        </div>
+      </>
     );
   };
 

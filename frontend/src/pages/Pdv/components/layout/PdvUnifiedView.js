@@ -256,7 +256,8 @@ const PdvUnifiedView = () => {
           variation = {
             id: product.id, // Usar o ID do produto como ID da variação
             price: product.unit_price,
-            stockQuantity: product.stock_quantity || Infinity, // Assume estoque infinito se não especificado
+            stock_quantity: product.stock_quantity || Infinity, // Assume estoque infinito se não especificado
+            reserved_quantity: product.reserved_quantity || 0, // Include reserved quantity
             color: null, // Sem cor para produtos sem variação
             size: null, // Sem tamanho para produtos sem variação
           };
@@ -272,7 +273,8 @@ const PdvUnifiedView = () => {
         variation = {
           id: product.id, // Usar o ID do produto como ID da variação
           price: product.unit_price || 0,
-          stockQuantity: Infinity, // Serviços geralmente não têm estoque
+          stock_quantity: Infinity, // Serviços geralmente não têm estoque
+          reserved_quantity: 0, // Services don't have reserved stock
           color: null,
           size: null,
         };
@@ -293,24 +295,27 @@ const PdvUnifiedView = () => {
 
       setCart((prevCart) => {
         const existingItemIndex = prevCart.findIndex((item) => item.variationId === variation.id);
+        const availableStock = (variation.stock_quantity || 0) - (variation.reserved_quantity || 0);
+
         if (existingItemIndex > -1) {
           const updatedCart = [...prevCart];
           const newQuantity = updatedCart[existingItemIndex].quantity + 1;
-          if (newQuantity <= variation.stockQuantity) {
+          if (newQuantity <= availableStock) { // Check against available stock
             updatedCart[existingItemIndex].quantity = newQuantity;
           } else {
-            toast.error(`Estoque máximo atingido para ${product.name}`);
+            toast.error(`Estoque disponível máximo atingido para ${product.name}`);
           }
           return updatedCart;
         } else {
-          if (1 <= variation.stockQuantity) {
+          if (1 <= availableStock) { // Check against available stock for initial add
             const newItem = {
               productId: product.id,
               productName: product.name,
               variationId: variation.id,
               quantity: 1,
               unitPrice: parseFloat(variation.price || product.unit_price),
-              stockQuantity: variation.stockQuantity,
+              stock_quantity: variation.stock_quantity,
+              reserved_quantity: variation.reserved_quantity,
               discount: { type: 'fixed', value: 0 },
               color: variation.color,
               size: variation.size,
@@ -369,8 +374,9 @@ const PdvUnifiedView = () => {
           return prevCart.filter((_, index) => index !== indexToUpdate);
         }
 
-        if (!returnMode && parsedNewQuantity > item.stockQuantity) {
-          toast.error(`Quantidade máxima para ${item.product_name} é ${item.stockQuantity}.`);
+        const availableStock = (item.stock_quantity || 0) - (item.reserved_quantity || 0);
+        if (!returnMode && parsedNewQuantity > availableStock) { // Check against available stock
+          toast.error(`Quantidade máxima disponível para ${item.product_name} é ${availableStock}.`);
           return prevCart;
         }
         item.quantity = parsedNewQuantity;
@@ -516,8 +522,15 @@ const PdvUnifiedView = () => {
   // --- Atalhos de Teclado ---
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (isPdvDisabled) return;
-      if (isPaymentModalOpen) return; // Desativa atalhos quando o modal de pagamento está aberto
+      console.log('Key pressed:', event.key, 'Ctrl:', event.ctrlKey, 'isPdvDisabled:', isPdvDisabled, 'isPaymentModalOpen:', isPaymentModalOpen, 'cart.length:', cart.length);
+      if (isPdvDisabled) {
+        console.log('PDV is disabled, shortcuts are inactive.');
+        return;
+      }
+      if (isPaymentModalOpen) {
+        console.log('Payment modal is open, shortcuts are inactive.');
+        return;
+      } // Desativa atalhos quando o modal de pagamento está aberto
 
       const fkey = event.key;
 
@@ -556,6 +569,9 @@ const PdvUnifiedView = () => {
       } else if (fkey === 'Escape') {
         event.preventDefault();
         handleClearSale();
+      } else if (event.ctrlKey && fkey === 'k') {
+        event.preventDefault();
+        productSearchInputRef.current?.focus();
       }
     };
 
@@ -671,11 +687,11 @@ const PdvUnifiedView = () => {
                         <li
                           key={product.id}
                           aria-selected={index === highlightedIndex}
-                          className={`p-2 border-bottom cursor-pointer hover-bg-light ${index === highlightedIndex ? 'highlighted' : ''} ${product.variations && product.variations[0]?.stockQuantity === 0 ? 'out-of-stock-product' : ''}`}
+                          className={`p-2 border-bottom cursor-pointer hover-bg-light ${index === highlightedIndex ? 'highlighted' : ''} ${product.variations && (product.variations[0]?.stock_quantity - product.variations[0]?.reserved_quantity) <= 0 ? 'out-of-stock-product' : ''}`}
                           role='option'
                           tabIndex='0'
                           onClick={() => {
-                            if (product.variations && product.variations[0]?.stockQuantity === 0) {
+                            if (product.variations && (product.variations[0]?.stock_quantity - product.variations[0]?.reserved_quantity) <= 0) {
                               toast.error(`Produto ${product.name} está esgotado.`);
                               return;
                             }
@@ -688,7 +704,7 @@ const PdvUnifiedView = () => {
                             if (e.key === 'Enter' || e.key === ' ') {
                               if (
                                 product.variations &&
-                                product.variations[0]?.stockQuantity === 0
+                                (product.variations[0]?.stock_quantity - product.variations[0]?.reserved_quantity) <= 0
                               ) {
                                 toast.error(`Produto ${product.name} está esgotado.`);
                                 return;
@@ -709,8 +725,11 @@ const PdvUnifiedView = () => {
                           {product.variations && product.variations.length > 0
                             ? product.variations[0].price
                             : 'N/A'}
-                          {product.variations && product.variations[0]?.stockQuantity === 0 && (
+                          {product.variations && (product.variations[0]?.stock_quantity - product.variations[0]?.reserved_quantity) <= 0 && (
                             <span className='text-danger ms-2'>(ESGOTADO)</span>
+                          )}
+                          {product.variations && product.variations[0]?.reserved_quantity > 0 && (
+                            <span className='text-warning ms-2'>(Res: {product.variations[0].reserved_quantity})</span>
                           )}
                         </li>
                       ))}

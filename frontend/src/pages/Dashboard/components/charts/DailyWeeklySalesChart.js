@@ -1,26 +1,57 @@
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import ReactApexChart from 'react-apexcharts';
+import { useTheme } from '../../../context/ThemeContext';
 
 const DailyWeeklySalesChart = ({ data }) => {
+  const { chartTheme } = useTheme();
+
+  const series = [
+    {
+      name: 'Vendas',
+      data: data.map(item => item.sales),
+    },
+  ];
+
+  const options = {
+    chart: {
+      type: 'line',
+      height: 300,
+      toolbar: { show: false },
+      foreColor: 'var(--color-body-text)',
+    },
+    theme: { mode: chartTheme },
+    xaxis: {
+      categories: data.map(item => item.date),
+      labels: { style: { colors: 'var(--color-text-muted)' } },
+    },
+    yaxis: {
+      labels: {
+        formatter: (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+      },
+    },
+    stroke: { curve: 'smooth', width: 2 },
+    tooltip: {
+      x: { format: 'dd/MM/yyyy' },
+      y: {
+        formatter: (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+      },
+    },
+    legend: {
+      position: 'top',
+      horizontalAlign: 'right',
+      labels: { colors: 'var(--color-body-text)' },
+    },
+    grid: {
+      borderColor: 'var(--color-border)',
+      strokeDashArray: 4,
+    },
+    colors: ['var(--color-primary)'],
+  };
+
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart
-        data={data}
-        margin={{
-          top: 5,
-          right: 30,
-          left: 20,
-          bottom: 5,
-        }}
-      >
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="date" />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        <Line type="monotone" dataKey="sales" stroke="#8884d8" activeDot={{ r: 8 }} />
-      </LineChart>
-    </ResponsiveContainer>
+    <div className='chart-container'>
+      <ReactApexChart options={options} series={series} type='line' height={300} />
+    </div>
   );
 };
 

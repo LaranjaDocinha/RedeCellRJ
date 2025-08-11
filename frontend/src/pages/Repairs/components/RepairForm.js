@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, CardBody, Button, Label, Input, Form, Alert } from 'reactstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
+import useApi from '../../../hooks/useApi';
+import { get, post, put } from '../../../helpers/api_helper';
 
 import Breadcrumbs from '../../../components/Common/Breadcrumb';
-import config from '../../../config';
+import RichTextEditor from '../../../components/Common/RichTextEditor';
 
 const RepairForm = () => {
   const { repairId } = useParams();
@@ -31,19 +33,25 @@ const RepairForm = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
+  const { request: fetchCustomersApi } = useApi(get);
+  const { request: fetchTechniciansApi } = useApi(get);
+  const { request: fetchRepairApi } = useApi(get);
+  const { request: createRepairApi } = useApi(post);
+  const { request: updateRepairApi } = useApi(put);
+
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
         setLoading(true);
         const [customersResponse, techniciansResponse] = await Promise.all([
-          axios.get(`${config.api.API_URL}/api/customers`),
-          axios.get(`${config.api.API_URL}/api/technicians`),
+          fetchCustomersApi(`${process.env.REACT_APP_API_URL}/api/customers`),
+          fetchTechniciansApi('/api/technicians'),
         ]);
         setCustomers(customersResponse.data.customers);
         setTechnicians(techniciansResponse.data);
 
         if (isEditing) {
-          const repairResponse = await axios.get(`${config.api.API_URL}/api/repairs/${repairId}`);
+          const repairResponse = await fetchRepairApi(`/api/repairs/${repairId}`);
           const repairData = repairResponse.data;
           setFormData({
             customerId: repairData.customer_id || '',
@@ -81,13 +89,12 @@ const RepairForm = () => {
     setError(null);
     setSuccess(null);
 
-    const url = isEditing
-      ? `${config.api.API_URL}/api/repairs/${repairId}`
-      : `${config.api.API_URL}/api/repairs`;
-    const method = isEditing ? 'put' : 'post';
-
     try {
-      await axios[method](url, formData);
+      if (isEditing) {
+        await updateRepairApi(`/api/repairs/${repairId}`, formData);
+      } else {
+        await createRepairApi('/api/repairs', formData);
+      }
       setSuccess(`Ordem de Serviço ${isEditing ? 'atualizada' : 'criada'} com sucesso!`);
       setTimeout(() => navigate('/repairs'), 1500);
     } catch (err) {
@@ -246,15 +253,12 @@ const RepairForm = () => {
                     </Row>
                     <div className='mb-3'>
                       <Label htmlFor='problemDescription'>Descrição do Problema</Label>
-                      <Input
-                        required
-                        id='problemDescription'
-                        name='problemDescription'
+                      <RichTextEditor
                         placeholder='Descreva o problema do aparelho...'
-                        rows='4'
-                        type='textarea'
                         value={formData.problemDescription}
-                        onChange={handleChange}
+                        onChange={(data) =>
+                          handleChange({ target: { name: 'problemDescription', value: data } })
+                        }
                       />
                     </div>
                     <Row>

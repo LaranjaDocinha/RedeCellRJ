@@ -1,8 +1,11 @@
 import React from 'react';
 import ReactApexChart from 'react-apexcharts'; // Adicionar importação
 import { motion } from 'framer-motion';
+import { useTheme } from '../../../context/ThemeContext';
 
 const MonthlySalesChart = ({ data }) => {
+  const { chartTheme, chartColor1, chartColor2, dailyRevenueChartType, showXAxisLabels, showYAxisLabels, showChartLegend } = useTheme();
+
   const formattedData =
     data?.map((item) => ({
       name: item.month, // Ou item.date, dependendo da granularidade
@@ -12,18 +15,20 @@ const MonthlySalesChart = ({ data }) => {
 
   const options = {
     chart: {
-      type: 'line',
+      type: dailyRevenueChartType,
+      background: 'transparent', // Set chart background to transparent
       toolbar: { show: false },
       foreColor: 'var(--color-body-text)',
     },
+    theme: { mode: chartTheme },
     xaxis: {
-      categories: formattedData.map(item => item.name),
-      labels: { style: { colors: 'var(--color-text-muted)' } },
+      categories: formattedData.map((item) => item.name),
+      labels: { show: showXAxisLabels, style: { colors: 'var(--color-text-muted)' } },
     },
     stroke: {
       curve: 'smooth',
     },
-    colors: ['var(--color-primary)', 'var(--color-success)'], // Usar variáveis de tema
+    colors: [chartColor1, chartColor2], // Usar variáveis de tema
     tooltip: {
       x: { format: 'dd/MM/yyyy' }, // Ajustar formato se necessário
       y: {
@@ -31,6 +36,7 @@ const MonthlySalesChart = ({ data }) => {
       },
     },
     legend: {
+      show: showChartLegend,
       position: 'top',
       horizontalAlign: 'right',
       labels: { colors: 'var(--color-body-text)' },
@@ -44,11 +50,11 @@ const MonthlySalesChart = ({ data }) => {
   const series = [
     {
       name: 'Vendas',
-      data: formattedData.map(item => item.Vendas),
+      data: formattedData.map((item) => item.Vendas),
     },
     {
       name: 'Lucro',
-      data: formattedData.map(item => item.Lucro),
+      data: formattedData.map((item) => item.Lucro),
     },
   ];
 
@@ -59,7 +65,7 @@ const MonthlySalesChart = ({ data }) => {
       style={{ width: '100%', height: '100%' }}
       transition={{ duration: 0.5, delay: 0.1 }}
     >
-      <ReactApexChart options={options} series={series} type="line" height="100%" />
+      <ReactApexChart height='100%' options={options} series={series} type={dailyRevenueChartType} />
     </motion.div>
   );
 };

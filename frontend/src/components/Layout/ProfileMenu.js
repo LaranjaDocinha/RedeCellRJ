@@ -29,7 +29,7 @@ const ProfileMenu = () => {
           </div>
         </DropdownToggle>
         <DropdownMenu className='dropdown-menu-end'>
-          <DropdownItem tag={Link} to='/user-profile'>
+          <DropdownItem tag={Link} to={`/user-profile/${user?.id}`}>
             <i className='bx bx-user align-middle me-1' /> Perfil
           </DropdownItem>
           <div className='dropdown-divider' />

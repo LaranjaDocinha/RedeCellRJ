@@ -1,20 +1,13 @@
-const fs = require('fs').promises;
-const path = require('path');
+const db = require('../db');
 
-const logFilePath = path.join(__dirname, '../../logs', 'auth.log');
-
-const logActivity = async (message) => {
-  const logMessage = `${new Date().toISOString()} - ${message}\n`;
+const logActivity = async (user_name, description, entity_type = null, entity_id = null, branch_id = null) => {
   try {
-    await fs.appendFile(logFilePath, logMessage);
+    await db.query(
+      'INSERT INTO activity_log (user_name, description, entity_type, entity_id, branch_id) VALUES ($1, $2, $3, $4, $5)',
+      [user_name, description, entity_type, entity_id, branch_id]
+    );
   } catch (error) {
-    if (error.code === 'ENOENT') {
-      // Se o diretório de logs não existe, crie-o
-      await fs.mkdir(path.dirname(logFilePath), { recursive: true });
-      await fs.appendFile(logFilePath, logMessage);
-    } else {
-      console.error('Failed to write to log file:', error);
-    }
+    console.error('Failed to log activity to database:', error);
   }
 };
 

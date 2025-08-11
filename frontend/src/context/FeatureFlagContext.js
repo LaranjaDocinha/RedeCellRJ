@@ -17,8 +17,8 @@ export const FeatureFlagProvider = ({ children }) => {
   useEffect(() => {
     const fetchFlags = async () => {
       try {
-        const response = await get('/api/settings/features');
-        setFlags(response || {});
+        const response = await get('/api/settings');
+        setFlags(response.featureFlags || {});
       } catch (error) {
         console.error('Failed to fetch feature flags', error);
         // Em caso de erro, usamos um objeto vazio para não quebrar a aplicação

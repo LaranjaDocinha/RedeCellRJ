@@ -2,73 +2,86 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Dropdown, DropdownToggle, DropdownMenu } from 'reactstrap';
 import SimpleBar from 'simplebar-react';
+import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import LoadingSpinner from '../Common/LoadingSpinner';
 import 'simplebar-react/dist/simplebar.min.css';
-import useApi from '../../hooks/useApi';
-import { get, put } from '../../helpers/api_helper';
-import { useAuthStore } from '../../store/authStore';
-
 import './NotificationCenter.scss';
 
 const NotificationCenter = () => {
   const [menu, setMenu] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const { user } = useAuthStore();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const {
-    data: fetchedNotifications,
-    loading,
-    error,
-    request: fetchNotificationsApi,
-  } = useApi(get);
-  const { request: markNotificationAsReadApi } = useApi(put);
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
-  const loadNotifications = useCallback(async () => {
-    if (user?.id) {
-      try {
-        const allNotifications = await fetchNotificationsApi(
-          `/api/notifications?userId=${user.id}&limit=20&readStatus=all`,
-        );
-        if (allNotifications) {
-          setNotifications(allNotifications);
-          setUnreadCount(allNotifications.filter((n) => !n.readStatus).length);
-        }
-      } catch (err) {
-        console.error('Erro ao carregar notificações:', err);
-        // Opcional: exibir um toast de erro aqui se desejar um feedback mais direto
-      }
+  const fetchNotifications = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setLoading(false);
+      return; // Não busca se não houver token
     }
-  }, [fetchNotificationsApi, user?.id]);
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/notifications`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications(response.data);
+    } catch (err) {
+      console.error('Erro ao carregar notificações:', err);
+      setError('Não foi possível carregar as notificações.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    loadNotifications();
-    // Opcional: Recarregar notificações a cada X segundos
-    const interval = setInterval(loadNotifications, 60000); // A cada 1 minuto
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000); // Atualiza a cada minuto
     return () => clearInterval(interval);
-  }, [loadNotifications]);
+  }, [fetchNotifications]);
 
-  const markAsRead = useCallback(
-    async (notificationId) => {
-      try {
-        await markNotificationAsReadApi(`/api/notifications/${notificationId}/read`);
-        setNotifications((prev) =>
-          prev.map((n) => (n.id === notificationId ? { ...n, readStatus: true } : n)),
-        );
-        setUnreadCount((prev) => (prev > 0 ? prev - 1 : 0));
-      } catch (err) {
-        console.error('Erro ao marcar notificação como lida:', err);
-      }
-    },
-    [markNotificationAsReadApi],
-  );
+  const markAllAsRead = useCallback(async () => {
+    const unreadIds = notifications.filter((n) => !n.is_read).map((n) => n.id);
+    if (unreadIds.length === 0) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/notifications/mark-read`,
+        { notificationIds: unreadIds },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      // Atualiza o estado local para refletir a mudança imediatamente
+      setNotifications((prev) =>
+        prev.map((n) => (unreadIds.includes(n.id) ? { ...n, is_read: true } : n)),
+      );
+    } catch (err) {
+      console.error('Erro ao marcar notificações como lidas:', err);
+    }
+  }, [notifications]);
 
   const toggle = () => {
     setMenu((prev) => !prev);
-    // Quando o dropdown é aberto, marca todas as notificações não lidas como lidas
     if (!menu && unreadCount > 0) {
-      notifications.filter((n) => !n.readStatus).forEach((n) => markAsRead(n.id));
+      markAllAsRead();
+    }
+  };
+
+  const getIcon = (type) => {
+    switch (type) {
+      case 'stock_alert':
+        return 'bx bx-error-circle text-warning';
+      case 'customer_risk':
+        return 'bx bx-user-x text-danger';
+      case 'sales_goal':
+        return 'bx bx-trending-down text-info';
+      default:
+        return 'bx bx-bell text-primary';
     }
   };
 
@@ -78,78 +91,71 @@ const NotificationCenter = () => {
         <DropdownToggle
           aria-label='Abrir notificações'
           className='btn header-item noti-icon'
-          id='page-header-notifications-dropdown'
           tag='button'
         >
           <i className='bx bx-bell notification-bell' />
-          {unreadCount > 0 && <span className='notification-badge'>{unreadCount}</span>}
+          <AnimatePresence>
+            {unreadCount > 0 && (
+              <motion.span
+                animate={{ scale: 1, opacity: 1 }}
+                className='notification-badge'
+                exit={{ scale: 0, opacity: 0 }}
+                initial={{ scale: 0, opacity: 0 }}
+              >
+                {unreadCount}
+              </motion.span>
+            )}
+          </AnimatePresence>
         </DropdownToggle>
 
         <DropdownMenu className='dropdown-menu-lg dropdown-menu-end p-0'>
           <div className='p-3 notification-header'>
-            <div className='row align-items-center'>
-              <div className='col'>
-                <h5 className='m-0'> Notificações </h5>
-              </div>
-            </div>
+            <h5 className='m-0'>Notificações</h5>
           </div>
 
           <SimpleBar className='notification-list'>
-            {loading ? (
-              <div className='text-center p-3'>
-                <LoadingSpinner size='sm' /> Carregando...
-              </div>
-            ) : error ? (
-              <div className='text-center p-3 text-danger'>Erro ao carregar notificações.</div>
-            ) : notifications.length === 0 ? (
-              <div className='text-center p-3 text-muted'>Nenhuma notificação.</div>
-            ) : (
-              notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`text-reset notification-item ${notification.readStatus ? 'read' : 'unread'}`}
-                  role='button'
-                  tabIndex={0}
-                  onClick={() => !notification.readStatus && markAsRead(notification.id)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      !notification.readStatus && markAsRead(notification.id);
-                    }
-                  }}
-                >
-                  <div className='item-icon'>
-                    {/* Ícone baseado no tipo de notificação */}
-                    {notification.type === 'stock_alert' && (
-                      <i className='bx bx-error-circle text-warning' />
-                    )}
-                    {notification.type === 'customer_risk' && (
-                      <i className='bx bx-user-x text-danger' />
-                    )}
-                    {notification.type === 'sales_goal' && (
-                      <i className='bx bx-trending-down text-info' />
-                    )}
-                    {!['stock_alert', 'customer_risk', 'sales_goal'].includes(
-                      notification.type,
-                    ) && <i className='bx bx-bell text-primary' />}
-                  </div>
-                  <div className='flex-1'>
-                    <h6 className='mt-0 mb-1'>
-                      {notification.type.replace(/_/g, ' ').toUpperCase()}
-                    </h6>
-                    <div className='font-size-12 text-muted'>
-                      <p className='mb-0'>{notification.message}</p>
-                      <p className='mb-0 text-end'>
-                        <small>{new Date(notification.created_at).toLocaleString()}</small>
-                      </p>
-                    </div>
-                  </div>
+            <AnimatePresence>
+              {loading ? (
+                <div className='text-center p-3'>
+                  <LoadingSpinner size='sm' /> Carregando...
                 </div>
-              ))
-            )}
+              ) : error ? (
+                <div className='text-center p-3 text-danger'>{error}</div>
+              ) : notifications.length === 0 ? (
+                <div className='text-center p-3 text-muted'>Nenhuma notificação.</div>
+              ) : (
+                notifications.map((notification, index) => (
+                  <motion.div
+                    key={notification.id}
+                    animate={{ opacity: 1, y: 0, transition: { delay: index * 0.05 } }}
+                    className={`text-reset notification-item ${notification.is_read ? 'read' : 'unread'}`}
+                    exit={{ opacity: 0, x: -20 }}
+                    initial={{ opacity: 0, y: -20 }}
+                  >
+                    <Link className='d-flex' to={notification.link || '#'}>
+                      <div className='item-icon'>
+                        <i className={getIcon(notification.type)} />
+                      </div>
+                      <div className='flex-1'>
+                        <h6 className='mt-0 mb-1'>
+                          {notification.type.replace(/_/g, ' ').toUpperCase()}
+                        </h6>
+                        <div className='font-size-12 text-muted'>
+                          <p className='mb-0'>{notification.message}</p>
+                          <p className='mb-0 text-end'>
+                            <small>{new Date(notification.created_at).toLocaleString()}</small>
+                          </p>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))
+              )}
+            </AnimatePresence>
           </SimpleBar>
 
           <div className='p-2 border-top'>
-            <Link className='notification-footer' to='#'>
+            <Link className='notification-footer' to='/notifications'>
               Ver todas as notificações
             </Link>
           </div>

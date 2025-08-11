@@ -1,15 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const { authenticateToken, authorize } = require('../middleware/authMiddleware');
 const technicianController = require('../controllers/technicianController');
-const { authenticateToken } = require('../middleware/authMiddleware');
 
-// Rotas para /api/technicians
-router.get('/', authenticateToken, technicianController.getAllTechnicians);
-router.post('/', authenticateToken, technicianController.createTechnician);
+// Obter todos os técnicos
+router.get('/', [authenticateToken, authorize('repairs:read')], technicianController.getAllTechnicians);
 
-// Rotas para /api/technicians/:id
-router.get('/:id', authenticateToken, technicianController.getTechnicianById);
-router.put('/:id', authenticateToken, technicianController.updateTechnician);
-router.delete('/:id', authenticateToken, technicianController.deleteTechnician);
+// Criar um novo técnico
+router.post('/', [authenticateToken, authorize('repairs:assign')], technicianController.createTechnician);
+
+// Deletar um técnico
+router.delete('/:id', [authenticateToken, authorize('repairs:assign')], technicianController.deleteTechnician);
 
 module.exports = router;

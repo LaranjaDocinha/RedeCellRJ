@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS notifications (
 );
 
 -- Adiciona um índice para buscas rápidas por usuário e status de leitura
-CREATE INDEX idx_notifications_user_read ON notifications(user_id, read_status);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, read_status);
 
 -- Adiciona comentários para clareza
 COMMENT ON TABLE notifications IS 'Armazena notificações proativas para usuários do sistema.';

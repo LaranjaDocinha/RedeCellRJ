@@ -43,6 +43,25 @@ const ReportsPage = () => {
           <Col lg={4}>
             <Card className='h-100'>
               <CardBody className='d-flex flex-column'>
+                <CardTitle className='h5'>Exportação Contábil</CardTitle>
+                <p className='card-text text-muted'>
+                  Exporte dados financeiros para uso em softwares de contabilidade.
+                </p>
+                <Button
+                  className='mt-auto'
+                  color='info'
+                  onClick={() => window.open('/api/reports/accounting-export', '_blank')}
+                >
+                  {' '}
+                  {/* Placeholder */}
+                  Exportar CSV
+                </Button>
+              </CardBody>
+            </Card>
+          </Col>
+          <Col lg={4}>
+            <Card className='h-100'>
+              <CardBody className='d-flex flex-column'>
                 <CardTitle className='h5'>Relatório de Clientes</CardTitle>
                 <p className='card-text text-muted'>
                   Informações sobre seus clientes mais valiosos e hábitos de compra.

@@ -14,18 +14,22 @@
 @import "components/Common/RippleEffect";
 @import "components/Common/LoadingBar";
 
+html, body {
+  height: 100%; // Ensure html and body take full height
+}
+
 body {
   margin: 0;
   font-family: var(--font-family-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--color-body-bg);
-  color: var(--color-body-text);
+  background-color: var(--color-background);
+  color: var(--color-text);
   transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 
 .page-content {
-  background-color: var(--color-body-bg);
+  background-color: var(--color-background);
 }
 
 .card {

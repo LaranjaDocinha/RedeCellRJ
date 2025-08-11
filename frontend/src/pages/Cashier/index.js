@@ -70,7 +70,7 @@ const CashierOpenStatus = ({ session, onStartCloseout }) => {
           Aberto por: <strong>{useAuthStore.getState().user?.name}</strong>
         </p>
         <p className='mb-2'>
-          Saldo Inicial: <strong>R$ {parseFloat(session.openingBalance).toFixed(2)}</strong>
+          Saldo Inicial: <strong>R$ {Number(session.opening_balance).toFixed(2)}</strong>
         </p>
         <p className='text-muted'>
           Aberto em: {new Date(session.opened_at).toLocaleString('pt-BR')}
@@ -86,7 +86,7 @@ const CashierOpenStatus = ({ session, onStartCloseout }) => {
 
 const CashierPage = () => {
   const { user } = useAuthStore();
-  const { data: statusData, loading: loadingStatus, request: fetchStatus } = useApi(get);
+  const { data: statusData, loading: loadingStatus, request: fetchStatus, setData: setStatusData } = useApi(get);
   const { loading: opening, request: openCashier } = useApi(post);
 
   const [isCloseoutModalOpen, setCloseoutModalOpen] = useState(false);
@@ -109,9 +109,10 @@ const CashierPage = () => {
         openingBalance: payload.openingBalance,
         userId: user.id,
       };
-      await openCashier('/api/cashier/open', apiPayload);
+      const response = await openCashier('/api/cashier/open', apiPayload);
       toast.success('Caixa aberto com sucesso!');
-      refreshStatus();
+      // Atualiza o statusData diretamente com a nova sessão
+      setStatusData({ isOpen: true, ...response.session });
     } catch (err) {
       // O helper já mostra o toast de erro
     }
@@ -129,7 +130,7 @@ const CashierPage = () => {
                     <div className='text-center'>
                       <LoadingSpinner />
                     </div>
-                  ) : statusData?.isOpen ? (
+                  ) : statusData?.isOpen && statusData.session ? (
                     <CashierOpenStatus
                       session={statusData.session}
                       onStartCloseout={toggleCloseoutModal}

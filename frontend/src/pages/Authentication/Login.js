@@ -7,13 +7,14 @@ import toast from 'react-hot-toast';
 import { motion } from 'framer-motion'; // Importar motion
 
 import { useAuthStore } from '../../store/authStore';
-import { post } from '../../helpers/api_helper'; // 1. Importar o helper da API
+import { get, post } from '../../helpers/api_helper'; // 1. Importar o helper da API
 import { useTheme } from '../../context/ThemeContext';
 import FormField from '../../components/Common/FormField'; // Import FormField
 import PasswordField from '../../components/Common/PasswordField'; // Import PasswordField
 import LoadingSpinner from '../../components/Common/LoadingSpinner'; // Import LoadingSpinner
 import RippleEffect from '../../components/Common/RippleEffect'; // Import RippleEffect
 import ThemeToggle from '../../components/Layout/ThemeToggle'; // Import ThemeToggle
+import axios from 'axios'; // Import axios
 
 const quotes = [
   'Simplifique sua gestão, impulsione suas vendas.',
@@ -32,37 +33,75 @@ const Login = () => {
   const [loginError, setLoginError] = useState(null); // Novo estado para erro de login
 
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0); // Estado para o carrossel de citações
-  const [gradientColors, setGradientColors] = useState([]); // Novo estado para as cores do gradiente
+  const [loginScreenSettings, setLoginScreenSettings] = useState(null);
+  const [loadingSettings, setLoadingSettings] = useState(true);
 
   const logoSrc = theme === 'dark' ? '/Dark-mode-logo.png' : '/redecellrj.png';
-
-  // Função para gerar uma cor RGB aleatória
-  const generateRandomColor = () => {
-    const r = Math.floor(Math.random() * 255);
-    const g = Math.floor(Math.random() * 255);
-    const b = Math.floor(Math.random() * 255);
-    return `rgb(${r}, ${g}, ${b})`;
-  };
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentQuoteIndex((prevIndex) => (prevIndex + 1) % quotes.length);
     }, 5000); // Muda a citação a cada 5 segundos
 
-    // Gerar 4 cores aleatórias para o gradiente
-    const newColors = Array.from({ length: 4 }, generateRandomColor);
-    setGradientColors(newColors);
+    return () => clearInterval(interval);
+  }, []);
 
-    // Aplicar as cores como variáveis CSS
-    const authPage = document.querySelector('.auth-page');
-    if (authPage) {
-      newColors.forEach((color, index) => {
-        authPage.style.setProperty(`--gradient-color-${index + 1}`, color);
-      });
-    }
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentQuoteIndex((prevIndex) => (prevIndex + 1) % quotes.length);
+    }, 5000); // Muda a citação a cada 5 segundos
 
     return () => clearInterval(interval);
   }, []);
+
+  // New useEffect to fetch and apply login screen settings
+  useEffect(() => {
+    const fetchLoginSettings = async () => {
+      try {
+        setLoadingSettings(true);
+        const response = await get('/api/settings/login-screen');
+        const settings = response.data;
+        setLoginScreenSettings(settings);
+
+        const authPage = document.querySelector('.auth-page');
+        if (authPage) {
+          // Apply background based on type
+          if (settings.background_type === 'gradient') {
+            authPage.style.backgroundImage = `linear-gradient(${settings.gradient_direction}deg, ${settings.gradient_color_1} 0%, ${settings.gradient_color_2} 25%, ${settings.gradient_color_3} 50%, ${settings.gradient_color_4} 75%, ${settings.gradient_color_1} 100%)`;
+            authPage.style.backgroundSize = '400% 400%';
+            authPage.style.animation = `gradient-animation ${settings.gradient_speed}s ease infinite, background-entry-animation 1s ease-out forwards`;
+          } else if (settings.background_type === 'solid') {
+            authPage.style.backgroundImage = 'none';
+            authPage.style.backgroundColor = settings.background_solid_color;
+            authPage.style.animation = 'background-entry-animation 1s ease-out forwards';
+          } else if (settings.background_type === 'image') {
+            authPage.style.backgroundImage = `url(${settings.background_image_url})`;
+            authPage.style.backgroundSize = settings.image_size;
+            authPage.style.backgroundRepeat = settings.image_repeat;
+            authPage.style.animation = 'background-entry-animation 1s ease-out forwards';
+          } else if (settings.background_type === 'video') {
+            // For video, we'll render a video element in the JSX, not via CSS background
+            authPage.style.backgroundImage = 'none';
+            authPage.style.backgroundColor = 'transparent'; // Ensure no background color
+            authPage.style.animation = 'none'; // No CSS animation for video background
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao carregar configurações da tela de login:', error);
+        // Fallback to default or a simple background if settings fail to load
+        const authPage = document.querySelector('.auth-page');
+        if (authPage) {
+          authPage.style.backgroundImage = 'linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%)'; // A default gradient
+          authPage.style.backgroundSize = '400% 400%';
+          authPage.style.animation = 'gradient-animation 15s ease infinite, background-entry-animation 1s ease-out forwards';
+        }
+      } finally {
+        setLoadingSettings(false);
+      }
+    };
+
+    fetchLoginSettings();
+  }, []); // Empty dependency array means this runs once on mount
 
   useEffect(() => {
     const particlesContainer = document.querySelector('.particles-container');
@@ -104,7 +143,7 @@ const Login = () => {
 
         if (response.token) {
           loginAction(response);
-          navigate('/dashboard');
+          navigate('/bi-dashboard');
         }
       } catch (error) {
         // Captura a mensagem de erro do backend
@@ -121,6 +160,26 @@ const Login = () => {
   return (
     <React.Fragment>
       <div className='auth-page'>
+        {loginScreenSettings && loginScreenSettings.background_type === 'video' && (
+          <video
+            autoPlay
+            loop
+            muted
+            className="background-video"
+            src={loginScreenSettings.background_video_url}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              zIndex: -2, // Below other content
+            }}
+          >
+            Seu navegador não suporta o elemento de vídeo.
+          </video>
+        )}
         <div className='particles-container'></div>
         <div className='parallax-layer parallax-layer-back'></div>
         <div className='parallax-layer parallax-layer-middle'></div>

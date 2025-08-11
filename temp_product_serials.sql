@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS product_serials (id SERIAL PRIMARY KEY, product_variation_id INTEGER NOT NULL REFERENCES product_variations(id) ON DELETE RESTRICT, serial_number VARCHAR(255) NOT NULL UNIQUE, status VARCHAR(50) NOT NULL DEFAULT 'in_stock', current_branch_id INTEGER NOT NULL REFERENCES branches(id) ON DELETE RESTRICT, purchase_order_item_id INTEGER REFERENCES purchase_order_items(id) ON DELETE SET NULL, sale_item_id INTEGER REFERENCES sale_items(id) ON DELETE SET NULL, repair_id INTEGER REFERENCES repairs(id) ON DELETE SET NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(), updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW());
+CREATE INDEX IF NOT EXISTS idx_product_serials_serial_number ON product_serials(serial_number);
+CREATE INDEX IF NOT EXISTS idx_product_serials_variation_id ON product_serials(product_variation_id);
+CREATE INDEX IF NOT EXISTS idx_product_serials_status ON product_serials(status);
+CREATE INDEX IF NOT EXISTS idx_product_serials_current_branch_id ON product_serials(current_branch_id);
+ALTER TABLE product_variations ADD COLUMN IF NOT EXISTS is_serialized BOOLEAN NOT NULL DEFAULT FALSE;

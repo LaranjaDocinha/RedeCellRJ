@@ -1,69 +1,100 @@
-import React, { useRef } from 'react';
-import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Table } from 'reactstrap';
+import React, { useRef, useState, useEffect } from 'react';
+import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Table, Input, FormGroup, Label } from 'reactstrap';
 import { useReactToPrint } from 'react-to-print';
 import Barcode from 'react-barcode';
+import './LabelPrintModal.scss'; // Import the new SCSS file
 
 const LabelPrintModal = ({ isOpen, toggle, selectedVariations }) => {
   const componentRef = useRef();
+  const [quantities, setQuantities] = useState({});
+
+  useEffect(() => {
+    // Initialize quantities when modal opens or selectedVariations change
+    const initialQuantities = {};
+    selectedVariations.forEach(v => {
+      initialQuantities[v.id] = 1; // Default to 1 label per item
+    });
+    setQuantities(initialQuantities);
+  }, [selectedVariations]);
+
+  const handleQuantityChange = (id, value) => {
+    const parsedValue = parseInt(value, 10);
+    setQuantities(prev => ({
+      ...prev,
+      [id]: isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue,
+    }));
+  };
 
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
     documentTitle: 'etiquetas-produtos',
+    pageStyle: '@page { size: auto; margin: 0mm; }',
   });
 
-  // Estilos para a etiqueta
-  const labelStyle = {
-    width: '180px',
-    height: '90px',
-    border: '1px solid #ccc',
-    borderRadius: '5px',
-    padding: '5px',
-    margin: '5px',
-    display: 'inline-block',
-    textAlign: 'center',
-    fontFamily: 'Arial, sans-serif',
-    fontSize: '12px',
-    boxSizing: 'border-box',
-    overflow: 'hidden',
-  };
-
-  const productNameStyle = {
-    fontWeight: 'bold',
-    fontSize: '14px',
-    margin: '0 0 5px 0',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-  };
-
-  const priceStyle = {
-    fontSize: '16px',
-    fontWeight: 'bold',
-    margin: '5px 0',
+  const generateLabels = () => {
+    const labels = [];
+    selectedVariations.forEach(variation => {
+      const numLabels = quantities[variation.id] || 0;
+      for (let i = 0; i < numLabels; i++) {
+        labels.push(
+          <div key={`${variation.id}-${i}`} className="product-label">
+            <p className="product-label-name">{variation.product_name}</p>
+            <div className="product-label-barcode">
+              <Barcode
+                fontSize={10}
+                height={25}
+                margin={2}
+                value={variation.barcode || 'P' + variation.product_id + 'V' + variation.id}
+              />
+            </div>
+            <p className="product-label-price">R$ {parseFloat(variation.price).toFixed(2)}</p>
+          </div>
+        );
+      }
+    });
+    return labels;
   };
 
   return (
     <Modal fade={false} isOpen={isOpen} size='lg' toggle={toggle}>
       <ModalHeader toggle={toggle}>Imprimir Etiquetas</ModalHeader>
       <ModalBody>
-        <p>As seguintes etiquetas serão impressas. Verifique e clique em "Imprimir".</p>
+        <p>Defina a quantidade de etiquetas para cada produto e clique em "Imprimir".</p>
+
+        <Table responsive striped className="mb-4">
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Código de Barras</th>
+              <th>Preço</th>
+              <th>Qtd. Etiquetas</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(selectedVariations || []).map((variation) => (
+              <tr key={variation.id}>
+                <td>{variation.product_name} {variation.color && `(${variation.color})`}</td>
+                <td>{variation.barcode}</td>
+                <td>R$ {parseFloat(variation.price).toFixed(2)}</td>
+                <td>
+                  <FormGroup className="mb-0">
+                    <Input
+                      type="number"
+                      min="0"
+                      value={quantities[variation.id] || 0}
+                      onChange={(e) => handleQuantityChange(variation.id, e.target.value)}
+                      style={{ width: '80px' }}
+                    />
+                  </FormGroup>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
 
         {/* Componente que será impresso */}
-        <div ref={componentRef} style={{ padding: '20px' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
-            {(selectedVariations || []).map((variation) => (
-              <div key={variation.id} style={labelStyle}>
-                <p style={productNameStyle}>{variation.product_name}</p>
-                <Barcode
-                  fontSize={10}
-                  height={25}
-                  margin={2}
-                  value={variation.barcode || 'P' + variation.product_id + 'V' + variation.id}
-                />
-                <p style={priceStyle}>R$ {parseFloat(variation.price).toFixed(2)}</p>
-              </div>
-            ))}
-          </div>
+        <div ref={componentRef} className="label-print-container">
+          {generateLabels()}
         </div>
       </ModalBody>
       <ModalFooter>

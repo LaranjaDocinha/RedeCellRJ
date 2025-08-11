@@ -19,8 +19,8 @@
   flex-shrink: 0;
   text-align: center;
   padding: 15px;
-  background-color: #f8f9fa; /* Um fundo leve para destacar */
-  border-top: 1px solid #eee;
+  background-color: var(--color-component-secondary-bg); /* Usar variável de tema */
+  border-top: 1px solid var(--color-border);
 }
 
 .pdv-total-amount {
@@ -98,7 +98,7 @@
 
 /* Realce para o item selecionado no dropdown de busca */
 .product-search-dropdown li.highlighted {
-  background-color: #e9ecef;
+  background-color: var(--color-component-secondary-bg);
 }
 
 /* Transição para botões */

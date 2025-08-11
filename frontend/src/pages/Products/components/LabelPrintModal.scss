@@ -1,0 +1,71 @@
+.label-print-container {
+  padding: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start; /* Alinha as etiquetas ao topo */
+}
+
+.product-label {
+  width: 180px;
+  height: 90px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 5px;
+  margin: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Distribui o conteúdo verticalmente */
+  align-items: center;
+  text-align: center;
+  font-family: 'Arial', sans-serif;
+  font-size: 12px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.product-label-name {
+  font-weight: bold;
+  font-size: 14px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%; /* Garante que o nome ocupe a largura total */
+}
+
+.product-label-barcode svg {
+  width: 100% !important; /* Garante que o barcode se ajuste */
+  height: 30px !important; /* Altura fixa para o barcode */
+}
+
+.product-label-price {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 5px 0 0 0; /* Espaçamento superior */
+}
+
+/* Estilos para impressão */
+@media print {
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .modal-content {
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .modal-header, .modal-footer, .modal-body > p {
+    display: none !important;
+  }
+  .label-print-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    justify-content: flex-start; /* Alinha à esquerda para impressão */
+    align-items: flex-start;
+  }
+  .product-label {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+}

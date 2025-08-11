@@ -2,13 +2,17 @@ import React from 'react';
 import { Card, CardBody, CardTitle } from 'reactstrap';
 import Skeleton from 'react-loading-skeleton';
 import Chart from 'react-apexcharts';
+import { useTheme } from '../../../../context/ThemeContext';
 
 const ProfitabilityChart = ({ data, loading }) => {
+  const { chartTheme, showXAxisLabels, showYAxisLabels, showChartLegend } = useTheme();
+
   const options = {
     chart: {
       toolbar: { show: false },
       stacked: false,
     },
+    theme: { mode: chartTheme },
     dataLabels: { enabled: false },
     stroke: {
       width: [3, 3],
@@ -17,6 +21,7 @@ const ProfitabilityChart = ({ data, loading }) => {
     xaxis: {
       type: 'datetime',
       categories: (data || []).map((d) => d.date),
+      labels: { show: showXAxisLabels },
     },
     yaxis: [
       {
@@ -24,6 +29,7 @@ const ProfitabilityChart = ({ data, loading }) => {
         axisTicks: { show: true },
         axisBorder: { show: true, color: '#008FFB' },
         labels: {
+          show: showYAxisLabels,
           style: { colors: '#008FFB' },
           formatter: (val) => `R$ ${val ? val.toFixed(0) : 0}`,
         },
@@ -35,6 +41,7 @@ const ProfitabilityChart = ({ data, loading }) => {
         axisTicks: { show: true },
         axisBorder: { show: true, color: '#FF4560' },
         labels: {
+          show: showYAxisLabels,
           style: { colors: '#FF4560' },
           formatter: (val) => `R$ ${val ? val.toFixed(0) : 0}`,
         },
@@ -48,7 +55,7 @@ const ProfitabilityChart = ({ data, loading }) => {
         formatter: (val) => `R$ ${val ? val.toFixed(2) : 0}`,
       },
     },
-    legend: { horizontalAlign: 'left', offsetX: 40 },
+    legend: { show: showChartLegend, horizontalAlign: 'left', offsetX: 40 },
   };
 
   const series = [

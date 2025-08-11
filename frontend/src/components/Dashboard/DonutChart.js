@@ -1,13 +1,15 @@
 import React from 'react';
 import ReactApexChart from 'react-apexcharts';
+
 import WidgetContainer from './WidgetContainer';
 
 const DonutChart = ({ data, title }) => {
-  const series = data.map(item => item.value);
-  const labels = data.map(item => item.name);
+  const series = data.map((item) => item.value);
+  const labels = data.map((item) => item.name);
 
   const options = {
     chart: {
+      background: 'transparent', // Set chart background to transparent
       type: 'donut',
     },
     labels: labels,
@@ -15,22 +17,24 @@ const DonutChart = ({ data, title }) => {
     legend: {
       position: 'bottom',
     },
-    responsive: [{
-      breakpoint: 480,
-      options: {
-        chart: {
-          width: 200,
-        },
-        legend: {
-          position: 'bottom',
+    responsive: [
+      {
+        breakpoint: 480,
+        options: {
+          chart: {
+            width: 200,
+          },
+          legend: {
+            position: 'bottom',
+          },
         },
       },
-    }],
+    ],
   };
 
   return (
-    <WidgetContainer title={title} style={{ height: '100%' }}>
-      <ReactApexChart options={options} series={series} type="donut" height="100%" />
+    <WidgetContainer style={{ height: '100%' }} title={title}>
+      <ReactApexChart height='100%' options={options} series={series} type='donut' />
     </WidgetContainer>
   );
 };

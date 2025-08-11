@@ -12,7 +12,8 @@ import ViewSwitcher from './ViewSwitcher';
 import './ProductToolbar.scss';
 
 const ProductToolbar = ({ onManageCategories, onPrintLabels }) => {
-  const { selection, filteredProducts } = useContext(ProductContext);
+  const { selection, filteredProducts, ui, setFilters } = useContext(ProductContext);
+  const { viewMode } = ui;
   const { selectedProducts, handleSelectAll } = selection;
   const checkboxRef = useRef();
 
@@ -24,6 +25,14 @@ const ProductToolbar = ({ onManageCategories, onPrintLabels }) => {
       checkboxRef.current.indeterminate = totalSelected > 0 && totalSelected < totalFiltered;
     }
   }, [totalSelected, totalFiltered]);
+
+  const handleMinPriceChange = (e) => {
+    setFilters(prevFilters => ({ ...prevFilters, min_price: e.target.value }));
+  };
+
+  const handleMaxPriceChange = (e) => {
+    setFilters(prevFilters => ({ ...prevFilters, max_price: e.target.value }));
+  };
 
   return (
     <Row className='product-toolbar mb-3 g-3 align-items-center'>
@@ -47,6 +56,18 @@ const ProductToolbar = ({ onManageCategories, onPrintLabels }) => {
       <Col lg={4} md={6}>
         <InputGroup>
           <CategoryFilter />
+          <Input
+            type="number"
+            placeholder="Preço Mín."
+            onChange={handleMinPriceChange}
+            style={{ maxWidth: '120px' }}
+          />
+          <Input
+            type="number"
+            placeholder="Preço Máx."
+            onChange={handleMaxPriceChange}
+            style={{ maxWidth: '120px' }}
+          />
           <Button
             outline
             color='secondary'
@@ -57,6 +78,16 @@ const ProductToolbar = ({ onManageCategories, onPrintLabels }) => {
           </Button>
           <Button outline color='secondary' onClick={onPrintLabels}>
             <i className='bx bx-printer me-1'></i>Etiquetas
+          </Button>
+          <Button outline color='secondary' onClick={() => alert('Importar Produtos')}>
+            {' '}
+            {/* Placeholder */}
+            <i className='bx bx-import me-1'></i>Importar
+          </Button>
+          <Button outline color='secondary' onClick={() => alert('Exportar Produtos')}>
+            {' '}
+            {/* Placeholder */}
+            <i className='bx bx-export me-1'></i>Exportar
           </Button>
         </InputGroup>
       </Col>

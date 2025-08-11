@@ -124,26 +124,6 @@
     }
   }
 
-  @media (max-width: 992px) {
-    .quick-action-btn {
-      padding: 8px; /* Reduz o padding em telas menores */
-
-      span {
-        display: none; /* Esconde o texto em telas menores */
-      }
-
-      i {
-        margin-right: 0; /* Remove o espaçamento do ícone quando o texto está escondido */
-      }
-    }
-  }
-
-  @media (max-width: 768px) {
-    .topbar-center {
-      display: none; /* Esconde a barra de pesquisa em telas muito pequenas */
-    }
-  }
-
   .topbar-right {
     flex: 1;
     justify-content: flex-end;
@@ -259,23 +239,27 @@
   }
 }
 
-// Light Theme Adjustments
-[data-bs-theme="light"] .quick-action-btn {
-  color: var(--color-body-bg) !important;
-}
+
 
 // --- Responsividade ---
 @media (max-width: 992px) {
   .topbar {
-    .page-title-container {
+    .page-title-container,
+    .greeting-container .greeting-subtitle,
+    .topbar-center .global-period-filter {
       display: none;
     }
-    .quick-action-btn span {
-      display: none;
-    }
+
     .quick-action-btn {
       padding: 8px;
+      span {
+        display: none;
+      }
+      i {
+        margin-right: 0;
+      }
     }
+
     .profile-menu .d-none.d-xl-inline-block {
       display: none !important;
     }
@@ -285,7 +269,8 @@
 @media (max-width: 768px) {
   .topbar {
     padding: 0 16px;
-    .topbar-center {
+    .topbar-center,
+    .greeting-container {
       display: none;
     }
     .topbar-left, .topbar-right {

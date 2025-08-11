@@ -1,4 +1,5 @@
 import React from 'react';
+
 import WidgetContainer from './WidgetContainer';
 import WidgetSkeleton from './WidgetSkeleton';
 import WidgetEmptyState from './WidgetEmptyState';
@@ -9,7 +10,7 @@ export default {
 
 export const Container = () => (
   <div style={{ width: '350px', height: '200px' }}>
-    <WidgetContainer title="Widget de Exemplo">
+    <WidgetContainer title='Widget de Exemplo'>
       <p>Conteúdo do widget.</p>
     </WidgetContainer>
   </div>
@@ -17,7 +18,7 @@ export const Container = () => (
 
 export const Skeleton = () => (
   <div style={{ width: '350px', height: '200px' }}>
-    <WidgetContainer title="Carregando...">
+    <WidgetContainer title='Carregando...'>
       <WidgetSkeleton height={30} style={{ marginBottom: '1rem' }} />
       <WidgetSkeleton count={3} />
     </WidgetContainer>
@@ -26,8 +27,8 @@ export const Skeleton = () => (
 
 export const EmptyState = () => (
   <div style={{ width: '350px', height: '200px' }}>
-    <WidgetContainer title="Vendas Recentes">
-      <WidgetEmptyState message="Nenhuma venda registrada hoje." />
+    <WidgetContainer title='Vendas Recentes'>
+      <WidgetEmptyState message='Nenhuma venda registrada hoje.' />
     </WidgetContainer>
   </div>
 );

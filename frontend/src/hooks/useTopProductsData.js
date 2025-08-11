@@ -11,7 +11,7 @@ const useTopProductsData = () => {
       setIsLoading(true);
       try {
         // Mock
-        await new Promise(resolve => setTimeout(resolve, 2500));
+        await new Promise((resolve) => setTimeout(resolve, 2500));
         setData([
           { name: 'iPhone 15', Vendas: 120 },
           { name: 'Cabo USB-C', Vendas: 98 },

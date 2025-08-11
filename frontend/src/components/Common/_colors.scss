@@ -5,6 +5,11 @@
   --color-primary: #007bff;
   --color-primary-rgb: 0, 123, 255;
   --color-secondary: #6c757d;
+  --color-secondary-rgb: 108, 117, 125;
+  --color-text: #343a40;
+  --color-text-rgb: 52, 58, 64;
+  --color-background: #f8f9fa;
+  --color-background-rgb: 248, 249, 250;
   --color-info: #17a2b8;
   --color-danger: #dc3545;
   --color-success: #28a745;
@@ -42,6 +47,11 @@
   --color-body-text: #f0f2f5;
   --color-body-text-rgb: 240, 242, 245;
   --color-text-muted: #a6b0cf;
+
+  --color-text: #f0f2f5; // Cor do texto no tema escuro
+  --color-text-rgb: 240, 242, 245;
+  --color-background: #2c2c2e; // Cor de fundo no tema escuro
+  --color-background-rgb: 44, 44, 46;
 
   --color-component-bg: #353537;
   --color-component-secondary-bg: #2c2c2e;
@@ -100,6 +110,132 @@
     }
     &.bg-warning {
       color: var(--color-body-text) !important; // Texto escuro para badge warning no tema
+    }
+    &.bg-info {
+      color: var(--color-body-text) !important;
+    }
+  }
+
+  .btn-light {
+    background-color: var(--color-component-secondary-bg);
+    color: var(--color-body-text);
+    border-color: var(--color-border);
+
+    &:hover {
+      background-color: var(--color-body-bg);
+    }
+  }
+
+  .btn-dark {
+    background-color: var(--color-body-text);
+    color: var(--color-body-bg);
+    border-color: var(--color-body-text);
+
+    &:hover {
+      background-color: color-mix(in srgb, var(--color-body-text), #fff 10%);
+    }
+  }
+
+  .input-group-text {
+    background-color: var(--color-component-secondary-bg);
+    border-color: var(--color-border);
+    color: var(--color-text-muted);
+  }
+
+  .form-control {
+    background-color: var(--form-background-color);
+    color: var(--color-body-text);
+    border-color: var(--form-border-color);
+
+    &:focus {
+      background-color: var(--form-background-color);
+      color: var(--color-body-text);
+      border-color: var(--form-focus-border-color);
+      box-shadow: var(--form-focus-box-shadow);
+    }
+
+    &.is-invalid, &.is-valid {
+      border-color: var(--form-border-color);
+    }
+  }
+
+  .has-error .form-control {
+    border-color: var(--color-danger);
+  }
+
+  .has-success .form-control {
+    border-color: var(--color-success);
+  }
+}
+
+[data-bs-theme="contrast"] {
+  --color-primary: #FFFF00; // Amarelo brilhante
+  --color-primary-rgb: 255, 255, 0;
+  --color-secondary: #00FFFF; // Ciano brilhante
+  --color-secondary-rgb: 0, 255, 255;
+  --color-text: #000000; // Texto preto
+  --color-text-rgb: 0, 0, 0;
+  --color-background: #FFFFFF; // Fundo branco
+  --color-background-rgb: 255, 255, 255;
+  --color-info: #0000FF; // Azul
+  --color-danger: #FF0000; // Vermelho
+  --color-success: #00FF00; // Verde
+  --color-warning: #FFA500; // Laranja
+  --color-light: #F0F0F0;
+  --color-dark: #101010;
+
+  --color-body-bg: #FFFFFF;
+  --color-body-text: #000000;
+  --color-body-text-rgb: 0, 0, 0;
+  --color-text-muted: #333333;
+
+  --color-component-bg: #F0F0F0;
+  --color-component-secondary-bg: #E0E0E0;
+  --color-border: #000000;
+
+  --shadow: none;
+  --shadow-color: transparent;
+
+  --color-active-menu-bg: rgba(var(--color-primary-rgb), 0.3);
+  --text-hover-color: color-mix(in srgb, var(--color-primary), #000 20%);
+
+  --bs-body-color-rgb: var(--color-body-text-rgb);
+  --bs-body-bg-rgb: 255, 255, 255;
+
+  --bs-body-color: var(--color-body-text);
+  --bs-body-bg: var(--color-body-bg);
+
+  --bs-border-color: var(--color-border);
+  --bs-border-color-rgb: 0, 0, 0;
+
+  --bs-heading-color: var(--color-body-text);
+
+  --bs-link-color: var(--color-primary);
+  --bs-link-hover-color: var(--text-hover-color);
+
+  --form-background-color: var(--color-component-bg);
+  --form-border-color: var(--color-border);
+  --form-focus-border-color: var(--color-primary);
+  --form-focus-box-shadow: 0 0 0 0.25rem rgba(var(--color-primary-rgb), 0.5);
+
+  --color-disabled-bg: #CCCCCC;
+  --color-disabled-border: #999999;
+  --color-disabled-text: #666666;
+
+  --bs-tertiary-bg: #E0E0E0;
+  --bs-border-color-translucent: rgba(0, 0, 0, 0.2);
+
+  --bs-table-accent-bg: var(--table-hover-bg);
+
+  --bs-component-bg: var(--color-component-bg);
+  --bs-component-active-bg: var(--color-active-menu-bg);
+
+  .badge {
+    &.bg-secondary {
+      color: var(--color-body-text) !important;
+    }
+    &.bg-warning {
+      color: var(--color-body-text) !important;
     }
     &.bg-info {
       color: var(--color-body-text) !important;

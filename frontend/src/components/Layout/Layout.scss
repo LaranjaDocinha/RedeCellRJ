@@ -1,5 +1,3 @@
-@import "../Common/colors";
-
 :root {
   --sidebar-width: 260px;
   --sidebar-width-collapsed: 88px;
@@ -26,6 +24,7 @@
 
 .content-page {
   padding: 24px;
+  background-color: var(--color-background); // Ensure content page respects global background
   flex-grow: 1;
 }
 
@@ -57,4 +56,80 @@
   width: 100%;
   height: 100%;
   z-index: -1;
+}
+
+/* --- Estilos da Navegação por Abas --- */
+.tab-navigation {
+  background-color: var(--secondary-bg);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 10px;
+
+  .nav-tabs {
+    border-bottom: none; // Remove a borda padrão do Bootstrap
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin; // Para Firefox
+    scrollbar-color: var(--primary-color) var(--secondary-bg);
+
+    &::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: var(--secondary-bg);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: var(--primary-color);
+      border-radius: 10px;
+    }
+  }
+
+  .nav-item {
+    flex-shrink: 0; // Impede que as abas encolham
+  }
+
+  .nav-link {
+    cursor: pointer;
+    color: var(--text-muted);
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s ease, border-bottom-color 0.2s ease;
+    white-space: nowrap;
+
+    &:hover {
+      color: var(--text-color);
+    }
+
+    &.active {
+      color: var(--primary-color);
+      background-color: var(--body-bg);
+      border-bottom-color: var(--primary-color);
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+    }
+
+    .close-tab-button {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 2px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s ease, color 0.2s ease;
+
+      &:hover {
+        background-color: rgba(var(--text-color-rgb), 0.1);
+        color: var(--text-color);
+      }
+    }
+  }
 }

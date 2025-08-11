@@ -7,6 +7,7 @@ export const useAuthStore = create(
       // 1. Estado inicial é mais simples. O `persist` cuidará da reidratação.
       user: null,
       token: null,
+      originalToken: null, // Novo estado para armazenar o token original do admin
 
       // Ação de Login (sem alterações, já estava ótima)
       login: (userData) => {
@@ -16,9 +17,19 @@ export const useAuthStore = create(
         });
       },
 
+      // Nova ação para definir o token (útil para personificação)
+      setToken: (newToken) => {
+        set({ token: newToken });
+      },
+
+      // Nova ação para definir o token original (ao iniciar a personificação)
+      setOriginalToken: (token) => {
+        set({ originalToken: token });
+      },
+
       // Ação de Logout (sem alterações)
       logout: () => {
-        set({ user: null, token: null });
+        set({ user: null, token: null, originalToken: null }); // Limpa também o token original
       },
 
       // Ação para atualizar o perfil do usuário

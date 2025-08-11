@@ -1,22 +1,23 @@
 import React from 'react';
+
 import WidgetContainer from './WidgetContainer';
 
 const LowStockProducts = ({ products }) => {
   return (
-    <WidgetContainer title="Produtos com Baixo Estoque" style={{ height: '100%' }}>
+    <WidgetContainer style={{ height: '100%' }} title='Produtos com Baixo Estoque'>
       <div style={{ height: '100%', overflowY: 'auto' }}>
-        <table className="table table-striped">
+        <table className='table table-striped'>
           <thead>
             <tr>
               <th>Produto</th>
-              <th className="text-end">Estoque</th>
+              <th className='text-end'>Estoque</th>
             </tr>
           </thead>
           <tbody>
             {products.map((product) => (
               <tr key={product.id}>
                 <td>{product.name}</td>
-                <td className="text-end">{product.stock}</td>
+                <td className='text-end'>{product.stock}</td>
               </tr>
             ))}
           </tbody>

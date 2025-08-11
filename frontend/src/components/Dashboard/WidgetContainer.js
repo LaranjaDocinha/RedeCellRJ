@@ -14,7 +14,7 @@ const WidgetWrapper = styled.div`
   flex-direction: column;
 
   /* Adaptação para o tema dark do seu projeto, se houver */
-  [data-bs-theme="dark"] & {
+  [data-bs-theme='dark'] & {
     background: var(--color-component-bg);
     border-color: var(--color-border);
     color: var(--color-body-text);

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Input, InputGroup, InputGroupText } from 'reactstrap';
 
 import { ProductContext } from '../../../context/ProductContext';
-import useDebounce from '../../../hooks/useDebounce';
+import { useDebounce } from '../../../hooks/useDebounce';
 
 const SearchInput = () => {
   const { setSearchTerm } = useContext(ProductContext);

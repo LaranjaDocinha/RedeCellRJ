@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { useBreadcrumb } from '../../context/BreadcrumbContext';
 import './Header.scss';
 
 import GlobalPeriodFilter from '../Common/GlobalPeriodFilter';
+import GlobalSearch from '../Common/GlobalSearch'; // Importa o novo componente
 
-import CommandBar from './CommandBar';
 import NotificationCenter from './NotificationCenter';
 import ProfileMenu from './ProfileMenu';
 import ThemeToggle from './ThemeToggle';
@@ -15,27 +15,6 @@ const Header = ({ onToggleSidebar, onToggleMobileMenu }) => {
   const navigate = useNavigate();
   const { breadcrumbTitle } = useBreadcrumb();
   const userName = 'Usuário'; // Mock user name
-
-  const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const toggleCommandBar = () => {
-    setIsCommandBarOpen(!isCommandBarOpen);
-    if (!isCommandBarOpen) {
-      setSearchQuery(''); // Limpa a pesquisa ao abrir
-    }
-  };
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        toggleCommandBar();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCommandBarOpen]);
 
   const handleQuickActionClick = (e) => {
     // Ripple effect logic
@@ -68,8 +47,16 @@ const Header = ({ onToggleSidebar, onToggleMobileMenu }) => {
     return `Boa noite, ${userName}!`;
   };
 
+  // Função para abrir a pesquisa programaticamente
+  const openSearch = () => {
+    // Simula o pressionar de Ctrl+K para abrir o modal de pesquisa
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
+  };
+
   return (
     <header className='topbar'>
+      <GlobalSearch />{' '}
+      {/* Adiciona o componente de pesquisa aqui. Ele não renderiza nada visível até ser ativado. */}
       <div className='topbar-left'>
         <div className='logo-container'>
           <button
@@ -98,31 +85,23 @@ const Header = ({ onToggleSidebar, onToggleMobileMenu }) => {
           )}
         </div>
       </div>
-
       <div className='topbar-center'>
         {breadcrumbTitle === 'Dashboard' && <GlobalPeriodFilter />}
         <div
           className='search-input-container'
           role='button'
           tabIndex={0}
-          onClick={() => setIsCommandBarOpen(true)}
+          onClick={openSearch}
           onKeyPress={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
-              setIsCommandBarOpen(true);
+              openSearch();
             }
           }}
         >
           <i className='bx bx-search search-icon'></i>
-          <input
-            className='global-search-input'
-            placeholder='Pesquisa global (Ctrl+K)'
-            type='text'
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <span className='global-search-placeholder'>Pesquisa global (Ctrl+K)</span>
         </div>
       </div>
-
       <div className='topbar-right'>
         <button
           aria-label='Criar nova venda'
@@ -136,7 +115,7 @@ const Header = ({ onToggleSidebar, onToggleMobileMenu }) => {
         <NotificationCenter />
         <ProfileMenu />
       </div>
-      <CommandBar initialQuery={searchQuery} isOpen={isCommandBarOpen} toggle={toggleCommandBar} />
+      {/* O CommandBar antigo foi removido */}
     </header>
   );
 };

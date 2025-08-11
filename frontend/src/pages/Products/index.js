@@ -70,15 +70,7 @@ const Products = () => {
 
   const onDeleteConfirm = () => {
     if (!selectedProduct) return;
-    deleteProductApi(`/api/products/${selectedProduct.id}`)
-      .then(() => {
-        toast.success('Produto excluído com sucesso!');
-        toggleDeleteModal();
-        reloadProducts();
-      })
-      .catch(() => {
-        toast.error('Falha ao excluir o produto.');
-      });
+    deleteProductApi(`/api/products/${selectedProduct.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
   };
 
   const onBulkDeleteConfirm = () => {

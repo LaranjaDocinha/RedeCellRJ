@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { ArrowUp, ArrowDown } from 'react-feather';
 import CountUp from 'react-countup';
+
 import WidgetSkeleton from './WidgetSkeleton';
 
 const CardWrapper = styled.div`
@@ -45,15 +46,19 @@ const KpiCard = ({ title, value, prefix = '', suffix = '', trend, percentage, is
   if (isLoading) {
     return (
       <div>
-        <WidgetSkeleton height={20} width="80%" />
-        <WidgetSkeleton height={38} width="60%" style={{ margin: '8px 0' }} />
-        <WidgetSkeleton height={18} width="40%" />
+        <WidgetSkeleton height={20} width='80%' />
+        <WidgetSkeleton height={38} style={{ margin: '8px 0' }} width='60%' />
+        <WidgetSkeleton height={18} width='40%' />
       </div>
     );
   }
 
   // Extrai apenas os números do valor para o CountUp
-  const numericValue = parseFloat(String(value).replace(/[^0-9.,]/g, '').replace(',', '.'));
+  const numericValue = parseFloat(
+    String(value)
+      .replace(/[^0-9.,]/g, '')
+      .replace(',', '.'),
+  );
 
   return (
     <CardWrapper>
@@ -61,13 +66,13 @@ const KpiCard = ({ title, value, prefix = '', suffix = '', trend, percentage, is
         <Title>{title}</Title>
         <Value>
           <CountUp
-            start={0}
-            end={numericValue || 0}
-            duration={1.5}
-            separator="."
-            decimal=","
+            decimal=','
             decimals={2}
+            duration={1.5}
+            end={numericValue || 0}
             prefix={prefix}
+            separator='.'
+            start={0}
             suffix={suffix}
           />
         </Value>

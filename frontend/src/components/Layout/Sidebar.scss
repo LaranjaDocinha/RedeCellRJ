@@ -7,6 +7,7 @@
   z-index: 1000;
   display: flex;
   flex-direction: column;
+  height: 100vh;
   
 
   &.collapsed {
@@ -228,4 +229,11 @@
     color: var(--color-text-muted);
     border-top-color: var(--color-border);
   }
+}
+
+.sidebar-footer-nav {
+  margin-top: auto; // Push this section to the bottom
+  padding-bottom: 20px; // Add some padding at the bottom
+  border-top: 1px solid var(--border-color); // Optional: Add a separator line
+  padding-top: 10px; // Add some padding at the top of the footer nav
 }

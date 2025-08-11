@@ -5,7 +5,7 @@ export const dashboardLoader = async ({ request }) => {
   const period = url.searchParams.get('period') || 'today'; // Default para 'today'
 
   try {
-    const data = await get(`/api/dashboard/summary?period=${period}`);
+    const data = await get(`/api/dashboard?period=${period}`);
     return { dashboardData: data, period };
   } catch (error) {
     console.error('Error loading dashboard data:', error);

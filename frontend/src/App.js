@@ -5,15 +5,17 @@ import { Toaster } from 'react-hot-toast';
 import { BreadcrumbProvider } from './context/BreadcrumbContext';
 import { GlobalFilterProvider } from './context/GlobalFilterContext';
 import { FeatureFlagProvider } from './context/FeatureFlagContext';
-import { ThemeProvider } from './context/ThemeContext'; // Import ThemeProvider
+import { ThemeProvider } from './context/ThemeContext';
 import router from './router';
 import LoadingBar from './components/Common/LoadingBar';
+import setupAxiosInterceptors from './helpers/api_client';
+
+// Configura os interceptadores do Axios globalmente
+setupAxiosInterceptors();
 
 function App() {
   return (
     <ThemeProvider>
-      {' '}
-      {/* Wrap with ThemeProvider */}
       <FeatureFlagProvider>
         <GlobalFilterProvider>
           <BreadcrumbProvider>
@@ -24,7 +26,7 @@ function App() {
                 duration: 4000,
               }}
             />
-            <RouterProvider router={router} fallbackElement={<LoadingBar />} />
+            <RouterProvider fallbackElement={<LoadingBar />} router={router} />
             <LoadingBar />
           </BreadcrumbProvider>
         </GlobalFilterProvider>

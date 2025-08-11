@@ -8,7 +8,6 @@ import useDebounce from '../../hooks/useDebounce';
 import './CommandBar.scss';
 
 const navigationData = [
-  { name: 'Dashboard', path: '/dashboard', icon: 'bx-home-alt' },
   { name: 'PDV (Ponto de Venda)', path: '/pdv', icon: 'bx-store' },
   { name: 'Produtos', path: '/products', icon: 'bx-package' },
   { name: 'Serviços e Reparos', path: '/repairs', icon: 'bx-wrench' },
@@ -28,8 +27,7 @@ const CommandBar = ({ isOpen, toggle }) => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [search, setSearch] = useState('');
-  const [products, setProducts] = useState([]);
-  const [customers, setCustomers] = useState([]);
+  const [results, setResults] = useState([]);
   const debouncedSearch = useDebounce(search, 300);
 
   useEffect(() => {
@@ -47,20 +45,14 @@ const CommandBar = ({ isOpen, toggle }) => {
     const fetchData = async () => {
       if (debouncedSearch.length > 1) {
         try {
-          const [productResults, customerResults] = await Promise.all([
-            get(`/products/search?query=${debouncedSearch}`),
-            get(`/customers?search=${debouncedSearch}`),
-          ]);
-          setProducts(productResults || []);
-          setCustomers(customerResults?.customers || []);
+          const searchResults = await get(`/search?q=${debouncedSearch}`);
+          setResults(searchResults || []);
         } catch (error) {
           console.error('Erro ao buscar dados:', error);
-          setProducts([]);
-          setCustomers([]);
+          setResults([]);
         }
       } else {
-        setProducts([]);
-        setCustomers([]);
+        setResults([]);
       }
     };
     fetchData();
@@ -81,31 +73,16 @@ const CommandBar = ({ isOpen, toggle }) => {
       <Command.List>
         <Command.Empty>Nenhum resultado encontrado.</Command.Empty>
 
-        {products.length > 0 && (
-          <Command.Group heading='Produtos'>
-            {products.map((product) => (
+        {results.length > 0 && (
+          <Command.Group heading='Resultados da Busca'>
+            {results.map((result) => (
               <Command.Item
-                key={`product-${product.id}`}
-                value={`Produto: ${product.name}`}
-                onSelect={() => runCommand(() => navigate(`/products/view/${product.id}`))}
+                key={result.id}
+                value={`${result.type}: ${result.name}`}
+                onSelect={() => runCommand(() => navigate(result.path))}
               >
-                <i className='bx bx-package'></i>
-                {product.name}
-              </Command.Item>
-            ))}
-          </Command.Group>
-        )}
-
-        {customers.length > 0 && (
-          <Command.Group heading='Clientes'>
-            {customers.map((customer) => (
-              <Command.Item
-                key={`customer-${customer.id}`}
-                value={`Cliente: ${customer.name}`}
-                onSelect={() => runCommand(() => navigate(`/customers/view/${customer.id}`))}
-              >
-                <i className='bx bx-user'></i>
-                {customer.name}
+                <i className={`bx ${result.icon}`}></i>
+                {result.name}
               </Command.Item>
             ))}
           </Command.Group>

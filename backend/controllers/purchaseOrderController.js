@@ -80,6 +80,53 @@ exports.getPurchaseOrderById = async (req, res) => {
     }
 };
 
+// PUT /api/purchase-orders/:id - Atualizar uma ordem de compra
+exports.updatePurchaseOrder = async (req, res) => {
+    const { id } = req.params;
+    const { supplier_id, expected_delivery_date, notes, status, items } = req.body;
+    const user_id = req.user.id;
+
+    const client = await db.getClient();
+    try {
+        await client.query('BEGIN');
+
+        // Atualiza os dados da ordem de compra
+        const updateOrderResult = await client.query(
+            `UPDATE purchase_orders SET supplier_id = $1, expected_delivery_date = $2, notes = $3, status = $4, updated_at = NOW()
+             WHERE id = $5 RETURNING *`,
+            [supplier_id, expected_delivery_date, notes, status, id]
+        );
+
+        if (updateOrderResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ message: 'Ordem de compra não encontrada.' });
+        }
+
+        // Atualiza os itens da ordem de compra (exemplo: deleta e recria ou atualiza)
+        // Para simplificar, vamos deletar todos os itens existentes e reinserir os novos
+        await client.query('DELETE FROM purchase_order_items WHERE purchase_order_id = $1', [id]);
+
+        if (items && items.length > 0) {
+            for (const item of items) {
+                await client.query(
+                    `INSERT INTO purchase_order_items (purchase_order_id, variation_id, quantity, cost_price)
+                     VALUES ($1, $2, $3, $4)`,
+                    [id, item.variation_id, item.quantity, item.cost_price]
+                );
+            }
+        }
+
+        await client.query('COMMIT');
+        res.status(200).json({ message: 'Ordem de compra atualizada com sucesso!', order: updateOrderResult.rows[0] });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Erro ao atualizar ordem de compra:', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    } finally {
+        client.release();
+    }
+};
+
 // POST /api/purchase-orders/:id/receive - Receber itens de uma ordem de compra
 exports.receivePurchaseOrderItems = async (req, res) => {
     const { id } = req.params;

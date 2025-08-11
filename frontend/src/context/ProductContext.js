@@ -31,7 +31,10 @@ export const ProductProvider = ({ children }) => {
 
   const loadData = useCallback(() => {
     setLoading(true);
-    Promise.all([fetchApi('/api/products?limit=2000'), fetchApi('/api/categories')])
+    Promise.all([
+      fetchApi('/api/products?limit=2000', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
+      fetchApi('/api/categories', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+    ])
       .then(([productsResponse, categoriesResponse]) => {
         setProducts(productsResponse.products || []);
         setCategories(categoriesResponse || []);

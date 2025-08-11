@@ -1,16 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const { authenticateToken, authorize } = require('../middleware/authMiddleware');
+const paymentMethodController = require('../controllers/paymentMethodController');
 
-// Rota para buscar todos os métodos de pagamento
-router.get('/', async (req, res) => {
-  try {
-    const { rows } = await db.query('SELECT * FROM payment_methods ORDER BY name');
-    res.json(rows);
-  } catch (err) {
-    console.error('Error fetching payment methods', err.stack);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-});
+// Obter todos os métodos de pagamento
+router.get('/', [authenticateToken, authorize('sales:read')], paymentMethodController.getAllPaymentMethods);
+
+// Criar um novo método de pagamento
+router.post('/', [authenticateToken, authorize('settings:manage')], paymentMethodController.createPaymentMethod);
+
+// Atualizar um método de pagamento
+router.put('/:id', [authenticateToken, authorize('settings:manage')], paymentMethodController.updatePaymentMethod);
+
+// Deletar um método de pagamento
+router.delete('/:id', [authenticateToken, authorize('settings:manage')], paymentMethodController.deletePaymentMethod);
 
 module.exports = router;

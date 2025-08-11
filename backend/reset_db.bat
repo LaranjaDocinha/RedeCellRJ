@@ -42,16 +42,6 @@ if %errorlevel% neq 0 (
 echo Banco de dados %DB_NAME% resetado com sucesso.
 echo.
 
-REM Apply consolidated schema directly using psql
-echo --- Aplicando o esquema consolidado diretamente via psql ---
-"%PSQL_PATH%" -h %DB_HOST% -p %DB_PORT% -U %DB_USER% -d %DB_NAME% -f "%SCHEMA_FILE%"
-if %errorlevel% neq 0 (
-    echo Erro ao aplicar o esquema consolidado diretamente.
-    goto :eof
-)
-echo Esquema consolidado aplicado com sucesso.
-echo.
-
 REM Run seed.js
 echo --- Executando seed.js ---
 node seed.js

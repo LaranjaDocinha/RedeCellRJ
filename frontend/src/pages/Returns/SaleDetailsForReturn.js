@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardBody,
-  CardTitle,
-  Table,
-  Button,
-  Input,
-  Label,
-  FormGroup,
-  Alert,
-} from 'reactstrap';
+import { Card, CardBody, CardTitle, Table, Button, Input, Alert } from 'reactstrap';
 
 const SaleDetailsForReturn = ({ sale, onProcessReturn, loading }) => {
   const [itemsToReturn, setItemsToReturn] = useState([]);
