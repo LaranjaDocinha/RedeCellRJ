@@ -19,7 +19,7 @@ const SalesByPaymentMethodChart = () => {
   const options = {
     chart: {
       type: 'donut',
-      foreColor: theme === 'dark' ? '#f0f2f5' : '#333',
+      foreColor: var(--color-body-text),
     },
     labels: labels,
     plotOptions: {
@@ -53,7 +53,7 @@ const SalesByPaymentMethodChart = () => {
     legend: {
       show: false,
     },
-    colors: ['#34c38f', '#556ee6', '#f1b44c', '#50a5f1', '#f46a6a', '#74788d'],
+    colors: ['var(--color-success)', 'var(--color-primary)', 'var(--color-warning)', 'var(--color-info)', 'var(--color-danger)', 'var(--color-secondary)'],
     responsive: [
       {
         breakpoint: 480,

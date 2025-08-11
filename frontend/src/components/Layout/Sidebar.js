@@ -10,7 +10,7 @@ import './Sidebar.scss';
 // Definição base dos itens de menu
 const allMenuItems = [
   { path: '/dashboard', icon: 'bxs-dashboard', title: 'Dashboard' },
-  { path: '/admin-dashboard', icon: 'bxs-dashboard', title: 'Admin Dashboard' }, // Novo item de menu
+  { path: '/painel-administrativo', icon: 'bxs-dashboard', title: 'Painel Administrativo' }, // Novo item de menu
   { path: '/pdv', icon: 'bx-cart-alt', title: 'PDV' },
   { type: 'separator', title: 'Operacional' },
   {

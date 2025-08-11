@@ -54,17 +54,23 @@ const BlindCloseoutModal = ({ isOpen, toggle, session, onFinish }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const payload = {
-      userId: session.user_id,
-      notes,
-      countedValues: Object.entries(countedValues).map(([id, value]) => ({
-        paymentMethodId: parseInt(id, 10),
-        countedAmount: parseFloat(value || 0),
-      })),
-    };
+    const countedValuesPayload = Object.entries(countedValues).map(([id, value]) => ({
+      paymentMethodId: parseInt(id, 10),
+      countedAmount: parseFloat(value || 0),
+    }));
+
+    // Adicionar verificação aqui
+    if (countedValuesPayload.length === 0) {
+      toast.error('Por favor, insira pelo menos um valor contado para fechar o caixa.');
+      return;
+    }
 
     try {
-      const result = await closeSession('/api/cashier/close', payload);
+      const result = await closeSession('/api/cashier/close', {
+        userId: session.user_id,
+        notes,
+        countedValues: countedValuesPayload,
+      });
       setReportData(result.report);
       setStep(2);
       toast.success('Caixa fechado com sucesso!');

@@ -11,7 +11,7 @@
 
 .page-content {
   position: relative;
-  background: linear-gradient(320deg, var(--body-bg), var(--card-bg), var(--body-bg));
+  background: linear-gradient(320deg, var(--color-body-bg), var(--color-component-bg), var(--color-body-bg));
   background-size: 400% 400%;
   animation: gradientAnimation 15s ease infinite;
 }

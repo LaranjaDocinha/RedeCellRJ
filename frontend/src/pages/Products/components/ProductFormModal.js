@@ -15,8 +15,8 @@ import {
 } from 'reactstrap';
 import Select from 'react-select';
 import { NumericFormat } from 'react-number-format';
-import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+// import { CKEditor } from '@ckeditor/ckeditor5-react';
+// import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import toast from 'react-hot-toast';
 
 import LoadingSpinner from '../../../components/Common/LoadingSpinner';
@@ -261,13 +261,21 @@ const ProductFormModal = ({ isOpen, toggle, product, onSuccess }) => {
               </Row>
               <FormGroup>
                 <Label for='description'>Descrição</Label>
-                <CKEditor
+                {/* <CKEditor
                   config={{ toolbar: ['bold', 'italic', 'bulletedList', 'numberedList', 'link'] }}
                   data={formData.description || ''}
                   editor={ClassicEditor}
                   onChange={(event, editor) =>
                     handleChange({ target: { name: 'description', value: editor.getData() } })
                   }
+                /> */}
+                <Input
+                  type="textarea"
+                  name="description"
+                  id="description"
+                  value={formData.description || ''}
+                  onChange={handleChange}
+                  rows="5"
                 />
               </FormGroup>
 

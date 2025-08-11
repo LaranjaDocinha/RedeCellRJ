@@ -102,7 +102,10 @@ const PdvUnifiedView = () => {
 
   // --- Funções de Caixa ---
   const fetchCashierStatus = useCallback(async (userId) => {
-    setCashierStatus((prev) => ({ ...prev, loading: true }));
+    // Deferir a atualização do estado de loading
+    setTimeout(() => {
+      setCashierStatus((prev) => ({ ...prev, loading: true }));
+    }, 0);
     try {
       const data = await get(`/api/cashier/status?userId=${userId}`);
       setCashierStatus({ loading: false, isOpen: data.isOpen, session: data.session });

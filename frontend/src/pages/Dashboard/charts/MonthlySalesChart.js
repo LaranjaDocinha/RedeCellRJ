@@ -26,7 +26,7 @@ const DailyRevenueChart = () => {
       type: 'area',
       height: '100%',
       toolbar: { show: false },
-      foreColor: theme === 'dark' ? '#f0f2f5' : '#333',
+      foreColor: var(--color-body-text),
     },
     dataLabels: { enabled: false },
     stroke: { curve: 'smooth', width: 2 },
@@ -56,9 +56,9 @@ const DailyRevenueChart = () => {
       position: 'top',
       horizontalAlign: 'right',
     },
-    colors: ['#556ee6', '#34c38f'],
+    colors: ['var(--color-primary)', 'var(--color-success)'],
     grid: {
-      borderColor: theme === 'dark' ? '#404040' : '#e0e0e0',
+      borderColor: var(--color-border),
       strokeDashArray: 4,
     },
   };

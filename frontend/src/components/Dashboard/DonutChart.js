@@ -1,32 +1,36 @@
 import React from 'react';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import ReactApexChart from 'react-apexcharts';
 import WidgetContainer from './WidgetContainer';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
 const DonutChart = ({ data, title }) => {
+  const series = data.map(item => item.value);
+  const labels = data.map(item => item.name);
+
+  const options = {
+    chart: {
+      type: 'donut',
+    },
+    labels: labels,
+    colors: ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'], // Manter as cores existentes ou usar variáveis de tema
+    legend: {
+      position: 'bottom',
+    },
+    responsive: [{
+      breakpoint: 480,
+      options: {
+        chart: {
+          width: 200,
+        },
+        legend: {
+          position: 'bottom',
+        },
+      },
+    }],
+  };
+
   return (
     <WidgetContainer title={title} style={{ height: '100%' }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={60}
-            outerRadius={80}
-            fill="#8884d8"
-            paddingAngle={5}
-            dataKey="value"
-          >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip />
-          <Legend />
-        </PieChart>
-      </ResponsiveContainer>
+      <ReactApexChart options={options} series={series} type="donut" height="100%" />
     </WidgetContainer>
   );
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Container } from 'reactstrap';
 import { motion } from 'framer-motion';
+import ReactApexChart from 'react-apexcharts';
 
 import DateRangePicker from '../../components/Common/DateRangePicker';
 import { useDashboard } from '../../context/DashboardContext';
@@ -18,7 +19,7 @@ import ChartWidget from '../../components/Dashboard/ChartWidget';
 import useTopProductsData from '../../hooks/useTopProductsData';
 import useSalesByCategoryData from '../../hooks/useSalesByCategoryData';
 import useLowStockProductsData from '../../hooks/useLowStockProductsData';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+
 
 import './DashboardV2.scss';
 
@@ -65,13 +66,32 @@ const DashboardV2 = () => {
                 error={topProductsError}
               >
                 {(data) => (
-                  <BarChart data={data} layout="vertical" margin={{ left: 30 }}>
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" width={100} />
-                    <Tooltip wrapperStyle={{ zIndex: 1000 }} />
-                    <Legend />
-                    <Bar dataKey="Vendas" fill="#007BFF" />
-                  </BarChart>
+                  <ReactApexChart
+                    options={{
+                      chart: {
+                        type: 'bar',
+                        toolbar: { show: false },
+                      },
+                      plotOptions: {
+                        bar: {
+                          horizontal: true,
+                        },
+                      },
+                      dataLabels: {
+                        enabled: false,
+                      },
+                      xaxis: {
+                        categories: data.map(item => item.name),
+                      },
+                      colors: ['#007BFF'], // Cor da barra
+                    }}
+                    series={[{
+                      name: 'Vendas',
+                      data: data.map(item => item.Vendas),
+                    }]}
+                    type="bar"
+                    height="100%"
+                  />
                 )}
               </ChartWidget>
             </div>

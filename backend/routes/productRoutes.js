@@ -4,6 +4,18 @@ const { body, param } = require('express-validator');
 const { validate } = require('../middleware/validationMiddleware');
 const db = require('../db');
 
+// Middleware para parsear variações de string JSON para array de objetos
+const parseVariations = (req, res, next) => {
+  if (req.body.variations && typeof req.body.variations === 'string') {
+    try {
+      req.body.variations = JSON.parse(req.body.variations);
+    } catch (e) {
+      return res.status(400).json({ msg: 'Formato inválido para variações.' });
+    }
+  }
+  next();
+};
+
 const productValidationRules = () => [
   body('name').trim().isLength({ min: 3 }).withMessage('O nome do produto deve ter pelo menos 3 caracteres.'),
   body('description').optional({ checkFalsy: true }).trim(),
@@ -173,7 +185,7 @@ router.get('/:id', idValidationRules(), validate, async (req, res) => {
 });
 
 // Create a new product with variations
-router.post('/', productValidationRules(), validate, async (req, res) => {
+router.post('/', parseVariations, productValidationRules(), validate, async (req, res) => {
   const client = await db.getClient();
   try {
     await client.query('BEGIN');
@@ -216,7 +228,7 @@ router.post('/', productValidationRules(), validate, async (req, res) => {
 });
 
 // Update a product with variations
-router.put('/:id', idValidationRules(), productValidationRules(), validate, async (req, res) => {
+router.put('/:id', idValidationRules(), parseVariations, productValidationRules(), validate, async (req, res) => {
   const client = await db.getClient();
   try {
     await client.query('BEGIN');
@@ -486,4 +498,3 @@ router.get('/:id/suggestions', async (req, res) => {
 
 
 module.exports = router;
-

@@ -13,12 +13,12 @@ const CardWrapper = styled.div`
 
 const Title = styled.p`
   font-size: 0.85rem;
-  color: #666;
+  color: var(--color-text-muted);
   margin: 0;
   font-weight: 500;
 
   body.dark-mode & {
-    color: #aaa;
+    color: var(--color-text-muted);
   }
 `;
 
@@ -26,7 +26,7 @@ const Value = styled.h2`
   font-size: 2rem;
   font-weight: 700;
   margin: 8px 0;
-  color: inherit;
+  color: var(--color-body-text);
 `;
 
 const Trend = styled.div`
@@ -34,7 +34,7 @@ const Trend = styled.div`
   align-items: center;
   font-size: 0.8rem;
   font-weight: 600;
-  color: ${({ $trend }) => ($trend === 'up' ? '#28a745' : '#dc3545')};
+  color: ${({ $trend }) => ($trend === 'up' ? 'var(--color-success)' : 'var(--color-danger)')};
 
   svg {
     margin-right: 4px;

@@ -9,7 +9,7 @@
 
 // Custom Tooltip for ApexCharts
 .apexcharts-tooltip-custom {
-  background: var(--card-bg);
+  background: var(--color-component-bg);
   border: 1px solid var(--border-color);
   padding: 1rem;
   border-radius: 8px;
@@ -20,12 +20,12 @@
   
   strong {
     font-size: 1rem;
-    color: var(--text-color);
+    color: var(--color-body-text);
   }
 
   span {
     font-size: 0.9rem;
-    color: var(--text-muted);
+    color: var(--color-text-muted);
   }
 }
 

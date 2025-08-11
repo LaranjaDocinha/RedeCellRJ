@@ -38,11 +38,13 @@ exports.getAllUsers = async (req, res) => {
         
         const filterParams = [];
         const whereClauses = [];
+        let paramIndex = 1; // Começa o índice do parâmetro em 1
 
         if (search) {
             const searchParam = `%${search}%`;
             filterParams.push(searchParam);
-            whereClauses.push(`(name ILIKE $1 OR email ILIKE $1)`);
+            whereClauses.push(`(name ILIKE ${paramIndex} OR email ILIKE ${paramIndex})`);
+            paramIndex++; // Incrementa o índice para o próximo parâmetro
         }
 
         if (whereClauses.length > 0) {
@@ -54,11 +56,11 @@ exports.getAllUsers = async (req, res) => {
         const totalResult = await db.query(countQuery, filterParams);
         const total = parseInt(totalResult.rows[0].count, 10);
 
-        const queryParams = [...filterParams];
-        query += ` ORDER BY name LIMIT ${queryParams.length + 1} OFFSET ${queryParams.length + 2}`;
-        queryParams.push(limit, offset);
+        // Adiciona limit e offset como os últimos parâmetros
+        query += ` ORDER BY name LIMIT ${paramIndex} OFFSET ${paramIndex + 1}`;
+        filterParams.push(limit, offset); // Adiciona limit e offset aos parâmetros
 
-        const usersResult = await db.query(query, queryParams);
+        const usersResult = await db.query(query, filterParams); // Usa filterParams que agora inclui limit e offset
 
         res.json({
             users: usersResult.rows,

@@ -6,7 +6,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(var(--color-body-bg-rgb), 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -15,7 +15,7 @@
 }
 
 .drill-down-modal-content {
-  background-color: var(--card-bg);
+  background-color: var(--color-component-bg);
   padding: 25px;
   border-radius: 12px;
   width: 90%;
@@ -40,14 +40,14 @@
       background: none;
       border: none;
       font-size: 2rem;
-      color: var(--text-muted);
+      color: var(--color-text-muted);
       cursor: pointer;
       line-height: 1;
       padding: 0;
       transition: color 0.2s ease;
 
       &:hover {
-        color: var(--text-color);
+        color: var(--color-body-text);
       }
     }
   }
