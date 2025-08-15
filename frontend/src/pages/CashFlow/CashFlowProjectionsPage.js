@@ -1,120 +1,110 @@
-import React, { useState, useEffect } from 'react';
-import CashFlowProjectionForm from './components/CashFlowProjectionForm';
+import React, { useState, useCallback } from 'react';
+import { Container, Row, Col, Card, CardBody, CardTitle, Button, Spinner, Alert, Modal, ModalHeader, ModalBody } from 'reactstrap';
+import { motion } from 'framer-motion';
+import Breadcrumb from '../../components/Common/Breadcrumb';
+import ProjectionsToolbar from './components/ProjectionsToolbar';
+import ProjectionsTable from './components/ProjectionsTable';
+import ProjectionFormModal from './components/ProjectionFormModal';
 import useApi from '../../hooks/useApi';
-import { get, post, put, del } from '../../helpers/api_helper';
 import toast from 'react-hot-toast';
 
+import './CashFlowProjectionsPage.scss'; // Page-specific styling
+
 const CashFlowProjectionsPage = () => {
-  const [projections, setProjections] = useState([]);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [selectedProjection, setSelectedProjection] = useState(null);
+  const [filters, setFilters] = useState({ page: 1, limit: 10 });
 
-  const { request: fetchProjectionsApi, loading: isLoading } = useApi(get);
-  const { request: saveProjectionApi, loading: isSaving } = useApi(post);
-  const { request: updateProjectionApi, loading: isUpdating } = useApi(put);
-  const { request: deleteProjectionApi, loading: isDeleting } = useApi(del);
+  const { data, isLoading, error, refresh } = useApi('/api/cashflow/projections', { params: filters });
 
-  useEffect(() => {
-    fetchProjections();
+  const toggleModal = () => {
+    setModalOpen(!modalOpen);
+    if (modalOpen) {
+      setSelectedProjection(null);
+    }
+  };
+
+  const handleCreate = () => {
+    setSelectedProjection(null);
+    setModalOpen(true);
+  };
+
+  const handleEdit = (projection) => {
+    setSelectedProjection(projection);
+    setModalOpen(true);
+  };
+
+  const handleSuccess = () => {
+    toggleModal();
+    refresh();
+  };
+
+  const handleFilterChange = useCallback((newFilters) => {
+    setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
   }, []);
 
-  const fetchProjections = async () => {
-    try {
-      const response = await fetchProjectionsApi('/api/cash-flow/projections');
-      setProjections(response.projections || []);
-    } catch (error) {
-      toast.error('Erro ao carregar projeções.');
-      console.error('Erro ao carregar projeções:', error);
-    }
-  };
-
-  const handleOpenForm = (projection = null) => {
-    setSelectedProjection(projection);
-    setIsFormOpen(true);
-  };
-
-  const handleCloseForm = () => {
-    setIsFormOpen(false);
-    setSelectedProjection(null);
-  };
-
-  const handleSubmit = async (formData) => {
-    try {
-      if (selectedProjection) {
-        await updateProjectionApi(`/api/cash-flow/projections/${selectedProjection.id}`, formData);
-        toast.success('Projeção atualizada com sucesso!');
-      } else {
-        await saveProjectionApi('/api/cash-flow/projections', formData);
-        toast.success('Projeção criada com sucesso!');
-      }
-      fetchProjections();
-    } catch (error) {
-      toast.error('Erro ao salvar projeção.');
-      console.error('Erro ao salvar projeção:', error);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm('Tem certeza que deseja excluir esta projeção?')) {
-      try {
-        await deleteProjectionApi(`/api/cash-flow/projections/${id}`);
-        toast.success('Projeção excluída com sucesso!');
-        fetchProjections();
-      } catch (error) {
-        toast.error('Erro ao excluir projeção.');
-        console.error('Erro ao excluir projeção:', error);
-      }
-    }
-  };
-
   return (
-    <div>
-      <h1>Gestão de Projeções de Fluxo de Caixa</h1>
-      <p>Aqui você poderá gerenciar suas projeções de fluxo de caixa.</p>
-
-      <button onClick={() => handleOpenForm()}>Criar Nova Projeção</button>
-
-      {isFormOpen && (
-        <CashFlowProjectionForm
-          onClose={handleCloseForm}
-          onSubmit={handleSubmit}
-          initialData={selectedProjection}
-        />
+    <motion.div
+      className="cash-flow-projections-page"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Container fluid className="p-4">
+        <Breadcrumb title="Finanças" breadcrumbItem="Projeções de Fluxo de Caixa" />
+        <Row>
+          <Col xs="12">
+            <Card>
+              <CardBody>
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                  <CardTitle tag="h5" className="mb-0">Projeções de Fluxo de Caixa</CardTitle>
+                  <Button color="primary" onClick={handleCreate}>
+                    <i className="bx bx-plus me-1"></i> Adicionar Projeção
+                  </Button>
+                </div>
+                <ProjectionsToolbar 
+                  onFilterChange={handleFilterChange} 
+                  onAddClick={handleCreate} // Keep for consistency, though button above handles it
+                />
+                {isLoading ? (
+                  <div className="text-center"><Spinner /> Carregando projeções...</div>
+                ) : error ? (
+                  <Alert color="danger">Erro ao carregar projeções: {error.message}</Alert>
+                ) : (
+                  <ProjectionsTable
+                    projections={data?.projections || []}
+                    isLoading={isLoading} // Pass isLoading to table for internal loading states if needed
+                    error={error} // Pass error to table for internal error states if needed
+                    onEdit={handleEdit}
+                    onDeleteSuccess={refresh}
+                    pagination={{
+                      page: data?.page,
+                      pages: data?.pages,
+                      total: data?.total,
+                    }}
+                    onPageChange={(page) => setFilters(prev => ({ ...prev, page }))}
+                  />
+                )}
+              </CardBody>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
+      {modalOpen && (
+        <Modal isOpen={modalOpen} toggle={toggleModal} centered size="lg">
+          <ModalHeader toggle={toggleModal}>
+            {selectedProjection ? 'Editar Projeção' : 'Adicionar Nova Projeção'}
+          </ModalHeader>
+          <ModalBody>
+            <ProjectionFormModal
+              projection={selectedProjection}
+              onSuccess={handleSuccess}
+              onCancel={toggleModal} // Pass onCancel prop
+            />
+          </ModalBody>
+        </Modal>
       )}
-
-      <h2>Projeções Existentes</h2>
-      {isLoading ? (
-        <p>Carregando projeções...</p>
-      ) : projections.length === 0 ? (
-        <p>Nenhuma projeção encontrada.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Entrada Projetada</th>
-              <th>Saída Projetada</th>
-              <th>Observações</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {projections.map((proj) => (
-              <tr key={proj.id}>
-                <td>{proj.projection_date}</td>
-                <td>{proj.projected_inflow}</td>
-                <td>{proj.projected_outflow}</td>
-                <td>{proj.notes}</td>
-                <td>
-                  <button onClick={() => handleOpenForm(proj)}>Editar</button>
-                  <button onClick={() => handleDelete(proj.id)}>Excluir</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+    </motion.div>
   );
 };
 

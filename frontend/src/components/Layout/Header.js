@@ -99,7 +99,7 @@ const Header = ({ onToggleSidebar, onToggleMobileMenu }) => {
           }}
         >
           <i className='bx bx-search search-icon'></i>
-          <span className='global-search-placeholder'>Pesquisa global (Ctrl+K)</span>
+          <span className='global-search-placeholder'>(Ctrl+K)</span>
         </div>
       </div>
       <div className='topbar-right'>

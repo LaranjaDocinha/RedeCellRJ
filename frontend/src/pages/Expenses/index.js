@@ -1,152 +1,84 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Container, Button, Card, CardBody, CardTitle, Badge } from 'reactstrap';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-
-import Breadcrumbs from '../../components/Common/Breadcrumb';
-import AdvancedTable from '../../components/Common/AdvancedTable';
-import { get, post, put, del } from '../../helpers/api_helper';
-import useApi from '../../hooks/useApi';
-import useNotification from '../../hooks/useNotification';
-
+import React, { useState, useCallback } from 'react';
+import { Container, Row, Col } from 'reactstrap';
+import Breadcrumb from '../../components/Common/Breadcrumb';
+import ExpensesToolbar from './components/ExpensesToolbar';
+import ExpensesTable from './components/ExpensesTable';
 import ExpenseFormModal from './components/ExpenseFormModal';
+import useApi from '../hooks/useApi';
 
-const Expenses = () => {
-  document.title = 'Controle de Despesas | PDV Web';
-  const { showSuccess, showError } = useNotification();
-
-  const [expenses, setExpenses] = useState([]);
+const ExpensesPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState(null);
+  const [filters, setFilters] = useState({ page: 1, limit: 10 });
 
-  const { request: fetchExpenses, loading, error } = useApi(get);
-  const { request: deleteExpense } = useApi(del);
+  const { data, isLoading, error, refresh } = useApi('/api/expenses', { params: filters });
 
-  const loadExpenses = () => {
-    fetchExpenses('/api/finance/expenses')
-      .then((response) => {
-        if (response) {
-          setExpenses(response);
-        }
-      })
-      .catch((err) => {
-        showError('Falha ao carregar despesas.');
-        console.error(err);
-      });
+  const toggleModal = () => {
+    setModalOpen(!modalOpen);
+    if (modalOpen) {
+      setSelectedExpense(null); // Limpa ao fechar
+    }
   };
 
-  useEffect(() => {
-    loadExpenses();
-  }, []);
-
-  const handleEditClick = (expense) => {
-    setSelectedExpense(expense);
-    setModalOpen(true);
-  };
-
-  const handleNewClick = () => {
+  const handleCreate = () => {
     setSelectedExpense(null);
     setModalOpen(true);
   };
 
-  const handleDeleteClick = async (expense) => {
-    if (window.confirm(`Tem certeza que deseja excluir a despesa de ${expense.description}?`)) {
-      try {
-        await deleteExpense(`/api/finance/expenses/${expense.id}`);
-        showSuccess('Despesa excluída com sucesso!');
-        loadExpenses();
-      } catch (err) {
-        showError('Falha ao excluir despesa.');
-        console.error(err);
-      }
-    }
+  const handleEdit = (expense) => {
+    setSelectedExpense(expense);
+    setModalOpen(true);
   };
 
-  const columns = useMemo(
-    () => [
-      {
-        header: 'Descrição',
-        accessorKey: 'description',
-      },
-      {
-        header: 'Valor',
-        accessorKey: 'amount',
-        cell: (info) => `R$ ${parseFloat(info.getValue()).toFixed(2)}`,
-      },
-      {
-        header: 'Data',
-        accessorKey: 'expense_date',
-        cell: (info) => format(new Date(info.getValue()), 'dd/MM/yyyy', { locale: ptBR }),
-      },
-      {
-        header: 'Categoria',
-        accessorKey: 'category',
-        cell: (info) => <Badge color='secondary'>{info.getValue() || 'N/A'}</Badge>,
-      },
-      {
-        header: 'Método de Pagamento',
-        accessorKey: 'payment_method',
-        cell: (info) => info.getValue() || 'N/A',
-      },
-      {
-        header: 'Ações',
-        cell: ({ row }) => {
-          const expense = row.original;
-          return (
-            <div className='d-flex gap-2'>
-              <Button color='primary' size='sm' onClick={() => handleEditClick(expense)}>
-                <i className='bx bx-pencil me-1'></i> Editar
-              </Button>
-              <Button color='danger' size='sm' onClick={() => handleDeleteClick(expense)}>
-                <i className='bx bx-trash me-1'></i> Excluir
-              </Button>
-            </div>
-          );
-        },
-      },
-    ],
-    [],
-  );
+  const handleSuccess = () => {
+    toggleModal();
+    refresh();
+  };
+
+  const handleFilterChange = useCallback((newFilters) => {
+    setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
+  }, []);
 
   return (
-    <React.Fragment>
-      <div className='page-content'>
-        <Container fluid>
-          <Breadcrumbs breadcrumbItem='Despesas' title='Financeiro' />
-
-          <Card>
-            <CardBody>
-              <CardTitle className='h4 mb-4'>Controle de Despesas</CardTitle>
-              <div className='mb-3'>
-                <Button color='success' onClick={handleNewClick}>
-                  <i className='bx bx-plus me-1'></i> Adicionar Nova Despesa
-                </Button>
+    <div className="page-content">
+      <Container fluid>
+        <Breadcrumb title="Finanças" breadcrumbItem="Despesas" />
+        <Row>
+          <Col xs="12">
+            <div className="card">
+              <div className="card-body">
+                <ExpensesToolbar 
+                  onFilterChange={handleFilterChange} 
+                  onAddClick={handleCreate} 
+                />
+                <ExpensesTable
+                  expenses={data?.expenses || []}
+                  isLoading={isLoading}
+                  error={error}
+                  onEdit={handleEdit}
+                  onDeleteSuccess={refresh}
+                  pagination={{
+                    page: data?.page,
+                    pages: data?.pages,
+                    total: data?.total,
+                  }}
+                  onPageChange={(page) => setFilters(prev => ({ ...prev, page }))}
+                />
               </div>
-              <AdvancedTable
-                columns={columns}
-                data={expenses}
-                emptyStateActionText={'Adicionar Despesa'}
-                emptyStateIcon={''}
-                emptyStateMessage={'Nenhuma despesa encontrada.'}
-                emptyStateTitle={'Despesas Vazias'}
-                loading={loading}
-                persistenceKey='expensesTable'
-                onEmptyStateActionClick={handleNewClick}
-                onRowClick={handleEditClick}
-              />
-            </CardBody>
-          </Card>
-        </Container>
-      </div>
-
-      <ExpenseFormModal
-        expense={selectedExpense}
-        isOpen={modalOpen}
-        toggle={() => setModalOpen(!modalOpen)}
-        onSave={loadExpenses}
-      />
-    </React.Fragment>
+            </div>
+          </Col>
+        </Row>
+      </Container>
+      {modalOpen && (
+        <ExpenseFormModal
+          isOpen={modalOpen}
+          toggle={toggleModal}
+          expense={selectedExpense}
+          onSuccess={handleSuccess}
+        />
+      )}
+    </div>
   );
 };
 
-export default Expenses;
+export default ExpensesPage;

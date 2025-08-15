@@ -1,9 +1,6 @@
 -- migration_26_02_create_permissions_table.sql
 
--- Limpa a tabela se ela já existir para garantir que o script seja executável novamente
-DROP TABLE IF EXISTS permissions CASCADE;
-
-CREATE TABLE permissions (
+CREATE TABLE IF NOT EXISTS permissions (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) UNIQUE NOT NULL, -- ex: 'users:create', 'products:read'
     description TEXT,

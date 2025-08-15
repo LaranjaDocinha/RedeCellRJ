@@ -40,7 +40,7 @@ const loginLimiter = rateLimit({
 exports.getAllUsers = async (req, res) => {
     const { limit = 10, offset = 0, search = '' } = req.query;
     try {
-        let query = 'SELECT id, name, email, role, is_active, created_at, last_login_at FROM users';
+        let query = 'SELECT u.id, u.name, u.email, r.name as role, u.is_active, u.created_at, u.last_login_at FROM users u LEFT JOIN roles r ON u.role_id = r.id';
         let countQuery = 'SELECT COUNT(*) FROM users';
         
         const filterParams = [];
@@ -83,7 +83,7 @@ exports.getAllUsers = async (req, res) => {
 exports.getUserById = async (req, res) => {
     try {
         const { id } = req.params;
-        const userResult = await db.query('SELECT id, name, email, role, is_active FROM users WHERE id = $1', [id]);
+        const userResult = await db.query('SELECT u.id, u.name, u.email, r.name as role, u.is_active FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.id = $1', [id]);
         if (userResult.rows.length === 0) {
             return res.status(404).json({ msg: 'Usuário não encontrado' });
         }
@@ -94,23 +94,23 @@ exports.getUserById = async (req, res) => {
     }
 };
 
-// PATCH /api/users/profile - Atualizar perfil do usuário (incluindo imagem)
-exports.updateUserProfile = async (req, res) => {
+// PUT /api/users/profile - Atualizar perfil do usuário logado
+exports.updateMyProfile = async (req, res) => {
     try {
-        const { name, phone, address, city, state, zip, bio } = req.body;
+        const { name, phone_number, bio, job_title } = req.body;
         const profileImage = req.file; // Informações do arquivo enviado pelo Multer
 
-        let query = 'UPDATE users SET name = $1, phone = $2, address = $3, city = $4, state = $5, zip = $6, bio = $7';
-        const queryParams = [name, phone, address, city, state, zip, bio];
-        let paramIndex = 8;
+        let query = 'UPDATE users SET name = $1, phone_number = $2, bio = $3, job_title = $4';
+        const queryParams = [name, phone_number, bio, job_title];
+        let paramIndex = 5;
 
         if (profileImage) {
             const imageUrl = `/uploads/profile_images/${profileImage.filename}`;
-            query += `, profile_image_url = $${paramIndex++}`;
+            query += `, avatar_url = ${paramIndex++}`;
             queryParams.push(imageUrl);
         }
 
-        query += ` WHERE id = $${paramIndex} RETURNING id, name, email, role, is_active, profile_image_url, phone, address, city, state, zip, bio`;
+        query += ` WHERE id = ${paramIndex} RETURNING id, name, email, role_id, is_active, avatar_url, phone_number, bio, job_title`;
         queryParams.push(req.user.id); // req.user.id vem do authenticateToken
 
         const updatedUser = await db.query(query, queryParams);
@@ -126,6 +126,85 @@ exports.updateUserProfile = async (req, res) => {
     }
 };
 
+// POST /api/users/change-password - Alterar a senha do usuário logado
+exports.changeMyPassword = async (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    if (!oldPassword || !newPassword) {
+        return res.status(400).json({ message: 'Senha antiga e nova senha são obrigatórias.' });
+    }
+
+    const passwordValidation = validatePassword(newPassword);
+    if (!passwordValidation.isValid) {
+        return res.status(400).json({ message: passwordValidation.message });
+    }
+
+    try {
+        const userResult = await db.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Usuário não encontrado.' });
+        }
+
+        const user = userResult.rows[0];
+        const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
+
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Senha antiga incorreta.' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const newPasswordHash = await bcrypt.hash(newPassword, salt);
+
+        await db.query(
+            'UPDATE users SET password_hash = $1 WHERE id = $2',
+            [newPasswordHash, userId]
+        );
+
+        res.status(200).json({ message: 'Senha atualizada com sucesso.' });
+    } catch (error) {
+        console.error('Erro ao alterar senha do usuário logado:', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+};
+
+// GET /api/users/sessions - Listar sessões ativas do usuário logado
+exports.getUserSessions = async (req, res) => {
+    const userId = req.user.id;
+    try {
+        const { rows } = await db.query(
+            'SELECT id, ip_address, user_agent, created_at, last_seen_at FROM user_sessions WHERE user_id = $1 ORDER BY last_seen_at DESC',
+            [userId]
+        );
+        res.json(rows);
+    } catch (error) {
+        console.error('Erro ao buscar sessões do usuário:', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+};
+
+// DELETE /api/users/sessions/:id - Revogar uma sessão específica do usuário logado
+exports.revokeUserSession = async (req, res) => {
+    const { id } = req.params; // ID da sessão a ser revogada
+    const userId = req.user.id; // ID do usuário logado
+
+    try {
+        const result = await db.query(
+            'DELETE FROM user_sessions WHERE id = $1 AND user_id = $2 RETURNING id',
+            [id, userId]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Sessão não encontrada ou não pertence a este usuário.' });
+        }
+
+        res.status(200).json({ message: 'Sessão revogada com sucesso.' });
+    } catch (error) {
+        console.error('Erro ao revogar sessão:', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+};
+
 // POST /api/users - Criar um novo usuário
 exports.createUser = async (req, res, next) => {
     const errors = validationResult(req);
@@ -133,7 +212,7 @@ exports.createUser = async (req, res, next) => {
         return next(new AppError(errors.array().map(err => err.msg).join(', '), 400));
     }
 
-    const { name, email, password, role = 'seller' } = req.body;
+    const { name, email, password, role_id } = req.body;
 
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
@@ -144,8 +223,8 @@ exports.createUser = async (req, res, next) => {
         const salt = await bcrypt.genSalt(10);
         const password_hash = await bcrypt.hash(password, salt);
         const newUser = await db.query(
-            'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role, is_active',
-            [name, email, password_hash, role]
+            'INSERT INTO users (name, email, password_hash, role_id) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role_id, is_active',
+            [name, email, password_hash, roleIdToUse]
         );
         res.status(201).json(newUser.rows[0]);
     } catch (error) {
@@ -159,16 +238,24 @@ exports.createUser = async (req, res, next) => {
 // PUT /api/users/:id - Atualizar um usuário
 exports.updateUser = async (req, res) => {
     const { id } = req.params;
-    const { name, role, is_active, branch_id } = req.body;
-    const profileImage = req.file; // Get the uploaded file
+    const { name, role_name, is_active, branch_id } = req.body;
+    const profileImage = req.file;
 
-    if (name === undefined || role === undefined || is_active === undefined || branch_id === undefined) {
+    if (name === undefined || role_name === undefined || is_active === undefined || branch_id === undefined) {
         return res.status(400).json({ message: 'Nome, permissão (role), status (is_active) e filial (branch_id) são obrigatórios.' });
     }
+
+    let roleIdToUse;
     try {
-        let query = 'UPDATE users SET name = $1, role = $2, is_active = $3, branch_id = $4';
-        const queryParams = [name, role, is_active, branch_id];
-        let paramIndex = 5; // Next parameter index
+        const roleResult = await db.query('SELECT id FROM roles WHERE name = $1', [role_name]);
+        if (roleResult.rows.length === 0) {
+            return res.status(400).json({ message: 'Permissão (role) inválida.' });
+        }
+        roleIdToUse = roleResult.rows[0].id;
+
+        let query = 'UPDATE users SET name = $1, role_id = $2, is_active = $3, branch_id = $4';
+        const queryParams = [name, roleIdToUse, is_active, branch_id];
+        let paramIndex = 5;
 
         if (profileImage) {
             const imageUrl = `/uploads/profile_images/${profileImage.filename}`;
@@ -176,8 +263,8 @@ exports.updateUser = async (req, res) => {
             queryParams.push(imageUrl);
         }
 
-        query += ` WHERE id = ${paramIndex} RETURNING id, name, email, role, is_active, profile_image_url, branch_id`;
-        queryParams.push(id); // The ID of the user being updated
+        query += ` WHERE id = ${paramIndex} RETURNING id, name, email, role_id, is_active, profile_image_url, branch_id`;
+        queryParams.push(id);
 
         const updatedUser = await db.query(query, queryParams);
 
@@ -274,7 +361,7 @@ exports.loginUser = async (req, res, next) => {
     const userAgent = req.headers['user-agent'];
 
     try {
-        const userResult = await db.query('SELECT * FROM users WHERE email = $1 AND is_active = TRUE', [email]);
+        const userResult = await db.query('SELECT id, name, email, password_hash, is_active, branch_id, two_factor_enabled, two_factor_secret, role_id FROM users WHERE email = $1 AND is_active = TRUE', [email]);
 
         if (userResult.rows.length === 0) {
             await db.query(
@@ -285,40 +372,37 @@ exports.loginUser = async (req, res, next) => {
             return next(new AppError('Credenciais inválidas.', 401));
         }
         const user = userResult.rows[0];
-        const isMatch = await bcrypt.compare(password, user.password_hash);
 
-        if (!isMatch) {
-            await db.query(
-                'INSERT INTO login_history (user_id, ip_address, user_agent, success) VALUES ($1, $2, $3, $4)',
-                [user.id, ipAddress, userAgent, false]
-            );
-            await logActivity(user.name, `Tentativa de login falhou para o usuário: ${user.name} <${email}> (senha incorreta).`);
-            return next(new AppError('Credenciais inválidas.', 401));
-        }
-
-        // Atualiza o timestamp de último login
-        await db.query('UPDATE users SET last_login_at = NOW() WHERE id = $1', [user.id]);
-
-        // Record successful login
-        await db.query(
-            'INSERT INTO login_history (user_id, ip_address, user_agent, success) VALUES ($1, $2, $3, $4)',
-            [user.id, ipAddress, userAgent, true]
-        );
+        // Fetch role name from roles table
+        const roleResult = await db.query('SELECT name FROM roles WHERE id = $1', [user.role_id]);
+        const roleName = roleResult.rows.length > 0 ? roleResult.rows[0].name : 'unknown'; // Default to 'unknown' if role not found
 
         await logActivity(user.name, `Usuário ${user.name} <${email}> logado com sucesso.`, 'user', user.id, user.branch_id || 1);
-        const payload = { user: { id: user.id, name: user.name, role: user.role } };
+        const payload = { user: { id: user.id, name: user.name, role: roleName } };
         jwt.sign(
             payload,
             process.env.JWT_SECRET,
             { expiresIn: '8h' },
-            (err, token) => {
+            async (err, token) => {
                 if (err) {
                     console.error('[LOGIN JWT SIGN ERROR]', err);
                     return next(new AppError('Erro ao gerar token de autenticação.', 500));
                 }
+
+                // Inserir nova sessão na tabela user_sessions
+                try {
+                    await db.query(
+                        'INSERT INTO user_sessions (user_id, token, ip_address, user_agent) VALUES ($1, $2, $3, $4)',
+                        [user.id, token, ipAddress, userAgent]
+                    );
+                } catch (sessionError) {
+                    console.error('Erro ao registrar sessão do usuário:', sessionError.stack);
+                    // Não impede o login, mas registra o erro
+                }
+
                 res.json({
                     token,
-                    user: { id: user.id, name: user.name, email: user.email, role: user.role }
+                    user: { id: user.id, name: user.name, email: user.email, role: roleName }
                 });
             }
         );
@@ -496,12 +580,17 @@ exports.getCurrentUserProfile = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'Usuário não encontrado.' });
         }
+
+        // Fetch role name from roles table
+        const roleResult = await db.query('SELECT name FROM roles WHERE id = $1', [user.role_id]);
+        const roleName = roleResult.rows.length > 0 ? roleResult.rows[0].name : 'unknown'; // Default to 'unknown' if role not found
+
         // Retorna apenas as informações de perfil relevantes
         res.json({
             id: user.id,
             name: user.name,
             email: user.email,
-            role: user.role,
+            role: roleName,
             profile_image_url: user.profile_image_url,
             phone: user.phone,
             address: user.address,
@@ -570,7 +659,13 @@ exports.bulkAction = async (req, res) => {
                 if (!role) {
                     return res.status(400).json({ message: 'A permissão (role) é obrigatória para esta ação.' });
                 }
-                result = await client.query('UPDATE users SET role = $1 WHERE id = ANY($2)', [role, userIds]);
+                // Fetch role_id from role name
+                const roleResult = await client.query('SELECT id FROM roles WHERE name = $1', [role]);
+                if (roleResult.rows.length === 0) {
+                    return res.status(400).json({ message: 'Permissão (role) inválida.' });
+                }
+                const roleIdToUse = roleResult.rows[0].id;
+                result = await client.query('UPDATE users SET role_id = $1 WHERE id = ANY($2)', [roleIdToUse, userIds]);
                 break;
             default:
                 return res.status(400).json({ message: 'Ação desconhecida.' });
@@ -620,7 +715,7 @@ exports.impersonateUser = async (req, res, next) => {
     try {
         // Buscar o usuário a ser personificado
         const userToImpersonateResult = await db.query(
-            'SELECT id, name, email, role FROM users WHERE id = $1 AND is_active = TRUE',
+            'SELECT id, name, email, role_id FROM users WHERE id = $1 AND is_active = TRUE',
             [id]
         );
 
@@ -630,8 +725,12 @@ exports.impersonateUser = async (req, res, next) => {
 
         const impersonatedUser = userToImpersonateResult.rows[0];
 
+        // Fetch role name from roles table for impersonated user
+        const roleResult = await db.query('SELECT name FROM roles WHERE id = $1', [impersonatedUser.role_id]);
+        const impersonatedUserRoleName = roleResult.rows.length > 0 ? roleResult.rows[0].name : 'unknown';
+
         // Gerar um novo token JWT para o usuário personificado
-        const payload = { user: { id: impersonatedUser.id, name: impersonatedUser.name, role: impersonatedUser.role } };
+        const payload = { user: { id: impersonatedUser.id, name: impersonatedUser.name, role: impersonatedUserRoleName } };
         const token = jwt.sign(
             payload,
             process.env.JWT_SECRET,

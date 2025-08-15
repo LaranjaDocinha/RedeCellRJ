@@ -10,11 +10,10 @@ import './Sidebar.scss';
 // Definição base dos itens de menu
 const allMenuItems = [
   { path: '/painel-administrativo', icon: 'bxs-dashboard', title: 'Painel Administrativo' },
-
-  { type: 'separator', title: 'Operações Diárias' }, // New separator
   { path: '/pdv', icon: 'bx-cart-alt', title: 'PDV' },
+
   {
-    title: 'Caixa e Fluxo', // Combined
+    title: 'Caixa e Fluxo',
     icon: 'bx-slider-alt',
     children: [
       { path: '/cashier', icon: 'bx-wallet', title: 'Abrir/Fechar Caixa' },
@@ -22,10 +21,17 @@ const allMenuItems = [
       { path: '/finance/cash-flow-report', icon: 'bx-file-blank', title: 'Relatório de Caixa' },
     ],
   },
-  { path: '/calendar', icon: 'bx-calendar', title: 'Agenda' },
-  { path: '/quotations', icon: 'bx-file', title: 'Orçamentos' }, // Moved up
+  {
+    title: 'Agendamento',
+    icon: 'bx-calendar',
+    children: [
+      { path: '/calendar', icon: 'bx-calendar', title: 'Agenda' },
+      { path: '/quotations', icon: 'bx-file', title: 'Orçamentos' },
+      { path: '/appointments/book', icon: 'bx-calendar-plus', title: 'Agendar Horário' },
+      { path: '/appointments/manage', icon: 'bx-calendar-check', title: 'Gerenciar Agenda' },
+    ],
+  },
 
-  { type: 'separator', title: 'Gestão' }, // New separator
   {
     title: 'Pessoas',
     icon: 'bxs-group',
@@ -37,7 +43,7 @@ const allMenuItems = [
     ],
   },
   {
-    title: 'Produtos e Estoque', // Combined
+    title: 'Produtos e Estoque',
     icon: 'bxs-package',
     children: [
       { path: '/products', icon: 'bxs-package', title: 'Produtos' },
@@ -49,65 +55,46 @@ const allMenuItems = [
     ],
   },
   {
-    title: 'Serviços', // New parent for repairs and related
+    title: 'Serviços',
     icon: 'bxs-wrench',
     children: [
       { path: '/repairs', icon: 'bxs-wrench', title: 'Gerenciar Reparos' },
       { path: '/repairs/warranty', icon: 'bx-check-shield', title: 'Garantias' },
       { path: '/technician-kanban', icon: 'bx-layout', title: 'Oficina (Kanban)' },
       { path: '/kanban-metrics', icon: 'bx-tachometer', title: 'Métricas do Kanban' },
-      { path: '/appointments/book', icon: 'bx-calendar-plus', title: 'Agendar Horário' },
-      { path: '/appointments/manage', icon: 'bx-calendar-check', title: 'Gerenciar Agenda' },
     ],
   },
 
-  { type: 'separator', title: 'Financeiro' }, // Separator for Finance
   {
-    title: 'Contas a Pagar/Receber', // Combined
+    title: 'Financeiro',
     icon: 'bx-money-withdraw',
-    roles: ['admin'],
     children: [
       { path: '/finance/receivables', title: 'Contas a Receber' },
       { path: '/finance/payables', title: 'Contas a Pagar' },
       { path: '/expenses', icon: 'bx-dollar-circle', title: 'Despesas', roles: ['admin'] },
       { path: '/finance/bank-accounts', icon: 'bx-bank', title: 'Contas Bancárias' },
-    ],
-  },
-  {
-    title: 'Comissões',
-    icon: 'bx-sitemap',
-    children: [
       { path: '/commissions/rules', icon: 'bx-sitemap', title: 'Regras de Comissão' },
       { path: '/commissions/calculated', icon: 'bx-calculator', title: 'Comissões Calculadas' },
       { path: '/commissions/payments', icon: 'bx-money-withdraw', title: 'Pagamento de Comissões' },
     ],
   },
 
-  { type: 'separator', title: 'Marketing e CRM' }, // New separator
   {
-    title: 'CRM',
-    icon: 'bxs-group',
+    title: 'Marketing e Vendas',
+    icon: 'bx-target-lock',
     children: [
       { path: '/leads', icon: 'bx-user-plus', title: 'Leads', roles: ['admin'] },
       { path: '/customer-interactions', icon: 'bx-chat', title: 'Interações com Clientes', roles: ['admin'] },
       { path: '/nps/survey', icon: 'bx-smile', title: 'Pesquisa NPS' },
       { path: '/nps/reports', icon: 'bx-line-chart', title: 'Relatórios NPS' },
-    ],
-  },
-  {
-    title: 'Marketing',
-    icon: 'bx-bullhorn',
-    children: [
       { path: '/marketing/campaigns', icon: 'bx-bullhorn', title: 'Campanhas de Marketing' },
       { path: '/marketing/reports', icon: 'bx-bar-chart-square', title: 'Relatórios de Campanha' },
     ],
   },
 
-  { type: 'separator', title: 'Relatórios e BI' }, // Separator for Reports & BI
-  { path: '/reports', icon: 'bx-chart', title: 'Visão Geral' },
   {
-    title: 'Relatórios Detalhados',
-    icon: 'bx-line-chart',
+    title: 'Relatórios e Análises',
+    icon: 'bx-chart',
     children: [
       { path: '/reports/profitability', icon: 'bx-line-chart', title: 'Lucratividade', roles: ['admin'] },
       { path: '/reports/sales', icon: 'bx-chart', title: 'Vendas' },
@@ -115,19 +102,25 @@ const allMenuItems = [
       { path: '/reports/technician-performance', icon: 'bx-user-check', title: 'Desempenho de Técnicos' },
       { path: '/reports/product-profitability', icon: 'bx-dollar', title: 'Lucratividade por Produto' },
       { path: '/reports/abc-analysis', icon: 'bx-sort-a-z', title: 'Análise ABC' },
+      { path: '/bi-dashboard', icon: 'bx-area', title: 'BI Dashboard' },
     ],
   },
-  { path: '/bi-dashboard', icon: 'bx-area', title: 'BI Dashboard' },
-  { path: '/audit-logs', icon: 'bx-file', title: 'Logs de Auditoria', roles: ['admin'] },
-  { path: '/roles-and-permissions', icon: 'bxs-key', title: 'Papéis e Permissões', roles: ['admin'] },
-];
 
-// Define a new constant for settings menu items
-const settingsMenuItems = [
-  { type: 'separator', title: 'Configurações' },
-  { path: '/settings', icon: 'bx-cog', title: 'Configurações' },
-  { path: '/settings/login-customization', icon: 'bx-palette', title: 'Personalizar Login', roles: ['admin'] },
-  { path: '/settings/checklist-templates', icon: 'bx-check-square', title: 'Templates de Checklist', roles: ['admin'] },
+  {
+    title: 'Aplicativos',
+    icon: 'bx-extension',
+    children: [
+      { path: '/apps/whatsapp', icon: 'bxl-whatsapp', title: 'WhatsApp' },
+      { path: '/apps/instagram', icon: 'bxl-instagram', title: 'Instagram' },
+      { path: '/apps/facebook', icon: 'bxl-facebook', title: 'Facebook' },
+      { path: '/apps/spotify', icon: 'bxl-spotify', title: 'Spotify' },
+    ],
+  },
+
+  ];
+
+const bottomMenuItems = [
+  { path: '/settings', icon: 'bx-cog', title: 'Configurações', roles: ['admin'] },
 ];
 
 // Componente recursivo para filtrar itens de menu com base nas permissões
@@ -172,12 +165,15 @@ const SidebarItem = ({ item, isCollapsed }) => {
   const linkId = `sidebar-link-${item.title.replace(/\s+/g, '-').replace(/[()]/g, '\$&')}`;
 
   if (hasChildren) {
-    return (
-      <li className={isOpen ? 'menu-item open' : 'menu-item'}>
+    return (      <li className={isOpen ? 'menu-item open' : 'menu-item'}>
         <button className='nav-link' id={linkId} onClick={toggle}>
-          {item.icon && <i className={`bx ${item.icon}`}></i>}
-          {!isCollapsed && <span>{item.title}</span>}
-          {!isCollapsed && <i className='bx bx-chevron-down arrow'></i>}
+          <div className='nav-link-content'>
+            {item.icon && <i className={`bx ${item.icon}`}></i>}
+            {!isCollapsed && <span>{item.title}</span>}
+          </div>
+          <div className='arrow-container'>
+            {!isCollapsed && <i className='bx bx-chevron-down arrow'></i>}
+          </div>
         </button>
         {isCollapsed && (
           <Tooltip
@@ -235,9 +231,14 @@ const Sidebar = ({ isCollapsed, isMobileOpen }) => {
 
   // Filtra os itens de menu com base na permissão do usuário.
   // useMemo garante que o filtro não seja re-executado a cada renderização.
-  const menuItems = useMemo(() => {
+  const mainMenuItems = useMemo(() => {
     if (isAuthLoading) return []; // Retorna vazio enquanto a autenticação carrega
     return filterMenuByRole(allMenuItems, hasRole);
+  }, [isAuthLoading, hasRole]);
+
+  const footerMenuItems = useMemo(() => {
+    if (isAuthLoading) return []; // Retorna vazio enquanto a autenticação carrega
+    return filterMenuByRole(bottomMenuItems, hasRole);
   }, [isAuthLoading, hasRole]);
 
   return (
@@ -250,29 +251,23 @@ const Sidebar = ({ isCollapsed, isMobileOpen }) => {
         </motion.div>
       </div>
       <nav className='sidebar-nav'>
-        <ul className='list-unstyled'>
-          {menuItems.map((item, index) =>
+        <ul className='list-unstyled main-menu'>
+          {mainMenuItems.map((item, index) =>
             item.type === 'separator' ? (
               <li key={index} className='sidebar-separator' />
             ) : (
               <SidebarItem key={index} isCollapsed={isCollapsed} item={item} />
             ),
           )}
+        </ul>
+        <ul className='list-unstyled footer-menu'>
+          {footerMenuItems.map((item, index) => (
+            <SidebarItem key={index} isCollapsed={isCollapsed} item={item} />
+          ))}
         </ul>
       </nav>
 
-      {/* New section for fixed settings at the bottom */}
-      <nav className='sidebar-footer-nav'>
-        <ul className='list-unstyled'>
-          {filterMenuByRole(settingsMenuItems, hasRole).map((item, index) =>
-            item.type === 'separator' ? (
-              <li key={index} className='sidebar-separator' />
-            ) : (
-              <SidebarItem key={index} isCollapsed={isCollapsed} item={item} />
-            ),
-          )}
-        </ul>
-      </nav>
+      
 
     </aside>
   );

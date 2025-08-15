@@ -1,12 +1,19 @@
-import React, { useState } from 'react';
-import { Form, Label, Input, Button, FormFeedback, Card, CardBody, CardTitle } from 'reactstrap';
+import { z } from 'zod';
 import { useFormik } from 'formik';
-import * as Yup from 'yup';
 import { toast } from 'react-hot-toast';
 import { motion } from 'framer-motion';
 
 import LoadingSpinner from '../../../components/Common/LoadingSpinner';
 import { patch } from '../../../helpers/api_helper';
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string({ required_error: 'A senha atual é obrigatória' }).min(1, 'A senha atual é obrigatória'),
+  newPassword: z.string({ required_error: 'A nova senha é obrigatória' }).min(6, 'A nova senha deve ter pelo menos 6 caracteres'),
+  confirmNewPassword: z.string({ required_error: 'A confirmação da nova senha é obrigatória' }).min(1, 'A confirmação da nova senha é obrigatória'),
+}).refine((data) => data.newPassword === data.confirmNewPassword, {
+  message: 'As senhas não coincidem',
+  path: ['confirmNewPassword'],
+});
 
 const ChangePasswordForm = ({ userId }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -17,15 +24,17 @@ const ChangePasswordForm = ({ userId }) => {
       newPassword: '',
       confirmNewPassword: '',
     },
-    validationSchema: Yup.object({
-      currentPassword: Yup.string().required('A senha atual é obrigatória'),
-      newPassword: Yup.string()
-        .min(6, 'A nova senha deve ter pelo menos 6 caracteres')
-        .required('A nova senha é obrigatória'),
-      confirmNewPassword: Yup.string()
-        .oneOf([Yup.ref('newPassword'), null], 'As senhas não coincidem')
-        .required('A confirmação da nova senha é obrigatória'),
-    }),
+    validate: (values) => {
+      try {
+        changePasswordSchema.parse(values);
+        return {};
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return error.formErrors.fieldErrors;
+        }
+        return {};
+      }
+    },
     onSubmit: async (values, { resetForm }) => {
       setIsSubmitting(true);
       try {

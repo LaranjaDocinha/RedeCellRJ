@@ -1,0 +1,214 @@
+.finance-dashboard-page {
+  padding: 20px;
+
+  .page-header {
+    margin-bottom: 20px;
+    h1 {
+      font-size: 2rem;
+      color: var(--text-color);
+    }
+  }
+
+  .card {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: var(--box-shadow);
+    transition: all 0.3s ease;
+
+    .card-title {
+      color: var(--text-color);
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+      label {
+        color: var(--text-color);
+      }
+      input, textarea, select {
+        background-color: var(--input-bg);
+        color: var(--input-text-color);
+        border: 1px solid var(--input-border-color);
+        &:focus {
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 0.25rem rgba(var(--primary-rgb), .25);
+        }
+      }
+    }
+
+    .text-center {
+      color: var(--text-color-muted);
+    }
+
+    .alert-info {
+      background-color: var(--alert-info-bg);
+      color: var(--alert-info-text);
+      border-color: var(--alert-info-border);
+    }
+
+    .alert-danger {
+      background-color: var(--alert-danger-bg);
+      color: var(--alert-danger-text);
+      border-color: var(--alert-danger-border);
+    }
+
+    .table {
+      color: var(--text-color);
+      th, td {
+        border-top: 1px solid var(--border-color);
+      }
+      thead th {
+        background-color: var(--table-header-bg);
+        color: var(--table-header-text-color);
+      }
+      tbody tr:nth-of-type(odd) {
+        background-color: var(--table-odd-row-bg);
+      }
+      tbody tr:hover {
+        background-color: var(--table-hover-bg);
+      }
+    }
+
+    .badge {
+      &.bg-success {
+        background-color: var(--success-color) !important;
+      }
+      &.bg-warning {
+        background-color: var(--warning-color) !important;
+      }
+      &.bg-info {
+        background-color: var(--info-color) !important;
+      }
+      &.bg-secondary {
+        background-color: var(--secondary-color) !important;
+      }
+      &.bg-primary {
+        background-color: var(--primary-color) !important;
+      }
+    }
+
+    .display-4 {
+      color: var(--text-color);
+    }
+
+    .text-success {
+      color: var(--success-color) !important;
+    }
+
+    .text-warning {
+      color: var(--warning-color) !important;
+    }
+
+    .text-danger {
+      color: var(--danger-color) !important;
+    }
+
+    .text-muted {
+      color: var(--text-color-muted) !important;
+    }
+  }
+
+  // React-select overrides for dark mode
+  .react-select__control {
+    background-color: var(--input-bg) !important;
+    border-color: var(--input-border-color) !important;
+    color: var(--input-text-color) !important;
+  }
+  .react-select__single-value {
+    color: var(--input-text-color) !important;
+  }
+  .react-select__placeholder {
+    color: var(--text-color-muted) !important;
+  }
+  .react-select__menu {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+  }
+  .react-select__option {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    &:hover {
+      background-color: var(--table-hover-bg) !important;
+    }
+  }
+  .react-select__option--is-selected {
+    background-color: var(--primary-color-light) !important;
+    color: var(--primary-color) !important;
+  }
+
+  // Flatpickr overrides for dark mode
+  .flatpickr-input {
+    background-color: var(--input-bg) !important;
+    color: var(--input-text-color) !important;
+    border-color: var(--input-border-color) !important;
+  }
+  .flatpickr-calendar {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+  }
+  .flatpickr-day {
+    color: var(--text-color) !important;
+    &:hover {
+      background-color: var(--table-hover-bg) !important;
+    }
+  }
+  .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: white !important;
+  }
+
+  // Dark Mode Variables (assuming a global theme context sets these)
+  @media (prefers-color-scheme: dark) {
+    --text-color: #e0e0e0;
+    --text-color-muted: #b0b0b0;
+    --card-bg: #2c2c2c;
+    --border-color: #444;
+    --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    --primary-color: #0056b3;
+    --primary-hover-color: #003f80;
+    --primary-color-light: rgba(0, 86, 179, 0.2);
+    --alert-info-bg: #2a3a4a;
+    --alert-info-text: #9acfea;
+    --alert-info-border: #4a6a8a;
+    --alert-danger-bg: #4a2a2a;
+    --alert-danger-text: #ea9a9a;
+    --alert-danger-border: #8a4a4a;
+    --table-header-bg: #3a3a3a;
+    --table-header-text-color: #e0e0e0;
+    --table-odd-row-bg: #333;
+    --table-hover-bg: #444;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+    --secondary-color: #6c757d;
+  }
+
+  // Light Mode Variables (default)
+  --text-color: #333;
+  --text-color-muted: #666;
+  --card-bg: #ffffff;
+  --border-color: #e0e0e0;
+    --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  --primary-color: #007bff;
+  --primary-hover-color: #0056b3;
+  --primary-color-light: rgba(0, 123, 255, 0.2);
+  --input-bg: #ffffff;
+  --input-text-color: #333;
+  --input-border-color: #ced4da;
+  --alert-info-bg: #d1ecf1;
+  --alert-info-text: #0c5460;
+  --alert-info-border: #bee5eb;
+  --alert-danger-bg: #f8d7da;
+  --alert-danger-text: #721c24;
+  --alert-danger-border: #f5c6cb;
+  --table-hover-bg: #e9ecef;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --info-color: #17a2b8;
+  --secondary-color: #6c757d;
+}

@@ -1,88 +1,55 @@
 import React from 'react';
-import { DndContext, DragOverlay } from '@dnd-kit/core';
-import { SortableContext } from '@dnd-kit/sortable';
-import styled from 'styled-components';
-
+import PropTypes from 'prop-types';
+import { Row, Col } from 'reactstrap';
+import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import KanbanColumn from './KanbanColumn';
 
-const ColumnsContainer = styled.div`
-  display: flex;
-  gap: 1rem;
-`;
+const KanbanBoard = ({ columns, repairsByStatus, onStatusChange }) => {
+  const onDragEnd = (result) => {
+    const { source, destination, draggableId } = result;
 
-const KanbanBoard = ({
-  columns,
-  tasks,
-  onTaskDrop,
-  onTaskClick,
-  onTaskAdd,
-  onCardAction,
-  columnOrder,
-  kanbanViewMode,
-  laneId,
-}) => {
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-
-    if (!over) return;
-
-    const sourceColumnId = active.data.current.sortable.containerId;
-    const destinationColumnId = over.data.current.sortable.containerId;
-
-    const sourceLaneId = sourceColumnId.split('-')[0];
-    const destLaneId = destinationColumnId.split('-')[0];
-
-    const sourceStatus = sourceColumnId.split('-')[1];
-    const destStatus = destinationColumnId.split('-')[1];
-
-    // Se o agrupamento for por técnico ou prioridade, e a tarefa for movida para outra swimlane
-    // precisamos atualizar o technician_id ou priority no backend.
-    const updatedFields = { newStatus: destStatus };
-    if (sourceLaneId !== destLaneId) {
-      if (sourceLaneId.startsWith('technician-')) {
-        updatedFields.technicianId =
-          destLaneId === 'technician-unassigned' ? null : destLaneId.replace('technician-', '');
-      } else if (sourceLaneId.startsWith('priority-')) {
-        updatedFields.priority = destLaneId.replace('priority-', '');
-      }
+    // Se não houver destino, ou se arrastou para o mesmo lugar
+    if (!destination || (source.droppableId === destination.droppableId && source.index === destination.index)) {
+      return;
     }
 
-    onTaskDrop({
-      draggableId: active.id,
-      source: { droppableId: sourceColumnId, index: active.data.current.sortable.index },
-      destination: { droppableId: destinationColumnId, index: over.data.current.sortable.index },
-      updatedFields: updatedFields,
-    });
+    // Encontra o reparo que foi arrastado
+    const repairId = parseInt(draggableId, 10);
+    const newStatus = destination.droppableId;
+
+    // Chama a função de mudança de status passada via props
+    onStatusChange(repairId, newStatus);
   };
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
-      <ColumnsContainer>
-        <SortableContext items={columnOrder}>
-          {columnOrder.map((columnId) => {
-            const column = columns[columnId];
-            const columnTasks = column.taskIds.map((taskId) => tasks[taskId]).filter(Boolean);
-
-            const droppableId = `${laneId}-${column.id}`;
-
-            return (
-              <KanbanColumn
-                key={droppableId}
-                column={column}
-                droppableId={droppableId}
-                kanbanViewMode={kanbanViewMode}
-                tasks={columnTasks}
-                onCardAction={onCardAction}
-                onTaskAdd={onTaskAdd}
-                onTaskClick={onTaskClick}
-              />
-            );
-          })}
-        </SortableContext>
-      </ColumnsContainer>
-      <DragOverlay>{/* Renderiza o item que está sendo arrastado */}</DragOverlay>
-    </DndContext>
+    <DragDropContext onDragEnd={onDragEnd}>
+      <Row className="flex-nowrap overflow-auto pb-3">
+        {columns.map((column) => (
+          <Col key={column.id} xs={12} sm={6} md={4} lg={3} xl={2} className="kanban-column-wrapper">
+            <Droppable droppableId={column.id}>
+              {(provided, snapshot) => (
+                <KanbanColumn
+                  column={column}
+                  repairs={repairsByStatus[column.id] || []}
+                  provided={provided}
+                  snapshot={snapshot}
+                />
+              )}
+            </Droppable>
+          </Col>
+        ))}
+      </Row>
+    </DragDropContext>
   );
+};
+
+KanbanBoard.propTypes = {
+  columns: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+  })).isRequired,
+  repairsByStatus: PropTypes.object.isRequired,
+  onStatusChange: PropTypes.func.isRequired,
 };
 
 export default KanbanBoard;

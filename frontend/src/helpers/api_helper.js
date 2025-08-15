@@ -9,11 +9,12 @@ const dispatchStartLoading = () => window.dispatchEvent(new CustomEvent('start-l
 const dispatchStopLoading = () => window.dispatchEvent(new CustomEvent('stop-loading'));
 // ------------------------------------
 
+// Instância Axios para requisições autenticadas
 const axiosApi = axios.create({
   baseURL: API_URL,
 });
 
-// Interceptador para adicionar o token JWT dinamicamente a cada requisição
+// Interceptador para adicionar o token JWT dinamicamente a cada requisição autenticada
 axiosApi.interceptors.request.use(
   (config) => {
     const authUser = localStorage.getItem('auth-storage'); // Corrigido para 'auth-storage' do Zustand
@@ -31,60 +32,100 @@ axiosApi.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// Interceptador para tratar respostas e erros de forma centralizada
+// Helper function to extract a readable error message
+const getErrorMessage = (error) => {
+  if (error && typeof error.message === 'string' && error.message) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  return 'Ocorreu um erro inesperado.';
+};
+
+// Interceptador de resposta para requisições autenticadas (tratamento de erros e redirecionamento)
 axiosApi.interceptors.response.use(
   (response) => {
     // Se a resposta contiver uma mensagem de sucesso, exiba-a
-    if (response.data && response.data.message) {
-      toast.success(response.data.message);
+    if (response.data && response.data.message && typeof response.data.message === 'string') {
+      // Do not show toast for GET requests, as they are usually not direct user actions
+      if (response.config.method !== 'get') {
+        toast.success(response.data.message);
+      }
     }
     return response.data;
   },
   (error) => {
-    let errorMessage = 'Ocorreu um erro inesperado.';
+    
+    const errorMessage = getErrorMessage(error);
 
-    if (error.response) {
-      if (error.response.data.errors && Array.isArray(error.response.data.errors)) {
-        const validationErrors = error.response.data.errors.map((err) => err.msg).join('\n');
-        errorMessage = `Por favor, corrija os seguintes erros:\n${validationErrors}`;
-      } else if (error.response.data.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response.data.error) {
-        errorMessage = error.response.data.error;
+    if (error.response && error.response.status === 401) {
+      // Se for a rota de login, não redirecionar ou mostrar toast de sessão expirada
+      if (error.config.url.includes('/api/users/login')) {
+        // Apenas rejeita a Promise para que o componente possa tratar
       } else {
-        errorMessage = `Erro no servidor: ${error.response.status} ${error.response.statusText}`;
+        localStorage.removeItem('auth-storage');
+        window.location.href = '/login';
+        toast.error('Sua sessão expirou. Por favor, faça login novamente.');
       }
-
-      if (error.response.status === 401) {
-        // Se for a rota de login, não redirecionar ou mostrar toast de sessão expirada
-        if (error.config.url === '/api/users/login') {
-          // Apenas rejeita a Promise para que o componente possa tratar
-          return Promise.reject(error);
-        } else {
-          localStorage.removeItem('auth-storage');
-          window.location.href = '/login';
-          toast.error('Sua sessão expirou. Por favor, faça login novamente.');
-        }
-      } else {
-        toast.error(errorMessage, {
-          style: {
-            whiteSpace: 'pre-line',
-            maxWidth: '500px',
-          },
-        });
-      }
-    } else if (error.request) {
-      errorMessage = 'Não foi possível se conectar ao servidor. Verifique sua conexão de rede.';
-      toast.error(errorMessage);
     } else {
-      errorMessage = error.message;
-      toast.error(errorMessage);
+      toast.error(errorMessage, {
+        style: {
+          whiteSpace: 'pre-line',
+          maxWidth: '500px',
+        },
+      });
+    }
+    
+    // Attach a user-friendly message to the error object
+    if (error.response && typeof error.response.data === 'object' && error.response.data !== null) {
+        error.response.data.friendlyMessage = errorMessage;
+    } else if (!error.response) {
+        error.friendlyMessage = errorMessage;
     }
 
     return Promise.reject(error);
   },
 );
 
+// Instância Axios para requisições PÚBLICAS (sem autenticação)
+const axiosPublicApi = axios.create({
+  baseURL: API_URL,
+});
+
+// Interceptador de resposta para requisições PÚBLICAS (apenas tratamento de erros, sem redirecionamento 401)
+axiosPublicApi.interceptors.response.use(
+  (response) => {
+    if (response.data && response.data.message && typeof response.data.message === 'string') {
+      // Do not show toast for GET requests
+      if (response.config.method !== 'get') {
+        toast.success(response.data.message);
+      }
+    }
+    return response.data;
+  },
+  (error) => {
+    const errorMessage = getErrorMessage(error);
+
+    toast.error(errorMessage, {
+      style: {
+        whiteSpace: 'pre-line',
+        maxWidth: '500px',
+      },
+    });
+    
+    if (error.response && typeof error.response.data === 'object' && error.response.data !== null) {
+        error.response.data.friendlyMessage = errorMessage;
+    } else if (!error.response) {
+        error.friendlyMessage = errorMessage;
+    }
+
+    return Promise.reject(error);
+  },
+);
+
+
+// Funções para requisições autenticadas
 export async function get(url, config = {}) {
   dispatchStartLoading();
   try {
@@ -127,5 +168,13 @@ export async function del(url, config = {}) {
     return await axiosApi.delete(url, { ...config });
   } finally {
     dispatchStopLoading();
+  }
+}
+
+// Nova função para requisições PÚBLICAS (sem autenticação)
+export async function publicGet(url, config = {}) {
+  try {
+    return await axiosPublicApi.get(url, { ...config });
+  } finally {
   }
 }

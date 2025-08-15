@@ -13,7 +13,7 @@ import {
   FormFeedback,
 } from 'reactstrap';
 import { useFormik } from 'formik';
-import * as Yup from 'yup';
+import { z } from 'zod';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 
@@ -47,20 +47,27 @@ const UserProfile = () => {
       zip: user?.zip || '',
       bio: user?.bio || '',
     },
-    validationSchema: Yup.object({
-      name: Yup.string().required('O nome é obrigatório'),
-      email: Yup.string().email('E-mail inválido').required('O e-mail é obrigatório'),
-      phone: Yup.string()
-        .matches(/^\(\d{2}\) \d{5}-\d{4}$/, 'Formato de telefone inválido (Ex: (XX) XXXXX-XXXX)')
-        .nullable(),
-      address: Yup.string().nullable(),
-      city: Yup.string().nullable(),
-      state: Yup.string().nullable(),
-      zip: Yup.string()
-        .matches(/^\d{5}-\d{3}$/, 'Formato de CEP inválido (Ex: XXXXX-XXX)')
-        .nullable(),
-      bio: Yup.string().max(200, 'A biografia deve ter no máximo 200 caracteres').nullable(),
-    }),
+    validate: (values) => {
+      const userProfileSchema = z.object({
+        name: z.string({ required_error: 'O nome é obrigatório' }).min(1, 'O nome é obrigatório'),
+        email: z.string({ required_error: 'O e-mail é obrigatório' }).email('E-mail inválido'),
+        phone: z.string().regex(/^\(\d{2}\) \d{5}-\d{4}$/, 'Formato de telefone inválido (Ex: (XX) XXXXX-XXXX)').nullable().optional(),
+        address: z.string().nullable().optional(),
+        city: z.string().nullable().optional(),
+        state: z.string().nullable().optional(),
+        zip: z.string().regex(/^\d{5}-\d{3}$/, 'Formato de CEP inválido (Ex: XXXXX-XXX)').nullable().optional(),
+        bio: z.string().max(200, 'A biografia deve ter no máximo 200 caracteres').nullable().optional(),
+      });
+      try {
+        userProfileSchema.parse(values);
+        return {};
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return error.formErrors.fieldErrors;
+        }
+        return {};
+      }
+    },
     onSubmit: async (values) => {
       setIsSubmitting(true);
       try {

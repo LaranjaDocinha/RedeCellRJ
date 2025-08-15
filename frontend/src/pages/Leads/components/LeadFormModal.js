@@ -1,168 +1,181 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Form,
-  FormGroup,
-  Label,
-  Input,
-} from 'reactstrap';
+import React from 'react';
+import PropTypes from 'prop-types';
+import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Form, FormGroup, Label, Input, Col, Row, Alert } from 'reactstrap';
+import { Formik, Field, ErrorMessage } from 'formik';
+import { z } from 'zod';
+import useApi from '../../hooks/useApi';
+import toast from 'react-hot-toast';
+import Select from 'react-select';
 
-import useApi from '../../../hooks/useApi';
-import { post, put } from '../../../helpers/api_helper';
-import LoadingSpinner from '../../../components/Common/LoadingSpinner';
-import useNotification from '../../../hooks/useNotification';
+const leadSchema = z.object({
+  name: z.string({ required_error: 'O nome é obrigatório.' }).min(1, 'O nome é obrigatório.'),
+  email: z.string().email('Email inválido.').nullable().optional(),
+  phone: z.string().nullable().optional(),
+  source: z.string().nullable().optional(),
+  status: z.enum(['Novo', 'Qualificado', 'Contato', 'Convertido', 'Perdido'], { required_error: 'O status é obrigatório.' }),
+  notes: z.string().nullable().optional(),
+});
 
-const LeadFormModal = ({ isOpen, toggle, lead, onSave }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    source: '',
-    status: 'Novo',
-    notes: '',
-  });
+const LeadFormModal = ({ isOpen, toggle, lead, onSuccess }) => {
+  const { request: createLead } = useApi('post');
+  const { request: updateLead } = useApi('put');
 
-  const { request: createLead, loading: creating } = useApi(post);
-  const { request: updateLead, loading: updating } = useApi(put);
-  const { showSuccess, showError } = useNotification();
+  const isEditing = !!lead;
 
-  useEffect(() => {
-    if (lead) {
-      setFormData({
-        name: lead.name || '',
-        email: lead.email || '',
-        phone: lead.phone || '',
-        source: lead.source || '',
-        status: lead.status || 'Novo',
-        notes: lead.notes || '',
-      });
-    } else {
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        source: '',
-        status: 'Novo',
-        notes: '',
-      });
+  const statusOptions = [
+    { value: 'Novo', label: 'Novo' },
+    { value: 'Qualificado', label: 'Qualificado' },
+    { value: 'Contato', label: 'Contato' },
+    { value: 'Convertido', label: 'Convertido' },
+    { value: 'Perdido', label: 'Perdido' },
+  ];
+
+  const sourceOptions = [
+    { value: 'Website', label: 'Website' },
+    { value: 'Indicação', label: 'Indicação' },
+    { value: 'Telefone', label: 'Telefone' },
+    { value: 'Email', label: 'Email' },
+    { value: 'Outro', label: 'Outro' },
+  ];
+
+  const handleSubmit = async (values, { setSubmitting, setErrors }) => {
+    try {
+      const apiCall = isEditing ? updateLead : createLead;
+      const url = isEditing ? `/api/leads/${lead.id}` : '/api/leads';
+      
+      await apiCall(url, values);
+      
+      toast.success(`Lead ${isEditing ? 'atualizado' : 'criado'} com sucesso!`);
+      onSuccess();
+    } catch (error) {
+      const message = error.message || 'Ocorreu um erro.';
+      toast.error(message);
+      setErrors({ submit: message });
+    } finally {
+      setSubmitting(false);
     }
-  }, [lead]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const initialValues = {
+    name: lead?.name || '',
+    email: lead?.email || '',
+    phone: lead?.phone || '',
+    source: lead?.source || '',
+    status: lead?.status || 'Novo',
+    notes: lead?.notes || '',
+  };
+
+  const validate = (values) => {
     try {
-      if (lead) {
-        await updateLead(`/api/leads/${lead.id}`, formData);
-        showSuccess('Lead atualizado com sucesso!');
-      } else {
-        await createLead('/api/leads', formData);
-        showSuccess('Lead criado com sucesso!');
+      leadSchema.parse(values);
+    }
+    catch (error) {
+      if (error instanceof z.ZodError) {
+        return error.formErrors.fieldErrors;
       }
-      onSave();
-      toggle();
-    } catch (err) {
-      showError(`Falha ao salvar lead: ${err.message}`);
-      console.error(err);
     }
   };
 
   return (
-    <Modal centered isOpen={isOpen} toggle={toggle}>
-      <ModalHeader toggle={toggle}>{lead ? 'Editar Lead' : 'Adicionar Novo Lead'}</ModalHeader>
-      <Form onSubmit={handleSubmit}>
-        <ModalBody>
-          <FormGroup>
-            <Label for='name'>Nome</Label>
-            <Input
-              required
-              id='name'
-              name='name'
-              placeholder='Nome do Lead'
-              value={formData.name}
-              onChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <Label for='email'>Email</Label>
-            <Input
-              id='email'
-              name='email'
-              placeholder='email@exemplo.com'
-              type='email'
-              value={formData.email}
-              onChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <Label for='phone'>Telefone</Label>
-            <Input
-              id='phone'
-              name='phone'
-              placeholder='(XX) XXXXX-XXXX'
-              type='tel'
-              value={formData.phone}
-              onChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <Label for='source'>Origem</Label>
-            <Input
-              id='source'
-              name='source'
-              placeholder='Ex: Website, Indicação'
-              type='text'
-              value={formData.source}
-              onChange={handleChange}
-            />
-          </FormGroup>
-          <FormGroup>
-            <Label for='status'>Status</Label>
-            <Input
-              id='status'
-              name='status'
-              type='select'
-              value={formData.status}
-              onChange={handleChange}
-            >
-              <option>Novo</option>
-              <option>Qualificado</option>
-              <option>Contato</option>
-              <option>Convertido</option>
-              <option>Perdido</option>
-            </Input>
-          </FormGroup>
-          <FormGroup className='mb-0'>
-            <Label for='notes'>Notas</Label>
-            <Input
-              id='notes'
-              name='notes'
-              rows='3'
-              type='textarea'
-              value={formData.notes}
-              onChange={handleChange}
-            />
-          </FormGroup>
-        </ModalBody>
-        <ModalFooter>
-          <Button color='secondary' disabled={creating || updating} onClick={toggle}>
-            Cancelar
-          </Button>
-          <Button color='primary' disabled={creating || updating} type='submit'>
-            {creating || updating ? <LoadingSpinner size='sm' /> : 'Salvar'}
-          </Button>
-        </ModalFooter>
-      </Form>
+    <Modal isOpen={isOpen} toggle={toggle} centered size="lg">
+      <ModalHeader toggle={toggle}>
+        {isEditing ? 'Editar Lead' : 'Adicionar Novo Lead'}
+      </ModalHeader>
+      <Formik
+        initialValues={initialValues}
+        validate={validate}
+        onSubmit={handleSubmit}
+        enableReinitialize
+      >
+        {({ isSubmitting, errors, setFieldValue, values }) => (
+          <Form>
+            <ModalBody>
+              <Row>
+                <Col md={12}>
+                  <FormGroup>
+                    <Label for="name">Nome</Label>
+                    <Field as={Input} type="text" name="name" id="name" />
+                    <ErrorMessage name="name" component="div" className="text-danger" />
+                  </FormGroup>
+                </Col>
+              </Row>
+              <Row>
+                <Col md={6}>
+                  <FormGroup>
+                    <Label for="email">Email</Label>
+                    <Field as={Input} type="email" name="email" id="email" />
+                    <ErrorMessage name="email" component="div" className="text-danger" />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup>
+                    <Label for="phone">Telefone</Label>
+                    <Field as={Input} type="text" name="phone" id="phone" />
+                    <ErrorMessage name="phone" component="div" className="text-danger" />
+                  </FormGroup>
+                </Col>
+              </Row>
+              <Row>
+                <Col md={6}>
+                  <FormGroup>
+                    <Label for="source">Origem</Label>
+                    <Select
+                      name="source"
+                      id="source"
+                      options={sourceOptions}
+                      isClearable
+                      placeholder="Selecione a origem..."
+                      onChange={(option) => setFieldValue('source', option ? option.value : '')}
+                      value={sourceOptions.find(option => option.value === values.source)}
+                    />
+                    <ErrorMessage name="source" component="div" className="text-danger" />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup>
+                    <Label for="status">Status</Label>
+                    <Select
+                      name="status"
+                      id="status"
+                      options={statusOptions}
+                      isClearable={false}
+                      placeholder="Selecione o status..."
+                      onChange={(option) => setFieldValue('status', option.value)}
+                      value={statusOptions.find(option => option.value === values.status)}
+                    />
+                    <ErrorMessage name="status" component="div" className="text-danger" />
+                  </FormGroup>
+                </Col>
+              </Row>
+              <Row>
+                <Col md={12}>
+                  <FormGroup>
+                    <Label for="notes">Observações</Label>
+                    <Field as={Input} type="textarea" name="notes" id="notes" />
+                    <ErrorMessage name="notes" component="div" className="text-danger" />
+                  </FormGroup>
+                </Col>
+              </Row>
+              {errors.submit && <Alert color="danger">{errors.submit}</Alert>}
+            </ModalBody>
+            <ModalFooter>
+              <Button type="button" color="secondary" onClick={toggle} disabled={isSubmitting}>Cancelar</Button>
+              <Button type="submit" color="primary" disabled={isSubmitting}>
+                {isSubmitting ? <Spinner size="sm" /> : 'Salvar'}
+              </Button>
+            </ModalFooter>
+          </Form>
+        )}
+      </Formik>
     </Modal>
   );
+};
+
+LeadFormModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  toggle: PropTypes.func.isRequired,
+  lead: PropTypes.object,
+  onSuccess: PropTypes.func.isRequired,
 };
 
 export default LeadFormModal;

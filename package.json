@@ -3,6 +3,12 @@
 "dependencies": {
   
   
+"@fortawesome/free-solid-svg-icons": "^7.0.0",
+  
+  
+"@fortawesome/react-fontawesome": "^0.2.3",
+  
+  
 "@sentry/node": "^10.3.0",
   
   
@@ -12,10 +18,16 @@
 "react-contextmenu": "^2.14.0",
   
   
+"react-table": "^7.8.0",
+  
+  
 "swagger-jsdoc": "^6.2.8",
   
   
-"swagger-ui-express": "^5.0.1"
+"swagger-ui-express": "^5.0.1",
+  
+  
+"yup": "^1.7.0"
   
 }
 }

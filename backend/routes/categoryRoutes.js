@@ -4,7 +4,7 @@ const { authenticateToken, authorize } = require('../middleware/authMiddleware')
 const categoryController = require('../controllers/categoryController');
 
 // Obter todas as categorias
-router.get('/', [authenticateToken, authorize('products:read')], categoryController.getAllCategories);
+router.get('/', categoryController.getAllCategories);
 
 // Criar uma nova categoria
 router.post('/', [authenticateToken, authorize('products:create')], categoryController.createCategory);

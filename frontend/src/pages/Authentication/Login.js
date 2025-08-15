@@ -1,20 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, CardBody, Card, Container, Form, Input, FormFeedback, Label } from 'reactstrap';
-import { Link, useNavigate } from 'react-router-dom';
-import * as Yup from 'yup';
+import { useNavigate } from 'react-router-dom';
+import { z } from 'zod';
 import { useFormik } from 'formik';
 import toast from 'react-hot-toast';
-import { motion } from 'framer-motion'; // Importar motion
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { useAuthStore } from '../../store/authStore';
-import { get, post } from '../../helpers/api_helper'; // 1. Importar o helper da API
+import { publicGet, post } from '../../helpers/api_helper';
 import { useTheme } from '../../context/ThemeContext';
-import FormField from '../../components/Common/FormField'; // Import FormField
-import PasswordField from '../../components/Common/PasswordField'; // Import PasswordField
-import LoadingSpinner from '../../components/Common/LoadingSpinner'; // Import LoadingSpinner
-import RippleEffect from '../../components/Common/RippleEffect'; // Import RippleEffect
-import ThemeToggle from '../../components/Layout/ThemeToggle'; // Import ThemeToggle
-import axios from 'axios'; // Import axios
+import FormField from '../../components/Common/FormField';
+import PasswordField from '../../components/Common/PasswordField';
+import LoadingSpinner from '../../components/Common/LoadingSpinner';
+import RippleEffect from '../../components/Common/RippleEffect';
+import ThemeToggle from '../../components/Layout/ThemeToggle';
 
 const quotes = [
   'Simplifique sua gestão, impulsione suas vendas.',
@@ -23,6 +21,11 @@ const quotes = [
   'Inovação e eficiência para o seu dia a dia.',
 ];
 
+const loginSchema = z.object({
+  email: z.string({ required_error: 'Por favor, digite seu e-mail' }).email('Formato de e-mail inválido'),
+  password: z.string({ required_error: 'Por favor, digite sua senha' }).min(1, 'Por favor, digite sua senha'),
+});
+
 const Login = () => {
   document.title = 'Login | PDV Web';
 
@@ -30,9 +33,9 @@ const Login = () => {
   const loginAction = useAuthStore((state) => state.login);
   const { theme } = useTheme();
   const [shakeForm, setShakeForm] = useState(false);
-  const [loginError, setLoginError] = useState(null); // Novo estado para erro de login
+  const [loginError, setLoginError] = useState(null);
 
-  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0); // Estado para o carrossel de citações
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   const [loginScreenSettings, setLoginScreenSettings] = useState(null);
   const [loadingSettings, setLoadingSettings] = useState(true);
 
@@ -47,21 +50,27 @@ const Login = () => {
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentQuoteIndex((prevIndex) => (prevIndex + 1) % quotes.length);
-    }, 5000); // Muda a citação a cada 5 segundos
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // New useEffect to fetch and apply login screen settings
-  useEffect(() => {
     const fetchLoginSettings = async () => {
+      const defaultSettings = {
+        background_type: 'gradient',
+        gradient_color_1: '#2a2a72',
+        gradient_color_2: '#009ffd',
+        gradient_color_3: '#2a2a72',
+        gradient_color_4: '#009ffd',
+        gradient_speed: 15,
+        gradient_direction: 45,
+      };
+
       try {
         setLoadingSettings(true);
-        const response = await get('/api/settings/login-screen');
-        const settings = response.data;
-        setLoginScreenSettings(settings);
+        const response = await publicGet('/api/settings/login-screen');
+        const settings = response;
+
+        if (!settings) {
+          console.error('API response data is undefined or null. Using default settings.');
+          setLoginScreenSettings(defaultSettings);
+          return; // Exit early if no settings
+        }
 
         const authPage = document.querySelector('.auth-page');
         if (authPage) {
@@ -80,18 +89,26 @@ const Login = () => {
             authPage.style.backgroundRepeat = settings.image_repeat;
             authPage.style.animation = 'background-entry-animation 1s ease-out forwards';
           } else if (settings.background_type === 'video') {
-            // For video, we'll render a video element in the JSX, not via CSS background
             authPage.style.backgroundImage = 'none';
-            authPage.style.backgroundColor = 'transparent'; // Ensure no background color
-            authPage.style.animation = 'none'; // No CSS animation for video background
+            authPage.style.backgroundColor = 'transparent';
+            authPage.style.animation = 'none';
           }
         }
       } catch (error) {
         console.error('Erro ao carregar configurações da tela de login:', error);
-        // Fallback to default or a simple background if settings fail to load
+        const defaultSettings = {
+          background_type: 'gradient',
+          gradient_color_1: '#2a2a72',
+          gradient_color_2: '#009ffd',
+          gradient_color_3: '#2a2a72',
+          gradient_color_4: '#009ffd',
+          gradient_speed: 15,
+          gradient_direction: 45,
+        };
+        setLoginScreenSettings(defaultSettings);
         const authPage = document.querySelector('.auth-page');
         if (authPage) {
-          authPage.style.backgroundImage = 'linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%)'; // A default gradient
+          authPage.style.backgroundImage = `linear-gradient(${defaultSettings.gradient_direction}deg, ${defaultSettings.gradient_color_1} 0%, ${defaultSettings.gradient_color_2} 25%, ${defaultSettings.gradient_color_3} 50%, ${defaultSettings.gradient_color_4} 75%, ${defaultSettings.gradient_color_1} 100%)`;
           authPage.style.backgroundSize = '400% 400%';
           authPage.style.animation = 'gradient-animation 15s ease infinite, background-entry-animation 1s ease-out forwards';
         }
@@ -101,7 +118,7 @@ const Login = () => {
     };
 
     fetchLoginSettings();
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
   useEffect(() => {
     const particlesContainer = document.querySelector('.particles-container');
@@ -111,12 +128,12 @@ const Login = () => {
     for (let i = 0; i < numberOfParticles; i++) {
       const particle = document.createElement('div');
       particle.classList.add('particle');
-      const size = Math.random() * 10 + 5; // Size between 5px and 15px
+      const size = Math.random() * 10 + 5;
       particle.style.width = `${size}px`;
       particle.style.height = `${size}px`;
       particle.style.left = `${Math.random() * 100}%`;
-      particle.style.animationDelay = `${Math.random() * 15}s`; // Delay up to 15s
-      particle.style.animationDuration = `${Math.random() * 10 + 10}s`; // Duration between 10s and 20s
+      particle.style.animationDelay = `${Math.random() * 15}s`;
+      particle.style.animationDuration = `${Math.random() * 10 + 10}s`;
       particlesContainer.appendChild(particle);
     }
   }, []);
@@ -127,14 +144,19 @@ const Login = () => {
       email: '',
       password: '',
     },
-    validationSchema: Yup.object({
-      email: Yup.string()
-        .email('Formato de e-mail inválido')
-        .required('Por favor, digite seu e-mail'),
-      password: Yup.string().required('Por favor, digite sua senha'),
-    }),
+    validate: (values) => {
+      try {
+        loginSchema.parse(values);
+        return {};
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return error.formErrors.fieldErrors;
+        }
+        return {};
+      }
+    },
     onSubmit: async (values, { setSubmitting }) => {
-      setLoginError(null); // Limpa erros anteriores
+      setLoginError(null);
       try {
         const response = await post('/api/users/login', {
           email: values.email,
@@ -142,15 +164,16 @@ const Login = () => {
         });
 
         if (response.token) {
+          toast.success('Login bem-sucedido!');
           loginAction(response);
           navigate('/bi-dashboard');
         }
       } catch (error) {
-        // Captura a mensagem de erro do backend
         const errorMessage = error.response?.data?.message || 'Ocorreu um erro inesperado.';
         setLoginError(errorMessage);
         setShakeForm(true);
-        setTimeout(() => setShakeForm(false), 500); // Remover a classe após a animação
+        setTimeout(() => setShakeForm(false), 500);
+        toast.error(errorMessage);
       } finally {
         setSubmitting(false);
       }
@@ -158,131 +181,96 @@ const Login = () => {
   });
 
   return (
-    <React.Fragment>
-      <div className='auth-page'>
-        {loginScreenSettings && loginScreenSettings.background_type === 'video' && (
-          <video
-            autoPlay
-            loop
-            muted
-            className="background-video"
-            src={loginScreenSettings.background_video_url}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              zIndex: -2, // Below other content
-            }}
+    <div className="auth-page">
+      <div className="particles-container"></div>
+      {loginScreenSettings?.background_type === 'video' && (
+        <video autoPlay loop muted className="background-video">
+          <source src={loginScreenSettings.background_video_url} type="video/mp4" />
+          Seu navegador não suporta vídeos em HTML5.
+        </video>
+      )}
+      <div className="auth-wrapper">
+        <div className="auth-content">
+          <motion.div
+            className={`auth-card ${shakeForm ? 'shake' : ''}`}
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
           >
-            Seu navegador não suporta o elemento de vídeo.
-          </video>
-        )}
-        <div className='particles-container'></div>
-        <div className='parallax-layer parallax-layer-back'></div>
-        <div className='parallax-layer parallax-layer-middle'></div>
-        <div className='parallax-layer parallax-layer-front'></div>
-        <Container fluid className='p-0'>
-          <Row className='g-0 justify-content-center align-items-center'>
-            <Col className='flex-grow-0 flex-shrink-0' lg={4} md={6} sm={8} xs={10}>
-              <div className='overflow-hidden shadow-lg auth-card'>
-                <div className='auth-card-body shadow-md'>
-                  <div className='auth-form-content'>
-                    <div className='text-center mb-4'>
-                      <Link className='d-block auth-logo' to='/'>
-                        <motion.img
-                          alt=''
-                          animate={{ opacity: 1, scale: 1 }}
-                          className='auth-logo-dark'
-                          height='40'
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          src={logoSrc}
-                          transition={{ duration: 0.5, delay: 0.2, ease: 'easeOut' }}
-                        />
-                      </Link>
-                    </div>
-
-                    <Form
-                      className={`form-horizontal ${shakeForm ? 'shake-animation' : ''}`}
-                      onSubmit={validation.handleSubmit}
+            <div className="card-body">
+              <div className="text-center mb-4">
+                <motion.img
+                  src={logoSrc}
+                  alt="Logo"
+                  className="logo-img"
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.2, duration: 0.5 }}
+                />
+              </div>
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={currentQuoteIndex}
+                  className="text-muted text-center mb-4 quote-carousel"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  {quotes[currentQuoteIndex]}
+                </motion.p>
+              </AnimatePresence>
+              <form onSubmit={validation.handleSubmit}>
+                <FormField
+                  name="email"
+                  label="E-mail"
+                  type="email"
+                  placeholder="Digite seu e-mail"
+                  formik={validation}
+                />
+                <PasswordField
+                  name="password"
+                  label="Senha"
+                  placeholder="Digite sua senha"
+                  formik={validation}
+                />
+                <div className="form-group mt-4">
+                  <RippleEffect>
+                    <button
+                      type="submit"
+                      className="btn btn-primary btn-block"
+                      disabled={validation.isSubmitting}
                     >
-                      {loginError && (
-                        <div aria-live='assertive' className='text-danger text-center mb-3'>
-                          {loginError}
-                        </div>
-                      )}
-
-                      <FormField
-                        formik={validation}
-                        label='E-mail'
-                        name='email'
-                        placeholder='Digite seu e-mail'
-                        type='email'
-                      />
-
-                      <PasswordField
-                        formik={validation}
-                        label='Senha'
-                        name='password'
-                        placeholder='Digite sua senha'
-                      />
-
-                      <div className='mt-4 d-flex justify-content-center'>
-                        <RippleEffect>
-                          <button
-                            className='btn btn-primary btn-liquid-effect btn-pulse-effect btn-login-custom-width'
-                            disabled={validation.isSubmitting}
-                            type='submit'
-                          >
-                            {validation.isSubmitting ? (
-                              <motion.div
-                                animate={{ opacity: 1 }}
-                                className='d-flex align-items-center justify-content-center'
-                                exit={{ opacity: 0 }}
-                                initial={{ opacity: 0 }}
-                                transition={{ duration: 0.3 }}
-                              >
-                                <LoadingSpinner color='#fff' size={20} />
-                                <span className='ms-2'>Entrando...</span>
-                              </motion.div>
-                            ) : (
-                              <motion.span
-                                animate={{ opacity: 1 }}
-                                initial={{ opacity: 0 }}
-                                transition={{ duration: 0.3 }}
-                              >
-                                Entrar
-                              </motion.span>
-                            )}
-                          </button>
-                        </RippleEffect>
-                      </div>
-
-                      <div className='mt-4 text-center'>
-                        <Link
-                          className='text-primary text-decoration-underline-hover animated-link'
-                          to='/forgot-password'
-                        >
-                          <i className='mdi mdi-lock me-1 animated-icon' />
-                          Esqueceu sua senha?
-                        </Link>
-                      </div>
-                      <div className='d-flex justify-content-center mt-3'></div>
-                    </Form>
-                  </div>
+                      {validation.isSubmitting ? <LoadingSpinner /> : 'Entrar'}
+                    </button>
+                  </RippleEffect>
                 </div>
-              </div>
-
-              <div className='mt-4 mt-md-auto text-center'>
-                <p className='mb-0'></p>
-              </div>
-            </Col>
-          </Row>
-        </Container>
+              </form>
+              <AnimatePresence>
+                {loginError && (
+                  <motion.div
+                    className="alert alert-danger mt-3 text-center"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    {loginError}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        </div>
+        <div className="auth-footer">
+          <p className="text-muted">
+            © {new Date().getFullYear()} PDV Web. Todos os direitos reservados.
+          </p>
+        </div>
+        <div className="theme-toggle-container">
+          <ThemeToggle />
+        </div>
       </div>
-    </React.Fragment>
+    </div>
   );
 };
 

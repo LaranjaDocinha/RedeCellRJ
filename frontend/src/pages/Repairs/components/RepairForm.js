@@ -44,10 +44,10 @@ const RepairForm = () => {
       try {
         setLoading(true);
         const [customersResponse, techniciansResponse] = await Promise.all([
-          fetchCustomersApi(`${process.env.REACT_APP_API_URL}/api/customers`),
+          fetchCustomersApi('/api/customers'),
           fetchTechniciansApi('/api/technicians'),
         ]);
-        setCustomers(customersResponse.data.customers);
+        setCustomers(customersResponse.data);
         setTechnicians(techniciansResponse.data);
 
         if (isEditing) {

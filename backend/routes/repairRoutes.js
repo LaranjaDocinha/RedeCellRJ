@@ -1,47 +1,85 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken, authorize } = require('../middleware/authMiddleware');
+const { body, param, query } = require('express-validator');
 const repairController = require('../controllers/repairController');
+const { authenticateToken, authorize } = require('../middleware/authMiddleware');
+const { validate } = require('../middleware/validationMiddleware');
 
-// Obter todas as ordens de reparo
-router.get('/', [authenticateToken, authorize('repairs:read')], repairController.getAllRepairs);
+// Proteger todas as rotas
+router.use(authenticateToken);
 
-// Obter uma ordem de reparo por ID
-router.get('/:id', [authenticateToken, authorize('repairs:read')], repairController.getRepairById);
+// Rotas CRUD para Reparos
+router.get('/', 
+  authorize('repairs:read'), 
+  repairController.getAllRepairsByStatus
+);
 
-// Obter detalhes da garantia de um reparo
-router.get('/:id/warranty', [authenticateToken, authorize('repairs:read')], repairController.getRepairWarrantyDetails);
+router.post('/', 
+  authorize('repairs:create'), 
+  // Adicionar validação de body aqui se necessário
+  repairController.createRepair
+);
 
-// Criar uma nova ordem de reparo
-router.post('/', [authenticateToken, authorize('repairs:create')], repairController.createRepair);
+router.get('/:id', 
+  authorize('repairs:read'), 
+  param('id').isInt(), 
+  validate, 
+  repairController.getRepairById
+);
 
-// Atualizar uma ordem de reparo
-router.put('/:id', [authenticateToken, authorize('repairs:update')], repairController.updateRepair);
+router.put('/:id', 
+  authorize('repairs:update'), 
+  param('id').isInt(), 
+  // Adicionar validação de body aqui se necessário
+  repairController.updateRepair
+);
 
-// Deletar uma ordem de reparo
-router.delete('/:id', [authenticateToken, authorize('repairs:delete')], repairController.deleteRepair);
+router.delete('/:id', 
+  authorize('repairs:delete'), 
+  param('id').isInt(), 
+  validate, 
+  repairController.deleteRepair
+);
 
-// Atualizar o status de uma ordem de reparo
-router.patch('/:id/status', [authenticateToken, authorize('repairs:update')], repairController.updateRepairStatus);
+// Rotas específicas para o Kanban
+router.get('/by-status', 
+  authorize('repairs:read'), 
+  query('technician_id').optional().isInt(),
+  validate,
+  repairController.getAllRepairsByStatus
+);
 
-// Rotas para o novo sistema de Checklists
-router.post('/:id/checklists', [authenticateToken, authorize('repairs:update')], repairController.assignChecklistToRepair);
-router.get('/:id/checklists', [authenticateToken, authorize('repairs:read')], repairController.getChecklistsForRepair);
-router.put('/:id/checklists/:instanceId', [authenticateToken, authorize('repairs:update')], repairController.saveChecklistAnswers);
+router.patch('/:id/status', 
+  authorize('repairs:update'), 
+  param('id').isInt(),
+  body('status').notEmpty().withMessage('Status é obrigatório.'),
+  validate,
+  repairController.updateRepairStatus
+);
 
-// Rotas para Time Tracking
-router.post('/:id/time-entries', [authenticateToken, authorize('repairs:update')], repairController.addTimeEntry);
-router.get('/:id/time-entries', [authenticateToken, authorize('repairs:read')], repairController.getTimeEntries);
-router.delete('/:repairId/time-entries/:entryId', [authenticateToken, authorize('repairs:update')], repairController.deleteTimeEntry);
+router.patch('/:id/assign-technician', 
+  authorize('repairs:update'), 
+  param('id').isInt(),
+  body('technician_id').isInt().optional({ nullable: true }).withMessage('ID do técnico inválido.'),
+  validate,
+  repairController.assignTechnician
+);
 
-// Rota para configurações do Kanban
-router.get('/kanban/settings', [authenticateToken, authorize('repairs:read')], repairController.getKanbanSettings);
-router.post('/kanban/settings', [authenticateToken, authorize('repairs:update')], repairController.updateKanbanSettings);
+// Rota para métricas do Kanban
+router.get('/kanban-metrics',
+  authorize('reports:view:operational'),
+  [
+    query('startDate').isISO8601().toDate().withMessage('Data de início inválida.'),
+    query('endDate').isISO8601().toDate().withMessage('Data de fim inválida.'),
+    validate // Moved inside the array
+  ],
+  repairController.getKanbanMetrics
+);
 
-// Rota para upload de assinatura
-router.post('/upload-signature', [authenticateToken, authorize('repairs:update')], repairController.uploadSignature);
-
-// Rota para histórico do aparelho por serial/IMEI
-router.get('/device-history/:serialNumber', [authenticateToken, authorize('repairs:read')], repairController.getDeviceHistoryBySerial);
+// Rota para obter as configurações do Kanban
+router.get('/kanban/settings',
+  authorize('repairs:read'),
+  repairController.getKanbanSettings
+);
 
 module.exports = router;

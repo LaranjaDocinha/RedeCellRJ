@@ -171,6 +171,23 @@ exports.getInteractions = async (req, res) => {
   }
 };
 
+// @desc    Obter histórico de vendas de um cliente
+// @route   GET /api/customers/:id/sales-history
+// @access  Private
+exports.getCustomerSalesHistory = async (req, res) => {
+    const { id: customer_id } = req.params;
+    try {
+        const { rows } = await pool.query(
+            'SELECT * FROM sales WHERE customer_id = $1 ORDER BY sale_date DESC',
+            [customer_id]
+        );
+        res.json(rows);
+    } catch (error) {
+        console.error('Erro ao buscar histórico de vendas do cliente:', error);
+        res.status(500).json({ message: 'Erro interno ao buscar histórico de vendas.' });
+    }
+};
+
 // @desc    Deletar uma interação do cliente
 // @route   DELETE /api/customers/:customerId/interactions/:interactionId
 // @access  Private

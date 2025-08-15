@@ -23,6 +23,9 @@ router.post('/:id/interactions', [authenticateToken, authorize('customers:update
 router.get('/:id/interactions', [authenticateToken, authorize('customers:read')], customerController.getInteractions);
 router.delete('/:customerId/interactions/:interactionId', [authenticateToken, authorize('customers:update')], customerController.deleteInteraction);
 
+// Get sales history for a specific customer
+router.get('/:id/sales-history', [authenticateToken, authorize('customers:read')], customerController.getCustomerSalesHistory);
+
 // Nova rota para obter todas as interações de clientes
 router.get('/interactions', [authenticateToken, authorize('customers:read')], customerController.getAllCustomerInteractions);
 

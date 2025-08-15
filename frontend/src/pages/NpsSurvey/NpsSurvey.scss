@@ -1,0 +1,129 @@
+.nps-survey-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 56px); /* Adjust based on header height */
+  padding: 20px;
+
+  &.submitted {
+    /* Styles for the submitted state */
+    min-height: calc(100vh - 56px);
+  }
+}
+
+.nps-survey-card {
+  max-width: 700px;
+  width: 100%;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+
+  /* Dark Mode */
+  @media (prefers-color-scheme: dark) {
+    background-color: #2c2c2c;
+    color: #e0e0e0;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.nps-score-buttons-group {
+  .form-label {
+    font-weight: bold;
+    margin-bottom: 15px;
+    display: block;
+    text-align: center;
+  }
+
+  .nps-score-button {
+    flex: 1;
+    min-width: 40px;
+    height: 40px;
+    margin: 2px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f0f0f0;
+    color: #333;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: #e0e0e0;
+      border-color: #999;
+    }
+
+    &.selected {
+      background-color: #007bff;
+      color: white;
+      border-color: #007bff;
+      box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+    }
+
+    /* Dark Mode */
+    @media (prefers-color-scheme: dark) {
+      border-color: #555;
+      background-color: #3a3a3a;
+      color: #e0e0e0;
+
+      &:hover {
+        background-color: #4a4a4a;
+        border-color: #777;
+      }
+
+      &.selected {
+        background-color: #0056b3;
+        border-color: #0056b3;
+        box-shadow: 0 0 8px rgba(0, 86, 179, 0.5);
+      }
+    }
+  }
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+textarea.form-control {
+  min-height: 100px;
+}
+
+.btn-primary {
+  /* Ensure primary button styles are consistent */
+  background-color: #007bff;
+  border-color: #007bff;
+
+  &:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+  }
+
+  /* Dark Mode */
+  @media (prefers-color-scheme: dark) {
+    background-color: #0056b3;
+    border-color: #0056b3;
+
+    &:hover {
+      background-color: #003f80;
+      border-color: #003f80;
+    }
+  }
+}
+
+.is-invalid {
+  border-color: #dc3545 !important;
+}
+
+.invalid-feedback {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  font-size: 87.5%;
+  color: #dc3545;
+}

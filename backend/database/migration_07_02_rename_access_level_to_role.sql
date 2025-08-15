@@ -1,1 +1,1 @@
--- -- ALTER TABLE users RENAME COLUMN access_level TO role;
+ALTER TABLE users RENAME COLUMN access_level TO role;

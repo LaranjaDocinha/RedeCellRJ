@@ -1,18 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Form, FormGroup, Label, Input, Spinner, Alert } from 'reactstrap';
 import { Formik, Field, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
+import { z } from 'zod';
 import Select from 'react-select';
 
 import useProductStore from '../../../store/productStore';
 import useBranchStore from '../../../store/branchStore';
 
-const StockTransferSchema = Yup.object().shape({
-  product_variation_id: Yup.number().required('O produto é obrigatório.'),
-  quantity: Yup.number().min(1, 'A quantidade deve ser no mínimo 1.').required('A quantidade é obrigatória.'),
-  from_branch_id: Yup.number().required('A filial de origem é obrigatória.'),
-  to_branch_id: Yup.number().required('A filial de destino é obrigatória.'),
-  notes: Yup.string().max(500, 'As notas não podem exceder 500 caracteres.'),
+const stockTransferSchema = z.object({
+  product_variation_id: z.number({ required_error: 'O produto é obrigatório.' }),
+  quantity: z.preprocess(
+    (val) => parseFloat(String(val).replace(",", ".")),
+    z.number({ required_error: 'A quantidade é obrigatória.' }).min(1, 'A quantidade deve ser no mínimo 1.')
+  ),
+  from_branch_id: z.number({ required_error: 'A filial de origem é obrigatória.' }),
+  to_branch_id: z.number({ required_error: 'A filial de destino é obrigatória.' }),
+  notes: z.string().max(500, 'As notas não podem exceder 500 caracteres.').optional(),
 });
 
 const StockTransferFormModal = ({ isOpen, toggle, onSave }) => {
@@ -59,11 +62,21 @@ const StockTransferFormModal = ({ isOpen, toggle, onSave }) => {
     notes: '',
   };
 
+  const validate = (values) => {
+    try {
+      stockTransferSchema.parse(values);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return error.formErrors.fieldErrors;
+      }
+    }
+  };
+
   return (
     <Modal isOpen={isOpen} toggle={toggle} size="lg">
       <Formik
         initialValues={initialValues}
-        validationSchema={StockTransferSchema}
+        validate={validate}
         onSubmit={(values, { setSubmitting, resetForm }) => {
           onSave(values);
           setSubmitting(false);

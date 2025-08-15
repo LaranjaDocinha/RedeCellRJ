@@ -39,8 +39,6 @@ const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));
 const TechnicianKanban = lazy(() => import('./pages/TechnicianKanban'));
 const CustomerHubPage = lazy(() => import('./pages/CustomerHubPage'));
 const KanbanMetrics = lazy(() => import('./pages/KanbanMetrics'));
-const RolesAndPermissions = lazy(() => import('./pages/RolesAndPermissions'));
-const AuditLogs = lazy(() => import('./pages/AuditLogs'));
 const Leads = lazy(() => import('./pages/Leads'));
 const Expenses = lazy(() => import('./pages/Expenses'));
 const FinanceDashboard = lazy(() => import('./pages/Finance/FinanceDashboard'));
@@ -53,7 +51,7 @@ const AppointmentBookingPage = lazy(() => import('./pages/Appointments/Appointme
 const AppointmentManagementPage = lazy(() => import('./pages/Appointments/AppointmentManagementPage'));
 const MarketingCampaignsPage = lazy(() => import('./pages/Marketing/MarketingCampaignsPage'));
 const CampaignReportsPage = lazy(() => import('./pages/Marketing/CampaignReportsPage'));
-const NpsSurveyPage = lazy(() => import('./pages/NPS/NpsSurveyPage'));
+const NpsSurveyPage = lazy(() => import('./pages/NpsSurvey')); // Corrected path to the directory, which will resolve to index.jsx
 const NpsReportsPage = lazy(() => import('./pages/NPS/NpsReportsPage'));
 const WarrantyManagementPage = lazy(() => import('./pages/Warranty/WarrantyManagementPage'));
 const DeviceHistoryPage = lazy(() => import('./pages/DeviceHistory/DeviceHistoryPage'));
@@ -122,8 +120,6 @@ const router = createBrowserRouter([
           { path: 'technicians', element: <TechniciansPage />, handle: { title: 'Técnicos', icon: 'user-plus' } },
           { path: 'technician-kanban', element: <TechnicianKanban />, handle: { title: 'Kanban de Técnicos', icon: 'layout' } },
           { path: 'kanban-metrics', element: <KanbanMetrics />, handle: { title: 'Métricas do Kanban', icon: 'tachometer' } },
-          { path: 'roles-and-permissions', element: <RolesAndPermissions />, handle: { title: 'Cargos e Permissões', icon: 'shield-quarter' } },
-          { path: 'audit-logs', element: <AuditLogs />, handle: { title: 'Logs de Auditoria', icon: 'file-find' } },
           { path: 'leads', element: <Leads />, handle: { title: 'Leads', icon: 'user-voice' } },
           { path: 'expenses', element: <Expenses />, handle: { title: 'Despesas', icon: 'wallet' } },
           { path: 'finance-dashboard', element: <FinanceDashboard />, handle: { title: 'Dashboard Financeiro', icon: 'dollar-circle' } },

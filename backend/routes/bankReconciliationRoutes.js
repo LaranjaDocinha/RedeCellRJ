@@ -1,22 +1,71 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken, authorize } = require('../middleware/authMiddleware');
+const multer = require('multer');
+const path = require('path');
+const { param, body } = require('express-validator');
 const bankReconciliationController = require('../controllers/bankReconciliationController');
+const { authenticateToken, authorize } = require('../middleware/authMiddleware');
+const { validate } = require('../middleware/validationMiddleware');
 
-// Rotas para obter transações internas não conciliadas
-router.get('/unreconciled/sales', [authenticateToken, authorize('bank_reconciliation:read_internal_transactions')], bankReconciliationController.getUnreconciledSales);
-router.get('/unreconciled/expenses', [authenticateToken, authorize('bank_reconciliation:read_internal_transactions')], bankReconciliationController.getUnreconciledExpenses);
-router.get('/unreconciled/accounts-receivable', [authenticateToken, authorize('bank_reconciliation:read_internal_transactions')], bankReconciliationController.getUnreconciledAccountsReceivable);
-router.get('/unreconciled/accounts-payable', [authenticateToken, authorize('bank_reconciliation:read_internal_transactions')], bankReconciliationController.getUnreconciledAccountsPayable);
+// Configuração do Multer para upload de arquivos
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadPath = 'backend/uploads/statements/';
+    // Garante que o diretório exista
+    require('fs').mkdirSync(uploadPath, { recursive: true });
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
 
-// Rotas para Conciliação
-router.patch('/transactions/:id/reconcile', [authenticateToken, authorize('bank_reconciliation:reconcile')], bankReconciliationController.reconcileTransaction);
-router.patch('/transactions/:id/unreconcile', [authenticateToken, authorize('bank_reconciliation:reconcile')], bankReconciliationController.unreconcileTransaction);
+const upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    // Aceita apenas arquivos CSV
+    if (path.extname(file.originalname).toLowerCase() === '.csv') {
+      cb(null, true);
+    } else {
+      cb(new Error('Formato de arquivo inválido. Apenas CSV é permitido.'), false);
+    }
+  }
+});
 
-// Rota para Conciliação Automática
-router.post('/auto-reconcile', [authenticateToken, authorize('bank_reconciliation:reconcile')], bankReconciliationController.performAutomaticReconciliation);
+// Proteger todas as rotas
+router.use(authenticateToken);
 
-// Rota para Relatório de Conciliação
-router.get('/report', [authenticateToken, authorize('bank_reconciliation:read_report')], bankReconciliationController.getReconciliationReport);
+// Rota para upload de extrato
+router.post(
+  '/:accountId/upload',
+  authorize('finance:manage'),
+  param('accountId').isInt().withMessage('ID da conta bancária inválido.'),
+  validate,
+  upload.single('statement'), // 'statement' é o nome do campo no formulário
+  bankReconciliationController.uploadStatement
+);
+
+// Rota para obter transações não conciliadas
+router.get(
+  '/:accountId/unreconciled',
+  authorize('finance:manage'),
+  param('accountId').isInt().withMessage('ID da conta bancária inválido.'),
+  validate,
+  bankReconciliationController.getUnreconciledData
+);
+
+// Rota para conciliar transações
+router.post(
+  '/reconcile',
+  authorize('finance:manage'),
+  [
+    body('bankTransactionId').isInt().withMessage('ID da transação bancária inválido.'),
+    body('internalTransactionId').isInt().withMessage('ID da transação interna inválido.'),
+    body('internalTransactionType').isIn(['sale', 'expense']).withMessage('Tipo de transação interna inválido.'),
+  ],
+  validate,
+  bankReconciliationController.reconcileTransactions
+);
 
 module.exports = router;

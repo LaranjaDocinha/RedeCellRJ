@@ -1,24 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import PropTypes from 'prop-types';
+import { Container, Row, Col, Card, CardBody, CardTitle, Button, Badge, Spinner, Alert, Modal, ModalHeader, ModalBody } from 'reactstrap';
+import { NumericFormat } from 'react-number-format';
+import toast from 'react-hot-toast';
 
 import useApi from '../../hooks/useApi';
-import * as api from '../../helpers/api_helper';
 import AdvancedTable from '../../components/Common/AdvancedTable';
-import Button from '../../components/Common/Button';
 import ConfirmationModal from '../../components/Common/ConfirmationModal';
 import EmptyState from '../../components/Common/EmptyState';
+import Breadcrumbs from '../../components/Common/Breadcrumb';
+
+import ReceivableModal from './Receivables/components/ReceivableModal'; // Import ReceivableModal
 
 const AccountsReceivable = () => {
-  const { data: receivables, loading, error, request: fetchReceivables } = useApi(api.get);
+  document.title = 'Contas a Receber | PDV Web';
+
+  const [receivables, setReceivables] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentReceivable, setCurrentReceivable] = useState(null);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [receivableToDelete, setReceivableToDelete] = useState(null);
+  const [refreshList, setRefreshList] = useState(false); // State to trigger list refresh
+
+  const { request: fetchReceivablesApi, isLoading, error } = useApi('get');
+  const { request: deleteReceivableApi, isLoading: isDeleting } = useApi('delete');
+
+  const loadReceivables = useCallback(async () => {
+    try {
+      const response = await fetchReceivablesApi('/api/finance/receivables');
+      setReceivables(response || []);
+    } catch (err) {
+      toast.error('Falha ao carregar contas a receber.');
+    }
+  }, [fetchReceivablesApi]);
 
   useEffect(() => {
-    fetchReceivables('/api/finance/receivables');
-  }, [fetchReceivables]);
+    loadReceivables();
+  }, [loadReceivables, refreshList]); // Refresh when refreshList changes
 
   const handleAddEdit = (receivable = null) => {
     setCurrentReceivable(receivable);
@@ -32,10 +50,11 @@ const AccountsReceivable = () => {
 
   const confirmDelete = async () => {
     try {
-      await fetchReceivables(`/api/finance/receivables/${receivableToDelete.id}`, 'DELETE');
-      fetchReceivables('/api/finance/receivables'); // Re-fetch data
+      await deleteReceivableApi(`/api/finance/receivables/${receivableToDelete.id}`);
+      toast.success('Conta a receber excluída com sucesso!');
+      setRefreshList(prev => !prev); // Trigger list refresh
     } catch (err) {
-      console.error(err);
+      toast.error(err.message || 'Falha ao excluir conta a receber.');
     } finally {
       setIsConfirmationModalOpen(false);
       setReceivableToDelete(null);
@@ -47,22 +66,44 @@ const AccountsReceivable = () => {
     {
       header: 'Valor',
       accessorKey: 'amount',
-      cell: (info) => `R$ ${parseFloat(info.getValue()).toFixed(2)}`,
+      cell: (info) => formatCurrency(parseFloat(info.getValue())),
     },
     {
       header: 'Vencimento',
       accessorKey: 'dueDate',
-      cell: (info) => new Date(info.getValue()).toLocaleDateString(),
+      cell: (info) => new Date(info.getValue()).toLocaleDateString('pt-BR'),
     },
-    { header: 'Status', accessorKey: 'status' },
+    {
+      header: 'Status',
+      accessorKey: 'status',
+      cell: (info) => {
+        let color = 'secondary';
+        let text = 'Pendente';
+        if (info.getValue() === 'received') {
+          color = 'success';
+          text = 'Recebido';
+        } else {
+          const dueDate = new Date(info.row.original.dueDate);
+          dueDate.setHours(0, 0, 0, 0);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          if (dueDate < today) {
+            color = 'danger';
+            text = 'Atrasado';
+          }
+        }
+        return <Badge color={color}>{text}</Badge>;
+      },
+    },
     {
       header: 'Ações',
+      accessorKey: 'actions',
       cell: (info) => (
-        <div className='flex space-x-2'>
-          <Button size='sm' variant='secondary' onClick={() => handleAddEdit(info.row.original)}>
+        <div className='d-flex gap-2'>
+          <Button color='light' size='sm' onClick={() => handleAddEdit(info.row.original)}>
             Editar
           </Button>
-          <Button size='sm' variant='danger' onClick={() => handleDelete(info.row.original)}>
+          <Button color='light' size='sm' onClick={() => handleDelete(info.row.original)} disabled={isDeleting}>
             Excluir
           </Button>
         </div>
@@ -70,169 +111,77 @@ const AccountsReceivable = () => {
     },
   ];
 
-  if (loading) return <div>Carregando Contas a Receber...</div>;
-  if (error) return <div>Erro ao carregar contas a receber: {error.message}</div>;
-
   return (
     <motion.div
-      animate={{ opacity: 1, y: 0 }}
-      className='p-6'
+      className="accounts-receivable-page"
       initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <h1 className='text-2xl font-bold mb-4'>Contas a Receber</h1>
-      <Button className='mb-4' variant='primary' onClick={() => handleAddEdit()}>
-        Adicionar Conta a Receber
-      </Button>
+      <Container fluid className="p-4">
+        <Breadcrumbs breadcrumbItem='Contas a Receber' title='Finanças' />
 
-      {receivables && receivables.length === 0 ? (
-        <EmptyState message='Nenhuma conta a receber encontrada.' />
-      ) : (
-        <AdvancedTable
-          columns={columns}
-          data={receivables || []}
-          persistenceKey='accountsReceivableTable'
+        <Row>
+          <Col lg={12}>
+            <Card>
+              <CardBody>
+                <div className='d-flex justify-content-between align-items-center mb-4'>
+                  <CardTitle className='h4 mb-0'>Lista de Contas a Receber</CardTitle>
+                  <Button color='primary' onClick={() => handleAddEdit()}>
+                    <i className='bx bx-plus me-1'></i> Adicionar Conta a Receber
+                  </Button>
+                </div>
+
+                {isLoading ? (
+                  <div className="text-center"><Spinner /> Carregando contas a receber...</div>
+                ) : error ? (
+                  <Alert color="danger">Erro ao carregar contas a receber: {error.message}</Alert>
+                ) : receivables && receivables.length === 0 ? (
+                  <Alert color="info" className="text-center">Nenhuma conta a receber encontrada.</Alert>
+                ) : (
+                  <AdvancedTable
+                    columns={columns}
+                    data={receivables || []}
+                    persistenceKey='accountsReceivableTable'
+                  />
+                )}
+              </CardBody>
+            </Card>
+          </Col>
+        </Row>
+
+        <Modal isOpen={isModalOpen} toggle={() => setIsModalOpen(false)} centered size="lg">
+          <ModalHeader toggle={() => setIsModalOpen(false)}>
+            {currentReceivable ? 'Editar Conta a Receber' : 'Adicionar Nova Conta a Receber'}
+          </ModalHeader>
+          <ModalBody>
+            <ReceivableModal
+              receivable={currentReceivable}
+              onSuccess={() => {
+                setRefreshList(prev => !prev);
+                setIsModalOpen(false);
+              }}
+              onCancel={() => setIsModalOpen(false)}
+            />
+          </ModalBody>
+        </Modal>
+
+        <ConfirmationModal
+          isOpen={isConfirmationModalOpen}
+          message={`Tem certeza que deseja excluir a conta a receber "${receivableToDelete?.description}"?`}
+          title='Confirmar Exclusão'
+          onClose={() => setIsConfirmationModalOpen(false)}
+          onConfirm={confirmDelete}
         />
-      )}
-
-      {isModalOpen && (
-        <ReceivableModal
-          receivable={currentReceivable}
-          onClose={() => setIsModalOpen(false)}
-          onSave={() => {
-            fetchReceivables('/api/finance/receivables');
-            setIsModalOpen(false);
-          }}
-        />
-      )}
-
-      <ConfirmationModal
-        isOpen={isConfirmationModalOpen}
-        message={`Tem certeza que deseja excluir a conta a receber "${receivableToDelete?.description}"?`}
-        title='Confirmar Exclusão'
-        onClose={() => setIsConfirmationModalOpen(false)}
-        onConfirm={confirmDelete}
-      />
+      </Container>
     </motion.div>
   );
 };
 
-const ReceivableModal = ({ receivable, onClose, onSave }) => {
-  const [formData, setFormData] = useState(
-    receivable || { description: '', amount: '', dueDate: '', status: 'pending' },
-  );
-  const api = useApi();
+// Local definition of formatCurrency
+const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (receivable) {
-        await api.request(`/api/finance/receivables/${receivable.id}`, 'PUT', formData);
-      } else {
-        await api.request('/api/finance/receivables', 'POST', formData);
-      }
-      onSave();
-    } catch (err) {
-      console.error('Error saving receivable:', err);
-      alert('Erro ao salvar conta a receber.');
-    }
-  };
-
-  return (
-    <div className='fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50'>
-      <motion.div
-        animate={{ opacity: 1, scale: 1 }}
-        className='bg-white p-6 rounded-lg shadow-lg w-full max-w-md'
-        initial={{ opacity: 0, scale: 0.9 }}
-        transition={{ duration: 0.3 }}
-      >
-        <h2 className='text-xl font-bold mb-4'>
-          {receivable ? 'Editar' : 'Adicionar'} Conta a Receber
-        </h2>
-        <form onSubmit={handleSubmit}>
-          <div className='mb-4'>
-            <label className='block text-gray-700 text-sm font-bold mb-2' htmlFor='description'>
-              Descrição
-            </label>
-            <input
-              required
-              className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-              id='description'
-              name='description'
-              type='text'
-              value={formData.description}
-              onChange={handleChange}
-            />
-          </div>
-          <div className='mb-4'>
-            <label className='block text-gray-700 text-sm font-bold mb-2' htmlFor='amount'>
-              Valor
-            </label>
-            <input
-              required
-              className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-              id='amount'
-              name='amount'
-              step='0.01'
-              type='number'
-              value={formData.amount}
-              onChange={handleChange}
-            />
-          </div>
-          <div className='mb-4'>
-            <label className='block text-gray-700 text-sm font-bold mb-2' htmlFor='dueDate'>
-              Data de Vencimento
-            </label>
-            <input
-              required
-              className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-              id='dueDate'
-              name='dueDate'
-              type='date'
-              value={formData.dueDate.split('T')[0]}
-              onChange={handleChange}
-            />
-          </div>
-          <div className='mb-4'>
-            <label className='block text-gray-700 text-sm font-bold mb-2' htmlFor='status'>
-              Status
-            </label>
-            <select
-              required
-              className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
-              id='status'
-              name='status'
-              value={formData.status}
-              onChange={handleChange}
-            >
-              <option value='pending'>Pendente</option>
-              <option value='received'>Recebido</option>
-              <option value='overdue'>Atrasado</option>
-            </select>
-          </div>
-          <div className='flex justify-end space-x-4'>
-            <Button type='button' variant='secondary' onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button type='submit' variant='primary'>
-              Salvar
-            </Button>
-          </div>
-        </form>
-      </motion.div>
-    </div>
-  );
-};
-
-ReceivableModal.propTypes = {
-  receivable: PropTypes.object,
-  onClose: PropTypes.func.isRequired,
-  onSave: PropTypes.func.isRequired,
-};
+// Remove the old ReceivableModal component definition from here
+// const ReceivableModal = ({ receivable, onClose, onSave }) => { ... };
 
 export default AccountsReceivable;

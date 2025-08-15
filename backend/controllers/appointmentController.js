@@ -1,94 +1,115 @@
 const db = require('../db');
-const { logActivity } = require('../utils/activityLogger');
+const AppError = require('../utils/appError');
+const { validationResult } = require('express-validator');
 
-// Criar um novo agendamento
-exports.createAppointment = async (req, res) => {
-  const { customer_id, service_type, appointment_date_time, notes, technician_id } = req.body;
-  const user_id = req.user.id; // Assuming user_id from auth token
-
-  if (!customer_id || !service_type || !appointment_date_time) {
-    return res.status(400).json({ message: 'Dados do agendamento incompletos.' });
-  }
-
-  try {
-    const result = await db.query(
-      'INSERT INTO appointments (customer_id, service_type, appointment_date_time, notes, technician_id) VALUES ($1, $2, $3, $4, $5) RETURNING *;',
-      [customer_id, service_type, appointment_date_time, notes || null, technician_id || null]
-    );
-    const appointment = result.rows[0];
-
-    await logActivity(req.user.name, `Agendamento #${appointment.id} criado para o cliente ${customer_id}.`, 'appointment', appointment.id);
-
-    res.status(201).json(appointment);
-  } catch (error) {
-    console.error('Erro ao criar agendamento:', error);
-    res.status(500).json({ message: error.message || 'Erro interno do servidor' });
-  }
-};
-
-// Obter todos os agendamentos
-exports.getAllAppointments = async (req, res) => {
-  try {
-    const { rows } = await db.query('SELECT a.*, c.name as customer_name, t.name as technician_name FROM appointments a JOIN customers c ON a.customer_id = c.id LEFT JOIN technicians t ON a.technician_id = t.id ORDER BY appointment_date_time DESC');
-    res.json(rows);
-  } catch (error) {
-    console.error('Erro ao buscar agendamentos:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-};
-
-// Obter um agendamento por ID
-exports.getAppointmentById = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const { rows } = await db.query('SELECT a.*, c.name as customer_name, t.name as technician_name FROM appointments a JOIN customers c ON a.customer_id = c.id LEFT JOIN technicians t ON a.technician_id = t.id WHERE a.id = $1', [id]);
-    if (rows.length === 0) {
-      return res.status(404).json({ message: 'Agendamento não encontrado.' });
-    }
-    res.json(rows[0]);
-  } catch (error) {
-    console.error(`Erro ao buscar agendamento ${id}:`, error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-};
-
-// Atualizar um agendamento
-exports.updateAppointment = async (req, res) => {
-  const { id } = req.params;
-  const { customer_id, service_type, appointment_date_time, notes, status, technician_id } = req.body;
-
-  try {
-    const result = await db.query(
-      'UPDATE appointments SET customer_id = $1, service_type = $2, appointment_date_time = $3, notes = $4, status = $5, technician_id = $6, updated_at = NOW() WHERE id = $7 RETURNING *;',
-      [customer_id, service_type, appointment_date_time, notes || null, status, technician_id || null, id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Agendamento não encontrado.' });
+// Create a new appointment
+exports.createAppointment = async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return next(new AppError(errors.array().map(err => err.msg).join(', '), 400));
     }
 
-    await logActivity(req.user.name, `Agendamento #${id} atualizado.`, 'appointment', id);
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error(`Erro ao atualizar agendamento ${id}:`, error);
-    res.status(500).json({ message: error.message || 'Erro interno do servidor' });
-  }
+    const { customer_id, service_type, appointment_date_time, notes, status, technician_id } = req.body;
+
+    try {
+        const newAppointment = await db.query(
+            'INSERT INTO appointments (customer_id, service_type, appointment_date_time, notes, status, technician_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *'
+            ,
+            [customer_id, service_type, appointment_date_time, notes, status, technician_id]
+        );
+        res.status(201).json(newAppointment.rows[0]);
+    } catch (error) {
+        console.error('Error creating appointment:', error);
+        next(new AppError('Erro ao criar agendamento.', 500));
+    }
 };
 
-// Deletar um agendamento
-exports.deleteAppointment = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const { rowCount } = await db.query('DELETE FROM appointments WHERE id = $1', [id]);
+// Get all appointments
+exports.getAllAppointments = async (req, res, next) => {
+    try {
+        const appointments = await db.query('SELECT * FROM appointments ORDER BY appointment_date_time DESC');
+        res.status(200).json(appointments.rows);
+    } catch (error) {
+        console.error('Error fetching appointments:', error);
+        next(new AppError('Erro ao buscar agendamentos.', 500));
+    }
+};
 
-    if (rowCount === 0) {
-      return res.status(404).json({ message: 'Agendamento não encontrado.' });
+// Get a single appointment by ID
+exports.getAppointmentById = async (req, res, next) => {
+    const { id } = req.params;
+    try {
+        const appointment = await db.query('SELECT * FROM appointments WHERE id = $1', [id]);
+        if (appointment.rows.length === 0) {
+            return next(new AppError('Agendamento não encontrado.', 404));
+        }
+        res.status(200).json(appointment.rows[0]);
+    } catch (error) {
+        console.error('Error fetching appointment by ID:', error);
+        next(new AppError('Erro ao buscar agendamento.', 500));
+    }
+};
+
+// Update an appointment
+exports.updateAppointment = async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return next(new AppError(errors.array().map(err => err.msg).join(', '), 400));
     }
 
-    await logActivity(req.user.name, `Agendamento #${id} deletado.`, 'appointment', id);
-    res.status(204).send();
-  } catch (error) {
-    console.error(`Erro ao deletar agendamento ${id}:`, error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
+    const { id } = req.params;
+    const { service_type, appointment_date_time, notes, status, technician_id } = req.body;
+
+    try {
+        const updatedAppointment = await db.query(
+            'UPDATE appointments SET service_type = $1, appointment_date_time = $2, notes = $3, status = $4, technician_id = $5, updated_at = NOW() WHERE id = $6 RETURNING *'
+            ,
+            [service_type, appointment_date_time, notes, status, technician_id, id]
+        );
+        if (updatedAppointment.rows.length === 0) {
+            return next(new AppError('Agendamento não encontrado.', 404));
+        }
+        res.status(200).json(updatedAppointment.rows[0]);
+    } catch (error) {
+        console.error('Error updating appointment:', error);
+        next(new AppError('Erro ao atualizar agendamento.', 500));
+    }
+};
+
+// Delete an appointment
+exports.deleteAppointment = async (req, res, next) => {
+    const { id } = req.params;
+    try {
+        const deletedAppointment = await db.query('DELETE FROM appointments WHERE id = $1 RETURNING *'
+        , [id]);
+        if (deletedAppointment.rows.length === 0) {
+            return next(new AppError('Agendamento não encontrado.', 404));
+        }
+        res.status(204).send(); // No content for successful deletion
+    } catch (error) {
+        console.error('Error deleting appointment:', error);
+        next(new AppError('Erro ao excluir agendamento.', 500));
+    }
+};
+
+// Check technician availability
+exports.checkTechnicianAvailability = async (req, res, next) => {
+    const { technician_id, start_time, end_time } = req.query;
+
+    if (!technician_id || !start_time || !end_time) {
+        return next(new AppError('ID do técnico, hora de início e hora de término são obrigatórios.', 400));
+    }
+
+    try {
+        const overlappingAppointments = await db.query(
+            'SELECT * FROM appointments WHERE technician_id = $1 AND appointment_date_time < $3 AND (appointment_date_time + INTERVAL \'1 hour\') > $2', // Assuming 1 hour duration for simplicity
+            [technician_id, start_time, end_time]
+        );
+
+        const isAvailable = overlappingAppointments.rows.length === 0;
+        res.status(200).json({ isAvailable });
+    } catch (error) {
+        console.error('Error checking technician availability:', error);
+        next(new AppError('Erro ao verificar disponibilidade do técnico.', 500));
+    }
 };

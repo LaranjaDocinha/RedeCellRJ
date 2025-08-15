@@ -1,0 +1,119 @@
+.cash-flow-report-page {
+  padding: 20px;
+
+  .page-header {
+    margin-bottom: 20px;
+    h1 {
+      font-size: 2rem;
+      color: var(--text-color);
+    }
+  }
+
+  .card {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: var(--box-shadow);
+    transition: all 0.3s ease;
+
+    .card-title {
+      color: var(--text-color);
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+      &:hover {
+        background-color: var(--primary-hover-color);
+        border-color: var(--primary-hover-color);
+      }
+      i {
+        margin-right: 5px;
+      }
+    }
+
+    .text-center {
+      color: var(--text-color-muted);
+    }
+
+    .alert-info {
+      background-color: var(--alert-info-bg);
+      color: var(--alert-info-text);
+      border-color: var(--alert-info-border);
+    }
+
+    .table {
+      color: var(--text-color);
+      th, td {
+        border-top: 1px solid var(--border-color);
+      }
+      thead th {
+        background-color: var(--table-header-bg);
+        color: var(--table-header-text-color);
+      }
+      tbody tr:nth-of-type(odd) {
+        background-color: var(--table-odd-row-bg);
+      }
+      tbody tr:hover {
+        background-color: var(--table-hover-bg);
+      }
+    }
+
+    .text-success {
+      color: var(--success-color) !important;
+    }
+
+    .text-danger {
+      color: var(--danger-color) !important;
+    }
+
+    .text-warning {
+      color: var(--warning-color) !important;
+    }
+
+    .text-muted {
+      color: var(--text-color-muted) !important;
+    }
+  }
+
+  // Dark Mode Variables (assuming a global theme context sets these)
+  @media (prefers-color-scheme: dark) {
+    --text-color: #e0e0e0;
+    --text-color-muted: #b0b0b0;
+    --card-bg: #2c2c2c;
+    --border-color: #444;
+    --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    --primary-color: #0056b3;
+    --primary-hover-color: #003f80;
+    --alert-info-bg: #2a3a4a;
+    --alert-info-text: #9acfea;
+    --alert-info-border: #4a6a8a;
+    --table-header-bg: #3a3a3a;
+    --table-header-text-color: #e0e0e0;
+    --table-odd-row-bg: #333;
+    --table-hover-bg: #444;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+  }
+
+  // Light Mode Variables (default)
+  --text-color: #333;
+  --text-color-muted: #666;
+  --card-bg: #ffffff;
+  --border-color: #e0e0e0;
+  --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  --primary-color: #007bff;
+  --primary-hover-color: #0056b3;
+  --alert-info-bg: #d1ecf1;
+  --alert-info-text: #0c5460;
+  --alert-info-border: #bee5eb;
+  --table-header-bg: #f8f9fa;
+  --table-header-text-color: #333;
+  --table-odd-row-bg: #f2f2f2;
+  --table-hover-bg: #e9ecef;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+}

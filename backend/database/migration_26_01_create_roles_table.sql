@@ -1,9 +1,6 @@
 -- migration_26_01_create_roles_table.sql
 
--- Limpa a tabela se ela já existir para garantir que o script seja executável novamente
-DROP TABLE IF EXISTS roles CASCADE;
-
-CREATE TABLE roles (
+CREATE TABLE IF NOT EXISTS roles (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL,
     description TEXT,

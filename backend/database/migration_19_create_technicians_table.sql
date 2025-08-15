@@ -1,5 +1,5 @@
 -- Criar a tabela de técnicos
-CREATE TABLE technicians (
+CREATE TABLE IF NOT EXISTS technicians (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     phone VARCHAR(255),

@@ -1,157 +1,137 @@
-import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, CardBody, CardTitle, Button, Spinner, Alert, ListGroup, ListGroupItem, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
-import useChecklistStore from '../store/checklistStore';
-import ChecklistTemplateForm from '../components/checklists/ChecklistTemplateForm'; // Import the real form
-import { Edit, Trash2 } from 'react-feather';
-
-// Real list component
-const ChecklistTemplateList = ({ templates, onEdit, onDelete }) => (
-  <ListGroup flush>
-    {templates.map(t => (
-      <ListGroupItem key={t.id} className="d-flex justify-content-between align-items-center">
-        <div>
-          <h6 className="mb-0">{t.name}</h6>
-          <small className="text-muted">{t.items.length} itens | Categoria: {t.category || 'N/A'}</small>
-        </div>
-        <div>
-          <Button color="light" size="sm" className="me-2" onClick={() => onEdit(t)}><Edit size={14} /></Button>
-          <Button color="danger" outline size="sm" onClick={() => onDelete(t.id)}><Trash2 size={14} /></Button>
-        </div>
-      </ListGroupItem>
-    ))}
-  </ListGroup>
-);
-
-// Real confirmation modal
-const ConfirmationModal = ({ isOpen, toggle, onConfirm, title, children }) => (
-    <Modal isOpen={isOpen} toggle={toggle}>
-        <ModalHeader toggle={toggle}>{title}</ModalHeader>
-        <ModalBody>{children}</ModalBody>
-        <ModalFooter>
-            <Button color="light" onClick={toggle}>Cancelar</Button>
-            <Button color="danger" onClick={onConfirm}>Confirmar Exclusão</Button>
-        </ModalFooter>
-    </Modal>
-);
+import React, { useState, useEffect } from 'react';
+import StandardModal from '../components/Common/StandardModal'; // Assuming StandardModal is in components/Common
+import { useForm } from 'react-hook-form'; // Assuming react-hook-form is used for forms
+import './ChecklistTemplatesPage.scss'; // For page-specific styling
 
 const ChecklistTemplatesPage = () => {
-  const {
-    templates,
-    loading,
-    error,
-    fetchTemplates,
-    createTemplate,
-    updateTemplate,
-    deleteTemplate
-  } = useChecklistStore();
+    const [templates, setTemplates] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedTemplate, setSelectedTemplate] = useState(null); // For editing or viewing details
 
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [templateToDelete, setTemplateToDelete] = useState(null);
+    // Dummy data for now, replace with API calls later
+    useEffect(() => {
+        setTemplates([
+            { id: 1, name: 'Checklist de Entrada - Celular', description: 'Verificação inicial de celulares.', category: 'Celular' },
+            { id: 2, name: 'Checklist de Saída - Notebook', description: 'Verificação final de notebooks.', category: 'Notebook' },
+            { id: 3, name: 'Checklist de Limpeza', description: 'Checklist para limpeza de equipamentos.', category: 'Geral' },
+        ]);
+    }, []);
 
-  useEffect(() => {
-    fetchTemplates();
-  }, [fetchTemplates]);
+    const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm();
 
-  const toggleFormModal = () => setIsFormModalOpen(!isFormModalOpen);
-  const toggleConfirmModal = () => setIsConfirmModalOpen(!isConfirmModalOpen);
+    const handleAddTemplate = () => {
+        setSelectedTemplate(null);
+        reset();
+        setIsModalOpen(true);
+    };
 
-  const handleCreate = () => {
-    setSelectedTemplate(null);
-    toggleFormModal();
-  };
+    const handleEditTemplate = (template) => {
+        setSelectedTemplate(template);
+        setValue('name', template.name);
+        setValue('description', template.description);
+        setValue('category', template.category);
+        setIsModalOpen(true);
+    };
 
-  const handleEdit = (template) => {
-    setSelectedTemplate(template);
-    toggleFormModal();
-  };
-
-  const handleDeleteRequest = (id) => {
-    setTemplateToDelete(id);
-    toggleConfirmModal();
-  };
-
-  const handleConfirmDelete = async () => {
-    if (templateToDelete) {
-      try {
-        await deleteTemplate(templateToDelete);
-      } catch (e) {
-        // error is already set in the store, the Alert component will show it
-      }
-    }
-    toggleConfirmModal();
-  };
-
-  const handleSave = async (values) => {
-    try {
-        if (selectedTemplate) {
-            await updateTemplate(selectedTemplate.id, values);
-        } else {
-            await createTemplate(values);
+    const handleDeleteTemplate = (id) => {
+        if (window.confirm('Tem certeza que deseja excluir este template?')) {
+            // Implement API call to delete template
+            setTemplates(templates.filter(t => t.id !== id)); // Optimistic update
         }
-        toggleFormModal();
-    } catch (e) {
-        // error is handled in the store, but we might want to keep the modal open on failure
-        // for now, we close it regardless.
-        toggleFormModal();
-    }
-  };
+    };
 
-  return (
-    <Container fluid className="p-4">
-      <Row>
-        <Col>
-          <Card>
-            <CardBody>
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <CardTitle tag="h5" className="mb-0">Gerenciar Templates de Checklist</CardTitle>
-                <Button color="success" onClick={handleCreate}>Criar Novo Template</Button>
-              </div>
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setSelectedTemplate(null);
+        reset();
+    };
 
-              {error && <Alert color="danger">Erro: {error}</Alert>}
+    const onSubmit = (data) => {
+        if (selectedTemplate) {
+            // Update existing template
+            setTemplates(templates.map(t => t.id === selectedTemplate.id ? { ...t, ...data } : t));
+        } else {
+            // Add new template
+            setTemplates([...templates, { id: templates.length + 1, ...data }]);
+        }
+        handleCloseModal();
+    };
 
-              {loading && !templates.length ? (
-                <div className="text-center p-5">
-                  <Spinner />
-                  <p className="mt-2">Carregando templates...</p>
-                </div>
-              ) : templates.length === 0 && !loading ? (
-                <div className="text-center p-5">
-                    <p>Nenhum template de checklist encontrado.</p>
-                    <Button color="primary" onClick={handleCreate}>Crie o primeiro!</Button>
-                </div>
-              ) : (
-                <ChecklistTemplateList
-                  templates={templates}
-                  onEdit={handleEdit}
-                  onDelete={handleDeleteRequest}
-                />
-              )}
-            </CardBody>
-          </Card>
-        </Col>
-      </Row>
+    return (
+        <div className="checklist-templates-page">
+            <div className="page-header">
+                <h1>Gerenciador de Templates de Checklist</h1>
+                <button className="btn btn-primary" onClick={handleAddTemplate}>Adicionar Novo Template</button>
+            </div>
 
-      {isFormModalOpen && 
-        <ChecklistTemplateForm 
-            isOpen={isFormModalOpen} 
-            toggle={toggleFormModal} 
-            template={selectedTemplate} 
-            onSave={handleSave} 
-        />
-      }
-      <ConfirmationModal 
-        isOpen={isConfirmModalOpen} 
-        toggle={toggleConfirmModal} 
-        onConfirm={handleConfirmDelete}
-        title="Confirmar Exclusão"
-      >
-        <p>Você tem certeza que deseja excluir este template?</p>
-        <p>Esta ação não poderá ser desfeita.</p>
-      </ConfirmationModal>
-    </Container>
-  );
+            <div className="templates-list">
+                {templates.length === 0 ? (
+                    <p className="empty-state">Nenhum template de checklist encontrado.</p>
+                ) : (
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Descrição</th>
+                                <th>Categoria</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {templates.map(template => (
+                                <tr key={template.id}>
+                                    <td>{template.name}</td>
+                                    <td>{template.description}</td>
+                                    <td>{template.category}</td>
+                                    <td>
+                                        <button className="btn btn-sm btn-info" onClick={() => handleEditTemplate(template)}>Editar</button>
+                                        <button className="btn btn-sm btn-danger" onClick={() => handleDeleteTemplate(template.id)}>Excluir</button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
+
+            <StandardModal
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+                title={selectedTemplate ? 'Editar Template de Checklist' : 'Adicionar Novo Template de Checklist'}
+            >
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <div className="form-group">
+                        <label htmlFor="name">Nome:</label>
+                        <input
+                            type="text"
+                            id="name"
+                            {...register('name', { required: 'Nome é obrigatório' })}
+                        />
+                        {errors.name && <span className="error-message">{errors.name.message}</span>}
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="description">Descrição:</label>
+                        <textarea
+                            id="description"
+                            {...register('description')}
+                        ></textarea>
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="category">Categoria:</label>
+                        <input
+                            type="text"
+                            id="category"
+                            {...register('category')}
+                        />
+                    </div>
+                    <div className="modal-actions">
+                        <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Cancelar</button>
+                        <button type="submit" className="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </StandardModal>
+        </div>
+    );
 };
 
 export default ChecklistTemplatesPage;

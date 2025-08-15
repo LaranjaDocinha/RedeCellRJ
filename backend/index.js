@@ -8,6 +8,7 @@ console.log('JWT_SECRET:', process.env.JWT_SECRET ? '*****' : 'Not Set'); // Nã
 // console.log('DB_PASSWORD:', process.env.DB_PASSWORD ? '*****' : 'Not Set'); // Não logar a senha em produção
 
 const express = require('express');
+const cors = require('cors'); // Importa o pacote cors
 const { query, getClient, redisClient } = require('./db');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -35,6 +36,8 @@ const technicianRoutes = require('./routes/technicianRoutes');
 const searchRoutes = require('./routes/searchRoutes');
 const roleRoutes = require('./routes/roleRoutes');
 const leadRoutes = require('./routes/leadRoutes');
+const customerInteractionRoutes = require('./routes/customerInteractionRoutes');
+const checklistTemplateRoutes = require('./routes/checklistTemplateRoutes');
 const checklistRoutes = require('./routes/checklistRoutes');
 const stockTransferRoutes = require('./routes/stockTransferRoutes');
 const usedProductRoutes = require('./routes/usedProductRoutes');
@@ -71,6 +74,14 @@ const loginSettingsRoutes = require('./routes/loginSettingsRoutes');
 //   tracesSampleRate: 1.0,
 // });
 
+// Swagger/OpenAPI setup
+// Swagger/OpenAPI setup
+// Swagger/OpenAPI setup
+// Swagger/OpenAPI setup
+// Swagger/OpenAPI setup
+// Swagger/OpenAPI setup
+// Swagger/OpenAPI setup
+// Swagger/OpenAPI setup
 // Swagger/OpenAPI setup
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
@@ -114,6 +125,12 @@ const swaggerOptions = {
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 
+
+
+
+
+
+
 const app = express();
 const port = 5000;
 
@@ -128,24 +145,43 @@ const limiter = rateLimit({
 });
 app.use(limiter); // Aplica o limitador de requisições a todas as rotas
 
-// Middleware CORS manual
-app.use((req, res, next) => {
-  const allowedOrigins = ['http://localhost:3001', 'http://localhost:3000', 'http://localhost:5173'];
-  const origin = req.headers.origin;
+// Configuração do CORS
+const corsOptions = {
+  origin: (origin, callback) => {
+    const allowedOrigins = ['http://localhost:3001', 'http://localhost:3000', 'http://localhost:5173'];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  allowedHeaders: 'Content-Type, Authorization',
+  credentials: true,
+  optionsSuccessStatus: 204 // Para requisições preflight
+};
+app.use(cors(corsOptions));
 
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', true);
-
-  // Lida com requisições preflight (OPTIONS)
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
-  }
-  next();
-});
+// Habilita o pre-flight para todas as rotas
+// Habilita o pre-flight para todas as rotas
+// // Habilita o pre-flight para todas as rotas
+// // Habilita o pre-flight para todas as rotas
+// // Habilita o pre-flight para todas as rotas
+// // Habilita o pre-flight para todas as rotas
+// // Habilita o pre-flight para todas as rotas
+// // Habilita o pre-flight para todas as rotas
+// // Habilita o pre-flight para todas as rotas
+// // Habilita o pre-flight para todas as rotas
+// // Habilita o pre-flight para todas as rotas
+// // Habilita o pre-flight para todas as rotas
+// // Habilita o pre-flight para todas as rotas
+// // Habilita o pre-flight para todas as rotas
+// // Habilita o pre-flight para todas as rotas
+// // Habilita o pre-flight para todas as rotas
+// // Habilita o pre-flight para todas as rotas
+// // Habilita o pre-flight para todas as rotas
+// // Habilita o pre-flight para todas as rotas
+// app.options('*', cors(corsOptions));
 
 app.use(express.json());
 
@@ -273,6 +309,29 @@ app.get('/apply-migrations', async (req, res) => {
 });
 
 // app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+// app.use routes
+
+// app.use routes
 app.use('/api/customers', customerRoutes);
 app.use('/api/products', productRoutes); // Use product routes
 app.use('/api/repairs', repairRoutes);
@@ -292,6 +351,8 @@ app.use('/api/technicians', technicianRoutes); // Use technician routes
 app.use('/api/search', searchRoutes); // Use search routes
 app.use('/api/roles', roleRoutes); // Use role routes
 app.use('/api/leads', leadRoutes); // Use lead routes
+app.use('/api/customer-interactions', customerInteractionRoutes); // Use customer interaction routes
+app.use('/api/checklist-templates', checklistTemplateRoutes); // Use checklist template routes
 app.use('/api/checklists', checklistRoutes); // Use checklist routes
 app.use('/api/stock/transfers', stockTransferRoutes); // Use stock transfer routes
 app.use('/api/used-products', usedProductRoutes); // Use used products routes
@@ -299,6 +360,7 @@ app.use('/api/gift-cards', giftCardRoutes); // Use gift card routes
 app.use('/api/quotations', quotationRoutes); // Use quotation routes
 app.use('/api/appointments', appointmentRoutes); // Use appointment routes
 app.use('/api/marketing', marketingRoutes); // Use marketing routes
+app.use('/api/nps-surveys', npsRoutes); // Use NPS routes
 app.use('/api/nps', npsRoutes); // Use NPS routes
 app.use('/api/commissions', commissionRoutes); // Use commission routes
 app.use('/api/commission-rules', commissionRuleRoutes); // Use commission rule routes // New use
@@ -308,7 +370,10 @@ app.use('/api/bank-accounts', bankAccountRoutes); // Use bank account routes // 
 app.use('/api/calendar', calendarRoutes); // Use calendar routes
 app.use('/api/expenses', expenseRoutes); // Use expense routes
 app.use('/api/branches', branchRoutes); // Use branch routes
-app.use('/api/settings', loginSettingsRoutes); // Use login settings routes
+app.use('/api/settings', loginSettingsRoutes); // Use login settings routes;
+
+// Serve Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Serve Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));

@@ -1,7 +1,7 @@
 -- Adiciona campos de fidelidade à tabela customers
 ALTER TABLE customers
-ADD COLUMN loyalty_points INTEGER DEFAULT 0,
-ADD COLUMN last_loyalty_update TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+ADD COLUMN IF NOT EXISTS loyalty_points INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS last_loyalty_update TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 
 -- Cria a tabela loyalty_transactions para registrar o histórico de pontos de fidelidade
 CREATE TABLE IF NOT EXISTS loyalty_transactions (

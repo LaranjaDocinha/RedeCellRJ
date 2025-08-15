@@ -1,291 +1,192 @@
-const db = require('../db');
-const { logActivity } = require('../utils/activityLogger');
+const pool = require('../db');
+const { AppError } = require('../utils/appError');
 
-// Criar uma nova projeção de fluxo de caixa
-exports.createCashFlowProjection = async (req, res) => {
-  const { projection_date, projected_inflow, projected_outflow, notes } = req.body;
+// ... (funções CRUD de projeções que já implementamos)
 
-  if (!projection_date || projected_inflow === undefined || projected_outflow === undefined) {
-    return res.status(400).json({ message: 'Dados da projeção incompletos.' });
-  }
-
+// @desc    Obter todas as projeções de fluxo de caixa
+// @route   GET /api/cashflow/projections
+// @access  Private
+exports.getAllProjections = async (req, res, next) => {
   try {
-    const result = await db.query(
-      'INSERT INTO cash_flow_projections (projection_date, projected_inflow, projected_outflow, notes) VALUES ($1, $2, $3, $4) RETURNING *;',
-      [projection_date, projected_inflow, projected_outflow, notes || null]
+    const { page = 1, limit = 10, type, startDate, endDate } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = 'SELECT * FROM cash_flow_projections';
+    const queryParams = [];
+    const whereClauses = [];
+
+    if (type) {
+      queryParams.push(type);
+      whereClauses.push(`type = $${queryParams.length}`);
+    }
+    if (startDate) {
+      queryParams.push(startDate);
+      whereClauses.push(`projection_date >= $${queryParams.length}`);
+    }
+    if (endDate) {
+      queryParams.push(endDate);
+      whereClauses.push(`projection_date <= $${queryParams.length}`);
+    }
+
+    if (whereClauses.length > 0) {
+      query += ' WHERE ' + whereClauses.join(' AND ');
+    }
+
+    query += ' ORDER BY projection_date DESC, created_at DESC';
+    queryParams.push(limit, offset);
+    query += ` LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}`;
+
+    const { rows } = await pool.query(query, queryParams);
+    
+    let countQuery = 'SELECT COUNT(*) FROM cash_flow_projections';
+    if (whereClauses.length > 0) {
+      countQuery += ' WHERE ' + whereClauses.join(' AND ');
+    }
+    const totalResult = await pool.query(countQuery, queryParams.slice(0, -2));
+    const total = parseInt(totalResult.rows[0].count, 10);
+
+    res.status(200).json({
+      projections: rows,
+      total,
+      page: parseInt(page, 10),
+      pages: Math.ceil(total / limit)
+    });
+  } catch (error) {
+    next(new AppError('Erro ao buscar projeções de fluxo de caixa.', 500));
+  }
+};
+
+// @desc    Criar uma nova projeção
+// @route   POST /api/cashflow/projections
+// @access  Private
+exports.createProjection = async (req, res, next) => {
+  try {
+    const { description, amount, type, projection_date, notes } = req.body;
+    const userId = req.user.id;
+    const branchId = req.user.branch_id;
+
+    const { rows } = await pool.query(
+      'INSERT INTO cash_flow_projections (description, amount, type, projection_date, notes, user_id, branch_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [description, amount, type, projection_date, notes, userId, branchId]
     );
-    const projection = result.rows[0];
 
-    await logActivity(req.user.name, `Projeção de fluxo de caixa para ${projection_date} criada.`, 'cash_flow_projection', projection.id);
-
-    res.status(201).json(projection);
+    res.status(201).json({ 
+      message: 'Projeção criada com sucesso!',
+      projection: rows[0]
+    });
   } catch (error) {
-    console.error('Erro ao criar projeção de fluxo de caixa:', error);
-    res.status(500).json({ message: error.message || 'Erro interno do servidor' });
+    next(new AppError('Erro ao criar projeção.', 500));
   }
 };
 
-// Obter todas as projeções de fluxo de caixa
-exports.getAllCashFlowProjections = async (req, res) => {
+// @desc    Atualizar uma projeção
+// @route   PUT /api/cashflow/projections/:id
+// @access  Private
+exports.updateProjection = async (req, res, next) => {
   try {
-    const { rows } = await db.query('SELECT * FROM cash_flow_projections ORDER BY projection_date DESC');
-    res.json(rows);
-  } catch (error) {
-    console.error('Erro ao buscar projeções de fluxo de caixa:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-};
+    const { id } = req.params;
+    const { description, amount, type, projection_date, notes } = req.body;
 
-// Obter uma projeção de fluxo de caixa por ID
-exports.getCashFlowProjectionById = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const { rows } = await db.query('SELECT * FROM cash_flow_projections WHERE id = $1', [id]);
+    const { rows } = await pool.query(
+      'UPDATE cash_flow_projections SET description = $1, amount = $2, type = $3, projection_date = $4, notes = $5, updated_at = NOW() WHERE id = $6 RETURNING *',
+      [description, amount, type, projection_date, notes, id]
+    );
+
     if (rows.length === 0) {
-      return res.status(404).json({ message: 'Projeção de fluxo de caixa não encontrada.' });
+      return next(new AppError('Projeção não encontrada para atualização.', 404));
     }
-    res.json(rows[0]);
+
+    res.status(200).json({
+      message: 'Projeção atualizada com sucesso!',
+      projection: rows[0]
+    });
   } catch (error) {
-    console.error(`Erro ao buscar projeção de fluxo de caixa ${id}:`, error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    next(new AppError('Erro ao atualizar projeção.', 500));
   }
 };
 
-// Atualizar uma projeção de fluxo de caixa
-exports.updateCashFlowProjection = async (req, res) => {
-  const { id } = req.params;
-  const { projection_date, projected_inflow, projected_outflow, notes } = req.body;
-
+// @desc    Deletar uma projeção
+// @route   DELETE /api/cashflow/projections/:id
+// @access  Private
+exports.deleteProjection = async (req, res, next) => {
   try {
-    const result = await db.query(
-      'UPDATE cash_flow_projections SET projection_date = $1, projected_inflow = $2, projected_outflow = $3, notes = $4, updated_at = NOW() WHERE id = $5 RETURNING *;',
-      [projection_date, projected_inflow, projected_outflow, notes || null, id]
-    );
+    const { id } = req.params;
+    const result = await pool.query('DELETE FROM cash_flow_projections WHERE id = $1', [id]);
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Projeção de fluxo de caixa não encontrada.' });
+    if (result.rowCount === 0) {
+      return next(new AppError('Projeção não encontrada para exclusão.', 404));
     }
 
-    await logActivity(req.user.name, `Projeção de fluxo de caixa #${id} atualizada.`, 'cash_flow_projection', id);
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error(`Erro ao atualizar projeção de fluxo de caixa ${id}:`, error);
-    res.status(500).json({ message: error.message || 'Erro interno do servidor' });
-  }
-};
-
-// Deletar uma projeção de fluxo de caixa
-exports.deleteCashFlowProjection = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const { rowCount } = await db.query('DELETE FROM cash_flow_projections WHERE id = $1', [id]);
-
-    if (rowCount === 0) {
-      return res.status(404).json({ message: 'Projeção de fluxo de caixa não encontrada.' });
-    }
-
-    await logActivity(req.user.name, `Projeção de fluxo de caixa #${id} deletada.`, 'cash_flow_projection', id);
     res.status(204).send();
   } catch (error) {
-    console.error(`Erro ao deletar projeção de fluxo de caixa ${id}:`, error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    next(new AppError('Erro ao deletar projeção.', 500));
   }
 };
 
-// Gerar relatório de fluxo de caixa (Previsto vs. Realizado)
-exports.getCashFlowReport = async (req, res) => {
-  const { start_date, end_date } = req.query;
 
-  if (!start_date || !end_date) {
-    return res.status(400).json({ message: 'Datas de início e fim são obrigatórias.' });
+// @desc    Gerar relatório de fluxo de caixa
+// @route   GET /api/cashflow/report
+// @access  Private
+exports.getCashFlowReport = async (req, res, next) => {
+  const { startDate, endDate } = req.query;
+
+  if (!startDate || !endDate) {
+    return next(new AppError('As datas de início e fim são obrigatórias.', 400));
   }
 
   try {
-    const [
-      projectionsResult,
-      actualInflowSalesResult,
-      actualInflowARResult,
-      actualOutflowExpensesResult,
-      actualOutflowAPResult
-    ] = await Promise.all([
-      // 1. Obter projeções
-      db.query(
-        'SELECT projection_date, projected_inflow, projected_outflow FROM cash_flow_projections WHERE projection_date >= $1 AND projection_date <= $2 ORDER BY projection_date;',
-        [start_date, end_date]
-      ),
-      // 2. Obter entradas reais (vendas)
-      db.query(
-        'SELECT sale_date::date as date, SUM(total_amount) as amount FROM sales WHERE sale_date >= $1 AND sale_date <= $2 GROUP BY sale_date::date ORDER BY sale_date::date;',
-        [start_date, end_date]
-      ),
-      // 3. Obter entradas reais (contas a receber)
-      db.query(
-        'SELECT due_date::date as date, SUM(amount) as amount FROM accounts_receivable WHERE status = \'paid\' AND payment_date >= $1 AND payment_date <= $2 GROUP BY due_date::date ORDER BY due_date::date;',
-        [start_date, end_date]
-      ),
-      // 4. Obter saídas reais (compras/despesas)
-      db.query(
-        'SELECT expense_date::date as date, SUM(amount) as amount FROM expenses WHERE expense_date >= $1 AND expense_date <= $2 GROUP BY expense_date::date ORDER BY expense_date::date;',
-        [start_date, end_date]
-      ),
-      // 5. Obter saídas reais (contas a pagar)
-      db.query(
-        'SELECT due_date::date as date, SUM(amount) as amount FROM accounts_payable WHERE status = \'paid\' AND payment_date >= $1 AND payment_date <= $2 GROUP BY due_date::date ORDER BY due_date::date;',
-        [start_date, end_date]
-      )
-    ]);
+    // 1. Calcular o saldo inicial (soma de tudo antes da data de início)
+    const initialBalanceQuery = `
+      SELECT 
+        (SELECT COALESCE(SUM(total_amount), 0) FROM sales WHERE sale_date < $1) - 
+        (SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE expense_date < $1) as balance
+    `;
+    const initialBalanceResult = await pool.query(initialBalanceQuery, [startDate]);
+    let currentBalance = parseFloat(initialBalanceResult.rows[0].balance);
 
-    const projections = projectionsResult.rows;
-    const actualInflowSales = actualInflowSalesResult.rows;
-    const actualInflowAR = actualInflowARResult.rows;
-    const actualOutflowExpenses = actualOutflowExpensesResult.rows;
-    const actualOutflowAP = actualOutflowAPResult.rows;
+    // 2. Obter todas as transações (reais e projetadas) no período
+    const transactionsQuery = `
+      SELECT description, sale_date as date, total_amount as amount, 'inflow' as type, 'Venda' as category FROM sales WHERE sale_date BETWEEN $1 AND $2
+      UNION ALL
+      SELECT description, expense_date as date, amount, 'outflow' as type, category FROM expenses WHERE expense_date BETWEEN $1 AND $2
+      UNION ALL
+      SELECT description, projection_date as date, amount, type, 'Projeção' as category FROM cash_flow_projections WHERE projection_date BETWEEN $1 AND $2
+      ORDER BY date ASC
+    `;
+    const transactionsResult = await pool.query(transactionsQuery, [startDate, endDate]);
+    const transactions = transactionsResult.rows;
 
-    // Consolidar dados por data
-    const reportData = {};
+    // 3. Processar transações para criar um extrato diário
+    const dailyBreakdown = {};
 
-    const addData = (source, type) => {
-      source.forEach(row => {
-        const date = row.date.toISOString().split('T')[0];
-        if (!reportData[date]) {
-          reportData[date] = {
-            date: date,
-            projected_inflow: 0,
-            projected_outflow: 0,
-            actual_inflow: 0,
-            actual_outflow: 0,
-          };
-        }
-        if (type === 'projected_inflow') reportData[date].projected_inflow += parseFloat(row.projected_inflow);
-        if (type === 'projected_outflow') reportData[date].projected_outflow += parseFloat(row.projected_outflow);
-        if (type === 'actual_inflow') reportData[date].actual_inflow += parseFloat(row.amount);
-        if (type === 'actual_outflow') reportData[date].actual_outflow += parseFloat(row.amount);
-      });
-    };
-
-    addData(projections, 'projected_inflow');
-    addData(projections, 'projected_outflow');
-    addData(actualInflowSales, 'actual_inflow');
-    addData(actualInflowAR, 'actual_inflow');
-    addData(actualOutflowExpenses, 'actual_outflow');
-    addData(actualOutflowAP, 'actual_outflow');
-
-    const sortedReport = Object.values(reportData).sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    res.json(sortedReport);
-  } catch (error) {
-    console.error('Erro ao gerar relatório de fluxo de caixa:', error);
-    res.status(500).json({ message: error.message || 'Erro interno do servidor' });
-  }
-};
-
-// Gerar relatório de fluxo de caixa por categoria
-exports.getCashFlowReportByCategory = async (req, res) => {
-  const { start_date, end_date, category_type } = req.query; // category_type can be 'inflow', 'outflow', or undefined
-
-  if (!start_date || !end_date) {
-    return res.status(400).json({ message: 'Datas de início e fim são obrigatórias.' });
-  }
-
-  try {
-    const reportData = {};
-
-    // Helper to add data to reportData
-    const addData = (date, category, type, amount) => {
-      const dateKey = date.toISOString().split('T')[0];
-      if (!reportData[dateKey]) {
-        reportData[dateKey] = { date: dateKey, categories: {} };
+    transactions.forEach(t => {
+      const date = new Date(t.date).toISOString().split('T')[0];
+      if (!dailyBreakdown[date]) {
+        dailyBreakdown[date] = { date, inflows: 0, outflows: 0, transactions: [] };
       }
-      if (!reportData[dateKey].categories[category]) {
-        reportData[dateKey].categories[category] = { inflow: 0, outflow: 0 };
+      if (t.type === 'inflow') {
+        dailyBreakdown[date].inflows += parseFloat(t.amount);
+      } else {
+        dailyBreakdown[date].outflows += parseFloat(t.amount);
       }
-      reportData[dateKey].categories[category][type] += parseFloat(amount);
-    };
-
-    const queries = [];
-
-    // 1. Obter entradas reais (vendas) por categoria
-    if (!category_type || category_type === 'inflow') {
-      queries.push(db.query(
-        `SELECT
-          s.sale_date::date as date,
-          c.name as category,
-          SUM(si.quantity * si.unit_price) as amount
-        FROM sales s
-        JOIN sale_items si ON s.id = si.sale_id
-        JOIN product_variations pv ON si.variation_id = pv.id
-        JOIN products p ON pv.product_id = p.id
-        JOIN categories c ON p.category_id = c.id
-        WHERE s.sale_date >= $1 AND s.sale_date <= $2
-        GROUP BY s.sale_date::date, c.name
-        ORDER BY s.sale_date::date, c.name;`,
-        [start_date, end_date]
-      ).then(result => ({ type: 'sales', rows: result.rows })));
-    }
-
-    // 2. Obter saídas reais (despesas) por categoria
-    if (!category_type || category_type === 'outflow') {
-      queries.push(db.query(
-        `SELECT
-          expense_date::date as date,
-          category,
-          SUM(amount) as amount
-        FROM expenses
-        WHERE expense_date >= $1 AND expense_date <= $2
-        GROUP BY expense_date::date, category
-        ORDER BY expense_date::date, category;`,
-        [start_date, end_date]
-      ).then(result => ({ type: 'expenses', rows: result.rows })));
-    }
-
-    // 3. Obter entradas reais (contas a receber) - Não categorizadas
-    if (!category_type || category_type === 'inflow') {
-      queries.push(db.query(
-        `SELECT
-          due_date::date as date,
-          SUM(amount) as amount
-        FROM accounts_receivable
-        WHERE status = 'paid' AND payment_date >= $1 AND payment_date <= $2
-        GROUP BY due_date::date
-        ORDER BY due_date::date;`,
-        [start_date, end_date]
-      ).then(result => ({ type: 'ar', rows: result.rows })));
-    }
-
-    // 4. Obter saídas reais (contas a pagar) - Não categorizadas
-    if (!category_type || category_type === 'outflow') {
-      queries.push(db.query(
-        `SELECT
-          due_date::date as date,
-          SUM(amount) as amount
-        FROM accounts_payable
-        WHERE status = 'paid' AND payment_date >= $1 AND payment_date <= $2
-        GROUP BY due_date::date
-        ORDER BY due_date::date;`,
-        [start_date, end_date]
-      ).then(result => ({ type: 'ap', rows: result.rows })));
-    }
-
-    const results = await Promise.all(queries);
-
-    results.forEach(result => {
-      if (result.type === 'sales') {
-        result.rows.forEach(row => addData(row.date, row.category, 'inflow', row.amount));
-      } else if (result.type === 'expenses') {
-        result.rows.forEach(row => addData(row.date, row.category || 'Outros', 'outflow', row.amount));
-      } else if (result.type === 'ar') {
-        result.rows.forEach(row => addData(row.date, 'Contas a Receber (Não Categorizado)', 'inflow', row.amount));
-      } else if (result.type === 'ap') {
-        result.rows.forEach(row => addData(row.date, 'Contas a Pagar (Não Categorizado)', 'outflow', row.amount));
-      }
+      dailyBreakdown[date].transactions.push(t);
     });
 
-    // Convert reportData object to a sorted array
-    const sortedReport = Object.values(reportData).sort((a, b) => new Date(a.date) - new Date(b.date));
+    // 4. Calcular o saldo corrente para cada dia
+    const report = Object.values(dailyBreakdown).sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    report.forEach(day => {
+      currentBalance += day.inflows - day.outflows;
+      day.balance = currentBalance;
+    });
 
-    res.json(sortedReport);
+    res.status(200).json({
+      initialBalance: parseFloat(initialBalanceResult.rows[0].balance),
+      report
+    });
+
   } catch (error) {
-    console.error('Erro ao gerar relatório de fluxo de caixa por categoria:', error);
-    res.status(500).json({ message: error.message || 'Erro interno do servidor' });
+    console.error('Erro ao gerar relatório de fluxo de caixa:', error);
+    next(new AppError('Erro ao gerar relatório de fluxo de caixa.', 500));
   }
 };

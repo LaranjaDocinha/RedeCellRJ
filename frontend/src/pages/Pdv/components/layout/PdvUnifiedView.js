@@ -522,13 +522,10 @@ const PdvUnifiedView = () => {
   // --- Atalhos de Teclado ---
   useEffect(() => {
     const handleKeyDown = (event) => {
-      console.log('Key pressed:', event.key, 'Ctrl:', event.ctrlKey, 'isPdvDisabled:', isPdvDisabled, 'isPaymentModalOpen:', isPaymentModalOpen, 'cart.length:', cart.length);
       if (isPdvDisabled) {
-        console.log('PDV is disabled, shortcuts are inactive.');
         return;
       }
       if (isPaymentModalOpen) {
-        console.log('Payment modal is open, shortcuts are inactive.');
         return;
       } // Desativa atalhos quando o modal de pagamento está aberto
 

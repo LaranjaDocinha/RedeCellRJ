@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Container, Button, Card, CardBody, CardTitle } from 'reactstrap';
 
-import useNotification from '../../hooks/useNotification';
-import Breadcrumbs from '../../components/Common/Breadcrumb';
-import AdvancedTable from '../../components/Common/AdvancedTable';
-import { get, post, put, del } from '../../helpers/api_helper';
-import useApi from '../../hooks/useApi';
+import useNotification from '../../../hooks/useNotification'; // Adjusted path
+import Breadcrumbs from '../../../components/Common/Breadcrumb'; // Adjusted path
+import AdvancedTable from '../../../components/Common/AdvancedTable'; // Adjusted path
+import { get, post, put, del } from '../../../helpers/api_helper'; // Adjusted path
+import useApi from '../../../hooks/useApi'; // Adjusted path
 
-import RoleFormModal from './components/RoleFormModal';
-import PermissionAssignmentModal from './components/PermissionAssignmentModal';
+import RoleFormModal from './RoleFormModal'; // Adjusted path
+import PermissionAssignmentModal from './PermissionAssignmentModal'; // Adjusted path
 
-const RolesAndPermissions = () => {
-  document.title = 'Gestão de Papéis e Permissões | PDV Web';
+const SettingsRolesAndPermissionsTab = () => { // Renamed component
+  document.title = 'Papéis e Permissões | Configurações | PDV Web'; // Adjusted title
 
   const [roles, setRoles] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -104,7 +104,8 @@ const RolesAndPermissions = () => {
     <React.Fragment>
       <div className='page-content'>
         <Container fluid>
-          <Breadcrumbs breadcrumbItem='Papéis e Permissões' title='Administração' />
+          {/* Removed Breadcrumbs as it will be part of SettingsPage */}
+          {/* <Breadcrumbs breadcrumbItem='Papéis e Permissões' title='Administração' /> */}
 
           <Card>
             <CardBody>
@@ -122,7 +123,7 @@ const RolesAndPermissions = () => {
                 emptyStateMessage={'Cadastre seu primeiro papel.'}
                 emptyStateTitle={'Nenhum papel encontrado'}
                 loading={loading}
-                persistenceKey='rolesTable'
+                persistenceKey={'rolesTable'}
                 onEmptyStateActionClick={handleNewClick}
                 onRowClick={handleEditClick}
               />
@@ -148,4 +149,4 @@ const RolesAndPermissions = () => {
   );
 };
 
-export default RolesAndPermissions;
+export default SettingsRolesAndPermissionsTab;

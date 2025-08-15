@@ -13,7 +13,7 @@ import {
 } from 'reactstrap';
 
 // Formik Validation
-import * as Yup from 'yup';
+import { z } from 'zod';
 import { useFormik } from 'formik';
 
 // action
@@ -28,6 +28,12 @@ import { registerUser, apiError } from '../../store/actions';
 // import images
 import profileImg from '../../assets/images/profile-img.png';
 import logoImg from '../../assets/images/logo.svg';
+
+const registerSchema = z.object({
+  email: z.string({ required_error: 'Please Enter Your Email' }).email('Invalid email address'),
+  username: z.string({ required_error: 'Please Enter Your Username' }).min(1, 'Please Enter Your Username'),
+  password: z.string({ required_error: 'Please Enter Your Password' }).min(1, 'Please Enter Your Password'),
+});
 
 const Register = (props) => {
   //meta title
@@ -45,11 +51,17 @@ const Register = (props) => {
       username: '',
       password: '',
     },
-    validationSchema: Yup.object({
-      email: Yup.string().required('Please Enter Your Email'),
-      username: Yup.string().required('Please Enter Your Username'),
-      password: Yup.string().required('Please Enter Your Password'),
-    }),
+    validate: (values) => {
+      try {
+        registerSchema.parse(values);
+        return {};
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return error.formErrors.fieldErrors;
+        }
+        return {};
+      }
+    },
     onSubmit: (values) => {
       dispatch(registerUser(values));
     },

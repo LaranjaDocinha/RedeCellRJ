@@ -83,7 +83,7 @@ const Layout = () => {
         <div className='overlay' role='button' tabIndex={0} onClick={toggleMobileMenu} onKeyPress={(e) => e.key === 'Enter' && toggleMobileMenu()}></div>
       )}
 
-      <div className='main-content'>
+      <div className='main-content' style={{ overflowX: 'hidden' }}> {/* Added overflowX: 'hidden' */}
         <Header onToggleMobileMenu={toggleMobileMenu} onToggleSidebar={toggleSidebar} />
 
         {/* Removed tab-navigation div */}

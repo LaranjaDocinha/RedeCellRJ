@@ -1,4 +1,5 @@
 const db = require('../db');
+const { AppError } = require('../utils/appError');
 
 // @desc    Gerar relatório de vendas
 // @route   GET /api/reports/sales
@@ -78,17 +79,19 @@ const getProfitabilityReport = async (req, res) => {
         (SUM(si.quantity * si.price_at_sale) - SUM(si.quantity * si.cost_at_sale)) as gross_profit
       FROM sale_items si
       JOIN sales s ON si.sale_id = s.id
+      JOIN product_variations pv ON si.product_id = pv.id -- Assuming product_id in sale_items refers to product_variations.id
+      JOIN products p ON pv.product_id = p.id
       WHERE s.sale_date BETWEEN $1 AND $2
     `;
     const queryParams = [startDate, endDate];
     let paramIndex = 3;
 
     if (productId) {
-      query += ` AND si.product_id = ${paramIndex++}`;
+      query += ` AND p.id = ${paramIndex++}`;
       queryParams.push(productId);
     }
     if (categoryId) {
-      query += ` AND si.category_id = ${paramIndex++}`;
+      query += ` AND p.category_id = ${paramIndex++}`;
       queryParams.push(categoryId);
     }
 
@@ -362,6 +365,112 @@ const getAbcCustomerAnalysis = async (req, res) => {
   }
 };
 
+// @desc    Obter métricas do Kanban
+// @route   GET /api/reports/kanban
+// @access  Private
+const getKanbanMetrics = async (req, res, next) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    // Total de reparos por status
+    const repairsByStatus = await db.query(
+      'SELECT status, COUNT(*) FROM repairs GROUP BY status;',
+    );
+
+    // Reparos concluídos por técnico no período
+    const completedRepairsByTechnician = await db.query(
+      `SELECT 
+        t.name as technician_name, 
+        COUNT(r.id) as completed_repairs
+      FROM repairs r
+      JOIN technicians t ON r.technician_id = t.id
+      WHERE r.status = 'Entregue' AND r.actual_completion_date BETWEEN $1 AND $2
+      GROUP BY t.name
+      ORDER BY completed_repairs DESC;
+      `,
+      [startDate, endDate]
+    );
+
+    // Tempo médio em cada status (exemplo simplificado, requer tabela de histórico de status)
+    // Para um cálculo preciso, precisaríamos de uma tabela repair_status_history com entry_date e exit_date para cada status
+    const avgTimeInStatus = await db.query(
+      `SELECT 
+        status, 
+        AVG(EXTRACT(EPOCH FROM (actual_completion_date - start_date))) / 3600 AS avg_hours_to_complete
+      FROM repairs
+      WHERE actual_completion_date IS NOT NULL
+      GROUP BY status;
+      `
+    );
+
+    res.status(200).json({
+      repairsByStatus: repairsByStatus.rows,
+      completedRepairsByTechnician: completedRepairsByTechnician.rows,
+      avgTimeInStatus: avgTimeInStatus.rows,
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar métricas do Kanban:', error);
+    next(new AppError('Erro ao buscar métricas do Kanban.', 500));
+  }
+};
+
+// @desc    Gerar relatório de lucratividade por produto detalhado
+// @route   GET /api/reports/product-profitability
+// @access  Private
+const getProductProfitabilityReport = async (req, res) => {
+  const { startDate, endDate, productId, categoryId } = req.query;
+  try {
+    let query = `
+      SELECT
+        p.id as product_id,
+        p.name as product_name,
+        pv.barcode,
+        SUM(si.quantity) as total_quantity_sold,
+        SUM(si.quantity * si.price_at_sale) as total_revenue,
+        SUM(si.quantity * si.cost_at_sale) as total_cost,
+        (SUM(si.quantity * si.price_at_sale) - SUM(si.quantity * si.cost_at_sale)) as gross_profit,
+        (SUM(si.quantity * si.price_at_sale) - SUM(si.quantity * si.cost_at_sale)) / SUM(si.quantity * si.price_at_sale) * 100 as profit_margin_percentage
+      FROM sale_items si
+      JOIN sales s ON si.sale_id = s.id
+      JOIN product_variations pv ON si.product_id = pv.id -- Assuming product_id in sale_items refers to product_variations.id
+      JOIN products p ON pv.product_id = p.id
+      WHERE s.sale_date BETWEEN $1 AND $2
+    `;
+    const queryParams = [startDate, endDate];
+    let paramIndex = 3;
+
+    if (productId) {
+      query += ` AND p.id = ${paramIndex++}`;
+      queryParams.push(productId);
+    }
+    if (categoryId) {
+      query += ` AND p.category_id = ${paramIndex++}`;
+      queryParams.push(categoryId);
+    }
+
+    query += ` GROUP BY p.id, p.name, pv.barcode ORDER BY gross_profit DESC;`;
+
+    const { rows } = await db.query(query, queryParams);
+    res.json(rows);
+  } catch (error) {
+    console.error('Erro ao gerar relatório de lucratividade por produto:', error);
+    res.status(500).json({ message: 'Erro interno do servidor.' });
+  }
+};
+
+// @desc    Obter logs de auditoria
+// @route   GET /api/reports/audit-logs
+// @access  Private
+const getAuditLogs = async (req, res, next) => {
+  try {
+    // Placeholder: Implementar a lógica para obter logs de auditoria aqui
+    res.status(200).json({ message: 'Logs de auditoria (placeholder) - Implementar lógica aqui.', data: [] });
+  } catch (error) {
+    next(new AppError('Erro ao obter logs de auditoria.', 500));
+  }
+};
+
 module.exports = {
   getSalesReport,
   getInventoryReport,
@@ -372,4 +481,7 @@ module.exports = {
   getTechnicianPerformanceReport,
   getAbcProductAnalysis,
   getAbcCustomerAnalysis,
+  getKanbanMetrics,
+  getProductProfitabilityReport,
+  getAuditLogs,
 };

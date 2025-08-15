@@ -20,7 +20,7 @@ import { Link } from 'react-router-dom';
 import withRouter from 'components/Common/withRouter';
 
 // Formik Validation
-import * as Yup from 'yup';
+import { z } from 'zod';
 import { useFormik } from 'formik';
 
 // action
@@ -29,6 +29,10 @@ import { userForgetPassword } from '../../store/actions';
 // import images
 import profile from '../../assets/images/profile-img.png';
 import logo from '../../assets/images/logo.svg';
+
+const forgetPasswordSchema = z.object({
+  email: z.string({ required_error: 'Please Enter Your Email' }).email({ message: "Invalid email address" }),
+});
 
 const ForgetPasswordPage = (props) => {
   //meta title
@@ -43,9 +47,17 @@ const ForgetPasswordPage = (props) => {
     initialValues: {
       email: '',
     },
-    validationSchema: Yup.object({
-      email: Yup.string().required('Please Enter Your Email'),
-    }),
+    validate: (values) => {
+      try {
+        forgetPasswordSchema.parse(values);
+        return {};
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return error.formErrors.fieldErrors;
+        }
+        return {};
+      }
+    },
     onSubmit: (values) => {
       dispatch(userForgetPassword(values, props.history));
     },

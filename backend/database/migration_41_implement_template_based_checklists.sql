@@ -1,7 +1,7 @@
 -- Fase 1: Criar as novas tabelas para o sistema de templates de checklist
 
 -- Tabela para armazenar os modelos/templates de checklist
-CREATE TABLE checklist_templates (
+CREATE TABLE IF NOT EXISTS checklist_templates (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -12,7 +12,7 @@ CREATE TABLE checklist_templates (
 );
 
 -- Tabela para armazenar os itens/perguntas de cada template
-CREATE TABLE checklist_template_items (
+CREATE TABLE IF NOT EXISTS checklist_template_items (
     id SERIAL PRIMARY KEY,
     template_id INTEGER NOT NULL REFERENCES checklist_templates(id) ON DELETE CASCADE,
     item_text TEXT NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE checklist_template_items (
 
 -- Tabela de instância: vincula um reparo a um template de checklist específico
 -- Um reparo pode ter múltiplas instâncias (ex: uma de entrada e uma de saída)
-CREATE TABLE repair_checklist_instances (
+CREATE TABLE IF NOT EXISTS repair_checklist_instances (
     id SERIAL PRIMARY KEY,
     repair_id INTEGER NOT NULL REFERENCES repairs(id) ON DELETE CASCADE,
     template_id INTEGER NOT NULL REFERENCES checklist_templates(id),
@@ -37,7 +37,7 @@ CREATE TABLE repair_checklist_instances (
 );
 
 -- Tabela para armazenar as respostas de cada item de uma instância de checklist
-CREATE TABLE repair_checklist_answers (
+CREATE TABLE IF NOT EXISTS repair_checklist_answers (
     id SERIAL PRIMARY KEY,
     instance_id INTEGER NOT NULL REFERENCES repair_checklist_instances(id) ON DELETE CASCADE,
     template_item_id INTEGER NOT NULL REFERENCES checklist_template_items(id) ON DELETE CASCADE,
@@ -48,9 +48,9 @@ CREATE TABLE repair_checklist_answers (
 );
 
 -- Adicionar índices para otimizar as consultas
-CREATE INDEX idx_checklist_template_items_template_id ON checklist_template_items(template_id);
-CREATE INDEX idx_repair_checklist_instances_repair_id ON repair_checklist_instances(repair_id);
-CREATE INDEX idx_repair_checklist_answers_instance_id ON repair_checklist_answers(instance_id);
+CREATE INDEX IF NOT EXISTS idx_checklist_template_items_template_id ON checklist_template_items(template_id);
+CREATE INDEX IF NOT EXISTS idx_repair_checklist_instances_repair_id ON repair_checklist_instances(repair_id);
+CREATE INDEX IF NOT EXISTS idx_repair_checklist_answers_instance_id ON repair_checklist_answers(instance_id);
 
 -- Comentário sobre a tabela antiga:
 -- A tabela 'repair_checklists' da migração 28 será descontinuada e removida em uma futura migração

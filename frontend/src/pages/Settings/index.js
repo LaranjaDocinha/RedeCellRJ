@@ -20,7 +20,7 @@ import InputMask from 'react-input-mask';
 
 import useNotification from '../../hooks/useNotification';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
-import useApi from '../../hooks/useApi';
+import useApi from '../hooks/useApi';
 import { get, put } from '../../helpers/api_helper';
 import { useTheme } from '../../context/ThemeContext';
 

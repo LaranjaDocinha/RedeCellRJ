@@ -83,8 +83,17 @@ router.get('/profile/me', authenticateToken, userController.getCurrentUserProfil
 // GET /api/users/:id/login-history - Obter histórico de login de um usuário específico
 router.get('/:id/login-history', [authenticateToken, authorize('users:read')], userController.getUserLoginHistory);
 
-// PATCH /api/users/profile - Atualizar o próprio perfil do usuário (qualquer usuário autenticado pode acessar)
-router.patch('/profile', [authenticateToken, userController.upload.single('profileImage')], userController.updateUserProfile);
+// PUT /api/users/profile - Atualizar o próprio perfil do usuário (qualquer usuário autenticado pode acessar)
+router.put('/profile', [authenticateToken, userController.upload.single('profileImage')], userController.updateMyProfile);
+
+// POST /api/users/change-password - Alterar a senha do usuário logado
+router.post('/change-password', authenticateToken, userController.changeMyPassword);
+
+// GET /api/users/sessions - Listar sessões ativas do usuário logado
+router.get('/sessions', authenticateToken, userController.getUserSessions);
+
+// DELETE /api/users/sessions/:id - Revogar uma sessão específica do usuário logado
+router.delete('/sessions/:id', authenticateToken, userController.revokeUserSession);
 
 
 // Rotas para 2FA

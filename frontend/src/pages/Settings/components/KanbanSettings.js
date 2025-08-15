@@ -13,7 +13,7 @@ import {
 } from 'reactstrap';
 import toast from 'react-hot-toast';
 
-import useApi from '../../../hooks/useApi';
+import useApi from '../../hooks/useApi';
 import { get, post } from '../../../helpers/api_helper';
 import LoadingSpinner from '../../../components/Common/LoadingSpinner';
 

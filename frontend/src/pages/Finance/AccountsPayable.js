@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Container,
@@ -7,10 +7,16 @@ import {
   Card,
   CardBody,
   CardTitle,
-  Button, // Import Button from reactstrap
-  Badge, // Import Badge for status
+  Button,
+  Badge,
+  Spinner,
+  Alert,
+  Modal,
+  ModalHeader,
+  ModalBody
 } from 'reactstrap';
-import { NumericFormat } from 'react-number-format'; // For currency formatting
+import { NumericFormat } from 'react-number-format';
+import toast from 'react-hot-toast';
 
 import useApi from '../../hooks/useApi';
 import AdvancedTable from '../../components/Common/AdvancedTable';
@@ -25,30 +31,29 @@ const AccountsPayable = () => {
   document.title = 'Contas a Pagar | PDV Web'; // Set document title
 
   const [payables, setPayables] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPayable, setCurrentPayable] = useState(null);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [payableToDelete, setPayableToDelete] = useState(null);
+  const [refreshList, setRefreshList] = useState(false); // State to trigger list refresh
 
-  const api = useApi();
+  const { request: fetchPayablesApi, isLoading, error } = useApi('get');
+  const { request: deletePayableApi, isLoading: isDeleting } = useApi('delete');
 
-  const fetchPayables = async () => {
+  const loadPayables = useCallback(async () => {
     try {
-      setLoading(true);
-      const response = await api.get('/finance/payables');
-      setPayables(response.data);
+      const response = await fetchPayablesApi('/api/finance/payables');
+      setPayables(response || []);
     } catch (err) {
-      setError(err);
-    } finally {
-      setLoading(false);
+      // Error handled by useApi, just toast here
+      // console.error(err); // Removed console.error
+      toast.error('Falha ao carregar contas a pagar.');
     }
-  };
+  }, [fetchPayablesApi]);
 
   useEffect(() => {
-    fetchPayables();
-  }, []);
+    loadPayables();
+  }, [loadPayables, refreshList]); // Refresh when refreshList changes
 
   // Calculate summary data
   const { totalPayable, overduePayable, paidPayable, pendingPayable } = useMemo(() => {
@@ -96,10 +101,11 @@ const AccountsPayable = () => {
 
   const confirmDelete = async () => {
     try {
-      await api.delete(`/finance/payables/${payableToDelete.id}`);
-      fetchPayables();
+      await deletePayableApi(`/api/finance/payables/${payableToDelete.id}`);
+      toast.success('Conta a pagar excluída com sucesso!');
+      setRefreshList(prev => !prev); // Trigger list refresh
     } catch (err) {
-      setError(err);
+      toast.error(err.message || 'Falha ao excluir conta a pagar.');
     } finally {
       setIsConfirmationModalOpen(false);
       setPayableToDelete(null);
@@ -164,203 +170,228 @@ const AccountsPayable = () => {
     },
   ];
 
-  if (loading) return <div>Carregando Contas a Pagar...</div>;
-  if (error) return <div>Erro ao carregar contas a pagar: {error.message}</div>;
+  if (isLoading) {
+    return (
+      <div className="text-center my-4">
+        <Spinner className="me-2" /> Carregando Contas a Pagar...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert color="danger" className="my-4">
+        Erro ao carregar contas a pagar: {error.message || 'Erro desconhecido.'}
+      </Alert>
+    );
+  }
 
   return (
-    <React.Fragment>
-      <div className='page-content'>
-        <Container fluid>
-          <Breadcrumbs breadcrumbItem='Contas a Pagar' title='Finanças' />
+    <motion.div
+      className="accounts-payable-page"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Container fluid className="p-4">
+        <Breadcrumbs breadcrumbItem='Contas a Pagar' title='Finanças' />
 
-          <Row>
-            {/* Card for Total Payables */}
-            <Col md={6} xl={3}>
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                initial={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                <Card className='mini-stats-wid'>
-                  <CardBody>
-                    <div className='d-flex'>
-                      <div className='flex-grow-1'>
-                        <p className='text-muted fw-medium'>Total a Pagar</p>
-                        <h4 className='mb-0'>
-                          <NumericFormat
-                            decimalSeparator={','}
-                            displayType={'text'}
-                            prefix={'R$ '}
-                            thousandSeparator={'.'}
-                            value={totalPayable.toFixed(2)}
-                          />
-                        </h4>
-                      </div>
-                      <div className='flex-shrink-0 align-self-center'>
-                        <div className='mini-stat-icon avatar-sm rounded-circle bg-primary'>
-                          <span className='avatar-title'>
-                            <i className='bx bx-dollar-circle font-size-24'></i>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardBody>
-                </Card>
-              </motion.div>
-            </Col>
-
-            {/* Card for Overdue Payables */}
-            <Col md={6} xl={3}>
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                initial={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <Card className='mini-stats-wid'>
-                  <CardBody>
-                    <div className='d-flex'>
-                      <div className='flex-grow-1'>
-                        <p className='text-muted fw-medium'>Contas Atrasadas</p>
-                        <h4 className='mb-0'>
-                          <NumericFormat
-                            decimalSeparator={','}
-                            displayType={'text'}
-                            prefix={'R$ '}
-                            thousandSeparator={'.'}
-                            value={overduePayable.toFixed(2)}
-                          />
-                        </h4>
-                      </div>
-                      <div className='flex-shrink-0 align-self-center'>
-                        <div className='mini-stat-icon avatar-sm rounded-circle bg-danger'>
-                          <span className='avatar-title'>
-                            <i className='bx bx-calendar-x font-size-24'></i>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardBody>
-                </Card>
-              </motion.div>
-            </Col>
-
-            {/* Card for Paid Payables */}
-            <Col md={6} xl={3}>
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                initial={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <Card className='mini-stats-wid'>
-                  <CardBody>
-                    <div className='d-flex'>
-                      <div className='flex-grow-1'>
-                        <p className='text-muted fw-medium'>Contas Pagas</p>
-                        <h4 className='mb-0'>
-                          <NumericFormat
-                            decimalSeparator={','}
-                            displayType={'text'}
-                            prefix={'R$ '}
-                            thousandSeparator={'.'}
-                            value={paidPayable.toFixed(2)}
-                          />
-                        </h4>
-                      </div>
-                      <div className='flex-shrink-0 align-self-center'>
-                        <div className='mini-stat-icon avatar-sm rounded-circle bg-success'>
-                          <span className='avatar-title'>
-                            <i className='bx bx-check-circle font-size-24'></i>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardBody>
-                </Card>
-              </motion.div>
-            </Col>
-
-            {/* Card for Pending Payables */}
-            <Col md={6} xl={3}>
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                initial={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-              >
-                <Card className='mini-stats-wid'>
-                  <CardBody>
-                    <div className='d-flex'>
-                      <div className='flex-grow-1'>
-                        <p className='text-muted fw-medium'>Contas Pendentes</p>
-                        <h4 className='mb-0'>
-                          <NumericFormat
-                            decimalSeparator={','}
-                            displayType={'text'}
-                            prefix={'R$ '}
-                            thousandSeparator={'.'}
-                            value={pendingPayable.toFixed(2)}
-                          />
-                        </h4>
-                      </div>
-                      <div className='flex-shrink-0 align-self-center'>
-                        <div className='mini-stat-icon avatar-sm rounded-circle bg-warning'>
-                          <span className='avatar-title'>
-                            <i className='bx bx-time font-size-24'></i>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardBody>
-                </Card>
-              </motion.div>
-            </Col>
-          </Row>
-
-          <Row>
-            <Col lg={12}>
-              <Card>
+        <Row>
+          {/* Card for Total Payables */}
+          <Col md={6} xl={3}>
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              <Card className='mini-stats-wid'>
                 <CardBody>
-                  <div className='d-flex justify-content-between align-items-center mb-4'>
-                    <CardTitle className='h4 mb-0'>Lista de Contas a Pagar</CardTitle>
-                    <Button color='primary' onClick={() => handleAddEdit()}>
-                      <i className='bx bx-plus me-1'></i> Adicionar Conta a Pagar
-                    </Button>
+                  <div className='d-flex'>
+                    <div className='flex-grow-1'>
+                      <p className='text-muted fw-medium'>Total a Pagar</p>
+                      <h4 className='mb-0'>
+                        <NumericFormat
+                          decimalSeparator={','}
+                          displayType={'text'}
+                          prefix={'R$ '}
+                          thousandSeparator={'.'}
+                          value={totalPayable.toFixed(2)}
+                        />
+                      </h4>
+                    </div>
+                    <div className='flex-shrink-0 align-self-center'>
+                      <div className='mini-stat-icon avatar-sm rounded-circle bg-primary'>
+                        <span className='avatar-title'>
+                          <i className='bx bx-dollar-circle font-size-24'></i>
+                        </span>
+                      </div>
+                    </div>
                   </div>
-
-                  {payables.length === 0 ? (
-                    <EmptyState message='Nenhuma conta a pagar encontrada.' />
-                  ) : (
-                    <AdvancedTable
-                      columns={columns}
-                      data={payables}
-                      persistenceKey='accountsPayableTable'
-                    />
-                  )}
                 </CardBody>
               </Card>
-            </Col>
-          </Row>
+            </motion.div>
+          </Col>
 
-          {isModalOpen && (
+          {/* Card for Overdue Payables */}
+          <Col md={6} xl={3}>
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <Card className='mini-stats-wid'>
+                <CardBody>
+                  <div className='d-flex'>
+                    <div className='flex-grow-1'>
+                      <p className='text-muted fw-medium'>Contas Atrasadas</p>
+                      <h4 className='mb-0'>
+                        <NumericFormat
+                          decimalSeparator={','}
+                          displayType={'text'}
+                          prefix={'R$ '}
+                          thousandSeparator={'.'}
+                          value={overduePayable.toFixed(2)}
+                        />
+                      </h4>
+                    </div>
+                    <div className='flex-shrink-0 align-self-center'>
+                      <div className='mini-stat-icon avatar-sm rounded-circle bg-danger'>
+                        <span className='avatar-title'>
+                          <i className='bx bx-calendar-x font-size-24'></i>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
+            </motion.div>
+          </Col>
+
+          {/* Card for Paid Payables */}
+          <Col md={6} xl={3}>
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <Card className='mini-stats-wid'>
+                <CardBody>
+                  <div className='d-flex'>
+                    <div className='flex-grow-1'>
+                      <p className='text-muted fw-medium'>Contas Pagas</p>
+                      <h4 className='mb-0'>
+                        <NumericFormat
+                          decimalSeparator={','}
+                          displayType={'text'}
+                          prefix={'R$ '}
+                          thousandSeparator={'.'}
+                          value={paidPayable.toFixed(2)}
+                        />
+                      </h4>
+                    </div>
+                    <div className='flex-shrink-0 align-self-center'>
+                      <div className='mini-stat-icon avatar-sm rounded-circle bg-success'>
+                        <span className='avatar-title'>
+                          <i className='bx bx-check-circle font-size-24'></i>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
+            </motion.div>
+          </Col>
+
+          {/* Card for Pending Payables */}
+          <Col md={6} xl={3}>
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <Card className='mini-stats-wid'>
+                <CardBody>
+                  <div className='d-flex'>
+                    <div className='flex-grow-1'>
+                      <p className='text-muted fw-medium'>Contas Pendentes</p>
+                      <h4 className='mb-0'>
+                        <NumericFormat
+                          decimalSeparator={','}
+                          displayType={'text'}
+                          prefix={'R$ '}
+                          thousandSeparator={'.'}
+                          value={pendingPayable.toFixed(2)}
+                        />
+                      </h4>
+                    </div>
+                    <div className='flex-shrink-0 align-self-center'>
+                      <div className='mini-stat-icon avatar-sm rounded-circle bg-warning'>
+                        <span className='avatar-title'>
+                          <i className='bx bx-time font-size-24'></i>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
+            </motion.div>
+          </Col>
+        </Row>
+
+        <Row>
+          <Col lg={12}>
+            <Card>
+              <CardBody>
+                <div className='d-flex justify-content-between align-items-center mb-4'>
+                  <CardTitle className='h4 mb-0'>Lista de Contas a Pagar</CardTitle>
+                  <Button color='primary' onClick={() => handleAddEdit()}>
+                    <i className='bx bx-plus me-1'></i> Adicionar Conta a Pagar
+                  </Button>
+                </div>
+
+                {isLoading ? (
+                  <div className="text-center"><Spinner /> Carregando contas a pagar...</div>
+                ) : error ? (
+                  <Alert color="danger">Erro ao carregar contas a pagar: {error.message}</Alert>
+                ) : payables.length === 0 ? (
+                  <Alert color="info" className="text-center">Nenhuma conta a pagar encontrada.</Alert>
+                ) : (
+                  <AdvancedTable
+                    columns={columns}
+                    data={payables}
+                    persistenceKey='accountsPayableTable'
+                  />
+                )}
+              </CardBody>
+            </Card>
+          </Col>
+        </Row>
+
+        <Modal isOpen={isModalOpen} toggle={() => setIsModalOpen(false)} centered size="lg">
+          <ModalHeader toggle={() => setIsModalOpen(false)}>
+            {currentPayable ? 'Editar Conta a Pagar' : 'Adicionar Nova Conta a Pagar'}
+          </ModalHeader>
+          <ModalBody>
             <PayableModal
               payable={currentPayable}
-              onClose={() => setIsModalOpen(false)}
-              onSave={() => {
-                fetchPayables();
+              onSuccess={() => {
+                setRefreshList(prev => !prev);
                 setIsModalOpen(false);
               }}
+              onCancel={() => setIsModalOpen(false)}
             />
-          )}
+          </ModalBody>
+        </Modal>
 
-          <ConfirmationModal
-            isOpen={isConfirmationModalOpen}
-            message={`Tem certeza que deseja excluir a conta a pagar "${payableToDelete?.description}"?`}
-            title='Confirmar Exclusão'
-            onClose={() => setIsConfirmationModalOpen(false)}
-            onConfirm={confirmDelete}
-          />
-        </Container>
-      </div>
-    </React.Fragment>
+        <ConfirmationModal
+          isOpen={isConfirmationModalOpen}
+          message={`Tem certeza que deseja excluir a conta a pagar "${payableToDelete?.description}"?`}
+          title='Confirmar Exclusão'
+          onClose={() => setIsConfirmationModalOpen(false)}
+          onConfirm={confirmDelete}
+        />
+      </Container>
+    </motion.div>
   );
 };
 

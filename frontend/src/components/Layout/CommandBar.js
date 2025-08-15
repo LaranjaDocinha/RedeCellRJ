@@ -4,7 +4,7 @@ import { Command } from 'cmdk';
 
 import { useTheme } from '../../context/ThemeContext';
 import { get } from '../../helpers/api_helper';
-import useDebounce from '../../hooks/useDebounce';
+import useDebounce from '../hooks/useDebounce';
 import './CommandBar.scss';
 
 const navigationData = [

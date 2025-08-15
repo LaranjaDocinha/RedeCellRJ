@@ -2,7 +2,7 @@ import React from 'react';
 import { Container, Row, Col } from 'reactstrap';
 
 import { useGlobalFilter } from '../../../context/GlobalFilterContext';
-import useApi from '../../../hooks/useApi';
+import useApi from '../../hooks/useApi';
 
 // Components
 import ReportKPI from '../components/ReportKPI';

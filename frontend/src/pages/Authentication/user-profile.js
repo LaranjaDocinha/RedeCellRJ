@@ -14,7 +14,7 @@ import {
 } from 'reactstrap';
 
 // Formik Validation
-import * as Yup from 'yup';
+import { z } from 'zod';
 import { useFormik } from 'formik';
 
 //redux
@@ -27,6 +27,10 @@ import Breadcrumb from '../../components/Common/Breadcrumb';
 import avatar from '../../assets/images/users/avatar-1.jpg';
 // actions
 import { editProfile, resetProfileFlag } from '../../store/actions';
+
+const userProfileSchema = z.object({
+  username: z.string({ required_error: 'Please Enter Your UserName' }).min(1, 'Please Enter Your UserName'),
+});
 
 const UserProfile = () => {
   //meta title
@@ -77,9 +81,17 @@ const UserProfile = () => {
       username: name || '',
       idx: idx || '',
     },
-    validationSchema: Yup.object({
-      username: Yup.string().required('Please Enter Your UserName'),
-    }),
+    validate: (values) => {
+      try {
+        userProfileSchema.parse(values);
+        return {};
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return error.formErrors.fieldErrors;
+        }
+        return {};
+      }
+    },
     onSubmit: (values) => {
       dispatch(editProfile(values));
     },

@@ -30,4 +30,13 @@ router.get('/abc-products', [authenticateToken, authorize('reports:view:operatio
 // Rota para gerar análise ABC de clientes
 router.get('/abc-customers', [authenticateToken, authorize('reports:view:operational')], reportController.getAbcCustomerAnalysis);
 
+// Rota para obter métricas do Kanban
+router.get('/kanban', [authenticateToken, authorize('reports:view:operational')], reportController.getKanbanMetrics);
+
+// Rota para gerar relatório de lucratividade por produto detalhado
+router.get('/product-profitability', [authenticateToken, authorize('reports:view:financial')], reportController.getProductProfitabilityReport);
+
+// Rota para obter logs de auditoria
+router.get('/audit-logs', [authenticateToken, authorize('reports:view:admin')], reportController.getAuditLogs);
+
 module.exports = router;

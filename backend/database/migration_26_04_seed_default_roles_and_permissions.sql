@@ -51,14 +51,15 @@ INSERT INTO permissions (name, description) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 -- Limpar associações existentes para garantir um estado limpo
-TRUNCATE TABLE role_permissions;
+
 
 -- Associar permissões ao papel de Admin (acesso total)
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT
     (SELECT id FROM roles WHERE name = 'admin'),
     p.id
-FROM permissions p;
+FROM permissions p
+ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- Associar permissões ao papel de Técnico
 INSERT INTO role_permissions (role_id, permission_id)
@@ -72,7 +73,8 @@ WHERE p.name IN (
     'repairs:read',
     'repairs:update',
     'customers:read'
-);
+)
+ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- Associar permissões ao papel de Usuário (antigo 'sales')
 INSERT INTO role_permissions (role_id, permission_id)
@@ -87,4 +89,5 @@ WHERE p.name IN (
     'customers:create',
     'customers:read',
     'customers:update'
-);
+)
+ON CONFLICT (role_id, permission_id) DO NOTHING;

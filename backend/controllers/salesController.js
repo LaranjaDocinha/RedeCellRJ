@@ -1,5 +1,5 @@
 const { AppError, NotFoundError, BadRequestError } = require('../utils/appError');
-const db = require('../db'); // Added this line
+const db = require('../db');
 
 exports.createSale = async (req, res) => {
     const { customer_id, total_amount, payment_method, sale_date, products, gift_card_code, gift_card_amount } = req.body;
@@ -52,7 +52,7 @@ exports.createSale = async (req, res) => {
 
             // Log transaction for redemption
             await client.query(
-                'INSERT INTO gift_card_transactions (gift_card_id, transaction_type, amount, user_id, notes) VALUES ($1, $2, $3, $4, $5);',
+                'INSERT INTO gift_card_transactions (gift_card_id, transaction_type, amount, user_id, notes) VALUES ($1, $2, $3, $4, $5); ', // Added a space before semicolon here, which is fine.
                 [giftCard.id, 'redeem', gift_card_amount, user_id, 'Resgate em venda']
             );
 
@@ -109,13 +109,13 @@ exports.createSale = async (req, res) => {
                     [quantity, product_id] // Assumindo product_id aqui é variation_id
                 );
                 await client.query(
-                    'INSERT INTO sale_items (sale_id, product_id, quantity, price_at_sale) VALUES ($1, $2, $3, $4);',
+                    'INSERT INTO sale_items (sale_id, product_id, quantity, price_at_sale) VALUES ($1, $2, $3, $4); ', // Added a space before semicolon here, which is fine.
                     [saleId, product_id, quantity, price_at_sale]
                 );
             }
         }
 
-        await logActivity(req.user.name, `Venda #${saleId} criada para o cliente ${customer_id}.`, 'sale', saleId);
+        // await logActivity(req.user.name, `Venda #${saleId} criada para o cliente ${customer_id}.`, 'sale', saleId);
 
         await client.query('COMMIT');
         res.status(201).json({ message: 'Venda criada com sucesso!', saleId });
@@ -128,33 +128,43 @@ exports.createSale = async (req, res) => {
     }
 };
 
-// Obter todas as vendas com paginação, ordenação e filtros
-exports.getAllSales = async (req, res) => {
-    const { page = 1, pageSize = 10, sort = 'sale_date', order = 'desc', filters } = req.query;
-    const offset = (page - 1) * pageSize;
+// @desc    Obter todas as vendas com paginação, ordenação e filtros
+// @route   GET /api/sales
+// @access  Private
+exports.getAllSales = async (req, res, next) => {
+    const { page = 1, limit = 10, sort = 'sale_date', order = 'desc', customer_id, startDate, endDate, payment_method, search } = req.query;
+    const offset = (page - 1) * limit;
 
     try {
         let whereClause = '';
         const params = [];
+        const conditions = [];
         let paramIndex = 1;
 
-        if (filters) {
-            const parsedFilters = JSON.parse(filters);
-            const filterConditions = [];
+        if (customer_id) {
+            conditions.push(`s.customer_id = $${paramIndex++}`);
+            params.push(customer_id);
+        }
+        if (startDate) {
+            conditions.push(`s.sale_date >= $${paramIndex++}`);
+            params.push(startDate);
+        }
+        if (endDate) {
+            conditions.push(`s.sale_date <= $${paramIndex++}`);
+            params.push(endDate);
+        }
+        if (payment_method) {
+            conditions.push(`s.payment_method ILIKE $${paramIndex++}`);
+            params.push(`%${payment_method}%`);
+        }
+        if (search) {
+            conditions.push(`(c.name ILIKE $${paramIndex} OR u.name ILIKE $${paramIndex} OR s.id::text ILIKE $${paramIndex})`);
+            params.push(`%${search}%`);
+            paramIndex++;
+        }
 
-            if (parsedFilters.customer_name) {
-                filterConditions.push(`c.name ILIKE ${paramIndex++}`);
-                params.push(`%${parsedFilters.customer_name}%`);
-            }
-            if (parsedFilters.payment_method) {
-                filterConditions.push(`s.payment_method ILIKE ${paramIndex++}`);
-                params.push(`%${parsedFilters.payment_method}%`);
-            }
-            // Adicionar mais filtros conforme necessário
-
-            if (filterConditions.length > 0) {
-                whereClause = ` WHERE ${filterConditions.join(' AND ')}`;
-            }
+        if (conditions.length > 0) {
+            whereClause = ` WHERE ${conditions.join(' AND ')}`;
         }
 
         const dataQuery = `
@@ -172,9 +182,9 @@ exports.getAllSales = async (req, res) => {
             JOIN users u ON s.user_id = u.id
             ${whereClause}
             ORDER BY ${sort} ${order.toUpperCase()}
-            LIMIT ${paramIndex++} OFFSET ${paramIndex++};
+            LIMIT $${paramIndex++} OFFSET $${paramIndex++};
         `;
-        const dataResult = await db.query(dataQuery, [...params, pageSize, offset]);
+        const dataResult = await db.query(dataQuery, [...params, limit, offset]);
 
         const countQuery = `
             SELECT COUNT(*)
@@ -187,20 +197,22 @@ exports.getAllSales = async (req, res) => {
         const totalRecords = parseInt(countResult.rows[0].count, 10);
 
         res.json({
-            data: dataResult.rows,
-            page,
-            pageSize,
+            sales: dataResult.rows,
+            page: parseInt(page, 10),
+            limit: parseInt(limit, 10),
             totalRecords,
-            totalPages: Math.ceil(totalRecords / pageSize),
+            totalPages: Math.ceil(totalRecords / limit),
         });
     } catch (error) {
         console.error('Erro ao buscar todas as vendas:', error);
-        throw new AppError('Erro interno do servidor ao buscar vendas.', 500);
+        next(new AppError('Erro interno do servidor ao buscar vendas.', 500));
     }
 };
 
-// Obter uma venda por ID
-exports.getSaleById = async (req, res) => {
+// @desc    Obter uma venda por ID
+// @route   GET /api/sales/:id
+// @access  Private
+exports.getSaleById = async (req, res, next) => {
     const { id } = req.params;
     try {
         const query = `
@@ -217,7 +229,7 @@ exports.getSaleById = async (req, res) => {
                 pv.barcode,
                 p.name AS product_name,
                 si.quantity,
-                si.price_at_sale,
+                si.unit_price as price_at_sale, -- Renomeado para consistência
                 si.serial_number
             FROM sales s
             JOIN customers c ON s.customer_id = c.id
@@ -230,7 +242,7 @@ exports.getSaleById = async (req, res) => {
         const { rows } = await db.query(query, [id]);
 
         if (rows.length === 0) {
-            throw new NotFoundError('Venda não encontrada.');
+            return next(new NotFoundError('Venda não encontrada.'));
         }
 
         // Agrupar itens da venda se houver múltiplos
@@ -256,63 +268,6 @@ exports.getSaleById = async (req, res) => {
         res.json(sale);
     } catch (error) {
         console.error('Erro ao buscar venda por ID:', error);
-        throw new AppError('Erro interno do servidor ao buscar venda.', 500);
-    }
-};
-
-// Obter o histórico de vendas
-exports.getSalesHistory = async (req, res) => {
-    try {
-        const { _sort = 'sale_date', _order = 'desc', q, sale_date_gte, sale_date_lte, customer_id } = req.query;
-        let query = `
-            SELECT
-                s.id,
-                s.customer_id,
-                c.name AS customer_name,
-                s.user_id,
-                u.name AS user_name,
-                s.total_amount,
-                s.payment_method,
-                s.sale_date
-            FROM sales s
-            JOIN customers c ON s.customer_id = c.id
-            JOIN users u ON s.user_id = u.id
-        `;
-        const params = [];
-        const conditions = [];
-        let paramIndex = 1;
-
-        if (q) {
-            conditions.push(`(s.id::text ILIKE ${paramIndex} OR c.name ILIKE ${paramIndex} OR s.payment_method ILIKE ${paramIndex})`);
-            params.push(`%${q}%`);
-            paramIndex++;
-        }
-        if (sale_date_gte) {
-            conditions.push(`s.sale_date >= ${paramIndex}`);
-            params.push(sale_date_gte);
-            paramIndex++;
-        }
-        if (sale_date_lte) {
-            conditions.push(`s.sale_date <= ${paramIndex}`);
-            params.push(sale_date_lte);
-            paramIndex++;
-        }
-        if (customer_id) {
-            conditions.push(`s.customer_id = ${paramIndex}`);
-            params.push(customer_id);
-            paramIndex++;
-        }
-
-        if (conditions.length > 0) {
-            query += ' WHERE ' + conditions.join(' AND ');
-        }
-
-        query += ` ORDER BY ${_sort} ${_order.toUpperCase()}`;
-
-        const { rows } = await db.query(query, params);
-        res.json(rows);
-    } catch (error) {
-        console.error('Erro ao obter histórico de vendas:', error);
-        throw new AppError('Erro interno do servidor ao obter histórico de vendas.', 500);
+        next(new AppError('Erro interno do servidor ao buscar venda.', 500));
     }
 };

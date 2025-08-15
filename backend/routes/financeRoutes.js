@@ -1,19 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken, authorize } = require('../middleware/authMiddleware');
+const { query } = require('express-validator');
 const financeController = require('../controllers/financeController');
+const { authenticateToken, authorize } = require('../middleware/authMiddleware');
+const { validate } = require('../middleware/validationMiddleware');
 
-// Rota para obter o resumo financeiro
-router.get('/summary', [authenticateToken, authorize('reports:view:financial')], financeController.getFinancialSummary);
+// Middleware de autenticação para todas as rotas financeiras
+router.use(authenticateToken);
 
-// Rotas para Despesas
-router.get('/expenses', [authenticateToken, authorize('expenses:read')], financeController.getAllExpenses);
-router.get('/expenses/:id', [authenticateToken, authorize('expenses:read')], financeController.getExpenseById);
-router.post('/expenses', [authenticateToken, authorize('expenses:create')], financeController.createExpense);
-router.put('/expenses/:id', [authenticateToken, authorize('expenses:update')], financeController.updateExpense);
-router.delete('/expenses/:id', [authenticateToken, authorize('expenses:delete')], financeController.deleteExpense);
-
-// Rota para obter dados do dashboard financeiro
-router.get('/dashboard', [authenticateToken, authorize('reports:view:financial')], financeController.getFinanceDashboardData);
+// Rota para o dashboard financeiro
+router.get(
+  '/dashboard',
+  authorize('reports:view:financial'), // Apenas usuários com permissão podem ver relatórios financeiros
+  [
+    query('startDate').isISO8601().withMessage('Data de início inválida.'),
+    query('endDate').isISO8601().withMessage('Data de fim inválida.')
+  ],
+  validate,
+  financeController.getDashboardData
+);
 
 module.exports = router;

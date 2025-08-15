@@ -1,4 +1,4 @@
-ALTER TABLE kanban_column_settings ADD COLUMN id UUID DEFAULT gen_random_uuid();
+ALTER TABLE kanban_column_settings ADD COLUMN IF NOT EXISTS id UUID DEFAULT gen_random_uuid();
 
 UPDATE kanban_column_settings SET id = gen_random_uuid() WHERE id IS NULL;
 

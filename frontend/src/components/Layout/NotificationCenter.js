@@ -108,13 +108,12 @@ const NotificationCenter = () => {
           </AnimatePresence>
         </DropdownToggle>
 
-        <DropdownMenu className='dropdown-menu-lg dropdown-menu-end p-0'>
+        <DropdownMenu className='dropdown-menu-lg dropdown-menu-start p-0'>
           <div className='p-3 notification-header'>
             <h5 className='m-0'>Notificações</h5>
           </div>
 
           <SimpleBar className='notification-list'>
-            <AnimatePresence>
               {loading ? (
                 <div className='text-center p-3'>
                   <LoadingSpinner size='sm' /> Carregando...
@@ -125,12 +124,9 @@ const NotificationCenter = () => {
                 <div className='text-center p-3 text-muted'>Nenhuma notificação.</div>
               ) : (
                 notifications.map((notification, index) => (
-                  <motion.div
+                  <div
                     key={notification.id}
-                    animate={{ opacity: 1, y: 0, transition: { delay: index * 0.05 } }}
                     className={`text-reset notification-item ${notification.is_read ? 'read' : 'unread'}`}
-                    exit={{ opacity: 0, x: -20 }}
-                    initial={{ opacity: 0, y: -20 }}
                   >
                     <Link className='d-flex' to={notification.link || '#'}>
                       <div className='item-icon'>
@@ -148,10 +144,9 @@ const NotificationCenter = () => {
                         </div>
                       </div>
                     </Link>
-                  </motion.div>
+                  </div>
                 ))
               )}
-            </AnimatePresence>
           </SimpleBar>
 
           <div className='p-2 border-top'>

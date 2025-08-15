@@ -1,21 +1,19 @@
 import React from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Form, FormGroup, Label, Input, Spinner, Alert } from 'reactstrap';
 import { Formik, Field, FieldArray, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
+import { z } from 'zod';
 import { Plus, Trash2 } from 'react-feather';
 
-const ChecklistTemplateSchema = Yup.object().shape({
-  name: Yup.string().required('O nome do template é obrigatório.'),
-  description: Yup.string(),
-  category: Yup.string(),
-  items: Yup.array()
-    .of(
-      Yup.object().shape({
-        item_text: Yup.string().required('O texto do item é obrigatório.'),
-        response_type: Yup.string().oneOf(['boolean', 'text']).required('O tipo de resposta é obrigatório.'),
-      })
-    )
-    .min(1, 'O template deve ter pelo menos um item.'),
+const checklistTemplateSchema = z.object({
+  name: z.string({ required_error: 'O nome do template é obrigatório.' }).min(1, 'O nome do template é obrigatório.'),
+  description: z.string().optional(),
+  category: z.string().optional(),
+  items: z.array(
+    z.object({
+      item_text: z.string({ required_error: 'O texto do item é obrigatório.' }).min(1, 'O texto do item é obrigatório.'),
+      response_type: z.enum(['boolean', 'text'], { required_error: 'O tipo de resposta é obrigatório.' }),
+    })
+  ).min(1, 'O template deve ter pelo menos um item.'),
 });
 
 const ChecklistTemplateForm = ({ isOpen, toggle, template, onSave }) => {
@@ -26,11 +24,21 @@ const ChecklistTemplateForm = ({ isOpen, toggle, template, onSave }) => {
     items: template?.items || [{ item_text: '', response_type: 'boolean' }],
   };
 
+  const validate = (values) => {
+    try {
+      checklistTemplateSchema.parse(values);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return error.formErrors.fieldErrors;
+      }
+    }
+  };
+
   return (
     <Modal isOpen={isOpen} toggle={toggle} size="lg">
       <Formik
         initialValues={initialValues}
-        validationSchema={ChecklistTemplateSchema}
+        validate={validate}
         onSubmit={(values, { setSubmitting }) => {
           onSave(values);
           setSubmitting(false);

@@ -7,7 +7,7 @@ const { AppError, NotFoundError, BadRequestError } = require('../utils/appError'
 exports.getAllProducts = async (req, res) => {
   const { limit = 10, offset = 0, search = '', category_id, min_price, max_price } = req.query;
   const cacheKey = `products:${limit}:${offset}:${search}:${category_id}:${min_price}:${max_price}`;
-  const currentBranchId = req.user.branch_id; // Assuming user has a branch_id
+  const currentBranchId = req.user ? req.user.branch_id : null; // Set to null if user is not authenticated
 
   try {
     const cachedProducts = await redisClient.get(cacheKey);
@@ -86,10 +86,16 @@ exports.getAllProducts = async (req, res) => {
     // Fetch serial numbers for serialized products
     for (let i = 0; i < products.length; i++) {
       if (products[i].is_serialized) {
-        const serialsResult = await db.query(
-          'SELECT id, serial_number, status FROM product_serials WHERE product_variation_id = $1 AND current_branch_id = $2 AND (status = \'in_stock\' OR status = \'in_repair\');',
-          [products[i].variation_id, currentBranchId]
-        );
+        let serialsQuery = 'SELECT id, serial_number, status FROM product_serials WHERE product_variation_id = $1 AND (status = \'in_stock\' OR status = \'in_repair\');';
+        let serialsQueryParams = [products[i].variation_id];
+
+        // Only filter by branch_id if currentBranchId is available
+        if (currentBranchId) {
+          serialsQuery = 'SELECT id, serial_number, status FROM product_serials WHERE product_variation_id = $1 AND current_branch_id = $2 AND (status = \'in_stock\' OR status = \'in_repair\');';
+          serialsQueryParams = [products[i].variation_id, currentBranchId];
+        }
+
+        const serialsResult = await db.query(serialsQuery, serialsQueryParams);
         products[i].serial_numbers = serialsResult.rows;
       }
     }
@@ -427,4 +433,21 @@ exports.exportProducts = async (req, res) => {
     console.error('Erro ao exportar produtos:', err);
     throw new AppError('Erro interno do servidor ao exportar produtos.', 500);
   }
+};
+
+// @desc    Obter histórico de estoque de uma variação de produto
+// @route   GET /api/products/stock-history/:productVariationId
+// @access  Private
+exports.getProductStockHistory = async (req, res, next) => {
+    const { productVariationId } = req.params;
+    try {
+        const { rows } = await db.query(
+            'SELECT * FROM stock_history WHERE product_variation_id = $1 ORDER BY movement_date DESC',
+            [productVariationId]
+        );
+        res.json(rows);
+    } catch (error) {
+        console.error('Erro ao buscar histórico de estoque do produto:', error);
+        next(new AppError('Erro interno ao buscar histórico de estoque.', 500));
+    }
 };

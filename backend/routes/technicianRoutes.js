@@ -1,3 +1,4 @@
+console.log('[TechnicianRoutes] Loaded');
 const express = require('express');
 const router = express.Router();
 const { authenticateToken, authorize } = require('../middleware/authMiddleware');

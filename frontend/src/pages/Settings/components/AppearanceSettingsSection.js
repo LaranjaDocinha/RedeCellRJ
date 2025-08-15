@@ -11,7 +11,7 @@ const AppearanceSettingsSection = ({ settings, handleInputChange }) => {
   const handleColorChange = (e) => {
     const newColor = e.target.value;
     setPrimaryColor(newColor);
-    handleInputChange({ target: { name: 'primary_color', value: newColor } });
+    handleInputChange({ target: { name: 'primary_color', value: newColor, type: 'color' } });
   };
 
   const handlePrimaryFontChange = (e) => {
@@ -19,7 +19,7 @@ const AppearanceSettingsSection = ({ settings, handleInputChange }) => {
     const selectedFont = availableFonts.find((font) => font.name === fontName);
     if (selectedFont) {
       setPrimaryFont(selectedFont);
-      handleInputChange({ target: { name: 'primary_font', value: fontName } });
+      handleInputChange({ target: { name: 'primary_font', value: fontName, type: 'select' } });
     }
   };
 
@@ -28,7 +28,7 @@ const AppearanceSettingsSection = ({ settings, handleInputChange }) => {
     const selectedFont = availableFonts.find((font) => font.name === fontName);
     if (selectedFont) {
       setSecondaryFont(selectedFont);
-      handleInputChange({ target: { name: 'secondary_font', value: fontName } });
+      handleInputChange({ target: { name: 'secondary_font', value: fontName, type: 'select' } });
     }
   };
 

@@ -1,29 +1,54 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer'); // Import multer
-const upload = multer(); // Create a multer instance for file uploads
-const { authenticateToken, authorize } = require('../middleware/authMiddleware');
+const { body, param } = require('express-validator');
 const bankAccountController = require('../controllers/bankAccountController');
+const { authenticateToken, authorize } = require('../middleware/authMiddleware');
+const { validate } = require('../middleware/validationMiddleware');
 
-// Criar uma nova conta bancária
-router.post('/', [authenticateToken, authorize('bank_accounts:manage')], bankAccountController.createBankAccount);
+// Regras de validação para criação e atualização de conta
+const accountValidationRules = () => [
+  body('name').notEmpty().withMessage('O nome da conta é obrigatório.').trim(),
+  body('bank_name').notEmpty().withMessage('O nome do banco é obrigatório.').trim(),
+  body('account_number').notEmpty().withMessage('O número da conta é obrigatório.').trim(),
+  body('initial_balance').isFloat().withMessage('O saldo inicial deve ser um número.')
+];
 
-// Obter todas as contas bancárias
-router.get('/', [authenticateToken, authorize('bank_accounts:read')], bankAccountController.getAllBankAccounts);
+// Proteger todas as rotas
+router.use(authenticateToken);
 
-// Obter uma conta bancária por ID
-router.get('/:id', [authenticateToken, authorize('bank_accounts:read')], bankAccountController.getBankAccountById);
+// Rotas CRUD para Contas Bancárias
+router.get('/', 
+  authorize('reports:view:financial'), 
+  bankAccountController.getAllBankAccounts
+);
 
-// Atualizar uma conta bancária
-router.put('/:id', [authenticateToken, authorize('bank_accounts:manage')], bankAccountController.updateBankAccount);
+router.post('/', 
+  authorize('finance:manage'), 
+  accountValidationRules(), 
+  validate, 
+  bankAccountController.createBankAccount
+);
 
-// Deletar uma conta bancária
-router.delete('/:id', [authenticateToken, authorize('bank_accounts:manage')], bankAccountController.deleteBankAccount);
+router.get('/:id', 
+  authorize('reports:view:financial'), 
+  param('id').isInt(), 
+  validate, 
+  bankAccountController.getBankAccountById
+);
 
-// Importar transações bancárias via CSV
-router.post('/:id/import-transactions', [authenticateToken, authorize('bank_accounts:manage'), upload.single('csvFile')], bankAccountController.importBankTransactions);
+router.put('/:id', 
+  authorize('finance:manage'), 
+  param('id').isInt(), 
+  accountValidationRules(), 
+  validate, 
+  bankAccountController.updateBankAccount
+);
 
-// Obter transações bancárias para uma conta específica
-router.get('/:id/transactions', [authenticateToken, authorize('bank_accounts:read')], bankAccountController.getBankTransactions);
+router.delete('/:id', 
+  authorize('finance:manage'), 
+  param('id').isInt(), 
+  validate, 
+  bankAccountController.deleteBankAccount
+);
 
 module.exports = router;

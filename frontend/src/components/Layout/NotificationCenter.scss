@@ -27,13 +27,21 @@
     animation: pulse-danger 1.5s infinite;
   }
 
-  .dropdown-menu {
-    width: 320px;
-    margin-top: 10px !important;
+      .dropdown-menu {
+    // position: fixed; // Reverted
+    // top: 60px; // Reverted
+    // right: 10px; // Reverted
+    // left: auto; // Reverted
+    width: calc(100vw - 20px); // Keep width calculation
+    max-width: calc(100vw - 20px); // Keep max-width
+    min-width: 280px; // Ensure a reasonable minimum width
+    margin-top: 10px !important; // Revert margin-top
     border: 1px solid var(--color-border);
     box-shadow: var(--shadow-lg);
     animation: fadeInSlideDown 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
     background-color: var(--color-component-bg);
+    z-index: 1050; // Keep z-index
+    overflow-x: hidden; // Keep overflow-x hidden
   }
 
   .notification-header {
@@ -86,6 +94,8 @@
       }
       p {
         color: var(--color-muted-text);
+        word-wrap: break-word; // Ensure long words break and wrap
+        overflow-wrap: break-word; // Modern alternative
       }
     }
   }

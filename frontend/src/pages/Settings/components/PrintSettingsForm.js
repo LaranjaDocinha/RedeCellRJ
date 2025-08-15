@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { Card, CardBody, CardTitle, Form, FormGroup, Label, Input, Button } from 'reactstrap';
 import useNotification from '../../../hooks/useNotification';
-import useApi from '../../../hooks/useApi';
+import useApi from '../../hooks/useApi';
 import { post } from '../../../helpers/api_helper'; // Assuming POST for saving settings
 import LoadingSpinner from '../../../components/Common/LoadingSpinner';
 import { useReactToPrint } from 'react-to-print';

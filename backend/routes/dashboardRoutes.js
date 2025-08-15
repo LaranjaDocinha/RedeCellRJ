@@ -12,4 +12,13 @@ router.get('/summary', [authenticateToken, authorize('reports:view:financial')],
 // Rota para obter visão geral de vendas por período (para gráficos)
 router.get('/sales-overview', [authenticateToken, authorize('reports:view:financial')], dashboardController.getSalesOverview);
 
+// Rota para obter os produtos mais vendidos
+router.get('/top-products', [authenticateToken, authorize('reports:view:financial')], dashboardController.getTopProducts);
+
+// Rota para obter vendas por categoria
+router.get('/sales-by-category', [authenticateToken, authorize('reports:view:financial')], dashboardController.getSalesByCategory);
+
+// Rota para obter tendências de vendas
+router.get('/sales-trends', [authenticateToken, authorize('reports:view:financial')], dashboardController.getSalesTrends);
+
 module.exports = router;

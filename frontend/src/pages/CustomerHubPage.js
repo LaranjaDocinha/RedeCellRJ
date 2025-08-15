@@ -1,294 +1,246 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  Container,
-  Row,
-  Col,
-  Card,
-  CardBody,
-  Button,
-  Input,
-  Form,
-  FormGroup,
-  ListGroup,
-  ListGroupItem,
-  Badge,
-  Alert,
-  Label,
-} from 'reactstrap';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Trash2 } from 'react-feather';
+import { Container, Row, Col, Card, CardBody, CardTitle, Spinner, Alert, Nav, NavItem, NavLink, TabContent, TabPane, Table, Badge, Button } from 'reactstrap'; // Added Button
+import { motion } from 'framer-motion';
+import classnames from 'classnames';
+import toast from 'react-hot-toast';
+import useApi from '../hooks/useApi'; // Adjust path as needed
 
-import useApi from '../hooks/useApi';
-import { get, post, del } from '../helpers/api_helper';
-import Timeline from '../components/Common/Timeline';
-import LoadingSpinner from '../components/Common/LoadingSpinner';
-import useNotification from '../hooks/useNotification';
-import Breadcrumbs from '../components/Common/Breadcrumb';
+import './CustomerHubPage.scss'; // Page-specific styling
 
-// Função para formatar a data e o valor monetário
-const formatDate = (dateString) =>
-  new Date(dateString).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  });
-const formatCurrency = (amount) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
-
-// Função adaptadora para transformar os dados da API no formato esperado pelo componente Timeline
-const adaptApiDataToTimeline = (activities) => {
-  if (!activities) return [];
-  return activities.map((activity) => {
-    let title = 'Atividade Desconhecida';
-    let description = activity.details;
-
-    switch (activity.type) {
-      case 'sale':
-        title = `Compra Realizada - ${formatCurrency(activity.amount)}`;
-        description = `Pagamento via: ${activity.details}`;
-        break;
-      case 'repair':
-        title = `Ordem de Serviço #${activity.event_id}`;
-        description = `Status: ${activity.details} - Custo: ${formatCurrency(activity.amount)}`;
-        break;
-      case 'log':
-        title = 'Registro do Sistema';
-        break;
-      default:
-        break;
-    }
-
-    return {
-      title,
-      description,
-      timestamp: formatDate(activity.date),
-      icon: activity.icon,
-      color: activity.color, // Passando a cor para o componente
-    };
-  });
-};
+const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
 const CustomerHubPage = () => {
-  document.title = 'Hub do Cliente | PDV Web';
-  const { id } = useParams();
-  const [customer, setCustomer] = useState(null);
-  const [activity, setActivity] = useState([]);
-  const [interactions, setInteractions] = useState([]);
-  const [newInteraction, setNewInteraction] = useState({
-    interaction_type: '',
-    notes: '',
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { customerId } = useParams();
+  const [activeTab, setActiveTab] = useState('details'); // 'details', 'sales', 'repairs', 'interactions'
 
-  const { request: fetchCustomerDataApi } = useApi(get);
-  const { request: fetchActivitiesApi } = useApi(get);
-  const { request: fetchInteractionsApi } = useApi(get);
-  const { request: addInteractionApi } = useApi(post);
-  const { request: deleteInteractionApi } = useApi(del);
-  const { showSuccess, showError } = useNotification();
-
-  const fetchAllCustomerData = async () => {
-    try {
-      setLoading(true);
-      const [customerData, activityData, interactionsData] = await Promise.all([
-        fetchCustomerDataApi(`/customers/${id}`),
-        fetchActivitiesApi(`/customers/${id}/activity`),
-        fetchInteractionsApi(`/customers/${id}/interactions`),
-      ]);
-      setCustomer(customerData);
-      setActivity(activityData);
-      setInteractions(interactionsData);
-    } catch (err) {
-      showError('Falha ao carregar os dados do cliente.');
-      console.error(err);
-      setError('Falha ao carregar os dados do cliente.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Fetch customer details
+  const { data: customerDetails, isLoading: loadingCustomer, error: customerError, refresh: refreshCustomerDetails } = useApi('get', `/api/customers/${customerId}`);
+  // Fetch sales history
+  const { data: salesHistory, isLoading: loadingSales, error: salesError, refresh: refreshSalesHistory } = useApi('get', `/api/sales?customer_id=${customerId}`);
+  // Fetch repair history
+  const { data: repairHistory, isLoading: loadingRepairs, error: repairsError, refresh: refreshRepairHistory } = useApi('get', `/api/repairs?customer_id=${customerId}`);
+  // Fetch customer interactions
+  const { data: interactions, isLoading: loadingInteractions, error: interactionsError, refresh: refreshInteractions } = useApi('get', `/api/customer-interactions?customer_id=${customerId}`);
 
   useEffect(() => {
-    fetchAllCustomerData();
-  }, [id]);
+    refreshCustomerDetails();
+    refreshSalesHistory();
+    refreshRepairHistory();
+    refreshInteractions();
+  }, [customerId, refreshCustomerDetails, refreshSalesHistory, refreshRepairHistory, refreshInteractions]);
 
-  const handleInteractionChange = (e) => {
-    const { name, value } = e.target;
-    setNewInteraction((prev) => ({ ...prev, [name]: value }));
+  const toggleTab = (tab) => {
+    if (activeTab !== tab) setActiveTab(tab);
   };
 
-  const handleAddInteraction = async (e) => {
-    e.preventDefault();
-    if (!newInteraction.interaction_type || !newInteraction.notes) {
-      showError('Tipo de interação e notas são obrigatórios.');
-      return;
-    }
-    try {
-      await addInteractionApi(`/customers/${id}/interactions`, newInteraction);
-      showSuccess('Interação adicionada com sucesso!');
-      setNewInteraction({ interaction_type: '', notes: '' });
-      fetchAllCustomerData(); // Recarrega todos os dados para atualizar a lista
-    } catch (err) {
-      showError('Falha ao adicionar interação.');
-      console.error(err);
-    }
-  };
-
-  const handleDeleteInteraction = async (interactionId) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta interação?')) return;
-    try {
-      await deleteInteractionApi(`/customers/${id}/interactions/${interactionId}`);
-      showSuccess('Interação excluída com sucesso!');
-      fetchAllCustomerData(); // Recarrega todos os dados para atualizar a lista
-    } catch (err) {
-      showError('Falha ao excluir interação.');
-      console.error(err);
-    }
-  };
-
-  if (loading) {
+  if (loadingCustomer) {
     return (
-      <div className='page-content'>
-        <Container fluid>
-          <LoadingSpinner />
-        </Container>
+      <div className="customer-hub-page text-center p-5">
+        <Spinner /> Carregando detalhes do cliente...
       </div>
     );
   }
 
-  if (error) {
+  if (customerError) {
     return (
-      <div className='page-content'>
-        <Container fluid>
-          <Alert color='danger'>{error}</Alert>
-        </Container>
+      <div className="customer-hub-page text-center p-5">
+        <Alert color="danger">Erro ao carregar cliente: {customerError.message}</Alert>
       </div>
     );
   }
 
-  if (!customer) {
+  if (!customerDetails) {
     return (
-      <div className='page-content'>
-        <Container fluid>
-          <Alert color='warning'>Cliente não encontrado.</Alert>
-        </Container>
+      <div className="customer-hub-page text-center p-5">
+        <Alert color="info">Cliente não encontrado.</Alert>
       </div>
     );
   }
-
-  const timelineItems = adaptApiDataToTimeline(activity);
 
   return (
-    <React.Fragment>
-      <div className='page-content'>
-        <Container fluid>
-          <Breadcrumbs breadcrumbItem='Hub do Cliente' title='CRM' />
+    <motion.div
+      className="customer-hub-page"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Container fluid className="p-4">
+        <Row>
+          <Col lg={12}>
+            <div className="page-header mb-4">
+              <h1>Hub do Cliente: {customerDetails.name}</h1>
+              <p className="text-muted">Email: {customerDetails.email} | Telefone: {customerDetails.phone}</p>
+              <p className="text-muted">Endereço: {customerDetails.address}</p>
+            </div>
+          </Col>
+        </Row>
 
-          <Row>
-            <Col lg='12'>
-              <Card>
-                <CardBody>
-                  <h4 className='card-title'>{customer.name}</h4>
-                  <p className='card-title-desc'>
-                    {customer.email} | {customer.phone}
-                  </p>
-                  <p>Endereço: {customer.address || 'N/A'}</p>
-                  <p>
-                    Pontos de Fidelidade: <Badge color='info'>{customer.loyalty_points || 0}</Badge>
-                  </p>
-                  <hr />
+        <Row>
+          <Col lg={12}>
+            <Card>
+              <CardBody>
+                <Nav tabs>
+                  <NavItem>
+                    <NavLink
+                      className={classnames({ active: activeTab === 'details' })}
+                      onClick={() => { toggleTab('details'); }}
+                    >
+                      Detalhes
+                    </NavLink>
+                  </NavItem>
+                  <NavItem>
+                    <NavLink
+                      className={classnames({ active: activeTab === 'sales' })}
+                      onClick={() => { toggleTab('sales'); }}
+                    >
+                      Histórico de Vendas
+                    </NavLink>
+                  </NavItem>
+                  <NavItem>
+                    <NavLink
+                      className={classnames({ active: activeTab === 'repairs' })}
+                      onClick={() => { toggleTab('repairs'); }}
+                    >
+                      Histórico de Reparos
+                    </NavLink>
+                  </NavItem>
+                  <NavItem>
+                    <NavLink
+                      className={classnames({ active: activeTab === 'interactions' })}
+                      onClick={() => { toggleTab('interactions'); }}
+                    >
+                      Interações
+                    </NavLink>
+                  </NavItem>
+                </Nav>
 
-                  <Row>
-                    <Col md={6}>
-                      <h5>Histórico de Atividades</h5>
-                      {timelineItems.length === 0 ? (
-                        <p>Nenhuma atividade recente para este cliente.</p>
-                      ) : (
-                        <Timeline items={timelineItems} />
-                      )}
-                    </Col>
-                    <Col md={6}>
-                      <h5>Interações com o Cliente</h5>
-                      <Form className='mb-3' onSubmit={handleAddInteraction}>
-                        <FormGroup>
-                          <Label for='interaction_type'>Tipo de Interação</Label>
-                          <Input
-                            required
-                            id='interaction_type'
-                            name='interaction_type'
-                            type='select'
-                            value={newInteraction.interaction_type}
-                            onChange={handleInteractionChange}
-                          >
-                            <option value=''>Selecione o Tipo</option>
-                            <option value='Chamada'>Chamada</option>
-                            <option value='Email'>Email</option>
-                            <option value='Visita'>Visita</option>
-                            <option value='Nota'>Nota</option>
-                          </Input>
-                        </FormGroup>
-                        <FormGroup>
-                          <Label for='notes'>Notas da Interação</Label>
-                          <Input
-                            required
-                            id='notes'
-                            name='notes'
-                            rows='3'
-                            type='textarea'
-                            value={newInteraction.notes}
-                            onChange={handleInteractionChange}
-                          />
-                        </FormGroup>
-                        <Button color='primary' type='submit'>
-                          Adicionar Interação
-                        </Button>
-                      </Form>
-
-                      <h6>Interações Anteriores</h6>
-                      {interactions.length === 0 ? (
-                        <p>Nenhuma interação registrada.</p>
-                      ) : (
-                        <ListGroup flush>
-                          {interactions.map((interaction) => (
-                            <ListGroupItem
-                              key={interaction.id}
-                              className='d-flex justify-content-between align-items-center'
-                            >
-                              <div>
-                                <strong>{interaction.interaction_type}</strong> -{' '}
-                                {format(
-                                  new Date(interaction.interaction_date),
-                                  'dd/MM/yyyy HH:mm',
-                                  {
-                                    locale: ptBR,
-                                  },
-                                )}
-                                <p className='mb-0 text-muted'>{interaction.notes}</p>
-                                <small>Registrado por: {interaction.user_name}</small>
-                              </div>
-                              <Button
-                                outline
-                                color='danger'
-                                size='sm'
-                                onClick={() => handleDeleteInteraction(interaction.id)}
-                              >
-                                <Trash2 size={14} />
-                              </Button>
-                            </ListGroupItem>
-                          ))}
-                        </ListGroup>
-                      )}
-                    </Col>
-                  </Row>
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
-        </Container>
-      </div>
-    </React.Fragment>
+                <TabContent activeTab={activeTab} className="p-3">
+                  <TabPane tabId="details">
+                    <Row>
+                      <Col md={6}>
+                        <p><strong>Nome Completo:</strong> {customerDetails.name}</p>
+                        <p><strong>Email:</strong> {customerDetails.email}</p>
+                        <p><strong>Telefone:</strong> {customerDetails.phone}</p>
+                        <p><strong>Endereço:</strong> {customerDetails.address}</p>
+                      </Col>
+                      <Col md={6}>
+                        <p><strong>CPF/CNPJ:</strong> {customerDetails.document}</p>
+                        <p><strong>Data de Registro:</strong> {new Date(customerDetails.created_at).toLocaleDateString('pt-BR')}</p>
+                        {/* Add more customer details here */}
+                      </Col>
+                    </Row>
+                  </TabPane>
+                  <TabPane tabId="sales">
+                    <CardTitle tag="h5" className="mb-4">Histórico de Vendas</CardTitle>
+                    {loadingSales ? (
+                      <div className="text-center"><Spinner /> Carregando vendas...</div>
+                    ) : salesError ? (
+                      <Alert color="danger">Erro ao carregar vendas: {salesError.message}</Alert>
+                    ) : salesHistory && salesHistory.length > 0 ? (
+                      <div className="table-responsive">
+                        <Table className="table-hover table-striped mb-0">
+                          <thead>
+                            <tr>
+                              <th>ID Venda</th>
+                              <th>Data</th>
+                              <th>Valor Total</th>
+                              <th>Itens</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {salesHistory.map(sale => (
+                              <tr key={sale.id}>
+                                <td>{sale.id}</td>
+                                <td>{new Date(sale.sale_date).toLocaleDateString('pt-BR')}</td>
+                                <td>{formatCurrency(sale.total_amount)}</td>
+                                <td>{sale.items.map(item => item.product_name).join(', ')}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <Alert color="info" className="text-center">Nenhuma venda encontrada para este cliente.</Alert>
+                    )}
+                  </TabPane>
+                  <TabPane tabId="repairs">
+                    <CardTitle tag="h5" className="mb-4">Histórico de Reparos</CardTitle>
+                    {loadingRepairs ? (
+                      <div className="text-center"><Spinner /> Carregando reparos...</div>
+                    ) : repairsError ? (
+                      <Alert color="danger">Erro ao carregar reparos: {repairsError.message}</Alert>
+                    ) : repairHistory && repairHistory.length > 0 ? (
+                      <div className="table-responsive">
+                        <Table className="table-hover table-striped mb-0">
+                          <thead>
+                            <tr>
+                              <th>ID Reparo</th>
+                              <th>Dispositivo</th>
+                              <th>Problema</th>
+                              <th>Status</th>
+                              <th>Data Entrada</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {repairHistory.map(repair => (
+                              <tr key={repair.id}>
+                                <td>{repair.id}</td>
+                                <td>{repair.device_type} - {repair.model}</td>
+                                <td>{repair.problem_description}</td>
+                                <td><Badge color={
+                                  repair.status === 'Pronto para entrega' ? 'success' :
+                                  repair.status === 'Em andamento' ? 'warning' :
+                                  'secondary'
+                                }>{repair.status}</Badge></td>
+                                <td>{new Date(repair.start_date).toLocaleDateString('pt-BR')}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <Alert color="info" className="text-center">Nenhum reparo encontrado para este cliente.</Alert>
+                    )}
+                  </TabPane>
+                  <TabPane tabId="interactions">
+                    <CardTitle tag="h5" className="mb-4">Interações com o Cliente</CardTitle>
+                    {loadingInteractions ? (
+                      <div className="text-center"><Spinner /> Carregando interações...</div>
+                    ) : interactionsError ? (
+                      <Alert color="danger">Erro ao carregar interações: {interactionsError.message}</Alert>
+                    ) : interactions && interactions.length > 0 ? (
+                      <div className="table-responsive">
+                        <Table className="table-hover table-striped mb-0">
+                          <thead>
+                            <tr>
+                              <th>Tipo</th>
+                              <th>Data</th>
+                              <th>Notas</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {interactions.map(interaction => (
+                              <tr key={interaction.id}>
+                                <td><Badge color="primary">{interaction.interaction_type}</Badge></td>
+                                <td>{new Date(interaction.interaction_date).toLocaleDateString('pt-BR')}</td>
+                                <td>{interaction.notes}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <Alert color="info" className="text-center">Nenhuma interação encontrada para este cliente.</Alert>
+                    )}
+                  </TabPane>
+                </TabContent>
+              </CardBody>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
+    </motion.div>
   );
 };
 

@@ -13,11 +13,27 @@ const generateRandomColor = () => {
 const getLoginScreenSettings = async (req, res, next) => {
   try {
     const result = await pool.query('SELECT * FROM login_screen_settings ORDER BY id LIMIT 1');
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Login screen settings not found.' });
-    }
+    let settings;
 
-    const settings = result.rows[0];
+    if (result.rows.length === 0) {
+      // Return default settings if no settings are found in the database
+      settings = {
+        background_type: 'solid',
+        background_solid_color: '#282c34', // A default dark color
+        background_image_url: null,
+        background_video_url: null,
+        image_size: 'cover',
+        image_repeat: 'no-repeat',
+        gradient_color_1: '#007bff',
+        gradient_color_2: '#6610f2',
+        gradient_color_3: '#007bff',
+        gradient_color_4: '#6610f2',
+        gradient_speed: 5,
+        gradient_direction: 'to right',
+      };
+    } else {
+      settings = result.rows[0];
+    }
 
     // If the gradient colors are set to 'random', generate them on the fly
     if (settings.background_type === 'gradient' && settings.gradient_color_1 === 'random') {

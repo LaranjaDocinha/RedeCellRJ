@@ -1,12 +1,19 @@
 import { useState, useCallback } from 'react';
 
 const useApi = (apiFunc) => {
+  
+
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const request = useCallback(
     async (...args) => {
+      if (typeof apiFunc !== 'function') {
+        const err = new Error('apiFunc is not a function');
+        setError({ message: err.message });
+        return Promise.reject(err);
+      }
       setLoading(true);
       setError(null);
       try {
@@ -16,7 +23,6 @@ const useApi = (apiFunc) => {
       } catch (err) {
         const errorData = err.response ? err.response.data : { message: err.message };
         setError(errorData);
-        // Não relance o erro, o componente que usa o hook deve verificar o estado de 'error'.
         return Promise.reject(errorData);
       } finally {
         setLoading(false);

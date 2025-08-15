@@ -1,222 +1,255 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, CardBody, CardTitle, Alert, Label, Input } from 'reactstrap';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Container, Row, Col, Card, CardBody, CardTitle, Alert, Label, Input, Spinner, Button } from 'reactstrap';
 import ReactApexChart from 'react-apexcharts';
-import { format } from 'date-fns';
-
+import { format, startOfMonth, endOfMonth } from 'date-fns';
 import Breadcrumbs from '../../components/Common/Breadcrumb';
-import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import useApi from '../../hooks/useApi';
-import { get } from '../../helpers/api_helper';
-import useNotification from '../../hooks/useNotification';
+import { motion } from 'framer-motion'; // Import motion
+import toast from 'react-hot-toast'; // Import toast for error messages
+
+const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
 const FinanceDashboard = () => {
   document.title = 'Dashboard Financeiro | PDV Web';
-  const { showSuccess, showError } = useNotification();
 
-  const [dashboardData, setDashboardData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-01'));
-  const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [filters, setFilters] = useState({
+    startDate: format(startOfMonth(new Date()), 'yyyy-MM-01'),
+    endDate: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
+  });
 
-  const { request: fetchDashboardData } = useApi(get);
+  const { data: dashboardData, isLoading, error, refresh } = useApi('/api/finance/dashboard', { params: filters });
 
-  const loadDashboardData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = { startDate, endDate };
-      const response = await fetchDashboardData('/api/finance/dashboard', { params });
-      setDashboardData(response);
-    } catch (err) {
-      showError('Falha ao carregar dados do dashboard financeiro.');
-      console.error(err);
-      setError('Falha ao carregar dados do dashboard financeiro.');
-    } finally {
-      setLoading(false);
-    }
+  const handleFilterChange = (e) => {
+    setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
+
+  const { salesByPaymentMethodOptions, salesByPaymentMethodSeries, expensesByCategoryOptions, expensesByCategorySeries, kpis } = useMemo(() => {
+    if (!dashboardData) return { salesByPaymentMethodOptions: {}, salesByPaymentMethodSeries: [], expensesByCategoryOptions: {}, expensesByCategorySeries: [], kpis: {} };
+
+    const { kpis, charts } = dashboardData;
+
+    // Sales by Payment Method Chart
+    const salesByPaymentMethodOptions = {
+      chart: {
+        type: 'donut',
+        foreColor: 'var(--text-color)', // Dark mode compatibility
+      },
+      labels: charts.salesByPaymentMethod.map((item) => item.payment_method),
+      responsive: [
+        {
+          breakpoint: 480,
+          options: {
+            chart: {
+              width: 200,
+            },
+            legend: {
+              position: 'bottom',
+            },
+          },
+        },
+      ],
+      theme: {
+        mode: 'light', // Placeholder, ideally dynamic based on theme context
+      },
+      legend: {
+        labels: {
+          colors: 'var(--text-color)', // Dark mode compatibility
+        }
+      },
+      tooltip: {
+        y: {
+          formatter: function (val) {
+            return formatCurrency(val);
+          },
+        },
+      },
+    };
+
+    const salesByPaymentMethodSeries = charts.salesByPaymentMethod.map((item) =>
+      parseFloat(item.amount),
+    );
+
+    // Expenses by Category Chart
+    const expensesByCategoryOptions = {
+      chart: {
+        type: 'bar',
+        height: 350,
+        foreColor: 'var(--text-color)', // Dark mode compatibility
+      },
+      plotOptions: {
+        bar: {
+          horizontal: false,
+          columnWidth: '55%',
+          endingShape: 'rounded',
+        },
+      },
+      dataLabels: {
+        enabled: false,
+      },
+      stroke: {
+        show: true,
+        width: 2,
+        colors: ['transparent'],
+      },
+      xaxis: {
+        categories: charts.expensesByCategory.map((item) => item.category),
+        labels: { style: { colors: 'var(--text-color)' } }, // Dark mode compatibility
+      },
+      yaxis: {
+        title: {
+          text: 'R$ (Valor)',
+          style: { color: 'var(--text-color)' } // Dark mode compatibility
+        },
+        labels: { style: { colors: 'var(--text-color)' } }, // Dark mode compatibility
+      },
+      fill: {
+        opacity: 1,
+      },
+      tooltip: {
+        y: {
+          formatter: function (val) {
+            return formatCurrency(val);
+          },
+        },
+      },
+      theme: {
+        mode: 'light', // Placeholder, ideally dynamic based on theme context
+      },
+    };
+
+    const expensesByCategorySeries = [
+      {
+        name: 'Despesas',
+        data: charts.expensesByCategory.map((item) => parseFloat(item.amount)),
+      },
+    ];
+
+    return {
+      salesByPaymentMethodOptions,
+      salesByPaymentMethodSeries,
+      expensesByCategoryOptions,
+      expensesByCategorySeries,
+      kpis,
+    };
+  }, [dashboardData]);
 
   useEffect(() => {
-    loadDashboardData();
-  }, [startDate, endDate]);
-
-  if (loading) {
-    return (
-      <div className='page-content'>
-        <Container fluid>
-          <LoadingSpinner />
-        </Container>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className='page-content'>
-        <Container fluid>
-          <Alert color='danger'>{error}</Alert>
-        </Container>
-      </div>
-    );
-  }
-
-  const salesByPaymentMethodOptions = {
-    chart: {
-      type: 'donut',
-    },
-    labels: dashboardData.charts.salesByPaymentMethod.map((item) => item.payment_method),
-    responsive: [
-      {
-        breakpoint: 480,
-        options: {
-          chart: {
-            width: 200,
-          },
-          legend: {
-            position: 'bottom',
-          },
-        },
-      },
-    ],
-  };
-
-  const salesByPaymentMethodSeries = dashboardData.charts.salesByPaymentMethod.map((item) =>
-    parseFloat(item.amount),
-  );
-
-  const expensesByCategoryOptions = {
-    chart: {
-      type: 'bar',
-      height: 350,
-    },
-    plotOptions: {
-      bar: {
-        horizontal: false,
-        columnWidth: '55%',
-        endingShape: 'rounded',
-      },
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    stroke: {
-      show: true,
-      width: 2,
-      colors: ['transparent'],
-    },
-    xaxis: {
-      categories: dashboardData.charts.expensesByCategory.map((item) => item.category),
-    },
-    yaxis: {
-      title: {
-        text: 'R$ (Valor)',
-      },
-    },
-    fill: {
-      opacity: 1,
-    },
-    tooltip: {
-      y: {
-        formatter: function (val) {
-          return 'R$ ' + val.toFixed(2);
-        },
-      },
-    },
-  };
-
-  const expensesByCategorySeries = [
-    {
-      name: 'Despesas',
-      data: dashboardData.charts.expensesByCategory.map((item) => parseFloat(item.amount)),
-    },
-  ];
+    refresh();
+  }, [filters, refresh]); // Re-fetch when filters change
 
   return (
-    <React.Fragment>
-      <div className='page-content'>
-        <Container fluid>
-          <Breadcrumbs breadcrumbItem='Dashboard' title='Financeiro' />
+    <motion.div
+      className="finance-dashboard-page" // Added class for styling
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Container fluid className="p-4">
+        <Breadcrumbs breadcrumbItem='Dashboard' title='Financeiro' />
 
-          <Row className='mb-3'>
-            <Col md={3}>
-              <Label for='startDate'>Data Início</Label>
-              <Input
-                id='startDate'
-                type='date'
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </Col>
-            <Col md={3}>
-              <Label for='endDate'>Data Fim</Label>
-              <Input
-                id='endDate'
-                type='date'
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </Col>
-          </Row>
+        <Row className='mb-3'>
+          <Col md={3}>
+            <Label for='startDate'>Data Início</Label>
+            <Input
+              id='startDate'
+              type='date'
+              value={filters.startDate}
+              onChange={(e) => handleFilterChange(e.target.name, e.target.value)}
+              name="startDate"
+            />
+          </Col>
+          <Col md={3}>
+            <Label for='endDate'>Data Fim</Label>
+            <Input
+              id='endDate'
+              type='date'
+              value={filters.endDate}
+              onChange={(e) => handleFilterChange(e.target.name, e.target.value)}
+              name="endDate"
+            />
+          </Col>
+          <Col md={6} className="text-end">
+            <Button color="primary" onClick={refresh}>
+              <i className="bx bx-refresh me-1"></i> Atualizar Dados
+            </Button>
+          </Col>
+        </Row>
 
-          <Row>
-            <Col md={4}>
-              <Card>
-                <CardBody>
-                  <CardTitle className='h5'>Receita Total</CardTitle>
-                  <h4 className='mb-0'>R$ {dashboardData.kpis.totalSales.toFixed(2)}</h4>
-                </CardBody>
-              </Card>
-            </Col>
-            <Col md={4}>
-              <Card>
-                <CardBody>
-                  <CardTitle className='h5'>Despesa Total</CardTitle>
-                  <h4 className='mb-0'>R$ {dashboardData.kpis.totalExpenses.toFixed(2)}</h4>
-                </CardBody>
-              </Card>
-            </Col>
-            <Col md={4}>
-              <Card>
-                <CardBody>
-                  <CardTitle className='h5'>Lucro Bruto</CardTitle>
-                  <h4 className='mb-0'>R$ {dashboardData.kpis.grossProfit.toFixed(2)}</h4>
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
+        {isLoading ? (
+          <div className="text-center p-5"><Spinner /> Carregando dashboard...</div>
+        ) : error ? (
+          <Alert color="danger">Erro ao carregar dashboard: {error.message}</Alert>
+        ) : dashboardData && dashboardData.kpis ? (
+          <>
+            <Row>
+              <Col md={4}>
+                <Card>
+                  <CardBody>
+                    <CardTitle tag='h5'>Receita Total</CardTitle>
+                    <h4 className='mb-0'>{formatCurrency(kpis.totalSales)}</h4>
+                  </CardBody>
+                </Card>
+              </Col>
+              <Col md={4}>
+                <Card>
+                  <CardBody>
+                    <CardTitle tag='h5'>Despesa Total</CardTitle>
+                    <h4 className='mb-0'>{formatCurrency(kpis.totalExpenses)}</h4>
+                  </CardBody>
+                </Card>
+              </Col>
+              <Col md={4}>
+                <Card>
+                  <CardBody>
+                    <CardTitle tag='h5'>Lucro Bruto</CardTitle>
+                    <h4 className='mb-0'>{formatCurrency(kpis.grossProfit)}</h4>
+                  </CardBody>
+                </Card>
+              </Col>
+            </Row>
 
-          <Row>
-            <Col md={6}>
-              <Card>
-                <CardBody>
-                  <CardTitle className='h5'>Vendas por Método de Pagamento</CardTitle>
-                  <ReactApexChart
-                    height={350}
-                    options={salesByPaymentMethodOptions}
-                    series={salesByPaymentMethodSeries}
-                    type='donut'
-                  />
-                </CardBody>
-              </Card>
-            </Col>
-            <Col md={6}>
-              <Card>
-                <CardBody>
-                  <CardTitle className='h5'>Despesas por Categoria</CardTitle>
-                  <ReactApexChart
-                    height={350}
-                    options={expensesByCategoryOptions}
-                    series={expensesByCategorySeries}
-                    type='bar'
-                  />
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
-        </Container>
-      </div>
-    </React.Fragment>
+            <Row className="mt-4">
+              <Col md={6}>
+                <Card>
+                  <CardBody>
+                    <CardTitle tag='h5'>Vendas por Método de Pagamento</CardTitle>
+                    {salesByPaymentMethodSeries && salesByPaymentMethodSeries.length > 0 ? (
+                      <ReactApexChart
+                        height={350}
+                        options={salesByPaymentMethodOptions}
+                        series={salesByPaymentMethodSeries}
+                        type='donut'
+                      />
+                    ) : (
+                      <Alert color="info" className="text-center">Nenhum dado de vendas por método de pagamento.</Alert>
+                    )}
+                  </CardBody>
+                </Card>
+              </Col>
+              <Col md={6}>
+                <Card>
+                  <CardBody>
+                    <CardTitle tag='h5'>Despesas por Categoria</CardTitle>
+                    {expensesByCategorySeries && expensesByCategorySeries[0]?.data?.length > 0 ? (
+                      <ReactApexChart
+                        height={350}
+                        options={expensesByCategoryOptions}
+                        series={expensesByCategorySeries}
+                        type='bar'
+                      />
+                    ) : (
+                      <Alert color="info" className="text-center">Nenhum dado de despesas por categoria.</Alert>
+                    )}
+                  </CardBody>
+                </Card>
+              </Col>
+            </Row>
+          </>
+        ) : (
+          <Alert color="info" className="text-center">Nenhum dado de dashboard financeiro disponível para o período selecionado.</Alert>
+        )}
+      </Container>
+    </motion.div>
   );
 };
 

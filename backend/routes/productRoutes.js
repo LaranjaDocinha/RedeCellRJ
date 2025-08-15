@@ -4,7 +4,7 @@ const { authenticateToken, authorize } = require('../middleware/authMiddleware')
 const productController = require('../controllers/productController');
 
 // Obter todos os produtos
-router.get('/', [authenticateToken, authorize('products:read')], productController.getAllProducts);
+router.get('/', productController.getAllProducts);
 
 // Obter um produto por ID
 router.get('/:id', [authenticateToken, authorize('products:read')], productController.getProductById);
@@ -24,5 +24,8 @@ router.get('/low-stock', [authenticateToken, authorize('products:read')], produc
 // Rotas para Importação/Exportação
 router.post('/import', [authenticateToken, authorize('products:create')], productController.importProducts);
 router.get('/export', [authenticateToken, authorize('products:read')], productController.exportProducts);
+
+// Get stock history for a specific product variation
+router.get('/stock-history/:productVariationId', [authenticateToken, authorize('products:read')], productController.getProductStockHistory);
 
 module.exports = router;
