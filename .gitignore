@@ -13,3 +13,5 @@ yarn-debug.log*
 .env.test.local
 .env.production.local
 /temp/
+Design-Files/
+commit_message.txt
