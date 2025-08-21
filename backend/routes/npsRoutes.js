@@ -19,6 +19,12 @@ router.post('/', npsSurveyValidationRules, npsController.createNpsSurvey); // Ad
 // Get all NPS survey responses
 router.get('/', npsController.getAllNpsSurveys); // Add authenticateToken and authorize middleware later
 
+// Calculate NPS score
+router.get('/calculate-nps', [
+    query('startDate').optional().isISO8601().toDate().withMessage('Data de início inválida.'),
+    query('endDate').optional().isISO8601().toDate().withMessage('Data de término inválida.'),
+], npsController.calculateNpsScore); // Add authenticateToken and authorize middleware later
+
 // Get a single NPS survey response by ID
 router.get('/:id', npsController.getNpsSurveyById); // Add authenticateToken and authorize middleware later
 
@@ -27,11 +33,5 @@ router.put('/:id', npsSurveyValidationRules, npsController.updateNpsSurvey); // 
 
 // Delete an NPS survey response
 router.delete('/:id', npsController.deleteNpsSurvey); // Add authenticateToken and authorize middleware later
-
-// Calculate NPS score
-router.get('/calculate-nps', [
-    query('startDate').optional().isISO8601().toDate().withMessage('Data de início inválida.'),
-    query('endDate').optional().isISO8601().toDate().withMessage('Data de término inválida.'),
-], npsController.calculateNpsScore); // Add authenticateToken and authorize middleware later
 
 module.exports = router;

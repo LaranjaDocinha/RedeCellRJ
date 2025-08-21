@@ -1,0 +1,81 @@
+.file-upload-container {
+  .dropzone {
+    border: 2px dashed var(--border-color);
+    border-radius: 0.75rem;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: var(--input-bg);
+    color: var(--text-color-secondary);
+
+    &:hover, &.active {
+      border-color: var(--primary-color);
+      background-color: var(--primary-color-light);
+      color: var(--primary-color-dark);
+    }
+
+    .upload-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      color: var(--primary-color);
+    }
+
+    p {
+      margin-bottom: 0.5rem;
+      font-size: 1rem;
+    }
+
+    .text-muted {
+      font-size: 0.85rem;
+      color: var(--text-color-secondary);
+    }
+
+    .upload-progress {
+      p {
+        font-weight: bold;
+        color: var(--primary-color);
+      }
+      .progress {
+        height: 10px;
+        .progress-bar {
+          background-color: var(--primary-color);
+        }
+      }
+    }
+  }
+}
+
+// Dark mode adjustments
+body.dark-mode {
+  .file-upload-container {
+    .dropzone {
+      border-color: var(--dark-border-color);
+      background-color: var(--dark-input-bg);
+      color: var(--dark-text-color-secondary);
+
+      &:hover, &.active {
+        border-color: var(--dark-primary-color);
+        background-color: var(--dark-primary-color-light);
+        color: var(--dark-primary-color-dark);
+      }
+
+      .upload-icon {
+        color: var(--dark-primary-color);
+      }
+
+      .text-muted {
+        color: var(--dark-text-color-secondary);
+      }
+
+      .upload-progress {
+        p {
+          color: var(--dark-primary-color);
+        }
+        .progress-bar {
+          background-color: var(--dark-primary-color);
+        }
+      }
+    }
+  }
+}

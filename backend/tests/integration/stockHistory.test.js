@@ -8,7 +8,7 @@ describe('Stock History API', () => {
 
     beforeAll(async () => {
         // Create a dummy product and variation for testing
-        const productRes = await db.query('INSERT INTO products (name, description, price) VALUES ($1, $2, $3) RETURNING id', ['Test Product', 'Description', 10.00]);
+        const productRes = await db.query('INSERT INTO products (name, description, branch_id) VALUES ($1, $2, $3) RETURNING id', ['Test Product', 'Description', 1]);
         productId = productRes.rows[0].id;
 
         const variationRes = await db.query('INSERT INTO product_variations (product_id, barcode, stock_quantity, min_stock_level) VALUES ($1, $2, $3, $4) RETURNING id', [productId, '123456789', 100, 10]);
@@ -33,7 +33,6 @@ describe('Stock History API', () => {
         await db.query('DELETE FROM stock_history');
         await db.query('DELETE FROM product_variations WHERE id = $1', [productVariationId]);
         await db.query('DELETE FROM products WHERE id = $1', [productId]);
-        await db.end();
     });
 
     it('should fetch stock history for a specific product variation', async () => {

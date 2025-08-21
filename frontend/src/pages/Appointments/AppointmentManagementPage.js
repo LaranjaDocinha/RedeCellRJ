@@ -5,8 +5,8 @@ import Flatpickr from 'react-flatpickr';
 import Select from 'react-select';
 import { Edit, Trash2 } from 'react-feather';
 import toast from 'react-hot-toast';
-import useApi from '../../hooks/useApi'; // Adjust path as needed
-import { useDebounce } from '../../hooks/useDebounce'; // Assuming useDebounce is available
+import useApi from '../../hooks/useApi';
+import { useDebounce } from '../../hooks/useDebounce';
 import ConfirmationModal from '../../components/Common/ConfirmationModal';
 import AppointmentBookingPage from './AppointmentBookingPage'; // Reusing the form from booking page
 
@@ -25,13 +25,14 @@ const AppointmentManagementPage = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const [appointmentToDelete, setAppointmentToDelete] = useState(null);
-  const [refreshList, setRefreshList] = useState(false);
 
   const debouncedFilters = useDebounce(filters, 500);
 
-  const { data: appointments, isLoading, error, request } = useApi('/api/appointments', { params: debouncedFilters });
+  // --- API Calls Refactored ---
+  const { data: appointmentsData, isLoading, error, request: fetchAppointments } = useApi('get');
   const { request: deleteAppointmentApi, isLoading: isDeleting } = useApi('delete');
-  const { data: customersData, isLoading: loadingCustomers, error: customersError } = useApi('get', '/api/customers');
+  const { data: customersData, isLoading: loadingCustomers, request: fetchCustomers } = useApi('get');
+  // --- End of Refactor ---
 
   const customerOptions = customersData?.customers?.map(c => ({ value: c.id, label: c.name })) || [];
   const serviceTypeOptions = [
@@ -56,11 +57,15 @@ const AppointmentManagementPage = () => {
     setConfirmationModalOpen(true);
   };
 
+  const reFetchAppointments = useCallback(() => {
+    fetchAppointments('/api/appointments', { params: debouncedFilters });
+  }, [fetchAppointments, debouncedFilters]);
+
   const confirmDelete = async () => {
     try {
       await deleteAppointmentApi(`/api/appointments/${appointmentToDelete.id}`);
       toast.success('Agendamento excluído com sucesso!');
-      setRefreshList(prev => !prev);
+      reFetchAppointments(); // Re-fetch the list
     } catch (err) {
       toast.error(err.message || 'Falha ao excluir agendamento.');
     } finally {
@@ -70,13 +75,17 @@ const AppointmentManagementPage = () => {
   };
 
   const handleFormSuccess = () => {
-    setRefreshList(prev => !prev);
+    reFetchAppointments(); // Re-fetch the list
     setModalOpen(false);
   };
 
   useEffect(() => {
-    request(); // Initial fetch and re-fetch on filter/refreshList change
-  }, [debouncedFilters, request, refreshList]);
+    reFetchAppointments(); // Initial fetch and re-fetch on filter change
+  }, [reFetchAppointments]);
+
+  useEffect(() => {
+    fetchCustomers('/api/customers');
+  }, [fetchCustomers]);
 
   return (
     <motion.div
@@ -166,7 +175,7 @@ const AppointmentManagementPage = () => {
                   <div className="text-center"><Spinner /> Carregando agendamentos...</div>
                 ) : error ? (
                   <Alert color="danger">Erro ao carregar agendamentos: {error.message}</Alert>
-                ) : appointments && appointments.length > 0 ? (
+                ) : appointmentsData && appointmentsData.appointments && appointmentsData.appointments.length > 0 ? (
                   <div className="table-responsive">
                     <Table className="table-hover table-striped mb-0">
                       <thead>
@@ -182,7 +191,7 @@ const AppointmentManagementPage = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {appointments.map(appointment => (
+                        {appointmentsData.appointments.map(appointment => (
                           <tr key={appointment.id}>
                             <td>{appointment.id}</td>
                             <td>{appointment.customer_name}</td>

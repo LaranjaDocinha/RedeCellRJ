@@ -10,12 +10,12 @@ describe('BI Dashboard Data API', () => {
 
     beforeAll(async () => {
         // Create dummy data for testing dashboard reports
-        const productRes1 = await db.query('INSERT INTO products (name, description, price) VALUES ($1, $2, $3) RETURNING id', ['Product A', 'Desc A', 10.00]);
+        const productRes1 = await db.query('INSERT INTO products (name, description, branch_id) VALUES ($1, $2, $3) RETURNING id', ['Product A', 'Desc A', 1]);
         productId1 = productRes1.rows[0].id;
-        const productRes2 = await db.query('INSERT INTO products (name, description, price) VALUES ($1, $2, $3) RETURNING id', ['Product B', 'Desc B', 20.00]);
+        const productRes2 = await db.query('INSERT INTO products (name, description, branch_id) VALUES ($1, $2, $3) RETURNING id', ['Product B', 'Desc B', 1]);
         productId2 = productRes2.rows[0].id;
 
-        const customerRes = await db.query('INSERT INTO customers (name, email) VALUES ($1, $2) RETURNING id', ['Dashboard Customer', 'dashboard@example.com']);
+        const customerRes = await db.query('INSERT INTO customers (name, email, branch_id) VALUES ($1, $2, $3) RETURNING id', ['Dashboard Customer', 'dashboard@example.com', 1]);
         customerId = customerRes.rows[0].id;
 
         const categoryRes1 = await db.query('INSERT INTO categories (name) VALUES ($1) RETURNING id', ['Category X']);
@@ -63,7 +63,6 @@ describe('BI Dashboard Data API', () => {
         await db.query('DELETE FROM products WHERE id IN ($1, $2)', [productId1, productId2]);
         await db.query('DELETE FROM customers WHERE id = $1', [customerId]);
         await db.query('DELETE FROM categories WHERE id IN ($1, $2)', [categoryId1, categoryId2]);
-        await db.end();
     });
 
     it('should fetch top products by quantity', async () => {

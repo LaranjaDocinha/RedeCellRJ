@@ -51,4 +51,10 @@ router.delete('/:id',
   bankAccountController.deleteBankAccount
 );
 
+// Rota para importação de extrato bancário
+router.post('/import-statement',
+  authorize('finance:manage'),
+  bankAccountController.importBankStatement
+);
+
 module.exports = router;

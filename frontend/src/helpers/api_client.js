@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '../store/authStore'; // Importar o store
 
 let activeRequests = 0;
 
@@ -13,6 +14,11 @@ const stopLoading = () => {
 const setupAxiosInterceptors = () => {
   axios.interceptors.request.use(
     config => {
+      const token = useAuthStore.getState().token; // Obter o token do store
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+
       if (activeRequests === 0) {
         startLoading();
       }
@@ -40,12 +46,10 @@ const setupAxiosInterceptors = () => {
 
     // Check for 401 Unauthorized or 403 Forbidden status
     if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      // Clear any stored token (e.g., from localStorage)
-      localStorage.removeItem('authUser'); // Assuming 'authUser' stores the token
-      localStorage.removeItem('token'); // Also remove 'token' if it's stored separately
-
-      // Redirect to login page
-      window.location.href = '/login'; // Force a full page reload to clear React state
+      // Não remover o token aqui, o logout deve ser explícito
+      // O redirecionamento para login deve ser tratado pelo componente de rota protegida
+      // ou por um contexto de autenticação global que reage a um estado de não autenticado
+      // window.location.href = '/login'; // Evitar redirecionamento forçado aqui
     }
 
     return Promise.reject(error);

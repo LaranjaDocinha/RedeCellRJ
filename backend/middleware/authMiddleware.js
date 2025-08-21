@@ -21,6 +21,7 @@ const authenticateToken = async (req, res, next) => {
 
     
     const decoded = jwt.verify(token, process.env.JWT_SECRET.trim());
+    console.log('[AuthMiddleware] Token decoded:', decoded); // Log do token decodificado
     const userId = decoded.user.id;
 
     // Busca o usuário, seu papel e suas permissões no banco de dados
@@ -56,27 +57,6 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
-/**
- * Middleware de Autorização Baseado em Permissões
- * Verifica se o usuário autenticado (`req.user`) possui a permissão necessária.
- * @param {string} requiredPermission - A permissão necessária para acessar a rota (ex: 'users:create').
- */
-const authorize = (requiredPermission) => {
-  return (req, res, next) => {
-    // As permissões são carregadas pelo middleware `authenticateToken`
-    const userPermissions = req.user?.permissions || [];
-
-    // O admin tem todas as permissões implicitamente, ou verificamos a permissão específica
-    if (req.user?.role === 'admin' || userPermissions.includes(requiredPermission)) {
-      return next();
-    }
-
-    return res.status(403).json({ 
-      message: `Acesso proibido. Requer a permissão: '${requiredPermission}'.` 
-    });
-  };
-};
-
 const admin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     next();
@@ -85,8 +65,22 @@ const admin = (req, res, next) => {
   }
 };
 
+const authorize = (requiredPermission) => {
+  return (req, res, next) => {
+    if (!req.user || !req.user.permissions) {
+      return res.status(403).json({ message: 'Acesso negado. Permissões de usuário não encontradas.' });
+    }
+
+    if (req.user.permissions.includes(requiredPermission)) {
+      next();
+    } else {
+      res.status(403).json({ message: `Acesso negado. Requer a permissão: ${requiredPermission}.` });
+    }
+  };
+};
+
 module.exports = {
   authenticateToken,
-  authorize,
-  admin, // Export the new admin middleware
+  admin,
+  authorize, // Export the new authorize middleware
 };

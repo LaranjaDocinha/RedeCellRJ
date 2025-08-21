@@ -9,23 +9,22 @@ describe('Audit Logs API', () => {
 
         // Insert some dummy audit logs
         await db.query(
-            'INSERT INTO activity_log (user_name, description, timestamp) VALUES ($1, $2, $3)',
-            ['TestUser1', 'User logged in', '2024-01-01T10:00:00Z']
+            'INSERT INTO activity_log (user_name, description, timestamp, branch_id) VALUES ($1, $2, $3, $4)',
+            ['TestUser1', 'User logged in', '2024-01-01T10:00:00Z', 1]
         );
         await db.query(
-            'INSERT INTO activity_log (user_name, description, timestamp) VALUES ($1, $2, $3)',
-            ['TestUser2', 'Product created', '2024-01-02T11:00:00Z']
+            'INSERT INTO activity_log (user_name, description, timestamp, branch_id) VALUES ($1, $2, $3, $4)',
+            ['TestUser2', 'Product created', '2024-01-02T11:00:00Z', 1]
         );
         await db.query(
-            'INSERT INTO activity_log (user_name, description, timestamp) VALUES ($1, $2, $3)',
-            ['TestUser1', 'Product updated', '2024-01-03T12:00:00Z']
+            'INSERT INTO activity_log (user_name, description, timestamp, branch_id) VALUES ($1, $2, $3, $4)',
+            ['TestUser1', 'Product updated', '2024-01-03T12:00:00Z', 1]
         );
     });
 
     afterAll(async () => {
         // Clean up after all tests are done
         await db.query('DELETE FROM activity_log');
-        await db.end();
     });
 
     it('should fetch all audit logs', async () => {

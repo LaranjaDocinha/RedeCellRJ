@@ -16,10 +16,10 @@ const ProfileSecurityTab = ({ user, onProfileUpdate }) => {
   const [twoFAToken, setTwoFAToken] = useState('');
   const [is2FAEnabled, setIs2FAEnabled] = useState(user.two_factor_enabled);
 
-  const { request: generateSecretApi, loading: generatingSecret } = useApi(post);
-  const { request: verifyTokenApi, loading: verifyingToken } = useApi(post);
-  const { request: enable2FAApi, loading: enabling2FA } = useApi(post);
-  const { request: disable2FAApi, loading: disabling2FA } = useApi(post);
+  const { request: generateSecretApi, loading: generatingSecret } = useApi('post');
+  const { request: verifyTokenApi, loading: verifyingToken } = useApi('post');
+  const { request: enable2FAApi, loading: enabling2FA } = useApi('post');
+  const { request: disable2FAApi, loading: disabling2FA } = useApi('post');
 
   useEffect(() => {
     setIs2FAEnabled(user.two_factor_enabled);
@@ -83,7 +83,7 @@ const ProfileSecurityTab = ({ user, onProfileUpdate }) => {
     newPassword: '',
     confirmNewPassword: '',
   });
-  const { request: changePasswordApi, loading: changingPassword } = useApi(post);
+  const { request: changePasswordApi, loading: changingPassword } = useApi('post');
 
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
@@ -111,8 +111,8 @@ const ProfileSecurityTab = ({ user, onProfileUpdate }) => {
 
   // Active Sessions State and Handlers
   const [sessions, setSessions] = useState([]);
-  const { request: fetchSessions, loading: sessionsLoading, error: sessionsError } = useApi(get);
-  const { request: revokeSessionApi, loading: revokingSession } = useApi(del);
+  const { request: fetchSessions, loading: sessionsLoading, error: sessionsError } = useApi('get');
+  const { request: revokeSessionApi, loading: revokingSession } = useApi('delete');
 
   const loadSessions = useCallback(async () => {
     try {

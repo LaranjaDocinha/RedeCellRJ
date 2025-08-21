@@ -43,10 +43,10 @@ const Suppliers = () => {
     data: suppliersData,
     loading: loadingSuppliers,
     request: fetchSuppliersApi,
-  } = useApi(get);
-  const { request: addSupplierApi, loading: addingSupplier } = useApi(post);
-  const { request: updateSupplierApi, loading: updatingSupplier } = useApi(put);
-  const { request: deleteSupplierApi, loading: deletingSupplier } = useApi(del);
+  } = useApi('get');
+  const { request: addSupplierApi, loading: addingSupplier } = useApi('post');
+  const { request: updateSupplierApi, loading: updatingSupplier } = useApi('put');
+  const { request: deleteSupplierApi, loading: deletingSupplier } = useApi('delete');
 
   const suppliers = suppliersData?.suppliers || [];
 

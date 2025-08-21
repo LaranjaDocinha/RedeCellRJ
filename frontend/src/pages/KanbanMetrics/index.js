@@ -8,7 +8,6 @@ import { format, startOfMonth, endOfMonth } from 'date-fns';
 import toast from 'react-hot-toast';
 import useApi from '../../hooks/useApi'; // Adjust path as needed
 import { useDebounce } from '../../hooks/useDebounce'; // Assuming useDebounce is available
-import { get } from '../../helpers/api_helper'; // Import get
 
 import 'flatpickr/dist/themes/material_blue.css'; // Example theme
 import './KanbanMetrics.scss'; // Page-specific styling
@@ -24,14 +23,26 @@ const KanbanMetrics = () => {
 
   const debouncedFilters = useDebounce(filters, 500);
 
-  const { data: metricsData, loading, error, request: fetchMetrics } = useApi(() => get('/api/repairs/kanban-metrics', { params: debouncedFilters }));
-  const { data: techniciansData, loading: loadingTechnicians, error: techniciansError, request: fetchTechnicians } = useApi(() => get('/api/technicians'));
+  const { data: metricsData, loading, error, request: fetchMetrics } = useApi('get');
+  const { data: techniciansData, loading: loadingTechnicians, error: techniciansError, request: fetchTechnicians } = useApi('get');
 
   const technicianOptions = techniciansData?.map(t => ({ value: t.id, label: t.name })) || [];
 
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({ ...prev, [name]: value }));
   };
+
+  const reFetchMetrics = useCallback(() => {
+    fetchMetrics('/api/repairs/kanban-metrics', { params: debouncedFilters });
+  }, [fetchMetrics, debouncedFilters]);
+
+  useEffect(() => {
+    reFetchMetrics();
+  }, [reFetchMetrics]);
+
+  useEffect(() => {
+    fetchTechnicians('/api/technicians');
+  }, [fetchTechnicians]);
 
   const { kpis, repairsByStatusChart, completedRepairsByTechnicianChart, avgTimeInStatusChart, cycleTimeTrendChart } = useMemo(() => {
     if (!metricsData) return {};
@@ -119,14 +130,6 @@ const KanbanMetrics = () => {
     };
   }, [metricsData]);
 
-  useEffect(() => {
-    fetchMetrics();
-  }, [debouncedFilters, fetchMetrics]);
-
-  useEffect(() => {
-    fetchTechnicians();
-  }, [fetchTechnicians]);
-
   return (
     <motion.div
       className="kanban-metrics-page"
@@ -139,7 +142,7 @@ const KanbanMetrics = () => {
           <Col lg={12}>
             <div className="page-header d-flex justify-content-between align-items-center mb-4">
               <h1>Métricas Kanban</h1>
-              <Button color="primary" onClick={fetchMetrics}>
+              <Button color="primary" onClick={reFetchMetrics}>
                 <i className="bx bx-refresh me-1"></i> Atualizar Métricas
               </Button>
             </div>
@@ -158,7 +161,7 @@ const KanbanMetrics = () => {
                       <Flatpickr
                         className="form-control d-block"
                         options={{ mode: 'range', dateFormat: 'Y-m-d' }}
-                        value={filters.startDate}
+                        value={[filters.startDate, filters.endDate]}
                         onChange={([start, end]) => {
                           handleFilterChange('startDate', start ? format(start, 'yyyy-MM-dd') : '');
                           handleFilterChange('endDate', end ? format(end, 'yyyy-MM-dd') : '');
@@ -189,7 +192,7 @@ const KanbanMetrics = () => {
           <div className="text-center p-5"><Spinner /> Carregando métricas Kanban...</div>
         ) : error ? (
           <Alert color="danger">Erro ao carregar métricas Kanban: {error.message}</Alert>
-        ) : metricsData && metricsData.summary ? (
+        ) : metricsData && kpis ? (
           <>
             <Row className="mt-4">
               <Col md={3}>
@@ -212,7 +215,7 @@ const KanbanMetrics = () => {
                 <Card className="text-center">
                   <CardBody>
                     <CardTitle tag="h5">Tempo de Ciclo Médio</CardTitle>
-                    <h3 className="text-info">{kpis.avgCycleTime.toFixed(2)}h</h3>
+                    <h3 className="text-info">{kpis.avgCycleTime ? kpis.avgCycleTime.toFixed(2) : '0.00'}h</h3>
                   </CardBody>
                 </Card>
               </Col>

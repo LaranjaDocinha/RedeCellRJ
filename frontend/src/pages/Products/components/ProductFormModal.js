@@ -8,7 +8,6 @@ import _ from 'lodash';
 import LoadingSpinner from '../../../components/Common/LoadingSpinner';
 import useApi from '../../../hooks/useApi';
 import { useDirtyForm } from '../../../hooks/useDirtyForm';
-import { get, post, put } from '../../../helpers/api_helper';
 
 const ProductFormModal = ({ isOpen, toggle, product, onSuccess }) => {
   const [formData, setFormData] = useState({});
@@ -21,8 +20,10 @@ const ProductFormModal = ({ isOpen, toggle, product, onSuccess }) => {
 
   const isEditing = product && product.id;
 
-  const { request: saveProduct, loading: isSaving } = useApi(isEditing ? put : post);
-  const { request: fetchCategories } = useApi(get);
+  const { request: createProduct, loading: isCreating } = useApi('post');
+  const { request: updateProduct, loading: isUpdating } = useApi('put');
+  const { request: fetchCategories } = useApi('get');
+  const isSaving = isCreating || isUpdating;
 
   // Efeito para detectar se o formulário está "sujo"
   useEffect(() => {
@@ -97,7 +98,7 @@ const ProductFormModal = ({ isOpen, toggle, product, onSuccess }) => {
       setFormData(data);
       setInitialData(data);
     }
-  }, [product, isOpen]);
+  }, [product, isOpen, isEditing]);
 
   const handleToggle = () => {
     resetDirty();
@@ -158,7 +159,7 @@ const ProductFormModal = ({ isOpen, toggle, product, onSuccess }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const dataToSend = new FormData();
@@ -194,18 +195,18 @@ const ProductFormModal = ({ isOpen, toggle, product, onSuccess }) => {
       dataToSend.append('productImage', selectedFile);
     }
 
+    const apiCall = isEditing ? updateProduct : createProduct;
     const url = isEditing ? `/api/products/${product.id}` : '/api/products';
 
-    saveProduct(url, dataToSend, { headers: { 'Content-Type': undefined } })
-      .then(() => {
-        toast.success(`Produto ${isEditing ? 'atualizado' : 'criado'} com sucesso!`);
-        resetDirty();
-        onSuccess();
-      })
-      .catch((error) => {
-        const errorMessage = error?.message || error?.msg || 'Erro ao salvar produto.';
-        toast.error(errorMessage);
-      });
+    try {
+      await apiCall(url, dataToSend, { headers: { 'Content-Type': undefined } });
+      toast.success(`Produto ${isEditing ? 'atualizado' : 'criado'} com sucesso!`);
+      resetDirty();
+      onSuccess();
+    } catch (error) {
+      const errorMessage = error?.message || error?.msg || 'Erro ao salvar produto.';
+      toast.error(errorMessage);
+    }
   };
 
   const categoryOptions = categories.map((cat) => ({ value: cat.id, label: cat.name }));

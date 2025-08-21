@@ -8,7 +8,7 @@ describe('Sales History API', () => {
 
     beforeAll(async () => {
         // Create a dummy customer for testing
-        const customerRes = await db.query('INSERT INTO customers (name, email) VALUES ($1, $2) RETURNING id', ['History Customer', 'history@example.com']);
+        const customerRes = await db.query('INSERT INTO customers (name, email, branch_id) VALUES ($1, $2, $3) RETURNING id', ['History Customer', 'history@example.com', 1]);
         customerId = customerRes.rows[0].id;
 
         // Create dummy sales for the customer
@@ -31,7 +31,6 @@ describe('Sales History API', () => {
         // Clean up after all tests are done
         await db.query('DELETE FROM sales WHERE id = $1 OR id = $2', [saleId1, saleId2]);
         await db.query('DELETE FROM customers WHERE id = $1', [customerId]);
-        await db.end();
     });
 
     it('should fetch sales history for a specific customer', async () => {
@@ -41,13 +40,13 @@ describe('Sales History API', () => {
         expect(res.statusCode).toEqual(200);
         expect(Array.isArray(res.body)).toBe(true);
         expect(res.body.length).toBeGreaterThanOrEqual(2); // Should contain at least the two sales we added
-        expect(res.body.some(sale => sale.id === sale1)).toBe(true);
-        expect(res.body.some(sale => sale.id === sale2)).toBe(true);
+        expect(res.body.some(sale => sale.id === saleId1)).toBe(true);
+        expect(res.body.some(sale => sale.id === saleId2)).toBe(true);
     });
 
     it('should return empty array if customer has no sales history', async () => {
         // Create a customer with no sales
-        const noSalesCustomerRes = await db.query('INSERT INTO customers (name, email) VALUES ($1, $2) RETURNING id', ['No Sales Customer', 'nosales@example.com']);
+        const noSalesCustomerRes = await db.query('INSERT INTO customers (name, email, branch_id) VALUES ($1, $2, $3) RETURNING id', ['No Sales Customer', 'nosales@example.com', 1]);
         const noSalesCustomerId = noSalesCustomerRes.rows[0].id;
 
         const res = await request(app)

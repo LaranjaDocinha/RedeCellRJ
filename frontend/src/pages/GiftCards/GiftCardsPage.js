@@ -15,7 +15,7 @@ const GiftCardsPage = () => {
   const [refreshList, setRefreshList] = useState(false); // State to trigger list refresh
 
   // Fetch gift cards data
-  const { request: fetchGiftCards, data: giftCards, isLoading, error } = useApi(get);
+  const { request: fetchGiftCards, data: giftCards, isLoading, error } = useApi('get');
 
   const loadGiftCards = useCallback(() => {
     fetchGiftCards('/api/gift-cards');

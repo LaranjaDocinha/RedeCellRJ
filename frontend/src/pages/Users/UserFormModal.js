@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Modal,
@@ -14,10 +13,8 @@ import {
   Col,
 } from 'reactstrap';
 import toast from 'react-hot-toast';
-import axios from 'axios';
 
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
-import { post, put, patch, get } from '../../helpers/api_helper'; // Import get for fetching branches
 import useApi from '../../hooks/useApi';
 
 const UserFormModal = ({ isOpen, toggle, user, onSave }) => {
@@ -28,10 +25,12 @@ const UserFormModal = ({ isOpen, toggle, user, onSave }) => {
 
   const isEditing = user && user.id;
 
-  const { request: requestPassword, loading: loadingPassword } = useApi(patch);
-  const { request: fetchBranches, loading: loadingBranches } = useApi(get);
-  const [loadingSubmit, setLoadingSubmit] = useState(false);
-  const isLoading = loadingSubmit || loadingPassword || loadingBranches;
+  const { request: requestPassword, loading: loadingPassword } = useApi('patch');
+  const { request: fetchBranches, loading: loadingBranches } = useApi('get');
+  const { request: createUser, loading: creatingUser } = useApi('post');
+  const { request: updateUser, loading: updatingUser } = useApi('put');
+
+  const isLoading = creatingUser || updatingUser || loadingPassword || loadingBranches;
 
   useEffect(() => {
     if (isOpen) {
@@ -91,16 +90,13 @@ const UserFormModal = ({ isOpen, toggle, user, onSave }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoadingSubmit(true);
 
     if (formData.password !== formData.confirmPassword) {
       toast.error('As senhas não coincidem.');
-      setLoadingSubmit(false);
       return;
     }
     if (!isEditing && !formData.password) {
       toast.error('A senha é obrigatória para novos usuários.');
-      setLoadingSubmit(false);
       return;
     }
 
@@ -120,16 +116,13 @@ const UserFormModal = ({ isOpen, toggle, user, onSave }) => {
     }
 
     const userUrl = isEditing ? `/api/users/${user.id}` : '/api/users';
-    const method = isEditing ? 'put' : 'post';
 
     try {
-      await axios[method](userUrl, userFormData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        withCredentials: true,
-      });
+      if (isEditing) {
+        await updateUser(userUrl, userFormData, { headers: { 'Content-Type': undefined } });
+      } else {
+        await createUser(userUrl, userFormData, { headers: { 'Content-Type': undefined } });
+      }
 
       if (isEditing && formData.password) {
         await requestPassword(`/api/users/${user.id}/password`, { password: formData.password });
@@ -141,8 +134,6 @@ const UserFormModal = ({ isOpen, toggle, user, onSave }) => {
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Ocorreu um erro ao salvar o usuário.';
       toast.error(errorMessage);
-    } finally {
-      setLoadingSubmit(false);
     }
   };
 

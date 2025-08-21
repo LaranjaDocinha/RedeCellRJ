@@ -5,15 +5,22 @@ import Breadcrumb from '../../components/Common/Breadcrumb';
 import BankAccountsToolbar from './components/BankAccountsToolbar';
 import BankAccountsList from './components/BankAccountsList';
 import BankAccountFormModal from './components/BankAccountFormModal';
+import FileUpload from '../../components/BankAccounts/FileUpload'; // Import FileUpload
+import TransactionMapping from '../../components/BankAccounts/TransactionMapping'; // Import TransactionMapping
 import useApi from '../../hooks/useApi';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '../../store/authStore'; // Import useAuthStore for token
 
 import './BankAccountsPage.scss'; // Page-specific styling
 
 const BankAccountsPage = () => {
+  const { token } = useAuthStore(); // Get token
   const [modalOpen, setModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false); // New state for import modal
   const [selectedAccount, setSelectedAccount] = useState(null);
-  const [refreshList, setRefreshList] = useState(false); // State to trigger list refresh
+  const [refreshList, setRefreshList] = useState(false);
+  const [importedTransactions, setImportedTransactions] = useState([]); // New state for imported transactions
+  const [existingTransactions, setExistingTransactions] = useState([]); // New state for existing transactions
 
   const { data, isLoading, error, refresh } = useApi('/api/bank-accounts');
 
@@ -21,6 +28,13 @@ const BankAccountsPage = () => {
     setModalOpen(!modalOpen);
     if (modalOpen) {
       setSelectedAccount(null);
+    }
+  };
+
+  const toggleImportModal = () => { // New toggle function for import modal
+    setImportModalOpen(!importModalOpen);
+    if (importModalOpen) {
+      setImportedTransactions([]); // Clear imported transactions on close
     }
   };
 
@@ -39,10 +53,46 @@ const BankAccountsPage = () => {
     toggleModal(); // Close modal
   };
 
+  const handleImportSuccess = (parsedData) => { // New handler for successful file upload
+    setImportedTransactions(parsedData);
+    // Optionally fetch existing transactions here if needed for mapping
+    // For now, let's assume existingTransactions are fetched when the modal opens
+  };
+
+  const handleSaveMapping = async (mappedData) => { // New handler for saving mapped transactions
+    // Implement logic to send mappedData to backend
+    toast.success('Mapeamento salvo com sucesso (simulado)!');
+    toggleImportModal(); // Close modal after saving
+  };
+
   // Load accounts on mount and when refreshList changes
   useEffect(() => {
     refresh();
   }, [refresh, refreshList]);
+
+  // Fetch existing transactions when import modal opens
+  useEffect(() => {
+    const fetchExistingTransactions = async () => {
+      if (!importModalOpen) return;
+      try {
+        // This is a placeholder. You'd fetch actual transactions relevant for mapping.
+        // For example, unconciled transactions for a specific bank account.
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/finance/transactions?status=unconciled`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        if (!response.ok) throw new Error('Failed to fetch existing transactions');
+        const data = await response.json();
+        setExistingTransactions(data.transactions || []); // Assuming API returns { transactions: [...] }
+      } catch (err) {
+        console.error('Error fetching existing transactions:', err);
+        toast.error('Erro ao carregar transações existentes.');
+      }
+    };
+    fetchExistingTransactions();
+  }, [importModalOpen, token]);
+
 
   return (
     <motion.div
@@ -59,9 +109,14 @@ const BankAccountsPage = () => {
               <CardBody>
                 <div className="d-flex justify-content-between align-items-center mb-4">
                   <CardTitle tag="h5" className="mb-0">Contas Bancárias</CardTitle>
-                  <Button color="primary" onClick={handleCreate}>
-                    <i className="bx bx-plus me-1"></i> Adicionar Conta
-                  </Button>
+                  <div>
+                    <Button color="info" onClick={toggleImportModal} className="me-2"> {/* New button */}
+                      <i className="bx bx-upload me-1"></i> Importar Extrato
+                    </Button>
+                    <Button color="primary" onClick={handleCreate}>
+                      <i className="bx bx-plus me-1"></i> Adicionar Conta
+                    </Button>
+                  </div>
                 </div>
                 <BankAccountsToolbar /> {/* Toolbar might have filters later */}
                 {isLoading ? (
@@ -93,8 +148,26 @@ const BankAccountsPage = () => {
             <BankAccountFormModal
               account={selectedAccount}
               onSuccess={handleSuccess}
-              onCancel={toggleModal} // Pass onCancel prop
+              onCancel={toggleModal}
             />
+          </ModalBody>
+        </Modal>
+      )}
+
+      {/* New Modal for Bank Statement Import */}
+      {importModalOpen && (
+        <Modal isOpen={importModalOpen} toggle={toggleImportModal} centered size="xl">
+          <ModalHeader toggle={toggleImportModal}>Importar Extrato Bancário</ModalHeader>
+          <ModalBody>
+            {importedTransactions.length === 0 ? (
+              <FileUpload onFileUpload={handleImportSuccess} />
+            ) : (
+              <TransactionMapping
+                importedTransactions={importedTransactions}
+                existingTransactions={existingTransactions}
+                onSaveMapping={handleSaveMapping}
+              />
+            )}
           </ModalBody>
         </Modal>
       )}

@@ -1,8 +1,8 @@
 import React from 'react';
 
-import WidgetContainer from './WidgetContainer';
-import WidgetSkeleton from './WidgetSkeleton';
-import WidgetEmptyState from './WidgetEmptyState';
+import WidgetContainer from '@components/Dashboard/WidgetContainer';
+import WidgetSkeleton from '@components/Dashboard/WidgetSkeleton';
+import WidgetEmptyState from '@components/Dashboard/WidgetEmptyState';
 
 export default {
   title: 'Dashboard/Base Components',

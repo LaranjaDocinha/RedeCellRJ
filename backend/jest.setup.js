@@ -1,2 +1,6 @@
 // backend/jest.setup.js
-// Global setup for tests
+const { initializePool } = require('./db'); // Import initializePool
+
+beforeAll(async () => {
+  initializePool(); // Initialize the DB pool
+});

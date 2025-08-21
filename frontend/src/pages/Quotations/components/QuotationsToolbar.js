@@ -16,8 +16,12 @@ const QuotationsToolbar = ({ onFilterChange }) => { // Removed onAddClick from p
   const debouncedDates = useDebounce(dates, 500);
 
   // Fetch customers for filter dropdown
-  const { data: customersData } = useApi('/api/customers');
+  const { data: customersData, request: fetchCustomers } = useApi('get');
   const customerOptions = customersData?.customers?.map(c => ({ value: c.id, label: c.name })) || [];
+
+  useEffect(() => {
+    fetchCustomers('/api/customers');
+  }, [fetchCustomers]);
 
   const statusOptions = [
     { value: 'Draft', label: 'Rascunho' },
@@ -46,6 +50,7 @@ const QuotationsToolbar = ({ onFilterChange }) => { // Removed onAddClick from p
         <Label for="customerFilter">Cliente</Label>
         <Select
           options={customerOptions}
+          isLoading={!customersData} // Use customersData to determine loading state
           isClearable
           placeholder="Filtrar por cliente..."
           onChange={(selectedOption) => setCustomer(selectedOption)}

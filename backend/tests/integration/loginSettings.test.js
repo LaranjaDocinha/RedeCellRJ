@@ -44,8 +44,7 @@ describe('Login Screen Settings API', () => {
 
   // After all tests, clean up or reset the database if necessary
   afterAll(async () => {
-    await pool.end(); // Close the database connection pool
-  });
+    });
 
   describe('GET /api/settings/login-screen', () => {
     it('should return login screen settings', async () => {

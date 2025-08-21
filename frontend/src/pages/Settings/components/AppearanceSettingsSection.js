@@ -385,6 +385,27 @@ const AppearanceSettingsSection = ({ settings, handleInputChange }) => {
           </FormGroup>
         </Col>
       </Row>
+
+      <Row>
+        <Col md={6}>
+          <ToggleSwitch
+            id="visual_feedback_enabled"
+            name="visual_feedback_enabled"
+            label="Habilitar Feedback Visual (Toasts, Spinners)"
+            checked={settings.visual_feedback_enabled || false}
+            onChange={(e) => handleInputChange({ target: { name: 'visual_feedback_enabled', value: e.target.checked, type: 'checkbox' } })}
+          />
+        </Col>
+        <Col md={6}>
+          <FormGroup className='mb-3'>
+            <Label for='animation_speed'>Velocidade da Animação</Label>
+            <Slider
+              value={settings.animation_speed || 50}
+              onChange={(value) => handleInputChange({ target: { name: 'animation_speed', value: value } })}
+            />
+          </FormGroup>
+        </Col>
+      </Row>
     </>
   );
 };

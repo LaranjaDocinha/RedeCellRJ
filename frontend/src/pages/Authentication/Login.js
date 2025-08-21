@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useFormik } from 'formik';
 import toast from 'react-hot-toast';
@@ -34,6 +34,7 @@ const Login = () => {
   const { theme } = useTheme();
   const [shakeForm, setShakeForm] = useState(false);
   const [loginError, setLoginError] = useState(null);
+  const [reduceMotion, setReduceMotion] = useState(false); // Novo estado para reduzir movimento
 
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   const [loginScreenSettings, setLoginScreenSettings] = useState(null);
@@ -143,6 +144,7 @@ const Login = () => {
     initialValues: {
       email: '',
       password: '',
+      rememberMe: false, // Adiciona o campo "Lembrar-me"
     },
     validate: (values) => {
       try {
@@ -169,7 +171,10 @@ const Login = () => {
           navigate('/bi-dashboard');
         }
       } catch (error) {
-        const errorMessage = error.response?.data?.message || 'Ocorreu um erro inesperado.';
+        let errorMessage = error.response?.data?.message || 'Ocorreu um erro inesperado.';
+        if (error.response?.status === 429) {
+          errorMessage = 'Muitas tentativas de login. Tente novamente em 15 minutos.';
+        }
         setLoginError(errorMessage);
         setShakeForm(true);
         setTimeout(() => setShakeForm(false), 500);
@@ -180,96 +185,143 @@ const Login = () => {
     },
   });
 
-  return (
-    <div className="auth-page">
-      <div className="particles-container"></div>
-      {loginScreenSettings?.background_type === 'video' && (
-        <video autoPlay loop muted className="background-video">
-          <source src={loginScreenSettings.background_video_url} type="video/mp4" />
-          Seu navegador não suporta vídeos em HTML5.
-        </video>
-      )}
-      <div className="auth-wrapper">
-        <div className="auth-content">
-          <motion.div
-            className={`auth-card ${shakeForm ? 'shake' : ''}`}
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: 'easeOut' }}
-          >
-            <div className="card-body">
-              <div className="text-center mb-4">
-                <motion.img
-                  src={logoSrc}
-                  alt="Logo"
-                  className="logo-img"
-                  initial={{ scale: 0.5, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.2, duration: 0.5 }}
-                />
-              </div>
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={currentQuoteIndex}
-                  className="text-muted text-center mb-4 quote-carousel"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  {quotes[currentQuoteIndex]}
-                </motion.p>
-              </AnimatePresence>
-              <form onSubmit={validation.handleSubmit}>
-                <FormField
-                  name="email"
-                  label="E-mail"
-                  type="email"
-                  placeholder="Digite seu e-mail"
-                  formik={validation}
-                />
-                <PasswordField
-                  name="password"
-                  label="Senha"
-                  placeholder="Digite sua senha"
-                  formik={validation}
-                />
-                <div className="form-group mt-4">
-                  <RippleEffect>
-                    <button
-                      type="submit"
-                      className="btn btn-primary btn-block"
-                      disabled={validation.isSubmitting}
+    return (
+    <div className={`auth-page ${reduceMotion ? 'reduce-motion' : ''}`}>
+      {loadingSettings ? (
+        <div className="full-page-loader">
+          <LoadingSpinner size={60} color="var(--color-primary)" />
+        </div>
+      ) : (
+        <>
+          <div className="particles-container"></div>
+          {loginScreenSettings?.background_type === 'video' && (
+            <video autoPlay loop muted className="background-video">
+              <source src={loginScreenSettings.background_video_url} type="video/mp4" />
+              Seu navegador não suporta vídeos em HTML5.
+            </video>
+          )}
+          <div className="auth-wrapper">
+            <div className="auth-content">
+              <motion.div
+                className="auth-card" // Remove shake class
+                initial={{ opacity: 0, y: -50 }}
+                animate={shakeForm ? "shake" : { opacity: 1, y: 0 }} // Conditionally apply shake variant
+                variants={{
+                  shake: {
+                    x: [0, -10, 10, -10, 10, 0], // Shake horizontally
+                    transition: { duration: 0.4, ease: "easeInOut" }
+                  }
+                }}
+                transition={{ duration: 0.7, ease: 'easeOut' }}
+              >
+                <div className="card-body">
+                  <div className="text-center mb-4">
+                    <motion.img
+                      src={logoSrc}
+                      alt="Logo"
+                      className="logo-img"
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: 0.2, duration: 0.5 }}
+                      whileHover={{ scale: 1.05, rotate: 5 }} // Leve aumento e rotação no hover
+                    />
+                  </div>
+                  <AnimatePresence mode="wait">
+                    <motion.p
+                      key={currentQuoteIndex}
+                      className="text-muted text-center mb-4 quote-carousel"
+                      initial={{ opacity: 0, y: 50, rotateX: -90 }} // Começa mais abaixo e rotacionado
+                      animate={{ opacity: 1, y: 0, rotateX: 0 }} // Entra suavemente
+                      exit={{ opacity: 0, y: -50, rotateX: 90 }} // Sai para cima e rotacionado
+                      transition={{ duration: 0.7, ease: "easeOut" }} // Duração e easing ajustados
                     >
-                      {validation.isSubmitting ? <LoadingSpinner /> : 'Entrar'}
-                    </button>
-                  </RippleEffect>
+                      {quotes[currentQuoteIndex]}
+                    </motion.p>
+                  </AnimatePresence>
+                  <form onSubmit={validation.handleSubmit}>
+                    <FormField
+                      name="email"
+                      label="E-mail"
+                      type="email"
+                      placeholder="Digite seu e-mail"
+                      formik={validation}
+                    />
+                    <PasswordField
+                      name="password"
+                      label="Senha"
+                      placeholder="Digite sua senha"
+                      formik={validation}
+                    />
+                    <div className="form-group mb-3">
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id="rememberMe"
+                          name="rememberMe"
+                          checked={validation.values.rememberMe}
+                          onChange={validation.handleChange}
+                        />
+                        <label className="form-check-label" htmlFor="rememberMe">
+                          Lembrar-me
+                        </label>
+                      </div>
+                    </div>
+                    <div className="form-group mt-4">
+                      <RippleEffect>
+                        <button
+                          type="submit"
+                          className="btn btn-primary btn-block"
+                          disabled={validation.isSubmitting}
+                        >
+                          {validation.isSubmitting ? <LoadingSpinner /> : 'Entrar'}
+                        </button>
+                      </RippleEffect>
+                    </div>
+                  </form>
+                  <div className="mt-4 text-center">
+                    <p className="text-muted mb-2">Ou entre com</p>
+                    <div className="d-flex justify-content-center gap-2">
+                      <button type="button" className="btn btn-outline-secondary btn-social">
+                        <i className="bx bxl-google"></i>
+                      </button>
+                      <button type="button" className="btn btn-outline-secondary btn-social">
+                        <i className="bx bxl-facebook"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="text-center mt-3">
+                    <Link to="/forgot-password" className="text-muted animated-link">
+                      Esqueceu a senha? <i className="bx bx-right-arrow-alt animated-icon"></i>
+                    </Link>
+                  </div>
                 </div>
-              </form>
-              <AnimatePresence>
-                {loginError && (
-                  <motion.div
-                    className="alert alert-danger mt-3 text-center"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    {loginError}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              </motion.div>
             </div>
-          </motion.div>
-        </div>
-        <div className="auth-footer">
-          <p className="text-muted">
-            © {new Date().getFullYear()} PDV Web. Todos os direitos reservados.
-          </p>
-        </div>
-        <div className="theme-toggle-container">
-          <ThemeToggle />
-        </div>
-      </div>
+            <div className="auth-footer">
+              <p className="text-muted">
+                © {new Date().getFullYear()} PDV Web. Todos os direitos reservados.
+              </p>
+            </div>
+            <div className="theme-toggle-container">
+              <ThemeToggle />
+            </div>
+            <div className="reduce-motion-toggle-container">
+              <label className="form-check form-switch">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  id="reduceMotionSwitch"
+                  checked={reduceMotion}
+                  onChange={() => setReduceMotion(!reduceMotion)}
+                />
+                <span className="form-check-label" htmlFor="reduceMotionSwitch">Reduzir Movimento</span>
+              </label>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

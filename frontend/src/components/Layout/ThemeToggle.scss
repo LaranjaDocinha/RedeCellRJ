@@ -1,4 +1,21 @@
 .theme-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem; // Adiciona um pouco de padding para a área de clique
+  border-radius: 50%; // Para um foco circular
+  transition: background-color 0.3s ease, box-shadow 0.3s ease; // Transição para hover/focus
+
+  &:hover {
+    background-color: rgba(var(--color-primary-rgb), 0.1); // Fundo sutil no hover
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary); // Contorno claro
+    outline-offset: 2px; // Afasta o contorno do botão
+    box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb), 0.2); // Sombra sutil para destaque
+  }
+
   .icon-wrapper {
     position: relative;
     width: 24px;
@@ -10,7 +27,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      transition: transform 0.5s cubic-bezier(0.55, 0.06, 0.68, 0.19), opacity 0.5s ease, color 0.3s ease;
+      transition: transform 0.5s cubic-bezier(0.55, 0.06, 0.68, 0.68), opacity 0.5s ease, color 0.3s ease;
     }
   }
 }

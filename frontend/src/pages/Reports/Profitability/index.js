@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { Container, Row, Col } from 'reactstrap';
 
 import { useGlobalFilter } from '../../../context/GlobalFilterContext';
-import useApi from '../../hooks/useApi';
+import useApi from '../../../hooks/useApi';
 
 // Components
 import ReportKPI from '../components/ReportKPI';
@@ -17,11 +17,20 @@ const ProfitabilityReport = () => {
 
   const {
     data: reportData,
-    loading,
+    isLoading: loading,
     error,
-  } = useApi('GET', `/reports/profitability?period=${globalPeriod}`, null, {
-    keepPreviousData: true,
-  });
+    request: fetchReport,
+  } = useApi('get');
+
+  const reFetchReport = useCallback(() => {
+    fetchReport(`/reports/profitability?period=${globalPeriod}`, null, {
+      keepPreviousData: true,
+    });
+  }, [fetchReport, globalPeriod]);
+
+  useEffect(() => {
+    reFetchReport();
+  }, [reFetchReport]);
 
   const kpis = [
     { title: 'Receita Total', value: reportData?.summary?.totalRevenue, format: 'currency' },

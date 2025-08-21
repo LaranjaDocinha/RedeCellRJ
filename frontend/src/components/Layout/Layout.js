@@ -1,41 +1,62 @@
-import React, { useState, useEffect, Suspense, useCallback, useRef } from 'react'; // Added useRef
+
+import React, { useState, useEffect, Suspense, useCallback, useRef } from 'react';
 import { Outlet, useLocation, useNavigate, useNavigation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Particles from '@tsparticles/react';
 import { loadSlim } from '@tsparticles/slim';
-// import { Nav, NavItem, NavLink } from 'reactstrap'; // Removed
-// import { X } from 'react-feather'; // Removed
 
 import ErrorBoundary from '../Common/ErrorBoundary';
-// import ConfirmationModal from '../Common/ConfirmationModal'; // Removed
 import { useTheme } from '../../context/ThemeContext';
 import { useBreadcrumb } from '../../context/BreadcrumbContext';
-// import { useTabs } from '../../hooks/useTabs'; // Removed
 import { useRouteHandle } from '../../hooks/useRouteHandle';
-// import { useDirtyForm } from '../../hooks/useDirtyForm'; // Removed
+import { useSpotifyStore } from '../../store/spotifyStore'; // Import the store
+import api from '../../utils/api'; // Import api
 
 import Header from './Header';
 import Sidebar from './Sidebar';
 import GlobalLoadingIndicator from './GlobalLoadingIndicator';
 import ImpersonationBanner from '../Common/ImpersonationBanner';
+
 import './Layout.scss';
 
 const Layout = () => {
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
-  // const [blockerModalOpen, setBlockerModalOpen] = useState(false); // Removed
-  const contentPageRef = useRef(null); // Ref for content-page div
-  // const [nextTab, setNextTab] = useState(null); // Removed
+  const contentPageRef = useRef(null);
 
   const location = useLocation();
-  const navigate = useNavigate();
   const navigation = useNavigation();
   const handle = useRouteHandle();
 
-  const { theme, backgroundColor } = useTheme(); // Get theme and backgroundColor from context
+  const { theme, backgroundColor } = useTheme();
   const { setBreadcrumbTitle } = useBreadcrumb();
-  // const { tabs, activeTab, addTab, removeTab, setActiveTab } = useTabs(); // Removed
-  // const { isDirty, message: dirtyMessage, reset: resetDirtyForm } = useDirtyForm(); // Removed
+  
+  // Spotify Store
+  const { hasToken, setHasToken, initializePlayer, disconnect } = useSpotifyStore();
+
+  useEffect(() => {
+    const checkTokenAndInitPlayer = async () => {
+      try {
+        const response = await api.get('/api/spotify/token');
+        setHasToken(true);
+        initializePlayer(response.data.accessToken);
+      } catch (error) {
+        setHasToken(false);
+        disconnect();
+      }
+    };
+
+    checkTokenAndInitPlayer();
+
+    // Periodically check for the token
+    const interval = setInterval(checkTokenAndInitPlayer, 60000 * 5); // every 5 minutes
+
+    return () => {
+        clearInterval(interval);
+        disconnect();
+    }
+  }, [setHasToken, initializePlayer, disconnect]);
+
 
   useEffect(() => {
     if (navigation.state === 'loading') {
@@ -47,17 +68,10 @@ const Layout = () => {
 
   useEffect(() => {
     if (handle) {
-      const { title } = handle; // Removed icon as it's not used for tabs anymore
+      const { title } = handle;
       setBreadcrumbTitle(title);
-      // addTab({ id, path: id, title, icon: icon || 'file-blank' }); // Removed
     }
-  }, [handle, setBreadcrumbTitle]); // Removed location, addTab
-
-  // Removed useEffect for activeTab navigation
-
-  // Removed handleTabClick
-  // Removed handleConfirmNavigation
-  // Removed handleCloseTab
+  }, [handle, setBreadcrumbTitle]);
 
   const toggleSidebar = () => setSidebarCollapsed(!isSidebarCollapsed);
   const toggleMobileMenu = () => setMobileMenuOpen(!isMobileMenuOpen);
@@ -83,15 +97,13 @@ const Layout = () => {
         <div className='overlay' role='button' tabIndex={0} onClick={toggleMobileMenu} onKeyPress={(e) => e.key === 'Enter' && toggleMobileMenu()}></div>
       )}
 
-      <div className='main-content' style={{ overflowX: 'hidden' }}> {/* Added overflowX: 'hidden' */}
+      <div className={`main-content ${hasToken ? 'with-player' : ''}`}>
         <Header onToggleMobileMenu={toggleMobileMenu} onToggleSidebar={toggleSidebar} />
 
-        {/* Removed tab-navigation div */}
-
-        <div className='content-page' ref={contentPageRef}> {/* Added ref */}
+        <div className='content-page' ref={contentPageRef}>
           <AnimatePresence mode='wait'>
             <motion.div
-              key={location.pathname} // Use location.pathname as key for AnimatePresence
+              key={location.pathname}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               initial={{ opacity: 0, y: 20 }}
@@ -106,8 +118,14 @@ const Layout = () => {
             </motion.div>
           </AnimatePresence>
         </div>
-      </div>
-      {/* Removed ConfirmationModal */}
+        
+        </div>
+
+      {hasToken && (
+          <footer className="app-footer">
+              
+          </footer>
+      )}
     </div>
   );
 };

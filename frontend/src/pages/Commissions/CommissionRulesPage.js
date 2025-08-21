@@ -8,7 +8,6 @@ import useApi from '../../hooks/useApi'; // Adjust path as needed
 import { useDebounce } from '../../hooks/useDebounce'; // Assuming useDebounce is available
 import ConfirmationModal from '../../components/Common/ConfirmationModal';
 import CommissionRuleFormModal from './components/CommissionRuleFormModal'; // Will create this
-import { get, del } from '../../helpers/api_helper'; // Import API functions
 
 import './CommissionRulesPage.scss'; // Page-specific styling
 
@@ -24,9 +23,10 @@ const CommissionRulesPage = () => {
 
   const debouncedFilters = useDebounce(filters, 500);
 
-  // Corrected useApi usage
-  const { data: rules, loading, error, request: fetchRules } = useApi(() => get('/api/commission-rules', { params: debouncedFilters }));
-  const { request: deleteRuleApi, loading: isDeleting } = useApi(del);
+  const { data: rulesData, loading, error, request: fetchRules } = useApi('get');
+  const { request: deleteRuleApi, loading: isDeleting } = useApi('delete');
+
+  const rules = rulesData?.rules || [];
 
   const typeOptions = [
     { value: 'product', label: 'Por Produto' },
@@ -49,12 +49,16 @@ const CommissionRulesPage = () => {
     setConfirmationModalOpen(true);
   };
 
+  const reFetchRules = useCallback(() => {
+    fetchRules('/api/commission-rules', { params: debouncedFilters });
+  }, [fetchRules, debouncedFilters]);
+
   const confirmDelete = async () => {
     if (!ruleToDelete) return;
     try {
       await deleteRuleApi(`/api/commission-rules/${ruleToDelete.id}`);
       toast.success('Regra de comissão excluída com sucesso!');
-      fetchRules(); // Re-fetch the list
+      reFetchRules(); // Re-fetch the list
     } catch (err) {
       // Error is already handled by the api_helper interceptor
     } finally {
@@ -64,14 +68,14 @@ const CommissionRulesPage = () => {
   };
 
   const handleFormSuccess = () => {
-    fetchRules(); // Re-fetch the list
+    reFetchRules(); // Re-fetch the list
     setModalOpen(false);
     setSelectedRule(null);
   };
 
   useEffect(() => {
-    fetchRules(); // Initial fetch and re-fetch on filter change
-  }, [debouncedFilters, fetchRules]);
+    reFetchRules(); // Initial fetch and re-fetch on filter change
+  }, [reFetchRules]);
 
   return (
     <motion.div
@@ -198,7 +202,7 @@ const CommissionRulesPage = () => {
 
       <ConfirmationModal
         isOpen={confirmationModalOpen}
-        message={`Tem certeza que deseja excluir a regra de comissão "${ruleToDelete?.description}"?`}
+        message={`Tem certeza que deseja excluir a regra de comissão \"${ruleToDelete?.description}\"?`}
         title="Confirmar Exclusão"
         onClose={() => setConfirmationModalOpen(false)}
         onConfirm={confirmDelete}

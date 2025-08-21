@@ -27,8 +27,8 @@ const ReturnsPage = () => {
   const [saleDetails, setSaleDetails] = useState(null);
   const [error, setError] = useState('');
 
-  const { loading: searching, request: findSale } = useApi(get);
-  const { loading: processing, request: processReturn } = useApi(post);
+  const { loading: searching, request: findSale } = useApi('get');
+  const { loading: processing, request: processReturn } = useApi('post');
 
   const handleSearch = async (e) => {
     e.preventDefault();

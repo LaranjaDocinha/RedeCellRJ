@@ -6,7 +6,6 @@ import QuotationsToolbar from './components/QuotationsToolbar';
 import QuotationsTable from './components/QuotationsTable';
 import QuotationFormModal from './components/QuotationFormModal';
 import useApi from '../../hooks/useApi';
-import toast from 'react-hot-toast';
 
 import './QuotationsPage.scss'; // Page-specific styling
 
@@ -14,9 +13,16 @@ const QuotationsPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedQuotation, setSelectedQuotation] = useState(null);
   const [filters, setFilters] = useState({ page: 1, limit: 10 });
-  const [refreshList, setRefreshList] = useState(false); // State to trigger list refresh
 
-  const { data, isLoading, error, refresh } = useApi('/api/quotations', { params: filters });
+  const { data, isLoading, error, request: fetchQuotations } = useApi('get');
+
+  const reFetchQuotations = useCallback(() => {
+    fetchQuotations('/api/quotations', { params: filters });
+  }, [fetchQuotations, filters]);
+
+  useEffect(() => {
+    reFetchQuotations();
+  }, [reFetchQuotations]);
 
   const toggleModal = () => {
     setModalOpen(!modalOpen);
@@ -36,18 +42,13 @@ const QuotationsPage = () => {
   };
 
   const handleSuccess = () => {
-    setRefreshList(prev => !prev); // Toggle to trigger list refresh
+    reFetchQuotations();
     toggleModal(); // Close modal
   };
 
   const handleFilterChange = useCallback((newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
   }, []);
-
-  // Load quotations on mount and when refreshList changes
-  useEffect(() => {
-    refresh();
-  }, [refresh, refreshList]);
 
   return (
     <motion.div

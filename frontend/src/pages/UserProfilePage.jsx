@@ -28,7 +28,7 @@ const UserProfilePage = () => {
   const { showSuccess, showError } = useNotification();
 
   const [currentUser, setCurrentUser] = useState(null);
-  const { request: fetchCurrentUser, loading: userLoading, error: userError } = useApi(get);
+  const { request: fetchCurrentUser, loading: userLoading, error: userError } = useApi('get');
 
   const [activeTab, setActiveTab] = useState('overview');
 

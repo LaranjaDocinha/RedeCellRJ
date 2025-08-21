@@ -1,5 +1,73 @@
 const pool = require('../db');
 const { AppError } = require('../utils/appError');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs'); // For file system operations
+
+// Multer storage configuration
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, '../uploads/bank_statements');
+    // Ensure the upload directory exists
+    fs.mkdirSync(uploadPath, { recursive: true });
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  },
+});
+
+const upload = multer({ storage: storage });
+
+// @desc    Importar extrato bancário
+// @route   POST /api/bank-accounts/import-statement
+// @access  Private
+exports.importBankStatement = async (req, res, next) => {
+  upload.single('bankStatementFile')(req, res, async (err) => {
+    if (err instanceof multer.MulterError) {
+      // A Multer error occurred when uploading.
+      return next(new AppError(`Erro de upload: ${err.message}`, 400));
+    } else if (err) {
+      // An unknown error occurred when uploading.
+      return next(new AppError(`Erro desconhecido no upload: ${err.message}`, 500));
+    }
+
+    if (!req.file) {
+      return next(new AppError('Nenhum arquivo enviado.', 400));
+    }
+
+    const filePath = req.file.path;
+    const originalname = req.file.originalname;
+
+    try {
+      // Placeholder for parsing logic
+      // In a real scenario, you would parse the file (OFX, CSV, etc.) here
+      // For example:
+      // const fileContent = fs.readFileSync(filePath, 'utf8');
+      // const parsedData = parseBankStatement(fileContent, originalname); // Your parsing function
+
+      // For now, just simulate success
+      console.log(`Arquivo ${originalname} recebido e pronto para processamento.`);
+
+      // After processing, you might want to delete the file or move it to a permanent storage
+      fs.unlink(filePath, (unlinkErr) => {
+        if (unlinkErr) console.error('Erro ao deletar arquivo temporário:', unlinkErr);
+      });
+
+      res.status(200).json({
+        message: 'Arquivo de extrato recebido com sucesso. Processamento em andamento (placeholder).',
+        fileName: originalname,
+        // parsedData: parsedData // Send parsed data to frontend
+      });
+    } catch (parseError) {
+      console.error('Erro ao processar extrato bancário:', parseError);
+      fs.unlink(filePath, (unlinkErr) => { // Ensure file is deleted on error
+        if (unlinkErr) console.error('Erro ao deletar arquivo temporário após erro de processamento:', unlinkErr);
+      });
+      next(new AppError(`Erro ao processar extrato bancário: ${parseError.message}`, 500));
+    }
+  });
+};
 
 // @desc    Obter todas as contas bancárias
 // @route   GET /api/bank-accounts

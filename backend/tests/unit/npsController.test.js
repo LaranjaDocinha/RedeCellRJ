@@ -38,12 +38,12 @@ describe('npsController', () => {
     jest.clearAllMocks();
   });
 
-  describe('submitNpsSurvey', () => {
+  describe('createNpsSurvey', () => {
     it('should submit an NPS survey successfully', async () => {
       const mockSurvey = { id: 1, ...mockReq.body };
       db.query.mockResolvedValueOnce({ rows: [mockSurvey] }); // For INSERT query
 
-      await npsController.submitNpsSurvey(mockReq, mockRes);
+      await npsController.createNpsSurvey(mockReq, mockRes);
 
       expect(db.query).toHaveBeenCalledWith(
         'INSERT INTO nps_surveys (customer_id, score, feedback_text, source, related_sale_id, related_repair_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;',
@@ -62,7 +62,7 @@ describe('npsController', () => {
     it('should handle errors during survey submission', async () => {
       db.query.mockRejectedValueOnce(new Error('DB Error'));
 
-      await npsController.submitNpsSurvey(mockReq, mockRes);
+      await npsController.createNpsSurvey(mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Erro interno do servidor' });
@@ -72,20 +72,20 @@ describe('npsController', () => {
     it('should return 400 if required fields are missing or invalid', async () => {
       delete mockReq.body.customer_id; // Missing customer_id
 
-      await npsController.submitNpsSurvey(mockReq, mockRes);
+      await npsController.createNpsSurvey(mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Dados da pesquisa NPS incompletos ou inválidos.' });
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Erro ao criar pesquisa NPS.' });
       expect(db.query).not.toHaveBeenCalled();
       expect(activityLogger.logActivity).not.toHaveBeenCalled();
 
       mockReq.body.customer_id = 1;
       mockReq.body.score = 11; // Invalid score
 
-      await npsController.submitNpsSurvey(mockReq, mockRes);
+      await npsController.createNpsSurvey(mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Dados da pesquisa NPS incompletos ou inválidos.' });
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Erro ao criar pesquisa NPS.' });
       expect(db.query).not.toHaveBeenCalled();
       expect(activityLogger.logActivity).not.toHaveBeenCalled();
     });

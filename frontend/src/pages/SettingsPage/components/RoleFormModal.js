@@ -22,8 +22,8 @@ const RoleFormModal = ({ isOpen, toggle, role, onSave }) => {
     description: '',
   });
 
-  const { request: createRole, loading: creating } = useApi(post);
-  const { request: updateRole, loading: updating } = useApi(put);
+  const { request: createRole, loading: creating } = useApi('post');
+  const { request: updateRole, loading: updating } = useApi('put');
   const { showSuccess, showError } = useNotification();
 
   useEffect(() => {

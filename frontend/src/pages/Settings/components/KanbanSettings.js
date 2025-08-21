@@ -116,8 +116,8 @@ const KanbanSettings = () => {
     );
   };
 
-  const { loading, request: fetchSettings } = useApi(get);
-  const { loading: saving, request: saveSettings } = useApi(post);
+  const { loading, request: fetchSettings } = useApi('get');
+  const { loading: saving, request: saveSettings } = useApi('post');
 
   const loadSettings = useCallback(() => {
     fetchSettings('/api/repairs/kanban/settings')

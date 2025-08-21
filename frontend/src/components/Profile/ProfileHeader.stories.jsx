@@ -1,6 +1,6 @@
 
 import React from 'react';
-import ProfileHeader from './ProfileHeader';
+import ProfileHeader from '@components/Profile/ProfileHeader';
 import { action } from '@storybook/addon-actions';
 
 export default {

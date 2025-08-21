@@ -1,5 +1,5 @@
 import React from 'react';
-import LoginCustomizer from './LoginCustomizer';
+import LoginCustomizer from '@pages/Settings/LoginCustomizer';
 import { MemoryRouter } from 'react-router-dom'; // Required for components using react-router-dom
 import axios from 'axios'; // Mock axios
 

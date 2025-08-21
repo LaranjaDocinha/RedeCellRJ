@@ -11,7 +11,6 @@ describe('Checklist Templates API', () => {
     afterAll(async () => {
         // Clean up after all tests are done
         await db.query('DELETE FROM checklist_templates');
-        await db.end();
     });
 
     it('should create a new checklist template', async () => {

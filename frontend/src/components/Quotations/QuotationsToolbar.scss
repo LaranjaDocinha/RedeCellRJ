@@ -1,0 +1,66 @@
+.quotations-toolbar {
+  background-color: var(--card-bg);
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: var(--box-shadow-sm);
+
+  .form-group {
+    margin-bottom: 0; // Remove default bottom margin for form groups in toolbar
+  }
+
+  label {
+    font-weight: 500;
+    color: var(--text-color-secondary);
+  }
+
+  .form-control, .react-datepicker-wrapper input {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-color);
+
+    &:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.2rem rgba(var(--primary-rgb), 0.25);
+    }
+  }
+
+  .btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    &:hover {
+      background-color: var(--primary-color-dark);
+      border-color: var(--primary-color-dark);
+    }
+  }
+}
+
+// Dark mode adjustments
+body.dark-mode {
+  .quotations-toolbar {
+    background-color: var(--dark-card-bg);
+
+    label {
+      color: var(--dark-text-color-secondary);
+    }
+
+    .form-control, .react-datepicker-wrapper input {
+      background-color: var(--dark-input-bg);
+      border-color: var(--dark-border-color);
+      color: var(--dark-text-color);
+
+      &:focus {
+        border-color: var(--dark-primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(var(--dark-primary-rgb), 0.25);
+      }
+    }
+
+    .btn-primary {
+      background-color: var(--dark-primary-color);
+      border-color: var(--dark-primary-color);
+      &:hover {
+        background-color: var(--dark-primary-color-dark);
+        border-color: var(--dark-primary-color-dark);
+      }
+    }
+  }
+}

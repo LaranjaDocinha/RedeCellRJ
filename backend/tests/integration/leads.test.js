@@ -10,8 +10,7 @@ describe('Leads API', () => {
 
     afterAll(async () => {
         // Clean up after all tests are done
-        await db.end();
-    });
+        });
 
     it('should create a new lead', async () => {
         const newLead = {

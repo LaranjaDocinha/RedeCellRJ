@@ -1,6 +1,6 @@
 
 import React from 'react';
-import ProfileActivityTab from './ProfileActivityTab';
+import ProfileActivityTab from '@components/Profile/ProfileActivityTab';
 import { action } from '@storybook/addon-actions';
 
 export default {

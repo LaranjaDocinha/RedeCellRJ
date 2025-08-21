@@ -204,66 +204,35 @@ const getLowStockProductsReport = async (req, res) => {
 // @route   GET /api/reports/technician-performance
 // @access  Private
 const getTechnicianPerformanceReport = async (req, res) => {
-  const { technicianId, startDate, endDate } = req.query;
+  const { startDate, endDate } = req.query;
 
-  if (!technicianId || !startDate || !endDate) {
-    return res.status(400).json({ message: 'ID do técnico, data de início e data de fim são obrigatórios.' });
+  if (!startDate || !endDate) {
+    return res.status(400).json({ message: 'Data de início e data de fim são obrigatórias.' });
   }
 
   try {
-    const repairsQuery = `
+    const query = `
       SELECT
-        r.id,
-        r.status,
-        r.created_at,
-        r.final_cost,
-        r.problem_description,
-        r.repair_actions,
-        r.expected_completion_date,
-        r.actual_completion_date,
-        c.name as customer_name
-      FROM repairs r
-      LEFT JOIN customers c ON r.customer_id = c.id
-      WHERE r.technician_id = $1
-        AND r.created_at BETWEEN $2 AND $3
-      ORDER BY r.created_at DESC;
+        t.id AS technician_id,
+        t.name AS technician_name,
+        COUNT(r.id) AS total_repairs,
+        COALESCE(SUM(r.final_cost), 0) AS total_revenue,
+        COALESCE(AVG(EXTRACT(EPOCH FROM (r.actual_completion_date - r.created_at))) / 60, 0) AS average_repair_time_minutes
+      FROM
+        technicians t
+      LEFT JOIN
+        repairs r ON t.id = r.technician_id
+      WHERE
+        r.created_at BETWEEN $1 AND $2
+        AND r.status IN ('Finalizado', 'Entregue')
+      GROUP BY
+        t.id, t.name
+      ORDER BY
+        total_revenue DESC;
     `;
-    const { rows: repairs } = await db.query(repairsQuery, [technicianId, startDate, endDate]);
+    const { rows } = await db.query(query, [startDate, endDate]);
 
-    const completedRepairs = repairs.filter(r => r.status === 'Finalizado' || r.status === 'Entregue');
-    const totalRevenue = repairs.reduce((sum, r) => sum + parseFloat(r.final_cost || 0), 0);
-
-    // Calculate average repair time for completed repairs
-    let totalRepairTimeDays = 0;
-    let repairsWithCompletionDates = 0;
-    completedRepairs.forEach(r => {
-      if (r.created_at && r.actual_completion_date) {
-        const start = new Date(r.created_at);
-        const end = new Date(r.actual_completion_date);
-        const diffTime = Math.abs(end - start);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        totalRepairTimeDays += diffDays;
-        repairsWithCompletionDates++;
-      }
-    });
-    const averageRepairTime = repairsWithCompletionDates > 0 ? (totalRepairTimeDays / repairsWithCompletionDates).toFixed(2) : 0;
-
-    // Count repairs by status
-    const repairsByStatus = repairs.reduce((acc, r) => {
-      acc[r.status] = (acc[r.status] || 0) + 1;
-      return acc;
-    }, {});
-
-    res.json({
-      technician_id: technicianId,
-      period: `${startDate} to ${endDate}`,
-      total_repairs: repairs.length,
-      completed_repairs: completedRepairs.length,
-      total_revenue_from_repairs: parseFloat(totalRevenue.toFixed(2)),
-      average_repair_time_days: parseFloat(averageRepairTime),
-      repairs_by_status: repairsByStatus,
-      details: repairs,
-    });
+    res.json(rows);
 
   } catch (error) {
     console.error('Erro ao gerar relatório de desempenho por técnico:', error);

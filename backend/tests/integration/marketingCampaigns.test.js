@@ -7,7 +7,10 @@ describe('Marketing Campaigns API', () => {
 
     beforeAll(async () => {
         // Create a dummy user for testing
-        const userRes = await db.query('INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id', ['Campaign User', 'campaign@example.com', 'hashed_password', 'admin']);
+        const adminRoleRes = await db.query('INSERT INTO roles (name, description) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET description = EXCLUDED.description RETURNING id', ['admin', 'Administrator role']);
+        const adminRoleId = adminRoleRes.rows[0].id;
+
+        const userRes = await db.query('INSERT INTO users (name, email, password, role_id) VALUES ($1, $2, $3, $4) RETURNING id', ['Campaign User', 'campaign@example.com', 'hashed_password', adminRoleId]);
         userId = userRes.rows[0].id;
 
         // Clear the marketing_campaigns table before running tests
@@ -18,7 +21,6 @@ describe('Marketing Campaigns API', () => {
         // Clean up after all tests are done
         await db.query('DELETE FROM marketing_campaigns');
         await db.query('DELETE FROM users WHERE id = $1', [userId]);
-        await db.end();
     });
 
     it('should create a new marketing campaign', async () => {

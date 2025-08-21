@@ -8,10 +8,13 @@ describe('Customer Interactions API', () => {
 
     beforeAll(async () => {
         // Create a dummy customer and user for testing
-        const customerRes = await db.query('INSERT INTO customers (name, email) VALUES ($1, $2) RETURNING id', ['Test Customer', 'customer@example.com']);
+        const customerRes = await db.query('INSERT INTO customers (name, email, branch_id) VALUES ($1, $2, $3) RETURNING id', ['Test Customer', 'customer@example.com', 1]);
         customerId = customerRes.rows[0].id;
 
-        const userRes = await db.query('INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id', ['Test User', 'user@example.com', 'hashed_password', 'admin']);
+        const adminRoleRes = await db.query('INSERT INTO roles (name, description) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET description = EXCLUDED.description RETURNING id', ['admin', 'Administrator role']);
+        const adminRoleId = adminRoleRes.rows[0].id;
+
+        const userRes = await db.query('INSERT INTO users (name, email, password, role_id) VALUES ($1, $2, $3, $4) RETURNING id', ['Test User', 'user@example.com', 'hashed_password', adminRoleId]);
         userId = userRes.rows[0].id;
 
         // Clear the customer_interactions table before running tests
@@ -23,7 +26,6 @@ describe('Customer Interactions API', () => {
         await db.query('DELETE FROM customer_interactions');
         await db.query('DELETE FROM customers WHERE id = $1', [customerId]);
         await db.query('DELETE FROM users WHERE id = $1', [userId]);
-        await db.end();
     });
 
     it('should create a new customer interaction', async () => {

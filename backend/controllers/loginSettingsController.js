@@ -70,10 +70,7 @@ const updateLoginScreenSettings = async (req, res, next) => {
     gradient_direction,
   } = req.body;
 
-  // Basic validation
-  if (!background_type) {
-    return res.status(400).json({ message: 'background_type is required.' });
-  }
+  
 
   try {
     const result = await pool.query(

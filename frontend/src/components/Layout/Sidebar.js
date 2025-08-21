@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink as RouterNavLink, useLocation } from 'react-router-dom';
 import { Collapse, Tooltip } from 'reactstrap';
 import { motion } from 'framer-motion';
-
 import { useAuthStore } from '../../store/authStore'; // Importa o store do Zustand
 import { useTheme } from '../../context/ThemeContext';
+import SpotifyPlayer from '../Spotify/Player'; // Import the Spotify Player
 import './Sidebar.scss';
+
+const motionNavLink = motion.create(RouterNavLink); // Create a motion-enabled NavLink
 
 // Definição base dos itens de menu
 const allMenuItems = [
@@ -112,8 +114,7 @@ const allMenuItems = [
     children: [
       { path: '/apps/whatsapp', icon: 'bxl-whatsapp', title: 'WhatsApp' },
       { path: '/apps/instagram', icon: 'bxl-instagram', title: 'Instagram' },
-      { path: '/apps/facebook', icon: 'bxl-facebook', title: 'Facebook' },
-      { path: '/apps/spotify', icon: 'bxl-spotify', title: 'Spotify' },
+      { path: '/apps/spotify', icon: 'bxl-spotify', title: 'Spotify' }
     ],
   },
 
@@ -162,66 +163,83 @@ const SidebarItem = ({ item, isCollapsed }) => {
   const toggle = () => setIsOpen(!isOpen);
   const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
 
-  const linkId = `sidebar-link-${item.title.replace(/\s+/g, '-').replace(/[()]/g, '\$&')}`;
-
-  if (hasChildren) {
-    return (      <li className={isOpen ? 'menu-item open' : 'menu-item'}>
-        <button className='nav-link' id={linkId} onClick={toggle}>
-          <div className='nav-link-content'>
-            {item.icon && <i className={`bx ${item.icon}`}></i>}
-            {!isCollapsed && <span>{item.title}</span>}
-          </div>
-          <div className='arrow-container'>
-            {!isCollapsed && <i className='bx bx-chevron-down arrow'></i>}
-          </div>
-        </button>
-        {isCollapsed && (
-          <Tooltip
-            isOpen={tooltipOpen}
-            placement='right'
-            target={linkId}
-            toggle={toggleTooltip}
-            transition={{ timeout: 300 }}
-          >
-            {item.title}
-          </Tooltip>
-        )}
-        <Collapse isOpen={isOpen}>
-          <ul className='list-unstyled submenu'>
-            {item.children.map((child, index) => (
-              <li key={index}>
-                <NavLink className='nav-link' to={child.path}>
-                  {child.icon && <i className={`bx ${child.icon}`}></i>}
-                  <span>{child.title}</span>
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </Collapse>
-      </li>
-    );
-  }
-
+  // The missing return statement and JSX
   return (
-    <li className='menu-item'>
-      <NavLink className='nav-link' id={linkId} to={item.path}>
-        {item.icon && <i className={`bx ${item.icon}`}></i>}
-        {!isCollapsed && <span>{item.title}</span>}
-      </NavLink>
-      {isCollapsed && (
-        <Tooltip
-          isOpen={tooltipOpen}
-          placement='right'
-          target={linkId}
-          toggle={toggleTooltip}
-          transition={{ timeout: 300 }}
-        >
-          {item.title}
-        </Tooltip>
+    <li className={`sidebar-item ${hasChildren ? 'has-children' : ''}`}>
+      {hasChildren ? (
+        <>
+          <div
+            className={`sidebar-link ${isOpen ? 'active' : ''} ${isCollapsed ? 'collapsed' : ''}`}
+            onClick={toggle}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                toggle();
+              }
+            }}
+            role="button"
+            tabIndex="0"
+            id={`tooltip-${item.title.replace(/\s/g, '-')}`}
+          >
+            <i className={`bx ${item.icon}`} />
+            {!isCollapsed && <span className="title">{item.title}</span>}
+            {hasChildren && !isCollapsed && (
+              <i className={`bx bx-chevron-down arrow ${isOpen ? 'open' : ''}`} />
+            )}
+          </div>
+          {isCollapsed && (
+            <Tooltip
+              placement="right"
+              isOpen={tooltipOpen}
+              target={`tooltip-${item.title.replace(/\s/g, '-')}`}
+              toggle={toggleTooltip}
+            >
+              {item.title}
+            </Tooltip>
+          )}
+          <Collapse isOpen={isOpen}>
+            <ul className="list-unstyled sub-menu">
+              {item.children.map((child, index) => (
+                <SidebarItem key={index} item={child} isCollapsed={isCollapsed} />
+              ))}
+            </ul>
+          </Collapse>
+        </>
+      ) : (
+        <>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <RouterNavLink
+              to={item.path}
+              className={({ isActive }) =>
+                `sidebar-link ${isActive ? 'active' : ''} ${isCollapsed ? 'collapsed' : ''}`
+              }
+              id={`tooltip-${item.title.replace(/\s/g, '-')}`}
+            >
+              <i className={`bx ${item.icon}`} />
+              {!isCollapsed && <span className="title">{item.title}</span>}
+            </RouterNavLink>
+          </motion.div>
+          {isCollapsed && (
+            <Tooltip
+              placement="right"
+              isOpen={tooltipOpen}
+              target={`tooltip-${item.title.replace(/\s/g, '-')}`}
+              toggle={toggleTooltip}
+            >
+              {item.title}
+            </Tooltip>
+          )}
+        </>
       )}
     </li>
   );
 };
+
+
+
+
 
 const Sidebar = ({ isCollapsed, isMobileOpen }) => {
   const { hasRole, isAuthLoading } = useAuthStore();
@@ -267,8 +285,12 @@ const Sidebar = ({ isCollapsed, isMobileOpen }) => {
         </ul>
       </nav>
 
-      
-
+      <div className="spotify-player-sidebar">
+        <SpotifyPlayer />
+      </div>
+        <div className="spotify-player-sidebar">
+        <SpotifyPlayer />
+      </div>
     </aside>
   );
 };

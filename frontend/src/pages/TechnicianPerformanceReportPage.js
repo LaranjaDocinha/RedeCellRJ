@@ -16,8 +16,8 @@ const TechnicianPerformanceReportPage = () => {
     const [startDate, setStartDate] = useState(new Date(new Date().setFullYear(new Date().getFullYear() - 1))); // Default to 1 year ago
     const [endDate, setEndDate] = useState(new Date()); // Default to today
 
-    const { loading, error, request: fetchReport } = useApi(get);
-    const { request: fetchTechnicians } = useApi(get);
+    const { loading, error, request: fetchReport } = useApi('get');
+    const { request: fetchTechnicians } = useApi('get');
 
     // Fetch list of technicians
     useEffect(() => {

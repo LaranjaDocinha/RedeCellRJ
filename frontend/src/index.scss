@@ -144,10 +144,21 @@ a {
   background-color: var(--color-primary) !important;
   border-color: var(--color-primary) !important;
   color: var(--white) !important;
+  box-shadow: var(--btn-box-shadow); // Adiciona sombra padrão
+  transition: all 0.3s ease; // Transição suave para todos os estados
 
   &:hover {
     background-color: color-mix(in srgb, var(--color-primary), #000 10%) !important;
     border-color: color-mix(in srgb, var(--color-primary), #000 10%) !important;
+    box-shadow: var(--btn-hover-box-shadow); // Sombra no hover
+    transform: translateY(-2px); // Leve elevação
+  }
+
+  &:active {
+    background-color: color-mix(in srgb, var(--color-primary), #000 20%) !important;
+    border-color: color-mix(in srgb, var(--color-primary), #000 20%) !important;
+    box-shadow: var(--btn-active-box-shadow); // Sombra no active
+    transform: translateY(0); // Volta à posição original
   }
 }
 

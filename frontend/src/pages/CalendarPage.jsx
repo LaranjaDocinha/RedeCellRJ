@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Card, CardBody, CardTitle, Button, Spinner, Alert } from 'reactstrap';
 import { motion } from 'framer-motion';
 import CalendarView from '../components/Calendar/CalendarView';
-import toast from 'react-hot-toast';
-import useApi from '../hooks/useApi'; // Use useApi directly
+import { get } from '../helpers/api_helper';
+import useApi from '../hooks/useApi';
 
 import './CalendarPage.scss'; // Page-specific styling
 
@@ -11,17 +11,27 @@ const CalendarPage = () => {
   document.title = 'Calendário | PDV Web';
 
   const [events, setEvents] = useState([]);
-  const { data: fetchedEvents, isLoading, error, request } = useApi('get', '/api/calendar/events'); // Use useApi directly
 
-  const loadEvents = useCallback(async () => {
-    // The useApi hook handles loading and error states internally.
-    // We just need to trigger the refresh and handle the data once it's available.
-    request();
-  }, [refresh]);
+  // Define a função de fetch de forma estável com useCallback
+  const fetchEvents = useCallback(() => {
+    const startDate = new Date();
+    const endDate = new Date();
+    startDate.setDate(1);
+    endDate.setMonth(endDate.getMonth() + 1);
+    endDate.setDate(0);
 
+    const start = startDate.toISOString().split('T')[0];
+    const end = endDate.toISOString().split('T')[0];
+
+    return get(`/api/calendar/events?start=${start}&end=${end}`);
+  }, []); // O array de dependências vazio garante que a função não seja recriada
+
+  const { data: fetchedEvents, isLoading, error, request } = useApi(fetchEvents);
+
+  // O useEffect agora chama a função `request` do hook, que é estável
   useEffect(() => {
-    loadEvents();
-  }, [loadEvents]);
+    request();
+  }, [request]); // A função `request` do useApi é garantidamente estável
 
   useEffect(() => {
     if (fetchedEvents) {
@@ -41,7 +51,7 @@ const CalendarPage = () => {
           <Col lg={12}>
             <div className="page-header d-flex justify-content-between align-items-center mb-4">
               <h1>Calendário de Atividades</h1>
-              <Button color="primary" onClick={loadEvents}>
+              <Button color="primary" onClick={request}>
                 <i className="bx bx-refresh me-1"></i> Atualizar Calendário
               </Button>
             </div>

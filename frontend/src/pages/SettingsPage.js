@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { get, put } from '../helpers/api_helper';
 import { Container, Row, Col, Card, CardBody, Input, FormGroup, Label, Button, Nav, NavItem, NavLink, TabContent, TabPane, CardTitle } from 'reactstrap';
-import toast from 'react-hot-toast';
+import useNotification from '../hooks/useNotification';
 import { NavLink as RouterNavLink } from 'react-router-dom'; // Renamed NavLink to avoid conflict
 
 import ConfirmationModal from '../components/Common/ConfirmationModal';
+import Breadcrumbs from '../components/Common/Breadcrumb';
 import { StoreSettingsSection, PrintSettingsSection, ChartSettingsSection, NotificationSettingsSection } from 'pages/SettingsPage/components';
 import AppearanceSettingsSection from '../pages/Settings/components/AppearanceSettingsSection';
 import LoginSettingsSection from './SettingsPage/components/LoginSettingsSection';
@@ -21,6 +22,8 @@ import { useAuthStore } from '../store/authStore'; // Import useAuthStore
 
 const SettingsPage = () => {
   document.title = 'Configurações | PDV Web';
+
+  const { showSuccess, showError } = useNotification();
 
   const { hasRole } = useAuthStore(); // Get hasRole from auth store
 
@@ -40,7 +43,7 @@ const SettingsPage = () => {
       } catch (err) {
         // console.error('Erro ao buscar configurações:', err);
         setError('Não foi possível carregar as configurações.');
-        toast.error('Não foi possível carregar as configurações.');
+        showError('Não foi possível carregar as configurações.');
       } finally {
         setLoading(false);
       }
@@ -71,11 +74,11 @@ const SettingsPage = () => {
           await put(`/api/settings/${name}`, { value: value });
         }
       }
-      toast.success('Configurações salvas com sucesso!');
+      showSuccess('Configurações salvas com sucesso!');
       setPendingChanges({}); // Clear pending changes after saving
     } catch (err) {
       console.error('Erro ao salvar configurações:', err);
-      toast.error('Erro ao salvar configurações.');
+      showError('Erro ao salvar configurações.');
     }
   };
 
@@ -183,6 +186,42 @@ const SettingsPage = () => {
       ],
     },
     {
+      id: 'apps-category',
+      title: 'Aplicativos',
+      children: [
+        {
+          id: 'whatsapp-app',
+          title: 'WhatsApp',
+          description: 'Configurações de integração com WhatsApp.',
+          component: () => (
+            <RouterNavLink to="/apps/whatsapp" className="btn btn-primary">
+              Ir para Configurações do WhatsApp
+            </RouterNavLink>
+          ),
+        },
+        {
+          id: 'instagram-app',
+          title: 'Instagram',
+          description: 'Configurações de integração com Instagram.',
+          component: () => (
+            <RouterNavLink to="/apps/instagram" className="btn btn-primary">
+              Ir para Configurações do Instagram
+            </RouterNavLink>
+          ),
+        },
+        {
+          id: 'spotify-app',
+          title: 'Spotify',
+          description: 'Configurações de integração com Spotify.',
+          component: () => (
+            <RouterNavLink to="/apps/spotify" className="btn btn-primary">
+              Ir para Configurações do Spotify
+            </RouterNavLink>
+          ),
+        },
+      ],
+    },
+    {
       id: 'advanced-category',
       title: 'Avançado',
       children: [
@@ -241,7 +280,7 @@ const SettingsPage = () => {
     // Lógica para resetar as configurações
     // Por enquanto, apenas um toast e console.log
     // console.log('Configurações resetadas para os padrões!');
-    toast.success('Configurações resetadas para os padrões!');
+    showSuccess('Configurações resetadas para os padrões!');
     setResetModal(false);
   };
 
@@ -277,6 +316,7 @@ const SettingsPage = () => {
         </Row>
         <Row>
           <Col lg={12}>
+            <Breadcrumbs />
             <FormGroup className='mb-4'>
               <Label for='settingsSearch'>Pesquisar Configurações</Label>
               <Input

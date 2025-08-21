@@ -37,7 +37,7 @@ const CommissionPaymentForm = ({ payment, onSuccess, onCancel }) => {
 
   const { request: createPayment, isLoading: isCreating, error: createError } = useApi('post');
   const { request: updatePayment, isLoading: isUpdating, error: updateError } = useApi('put');
-  const { data: salespersonsData, isLoading: loadingSalespersons, error: salespersonsError } = useApi('get', '/api/users?role=salesperson'); // Assuming an API to get salespersons
+  const { data: salespersonsData, isLoading: loadingSalespersons, error: salespersonsError, request: fetchSalespersons } = useApi('get');
 
   const isEditing = !!payment;
   const isLoading = isCreating || isUpdating;
@@ -51,6 +51,10 @@ const CommissionPaymentForm = ({ payment, onSuccess, onCancel }) => {
     { value: 'Transferência Bancária', label: 'Transferência Bancária' },
     { value: 'PIX', label: 'PIX' },
   ];
+
+  useEffect(() => {
+    fetchSalespersons('/api/users?role=salesperson');
+  }, [fetchSalespersons]);
 
   useEffect(() => {
     if (isEditing && payment) {

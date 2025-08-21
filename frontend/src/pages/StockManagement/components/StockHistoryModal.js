@@ -17,7 +17,7 @@ import { get } from '../../../helpers/api_helper';
 
 const StockHistoryModal = ({ isOpen, toggle, variation }) => {
   const [history, setHistory] = useState([]);
-  const { request: fetchHistory, loading } = useApi(get);
+  const { request: fetchHistory, loading } = useApi('get');
 
   useEffect(() => {
     if (isOpen && variation) {

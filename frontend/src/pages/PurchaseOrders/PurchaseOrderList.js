@@ -9,7 +9,7 @@ import AdvancedTable from '../../components/Common/AdvancedTable';
 
 const PurchaseOrderList = () => {
   const navigate = useNavigate();
-  const { data, loading, request: fetchPurchaseOrders } = useApi(get);
+  const { data, loading, request: fetchPurchaseOrders } = useApi('get');
 
   const purchaseOrders = data?.purchaseOrders || [];
 

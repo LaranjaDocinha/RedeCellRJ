@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Container, Row, Col } from 'reactstrap';
 import Breadcrumb from '../../components/Common/Breadcrumb';
 import LeadsToolbar from './components/LeadsToolbar';
@@ -11,7 +11,15 @@ const LeadsPage = () => {
   const [selectedLead, setSelectedLead] = useState(null);
   const [filters, setFilters] = useState({ page: 1, limit: 10 });
 
-  const { data, isLoading, error, refresh } = useApi('/api/leads', { params: filters });
+  const { data, isLoading, error, request: fetchLeads } = useApi('get');
+
+  const reFetchLeads = useCallback(() => {
+    fetchLeads('/api/leads', { params: filters });
+  }, [fetchLeads, filters]);
+
+  useEffect(() => {
+    reFetchLeads();
+  }, [reFetchLeads]);
 
   const toggleModal = () => {
     setModalOpen(!modalOpen);
@@ -32,7 +40,7 @@ const LeadsPage = () => {
 
   const handleSuccess = () => {
     toggleModal();
-    refresh();
+    reFetchLeads();
   };
 
   const handleFilterChange = useCallback((newFilters) => {
@@ -56,7 +64,7 @@ const LeadsPage = () => {
                   isLoading={isLoading}
                   error={error}
                   onEdit={handleEdit}
-                  onDeleteSuccess={refresh}
+                  onDeleteSuccess={reFetchLeads}
                   pagination={{
                     page: data?.page,
                     pages: data?.pages,

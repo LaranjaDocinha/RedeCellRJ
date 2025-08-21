@@ -42,6 +42,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      # 3.1. Roda o npm audit para verificar vulnerabilidades de segurança
+      - name: Run npm audit
+        run: npm audit --production --audit-level=high
+
       # 4. Roda o Linter para verificar a qualidade do código
       - name: Run linter
         run: npm run lint
@@ -49,6 +53,10 @@ jobs:
       # 5. Roda o build para garantir que a aplicação compila sem erros
       - name: Run build
         run: npm run build
+
+      # 6. Roda os testes unitários e de integração do frontend
+      - name: Run frontend tests
+        run: npm test
 
       # O passo de teste E2E com Cypress será adicionado em uma etapa futura,
       # pois requer uma configuração mais complexa (como iniciar um servidor).
@@ -80,6 +88,10 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      # 3.1. Roda o npm audit para verificar vulnerabilidades de segurança
+      - name: Run npm audit
+        run: npm audit --production --audit-level=high
 
       - name: Run backend tests
         run: npm test

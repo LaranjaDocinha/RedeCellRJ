@@ -21,8 +21,8 @@ const PermissionAssignmentModal = ({ isOpen, toggle, role, onSave }) => {
   const [allPermissions, setAllPermissions] = useState([]);
   const [selectedPermissionIds, setSelectedPermissionIds] = useState([]);
 
-  const { request: fetchAllPermissions, loading: loadingPermissions } = useApi(get);
-  const { request: assignPermissions, loading: assigningPermissions } = useApi(post);
+  const { request: fetchAllPermissions, loading: loadingPermissions } = useApi('get');
+  const { request: assignPermissions, loading: assigningPermissions } = useApi('post');
   const { showSuccess, showError } = useNotification();
 
   useEffect(() => {

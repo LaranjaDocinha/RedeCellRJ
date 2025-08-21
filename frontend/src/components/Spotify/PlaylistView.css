@@ -1,0 +1,156 @@
+
+.spotify-view-container {
+  display: flex;
+  gap: 2rem;
+  padding: 1rem;
+  height: calc(100vh - 200px); /* Adjust based on your layout */
+}
+
+.playlists-grid {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.playlist-card {
+  background-color: #282828;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  position: relative;
+}
+
+.playlist-card:hover {
+  background-color: #404040;
+}
+
+.playlist-card img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+
+.playlist-name {
+  font-weight: bold;
+  padding: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tracks-view {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+}
+
+.search-bar {
+  margin-bottom: 1rem;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 0.8rem;
+  border-radius: 20px;
+  border: none;
+  background-color: #282828;
+  color: white;
+}
+
+.track-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.track-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.track-item:hover {
+  background-color: #3a3a3a;
+}
+
+.track-item .play-button {
+  display: none;
+  margin-left: auto;
+  background: #1db954;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+}
+
+.track-item:hover .play-button {
+  display: flex;
+}
+
+.track-album-art {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+}
+
+.track-info {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.track-name {
+  font-weight: 500;
+}
+
+.track-artist {
+  font-size: 0.9em;
+  color: #b3b3b3;
+}
+
+.track-duration {
+  font-size: 0.9em;
+  color: #b3b3b3;
+}
+
+.no-selection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: #b3b3b3;
+  font-size: 1.2em;
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #121212;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #535353;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b3b3b3;
+}

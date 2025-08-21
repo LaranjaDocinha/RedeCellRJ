@@ -27,9 +27,11 @@ import { get, post } from '../../../../helpers/api_helper';
 
 // Importa componentes de modal e recibo
 import Receipt from '../Receipt';
-import CashierModal from '../CashierModal';
+
 import PaymentModal from '../PaymentModal'; // Importa o novo Modal de Pagamento
 import SuccessModal from '../SuccessModal'; // Importa o Modal de Sucesso
+import OpenCashierModal from '../OpenCashierModal'; // Importa o novo modal
+import CloseCashierModal from '../CloseCashierModal'; // Importa o modal de fechar caixa
 import '../Receipt.css';
 import './PdvUnifiedView.css'; // Novo CSS para o layout unificado
 
@@ -44,6 +46,12 @@ const PdvUnifiedView = () => {
   const productSearchInputRef = useRef(null);
   const barcodeSearchInputRef = useRef(null);
   const receiptRef = useRef();
+
+  // State - Caixa
+  const [cashierStatus, setCashierStatus] = useState(null);
+  const [isCashierLoading, setIsCashierLoading] = useState(true);
+  const [isOpeningModalOpen, setOpeningModalOpen] = useState(false);
+  const [isClosingModalOpen, setClosingModalOpen] = useState(false);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -85,48 +93,46 @@ const PdvUnifiedView = () => {
   const [pulseTotal, setPulseTotal] = useState(false); // Novo estado para animação de pulso
 
   // State - Caixa e Devolução
-  const [cashierModalOpen, setCashierModalOpen] = useState(false);
-  const [cashierStatus, setCashierStatus] = useState({
-    loading: true,
-    isOpen: false,
-    session: null,
-  });
+  
   const [returnMode, setReturnMode] = useState(null); // Armazena o ID da venda original
 
   // Variáveis de controle de UI
-  const isCashierOpen = cashierStatus.isOpen;
-  const isPdvDisabled = !isCashierOpen || loading || !!returnMode;
-  const isCartDisabled = !isCashierOpen || loading;
+  
 
   const togglePaymentModal = () => setPaymentModalOpen(!isPaymentModalOpen);
 
   // --- Funções de Caixa ---
-  const fetchCashierStatus = useCallback(async (userId) => {
-    // Deferir a atualização do estado de loading
-    setTimeout(() => {
-      setCashierStatus((prev) => ({ ...prev, loading: true }));
-    }, 0);
+  const fetchCashierStatus = useCallback(async () => {
+    setIsCashierLoading(true);
     try {
-      const data = await get(`/api/cashier/status?userId=${userId}`);
-      setCashierStatus({ loading: false, isOpen: data.isOpen, session: data.session });
-    } catch (err) {
+      const status = await get('/api/cashier/status');
+      setCashierStatus(status);
+      if (!status.isOpen) {
+        setOpeningModalOpen(true);
+      }
+    } catch (error) {
       toast.error('Falha ao verificar o status do caixa.');
-      setCashierStatus({ loading: false, isOpen: false, session: null });
+      console.error(error);
+    } finally {
+      setIsCashierLoading(false);
     }
   }, []);
 
-  const toggleCashierModal = useCallback(() => {
-    if (cashierStatus.loading) return; // Impede abrir o modal se ainda estiver carregando
-    setCashierModalOpen((prevState) => !prevState);
-  }, [cashierStatus.loading]);
-
-  const onCashierUpdate = useCallback(() => {
-    if (user?.id) {
-      fetchCashierStatus(user.id);
+  const handleOpenCashier = async (initialAmount) => {
+    setLoading(true);
+    try {
+      await post('/api/cashier/open', { initial_amount: initialAmount });
+      toast.success('Caixa aberto com sucesso!');
+      setOpeningModalOpen(false);
+      fetchCashierStatus(); // Re-fetch status to update UI
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Falha ao abrir o caixa.');
+    } finally {
+      setLoading(false);
     }
-    setCashierModalOpen(false);
-    toast.success('Status do caixa atualizado!');
-  }, [user?.id, fetchCashierStatus]);
+  };
+
+  
 
   // --- Funções de Impressão ---
   const handlePrint = useReactToPrint({
@@ -147,16 +153,11 @@ const PdvUnifiedView = () => {
   // --- Efeitos ---
   useEffect(() => {
     if (user?.id) {
-      fetchCashierStatus(user.id);
       fetchPaymentMethods();
     }
-  }, [user?.id, fetchCashierStatus, fetchPaymentMethods]);
+  }, [user?.id, fetchPaymentMethods]);
 
-  useEffect(() => {
-    if (isCashierOpen) {
-      barcodeSearchInputRef.current?.focus();
-    }
-  }, [isCashierOpen]);
+  
 
   const handleClearSale = useCallback(() => {
     setCart([]);
@@ -244,7 +245,7 @@ const PdvUnifiedView = () => {
   // --- Funções do Carrinho ---
   const addToCart = useCallback(
     (productToAdd, event = null) => {
-      if (isPdvDisabled) return;
+      if (loading || !!returnMode) return;
 
       let variation = productToAdd.variations?.[0];
       const product = productToAdd;
@@ -346,7 +347,7 @@ const PdvUnifiedView = () => {
 
       fetchSuggestions(variation.id);
     },
-    [isPdvDisabled, setProductSuggestions],
+    [loading || !!returnMode, setProductSuggestions],
   );
 
   const handleRemoveItem = useCallback((indexToRemove) => {
@@ -439,7 +440,7 @@ const PdvUnifiedView = () => {
   // --- Funções de Busca ---
   const searchProducts = useCallback(
     debounce(async (query, isBarcode = false) => {
-      if (isPdvDisabled || (query.length < 2 && !isBarcode)) {
+      if (loading || !!returnMode || (query.length < 2 && !isBarcode)) {
         if (query.length === 0) setProductResults([]);
         return;
       }
@@ -457,12 +458,12 @@ const PdvUnifiedView = () => {
         toast.error('Erro ao buscar produtos.');
       }
     }, 300),
-    [isPdvDisabled, addToCart],
+    [loading || !!returnMode, addToCart],
   );
 
   // --- Funções de Finalização de Venda ---
   const handleSuspendSale = useCallback(async () => {
-    if (isCartDisabled || cart.length === 0) return;
+    if (loading || cart.length === 0) return;
     setLoading(true);
     try {
       await post('/api/sales/suspend', {
@@ -479,11 +480,11 @@ const PdvUnifiedView = () => {
     } finally {
       setLoading(false);
     }
-  }, [cart, selectedCustomer, saleDiscount, notes, handleClearSale, isCartDisabled]);
+  }, [cart, selectedCustomer, saleDiscount, notes, handleClearSale, loading]);
 
   const handleFinalizeSale = useCallback(
     async (payments) => {
-      if (isCartDisabled) return;
+      if (loading) return;
 
       setLoading(true);
       const saleData = {
@@ -516,13 +517,13 @@ const PdvUnifiedView = () => {
         setLoading(false);
       }
     },
-    [cart, saleDiscount, notes, selectedCustomer, isCartDisabled, returnMode],
+    [cart, saleDiscount, notes, selectedCustomer, loading, returnMode],
   );
 
   // --- Atalhos de Teclado ---
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (isPdvDisabled) {
+      if (loading || returnMode || !cashierStatus?.isOpen) {
         return;
       }
       if (isPaymentModalOpen) {
@@ -577,7 +578,7 @@ const PdvUnifiedView = () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [
-    isPdvDisabled,
+    loading || !!returnMode,
     isPaymentModalOpen,
     handleSuspendSale,
     handleClearSale,
@@ -588,13 +589,36 @@ const PdvUnifiedView = () => {
     addToCart,
   ]);
 
+  if (isCashierLoading) {
+    return <div className="page-content"><Spinner>Carregando...</Spinner></div>;
+  }
+
   return (
-    <motion.div
-      animate={{ opacity: 1, y: 0 }}
-      className='pdv-unified-container'
-      initial={{ opacity: 0, y: 20 }}
-      transition={{ duration: 0.5 }}
-    >
+    <React.Fragment>
+      <AnimatePresence>
+        {!cashierStatus?.isOpen && (
+          <motion.div
+            className="pdv-blocked-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <OpenCashierModal
+              isOpen={isOpeningModalOpen}
+              onOpen={handleOpenCashier}
+              onClose={() => setOpeningModalOpen(false)}
+              isLoading={loading}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <motion.div
+        animate={{ opacity: 1, y: 0 }}
+        className={`pdv-unified-container ${!cashierStatus?.isOpen ? 'pdv-blocked' : ''}`}
+        initial={{ opacity: 0, y: 20 }}
+        transition={{ duration: 0.5 }}
+      >
       {returnMode && (
         <Alert className='text-center' color='warning'>
           <h4 className='alert-heading'>Modo de Devolução</h4>
@@ -610,6 +634,15 @@ const PdvUnifiedView = () => {
       <Card className='pdv-search-section'>
         <CardBody className='p-3'>
           <div className='d-flex justify-content-end align-items-center mb-4'>
+            {cashierStatus?.isOpen && (
+              <div className="cashier-status-indicator me-auto">
+                <span className="status-dot"></span>
+                Caixa Aberto desde {new Date(cashierStatus.session.opening_time).toLocaleTimeString()}
+                <Button color="link" size="sm" onClick={() => setClosingModalOpen(true)} className="ms-2">
+                  Fechar Caixa
+                </Button>
+              </div>
+            )}
             <div>
               <Button outline className='me-2' size='sm' title='Vendas Suspensas'>
                 <i className='bx bx-pause'></i>
@@ -628,7 +661,7 @@ const PdvUnifiedView = () => {
                   <i className='bx bx-user-circle me-1'></i>Cliente (F2)
                 </Label>
                 <Input
-                  disabled={isPdvDisabled}
+                  disabled={loading || !!returnMode}
                   id='customerSearch'
                   placeholder='Nome ou CPF'
                   type='text'
@@ -662,7 +695,7 @@ const PdvUnifiedView = () => {
                   <i className='bx bx-search-alt me-1'></i>Buscar Produto (F1)
                 </Label>
                 <Input
-                  disabled={isPdvDisabled}
+                  disabled={loading || !!returnMode}
                   id='productSearch'
                   placeholder='Nome do produto'
                   type='text'
@@ -741,7 +774,7 @@ const PdvUnifiedView = () => {
                   <i className='bx bx-barcode-reader me-1'></i>Código de Barras
                 </Label>
                 <Input
-                  disabled={isPdvDisabled}
+                  disabled={loading || !!returnMode}
                   id='barcodeSearch'
                   innerRef={barcodeSearchInputRef}
                   placeholder='Leia o código de barras'
@@ -808,7 +841,7 @@ const PdvUnifiedView = () => {
                       <td>
                         <Input
                           bsSize='lg'
-                          disabled={isCartDisabled}
+                          disabled={loading}
                           min={returnMode ? -Infinity : 1}
                           style={{ width: '80px' }}
                           type='number'
@@ -825,7 +858,7 @@ const PdvUnifiedView = () => {
                         <Button
                           outline
                           color='danger'
-                          disabled={isCartDisabled}
+                          disabled={loading}
                           size='lg'
                           onClick={() => handleRemoveItem(index)}
                         >
@@ -867,7 +900,7 @@ const PdvUnifiedView = () => {
             <Button
               className='w-100'
               color='success'
-              disabled={isCartDisabled || cart.length === 0}
+              disabled={loading || cart.length === 0}
               size='sm'
               onClick={() => handleFinalizeSale(null)}
             >
@@ -877,7 +910,7 @@ const PdvUnifiedView = () => {
               outline
               className='w-100'
               color='info'
-              disabled={isCartDisabled || cart.length === 0}
+              disabled={loading || cart.length === 0}
               size='sm'
               onClick={handleSuspendSale}
             >
@@ -887,7 +920,7 @@ const PdvUnifiedView = () => {
               outline
               className='w-100'
               color='secondary'
-              disabled={isCartDisabled && cart.length === 0}
+              disabled={loading && cart.length === 0}
               size='sm'
               onClick={handleClearSale}
             >
@@ -898,12 +931,7 @@ const PdvUnifiedView = () => {
       </Card>
 
       {/* Modais */}
-      <CashierModal
-        cashierStatus={cashierStatus}
-        isOpen={cashierModalOpen}
-        toggle={toggleCashierModal}
-        onCashierUpdate={onCashierUpdate}
-      />
+      
       <PaymentModal
         cart={cart}
         finalizeSale={handleFinalizeSale}
@@ -920,7 +948,14 @@ const PdvUnifiedView = () => {
         onNewSale={handleNewSaleFromSuccessModal}
         onPrintReceipt={handlePrintReceiptFromSuccessModal}
       />
+
+      <CloseCashierModal
+        isOpen={isClosingModalOpen}
+        onClose={() => setClosingModalOpen(false)}
+        onRefreshStatus={fetchCashierStatus}
+      />
     </motion.div>
+  </React.Fragment>
   );
 };
 

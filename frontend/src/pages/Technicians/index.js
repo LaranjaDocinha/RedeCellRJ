@@ -33,10 +33,10 @@ const TechniciansPage = () => {
   const [formData, setFormData] = useState({ name: '', phone: '', email: '' });
   const [formErrors, setFormErrors] = useState({});
 
-  const { data, loading, error, request: fetchTechnicians } = useApi(get);
-  const { request: addTechnician, loading: adding } = useApi(post);
-  const { request: updateTechnician, loading: updating } = useApi(put);
-  const { request: deleteTechnician, loading: deleting } = useApi(del);
+  const { data, loading, error, request: fetchTechnicians } = useApi('get');
+  const { request: addTechnician, loading: adding } = useApi('post');
+  const { request: updateTechnician, loading: updating } = useApi('put');
+  const { request: deleteTechnician, loading: deleting } = useApi('delete');
 
   const technicians = data || [];
 

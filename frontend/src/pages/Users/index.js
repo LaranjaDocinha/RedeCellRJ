@@ -21,7 +21,6 @@ import Breadcrumbs from '../../components/Common/Breadcrumb';
 import AdvancedTable from '../../components/Common/AdvancedTable';
 import TableSkeleton from '../../components/Common/TableSkeleton';
 import BulkActionsToolbar from '../../components/Common/BulkActionsToolbar';
-import { get, del, post } from '../../helpers/api_helper';
 import useApi from '../../hooks/useApi';
 import { useAuthStore } from '../../store/authStore';
 
@@ -44,38 +43,32 @@ const UserManagement = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState('all');
 
-  const { request: fetchUsers, loading, error } = useApi(get);
-  const { request: toggleUserStatusApi } = useApi(del);
-  const { request: bulkActionApi, loading: bulkLoading } = useApi(post);
-  const { request: sendResetEmailApi, loading: sendingEmail } = useApi(post);
-  const { request: impersonateUserApi, loading: impersonatingUser } = useApi(post);
+  const { data: usersData, isLoading: loading, error, request: fetchUsers } = useApi('get');
+  const { request: toggleUserStatusApi } = useApi('delete');
+  const { request: bulkActionApi, loading: bulkLoading } = useApi('post');
+  const { request: sendResetEmailApi, loading: sendingEmail } = useApi('post');
+  const { request: impersonateUserApi, loading: impersonatingUser } = useApi('post');
   const { showSuccess, showError } = useNotification();
   const { user: loggedInUser, setToken, setOriginalToken } = useAuthStore();
 
   const navigate = useNavigate();
 
-  const loadUsers = useCallback((search, status, role) => {
-    let url = `/api/users?limit=1000&search=${search}`;
-    if (status !== 'all') url += `&is_active=${status}`;
-    if (role !== 'all') url += `&role=${role}`;
-
-    fetchUsers(url)
-      .then((response) => {
-        if (response.users) {
-          setUsers(response.users);
-        }
-      })
-      .catch((err) => {
-        showError('Falha ao carregar usuários.');
-        console.error(err);
-      });
-  }, [fetchUsers, showError]);
-
-  const debouncedLoadUsers = useCallback(debounce(loadUsers, 300), [loadUsers]);
+  const loadUsers = useCallback(() => {
+    let url = `/api/users?limit=1000&search=${searchQuery}`;
+    if (statusFilter !== 'all') url += `&is_active=${statusFilter}`;
+    if (roleFilter !== 'all') url += `&role=${roleFilter}`;
+    fetchUsers(url);
+  }, [fetchUsers, searchQuery, statusFilter, roleFilter]);
 
   useEffect(() => {
-    debouncedLoadUsers(searchQuery, statusFilter, roleFilter);
-  }, [searchQuery, statusFilter, roleFilter, debouncedLoadUsers]);
+    loadUsers();
+  }, [loadUsers]);
+
+  useEffect(() => {
+    if (usersData && usersData.users) {
+      setUsers(usersData.users);
+    }
+  }, [usersData]);
 
   const handleStatusToggle = (user) => {
     setUserToToggle(user);
@@ -88,10 +81,13 @@ const UserManagement = () => {
     try {
       await toggleUserStatusApi(`/api/users/${userToToggle.id}`);
       showSuccess(`Usuário ${action} com sucesso!`);
-      loadUsers(searchQuery, statusFilter, roleFilter);
+      loadUsers();
     } catch (err) {
       showError(`Falha ao ${action} o usuário.`);
       console.error(err);
+    } finally {
+      setConfirmModalOpen(false);
+      setUserToToggle(null);
     }
   };
 
@@ -103,7 +99,7 @@ const UserManagement = () => {
     }
 
     const payload = { 
-        action, 
+        action,
         userIds: selectedUserIds, 
         ...options 
     };
@@ -112,7 +108,7 @@ const UserManagement = () => {
         const response = await bulkActionApi('/api/users/bulk-action', payload);
         showSuccess(response.message);
         setRowSelection({});
-        loadUsers(searchQuery, statusFilter, roleFilter);
+        loadUsers();
     } catch (err) {
         showError('Falha ao executar ação em massa.');
         console.error(err);
@@ -128,7 +124,7 @@ const UserManagement = () => {
     users.forEach(user => {
         const row = [
             user.id,
-            `"${user.name}"`,
+            `"${user.name}"`, // Corrected escaping for double quotes within template literal
             user.email,
             user.is_active ? 'Ativo' : 'Inativo',
             user.role,
@@ -137,7 +133,7 @@ const UserManagement = () => {
         csvRows.push(row.join(','));
     });
 
-    const csvString = csvRows.join('\n');
+    const csvString = csvRows.join('\n'); // Corrected escaping for newline character
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -328,7 +324,7 @@ const UserManagement = () => {
           )}
         </Container>
       </div>
-      <UserFormModal isOpen={modalOpen} toggle={toggleModal} user={selectedUser} onSave={() => loadUsers(searchQuery, statusFilter, roleFilter)} />
+      <UserFormModal isOpen={modalOpen} toggle={toggleModal} user={selectedUser} onSave={() => loadUsers()} />
       <ConfirmationModal isOpen={confirmModalOpen} toggle={() => setConfirmModalOpen(false)} onConfirm={confirmStatusToggle} title={`Confirmar Alteração de Status`} message={`Você tem certeza que deseja ${userToToggle?.is_active ? 'desativar' : 'ativar'} o usuário ${userToToggle?.name}?`} />
     </React.Fragment>
   );

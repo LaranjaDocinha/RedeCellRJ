@@ -27,8 +27,8 @@ const PurchaseOrderDetail = () => {
   const navigate = useNavigate();
 
   // API Hooks
-  const { data, loading, request: fetchOrderDetails } = useApi(get);
-  const { request: receiveItemsApi, loading: receivingItems } = useApi(post);
+  const { data, loading, request: fetchOrderDetails } = useApi('get');
+  const { request: receiveItemsApi, loading: receivingItems } = useApi('post');
 
   // State
   const [order, setOrder] = useState(null);

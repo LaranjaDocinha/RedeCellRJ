@@ -42,6 +42,17 @@ if %errorlevel% neq 0 (
 echo Banco de dados %DB_NAME% resetado com sucesso.
 echo.
 
+REM Apply schema_consolidated.sql
+echo --- Aplicando schema_consolidated.sql ---
+"%PSQL_PATH%" -h %DB_HOST% -p %DB_PORT% -U %DB_USER% -d %DB_NAME% -f "%SCHEMA_FILE%" -v ON_ERROR_STOP=1
+if %errorlevel% neq 0 (
+    echo Erro ao aplicar schema_consolidated.sql.
+    goto :eof
+)
+echo schema_consolidated.sql aplicado com sucesso.
+echo.
+pause
+
 REM Run seed.js
 echo --- Executando seed.js ---
 node seed.js

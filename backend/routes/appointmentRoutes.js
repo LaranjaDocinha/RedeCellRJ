@@ -19,6 +19,13 @@ router.post('/', appointmentValidationRules, appointmentController.createAppoint
 // Get all appointments
 router.get('/', appointmentController.getAllAppointments); // Add authenticateToken and authorize middleware later
 
+// Check technician availability
+router.get('/check-availability', [
+    query('technician_id').isInt({ min: 1 }).withMessage('ID do técnico é obrigatório e deve ser um número inteiro.'),
+    query('start_time').isISO8601().toDate().withMessage('Hora de início inválida.'),
+    query('end_time').isISO8601().toDate().withMessage('Hora de término inválida.'),
+], appointmentController.checkTechnicianAvailability); // Add authenticateToken and authorize middleware later
+
 // Get a single appointment by ID
 router.get('/:id', appointmentController.getAppointmentById); // Add authenticateToken and authorize middleware later
 
@@ -27,12 +34,5 @@ router.put('/:id', appointmentValidationRules, appointmentController.updateAppoi
 
 // Delete an appointment
 router.delete('/:id', appointmentController.deleteAppointment); // Add authenticateToken and authorize middleware later
-
-// Check technician availability
-router.get('/check-availability', [
-    query('technician_id').isInt({ min: 1 }).withMessage('ID do técnico é obrigatório e deve ser um número inteiro.'),
-    query('start_time').isISO8601().toDate().withMessage('Hora de início inválida.'),
-    query('end_time').isISO8601().toDate().withMessage('Hora de término inválida.'),
-], appointmentController.checkTechnicianAvailability); // Add authenticateToken and authorize middleware later
 
 module.exports = router;

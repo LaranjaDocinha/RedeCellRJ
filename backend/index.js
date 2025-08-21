@@ -1,15 +1,13 @@
+
 require('dotenv').config();
+
 console.log('--- Backend Server Starting...');
-console.log('DB_USER:', process.env.DB_USER);
-console.log('DB_HOST:', process.env.DB_HOST);
-console.log('DB_DATABASE:', process.env.DB_NAME);
-console.log('DB_PORT:', process.env.DB_PORT);
-console.log('JWT_SECRET:', process.env.JWT_SECRET ? '*****' : 'Not Set'); // Não logar o segredo em produção
-// console.log('DB_PASSWORD:', process.env.DB_PASSWORD ? '*****' : 'Not Set'); // Não logar a senha em produção
+
 
 const express = require('express');
 const cors = require('cors'); // Importa o pacote cors
-const { query, getClient, redisClient } = require('./db');
+const { initializePool, query, getClient, redisClient } = require('./db');
+initializePool();
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const fs = require('fs').promises;
@@ -17,10 +15,14 @@ const path = require('path');
 const { exec } = require('child_process');
 
 // Route imports
+const { authenticateToken, authorize } = require('./middleware/authMiddleware');
+
+const authRoutes = require('./routes/authRoutes');
 const customerRoutes = require('./routes/customerRoutes');
 const productRoutes = require('./routes/productRoutes');
 const repairRoutes = require('./routes/repairRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const dashboardController = require('./controllers/dashboardController');
 const userRoutes = require('./routes/userRoutes');
 const salesRoutes = require('./routes/salesRoutes');
 const cashierRoutes = require('./routes/cashierRoutes');
@@ -55,6 +57,13 @@ const calendarRoutes = require('./routes/calendarRoutes');
 const expenseRoutes = require('././routes/expenseRoutes');
 const branchRoutes = require('./routes/branchRoutes');
 const loginSettingsRoutes = require('./routes/loginSettingsRoutes');
+const whatsappRoutes = require('./routes/whatsappRoutes');
+const instagramRoutes = require('./routes/instagramRoutes');
+const spotifyAuthRoutes = require('./routes/spotifyAuthRoutes');
+const spotifyApiRoutes = require('./routes/spotifyApiRoutes');
+
+const http = require('http'); // New import
+const { Server } = require("socket.io"); // New import
 
 // Sentry setup
 // const Sentry = require('@sentry/node');
@@ -68,7 +77,7 @@ const loginSettingsRoutes = require('./routes/loginSettingsRoutes');
 //     // Enable Express.js middleware tracing
 //     new Integrations.Express({ app: app }), // Use the 'app' instance here
 //   ],
-//   // Set tracesSampleRate to 1.0 to capture 100%
+//   // Set tracesSampleRate to 1.0 to capture 100% 
 //   // of transactions for performance monitoring.
 //   // We recommend adjusting this value in production.
 //   tracesSampleRate: 1.0,
@@ -130,9 +139,29 @@ const swaggerDocs = swaggerJsdoc(swaggerOptions);
 
 
 
-
 const app = express();
 const port = 5000;
+
+const server = http.createServer(app); // Create HTTP server
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Allow all origins for development, restrict in production
+    methods: ["GET", "POST"]
+  }
+});
+
+// Export io for use in other modules
+module.exports.io = io;
+
+io.on("connection", (socket) => {
+  console.log("A user connected:", socket.id);
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
+
+  // You can add more Socket.IO event listeners here
+});
 
 // Middlewares de Segurança
 app.use(helmet()); // Aplica cabeçalhos de segurança, incluindo CSP
@@ -146,42 +175,16 @@ const limiter = rateLimit({
 app.use(limiter); // Aplica o limitador de requisições a todas as rotas
 
 // Configuração do CORS
-const corsOptions = {
-  origin: (origin, callback) => {
-    const allowedOrigins = ['http://localhost:3001', 'http://localhost:3000', 'http://localhost:5173'];
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-  allowedHeaders: 'Content-Type, Authorization',
-  credentials: true,
-  optionsSuccessStatus: 204 // Para requisições preflight
-};
-app.use(cors(corsOptions));
+app.use(cors());
 
 // Habilita o pre-flight para todas as rotas
-// Habilita o pre-flight para todas as rotas
-// // Habilita o pre-flight para todas as rotas
-// // Habilita o pre-flight para todas as rotas
-// // Habilita o pre-flight para todas as rotas
-// // Habilita o pre-flight para todas as rotas
-// // Habilita o pre-flight para todas as rotas
-// // Habilita o pre-flight para todas as rotas
-// // Habilita o pre-flight para todas as rotas
-// // Habilita o pre-flight para todas as rotas
-// // Habilita o pre-flight para todas as rotas
-// // Habilita o pre-flight para todas as rotas
-// // Habilita o pre-flight para todas as rotas
-// // Habilita o pre-flight para todas as rotas
-// // Habilita o pre-flight para todas as rotas
-// // Habilita o pre-flight para todas as rotas
-// // Habilita o pre-flight para todas as rotas
-// // Habilita o pre-flight para todas as rotas
-// // Habilita o pre-flight para todas as rotas
-// app.options('*', cors(corsOptions));
+
+
+// Middleware para desabilitar o cache
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
 
 app.use(express.json());
 
@@ -304,39 +307,18 @@ app.get('/apply-migrations', async (req, res) => {
     res.status(500).send(`Failed to apply migrations: ${err.message}`); // Include error message
   } finally {
     client.release();
-    console.log('[MIGRATION] Client released. Migration process finished.\n');
+    console.log('[MIGRATION] Client released. Migration process finished.  \n');
   }
 });
-
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
-// app.use routes
 
 // app.use routes
 app.use('/api/customers', customerRoutes);
 app.use('/api/products', productRoutes); // Use product routes
 app.use('/api/repairs', repairRoutes);
 app.use('/api/dashboard', dashboardRoutes); // Use dashboard routes
+app.get('/api/bi/dashboard', [authenticateToken, authorize('reports:view:financial')], dashboardController.getDashboardData); // Route for BI dashboard data
 app.use('/api/users', userRoutes); // Use user routes
+app.use('/api/auth', authRoutes); // Use auth routes
 app.use('/api/sales', salesRoutes); // Use sales routes
 app.use('/api/cashier', cashierRoutes); // Use cashier routes
 app.use('/api/payment-methods', paymentMethodRoutes); // Use payment method routes
@@ -371,9 +353,10 @@ app.use('/api/calendar', calendarRoutes); // Use calendar routes
 app.use('/api/expenses', expenseRoutes); // Use expense routes
 app.use('/api/branches', branchRoutes); // Use branch routes
 app.use('/api/settings', loginSettingsRoutes); // Use login settings routes;
-
-// Serve Swagger UI
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+app.use('/api/whatsapp', whatsappRoutes); // Use WhatsApp routes
+app.use('/api/instagram', instagramRoutes); // Use Instagram routes
+app.use('/auth/spotify', spotifyAuthRoutes); // Use Spotify auth routes
+app.use('/api/spotify', spotifyApiRoutes); // Use Spotify API routes
 
 // Serve Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
@@ -389,6 +372,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(port, () => {
-  console.log(`Backend server listening at http://localhost:${port}`);
-});
+// Only start the server if this file is run directly
+if (require.main === module) {
+  server.listen(port, () => {
+    console.log(`Backend server listening at http://localhost:${port}`);
+    console.log(`Socket.IO server listening on port ${port}`);
+  });
+}
+
+module.exports = { app, server };

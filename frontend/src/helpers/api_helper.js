@@ -59,14 +59,29 @@ axiosApi.interceptors.response.use(
     
     const errorMessage = getErrorMessage(error);
 
-    if (error.response && error.response.status === 401) {
-      // Se for a rota de login, não redirecionar ou mostrar toast de sessão expirada
-      if (error.config.url.includes('/api/users/login')) {
-        // Apenas rejeita a Promise para que o componente possa tratar
+    if (error.response) {
+      if (error.response.status === 401) {
+        if (!error.config.url.includes('/api/users/login')) {
+          localStorage.removeItem('auth-storage');
+          window.location.href = '/login';
+          toast.error('Sua sessão expirou. Por favor, faça login novamente.');
+        } else {
+          // Apenas rejeita a Promise para que o componente de login possa tratar
+        }
+      } else if (error.response.status === 403) {
+        toast.error('Você não tem permissão para acessar esta funcionalidade.', {
+          style: {
+            whiteSpace: 'pre-line',
+            maxWidth: '500px',
+          },
+        });
       } else {
-        localStorage.removeItem('auth-storage');
-        window.location.href = '/login';
-        toast.error('Sua sessão expirou. Por favor, faça login novamente.');
+        toast.error(errorMessage, {
+          style: {
+            whiteSpace: 'pre-line',
+            maxWidth: '500px',
+          },
+        });
       }
     } else {
       toast.error(errorMessage, {

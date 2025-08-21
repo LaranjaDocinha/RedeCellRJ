@@ -97,18 +97,18 @@ const RepairDetailsView = ({ repair: initialRepair, onUpdate }) => {
     notes: '',
   });
 
-  const { request: fetchTagsApi } = useApi(get);
-  const { request: updateRepairTagsApi } = useApi(put);
-  const { request: createChecklistItemApi } = useApi(post);
-  const { request: updateChecklistItemApi } = useApi(put);
-  const { request: uploadAttachmentApi } = useApi(post);
-  const { request: deleteAttachmentApi } = useApi(del);
-  const { request: fetchActivitiesApi } = useApi(get);
-  const { request: fetchCommentsApi } = useApi(get);
-  const { request: addCommentApi } = useApi(post);
-  const { request: addTimeEntryApi } = useApi(post);
-  const { request: fetchTimeEntriesApi } = useApi(get);
-  const { request: deleteTimeEntryApi } = useApi(del);
+  const { request: fetchTagsApi } = useApi('get');
+  const { request: updateRepairTagsApi } = useApi('put');
+  const { request: createChecklistItemApi } = useApi('post');
+  const { request: updateChecklistItemApi } = useApi('put');
+  const { request: uploadAttachmentApi } = useApi('post');
+  const { request: deleteAttachmentApi } = useApi('delete');
+  const { request: fetchActivitiesApi } = useApi('get');
+  const { request: fetchCommentsApi } = useApi('get');
+  const { request: addCommentApi } = useApi('post');
+  const { request: addTimeEntryApi } = useApi('post');
+  const { request: fetchTimeEntriesApi } = useApi('get');
+  const { request: deleteTimeEntryApi } = useApi('delete');
   const { showSuccess, showError, showInfo } = useNotification();
 
   useEffect(() => {

@@ -1,5 +1,6 @@
 const repairController = require('../../controllers/repairController');
 const db = require('../../db');
+const { AppError } = require('../../utils/appError'); // Import AppError
 
 // Mock the db module
 jest.mock('../../db', () => ({
@@ -18,6 +19,7 @@ jest.mock('../../utils/activityLogger', () => ({
 describe('repairController', () => {
   let mockReq;
   let mockRes;
+  let mockNext;
   let mockClient;
 
   beforeEach(() => {
@@ -28,27 +30,28 @@ describe('repairController', () => {
     db.getClient.mockResolvedValue(mockClient);
 
     mockReq = {
-      user: { id: 1, name: 'Test User' },
+      user: { id: 1, name: 'Test User', branch_id: 1 }, // Added branch_id
       body: {
         customer_id: 1,
         device_type: 'Smartphone',
+        brand: 'Apple', // Added brand
         model: 'iPhone X',
+        imei_serial: 'IMEI12345', // Added imei_serial
         problem_description: 'Screen cracked',
         status: 'Diagnóstico',
-        technician_id: 1,
         priority: 'Normal',
+        service_cost: 50.00, // Added service_cost
+        parts_cost: 100.00, // Added parts_cost
+        final_cost: 150.00, // Added final_cost
+        tags: ['tela', 'quebrada'], // Added tags
+        technician_id: 1,
+        start_date: '2025-08-10T10:00:00Z', // Added start_date
         expected_completion_date: '2025-08-15T10:00:00Z',
-        serial_number: 'SN12345',
-        accessories: 'Case',
-        condition_on_receipt: 'Good',
-        repair_actions: 'None',
-        parts_cost: 0,
-        labor_cost: 0,
-        discount: 0,
-        final_cost: 0,
-        payment_status: 'Pending',
-        notes: 'Customer wants quick repair',
         warranty_period_days: 90,
+        warranty_start_date: '2025-08-10T10:00:00Z', // Added warranty_start_date
+        warranty_end_date: '2025-11-08T10:00:00Z', // Added warranty_end_date
+        quotation_signature_url: 'http://example.com/quote.png', // Added quotation_signature_url
+        handover_signature_url: 'http://example.com/handover.png', // Added handover_signature_url
       },
     };
     mockRes = {
@@ -56,6 +59,7 @@ describe('repairController', () => {
       status: jest.fn().mockReturnThis(),
       send: jest.fn(),
     };
+    mockNext = jest.fn(); // Mock the next function
   });
 
   afterEach(() => {
@@ -64,34 +68,37 @@ describe('repairController', () => {
 
   describe('createRepair', () => {
     it('should create a repair order successfully', async () => {
-      mockClient.query.mockResolvedValueOnce({ rows: [{ id: 1 }] }); // For INSERT query
+      const mockRepair = { id: 1, ...mockReq.body, user_id: mockReq.user.id, branch_id: mockReq.user.branch_id };
+      mockClient.query.mockResolvedValueOnce({ rows: [mockRepair] }); // For INSERT query
 
-      await repairController.createRepair(mockReq, mockRes);
+      await repairController.createRepair(mockReq, mockRes, mockNext); // Pass mockNext
 
       expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
       expect(mockClient.query).toHaveBeenCalledWith(
-        'INSERT INTO repairs (customer_id, user_id, device_type, model, problem_description, status, technician_id, priority, expected_completion_date, serial_number, accessories, condition_on_receipt, repair_actions, parts_cost, labor_cost, discount, final_cost, payment_status, notes, warranty_period_days) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20) RETURNING *;',
+        'INSERT INTO repairs (customer_id, user_id, device_type, brand, model, imei_serial, problem_description, status, priority, service_cost, parts_cost, final_cost, tags, technician_id, start_date, expected_completion_date, warranty_period_days, warranty_start_date, warranty_end_date, quotation_signature_url, handover_signature_url, branch_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22) RETURNING *;',
         [
           1,
           1,
           'Smartphone',
+          'Apple',
           'iPhone X',
+          'IMEI12345',
           'Screen cracked',
           'Diagnóstico',
-          1,
           'Normal',
+          50.00,
+          100.00,
+          150.00,
+          ['tela', 'quebrada'],
+          1,
+          '2025-08-10T10:00:00Z',
           '2025-08-15T10:00:00Z',
-          'SN12345',
-          'Case',
-          'Good',
-          'None',
-          0,
-          0,
-          0,
-          0,
-          'Pending',
-          'Customer wants quick repair',
           90,
+          '2025-08-10T10:00:00Z',
+          '2025-11-08T10:00:00Z',
+          'http://example.com/quote.png',
+          'http://example.com/handover.png',
+          1,
         ]
       );
       expect(logActivity).toHaveBeenCalledWith(
@@ -102,18 +109,20 @@ describe('repairController', () => {
       );
       expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
       expect(mockRes.status).toHaveBeenCalledWith(201);
-      expect(mockRes.json).toHaveBeenCalledWith({ id: 1 });
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Ordem de reparo criada com sucesso!', repair: mockRepair });
+      expect(mockNext).not.toHaveBeenCalled(); // Ensure next is not called on success
     });
 
     it('should handle errors during repair creation', async () => {
       mockClient.query.mockRejectedValueOnce(new Error('DB Error'));
 
-      await repairController.createRepair(mockReq, mockRes);
+      await repairController.createRepair(mockReq, mockRes, mockNext); // Pass mockNext
 
       expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
       expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Erro interno do servidor' });
+      expect(mockNext).toHaveBeenCalledWith(new AppError('Erro ao criar ordem de reparo.', 500)); // Expect next to be called with AppError
+      expect(mockRes.status).not.toHaveBeenCalled(); // Ensure res.status is not called
+      expect(mockRes.json).not.toHaveBeenCalled(); // Ensure res.json is not called
       expect(logActivity).not.toHaveBeenCalled();
     });
   });

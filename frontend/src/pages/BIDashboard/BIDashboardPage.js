@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Container, Row, Col, Card, CardBody, CardTitle, Button, FormGroup, Label, Input, Spinner, Alert } from 'reactstrap';
 import { motion } from 'framer-motion';
 import Flatpickr from 'react-flatpickr';
@@ -6,7 +6,6 @@ import ReactApexChart from 'react-apexcharts';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import toast from 'react-hot-toast';
 import useApi from '../../hooks/useApi'; // Adjust path as needed
-import { get } from '../../helpers/api_helper'; // Import the 'get' API function
 import { useDebounce } from '../../hooks/useDebounce'; // Assuming useDebounce is available
 
 import 'flatpickr/dist/themes/material_blue.css'; // Example theme
@@ -24,11 +23,16 @@ const BIDashboardPage = () => {
 
   const debouncedFilters = useDebounce(filters, 500);
 
-  const { data: dashboardData, isLoading, error, request } = useApi(get, '/api/bi/dashboard', { params: debouncedFilters });
+  const { data: dashboardData, isLoading, error, request } = useApi('get');
 
   const handleFilterChange = (e) => {
-    setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFilters(prev => ({ ...prev, [name]: value }));
   };
+
+  const fetchDashboard = useCallback(() => {
+    request('/api/bi/dashboard', { params: debouncedFilters });
+  }, [request, debouncedFilters]);
 
   const { kpis, salesTrendChart, profitabilityByCategoryChart, customerDemographicsChart, expenseDistributionChart } = useMemo(() => {
     if (!dashboardData) return {};
@@ -113,8 +117,8 @@ const BIDashboardPage = () => {
   }, [dashboardData]);
 
   useEffect(() => {
-    request();
-  }, [filters, request]); // Re-fetch when filters change
+    fetchDashboard();
+  }, [fetchDashboard]); // Re-fetch when filters change
 
   return (
     <motion.div
@@ -128,7 +132,7 @@ const BIDashboardPage = () => {
           <Col lg={12}>
             <div className="page-header d-flex justify-content-between align-items-center mb-4">
               <h1>BI Dashboard</h1>
-              <Button color="primary" onClick={request}>
+              <Button color="primary" onClick={fetchDashboard}>
                 <i className="bx bx-refresh me-1"></i> Atualizar Dashboard
               </Button>
             </div>
@@ -144,22 +148,24 @@ const BIDashboardPage = () => {
                   <Col md={4}>
                     <FormGroup>
                       <Label for="startDate">Data Início</Label>
-                      <Flatpickr
-                        className="form-control d-block"
-                        options={{ dateFormat: 'Y-m-d' }}
+                      <Input
+                        type="date"
+                        name="startDate"
+                        id="startDate"
                         value={filters.startDate}
-                        onChange={([date]) => handleFilterChange('startDate', date ? format(date, 'yyyy-MM-dd') : '')}
+                        onChange={handleFilterChange}
                       />
                     </FormGroup>
                   </Col>
                   <Col md={4}>
                     <FormGroup>
                       <Label for="endDate">Data Fim</Label>
-                      <Flatpickr
-                        className="form-control d-block"
-                        options={{ dateFormat: 'Y-m-d' }}
+                      <Input
+                        type="date"
+                        name="endDate"
+                        id="endDate"
                         value={filters.endDate}
-                        onChange={([date]) => handleFilterChange('endDate', date ? format(date, 'yyyy-MM-dd') : '')}
+                        onChange={handleFilterChange}
                       />
                     </FormGroup>
                   </Col>
@@ -173,7 +179,7 @@ const BIDashboardPage = () => {
           <div className="text-center p-5"><Spinner /> Carregando dashboard...</div>
         ) : error ? (
           <Alert color="danger">Erro ao carregar dashboard: {error.message}</Alert>
-        ) : dashboardData && dashboardData.kpis ? (
+        ) : dashboardData && kpis ? (
           <>
             <Row className="mt-4">
               <Col md={3}>

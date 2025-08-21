@@ -13,11 +13,11 @@ const ProfileActivityTab = ({ userId }) => {
 
   const [activityLogs, setActivityLogs] = useState([]);
   const [activityLogsPageCount, setActivityLogsPageCount] = useState(0);
-  const { request: fetchActivityLogs, loading: logsLoading, error: logsError } = useApi(get);
+  const { request: fetchActivityLogs, loading: logsLoading, error: logsError } = useApi('get');
 
   const [loginHistory, setLoginHistory] = useState([]);
   const [loginHistoryPageCount, setLoginHistoryPageCount] = useState(0);
-  const { request: fetchLoginHistory, loading: loginHistoryLoading, error: loginHistoryError } = useApi(get);
+  const { request: fetchLoginHistory, loading: loginHistoryLoading, error: loginHistoryError } = useApi('get');
 
   const toggleTab = (tab) => {
     if (activeTab !== tab) {

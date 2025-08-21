@@ -7,7 +7,7 @@ describe('NPS Surveys API', () => {
 
     beforeAll(async () => {
         // Create a dummy customer for testing
-        const customerRes = await db.query('INSERT INTO customers (name, email) VALUES ($1, $2) RETURNING id', ['NPS Customer', 'nps@example.com']);
+        const customerRes = await db.query('INSERT INTO customers (name, email, branch_id) VALUES ($1, $2, $3) RETURNING id', ['NPS Customer', 'nps@example.com', 1]);
         customerId = customerRes.rows[0].id;
 
         // Clear the nps_surveys table before running tests
@@ -18,7 +18,6 @@ describe('NPS Surveys API', () => {
         // Clean up after all tests are done
         await db.query('DELETE FROM nps_surveys');
         await db.query('DELETE FROM customers WHERE id = $1', [customerId]);
-        await db.end();
     });
 
     it('should create a new NPS survey response', async () => {

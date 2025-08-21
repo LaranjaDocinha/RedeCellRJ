@@ -19,13 +19,7 @@ function App() {
       <FeatureFlagProvider>
         <GlobalFilterProvider>
           <BreadcrumbProvider>
-            <Toaster
-              position='top-right'
-              toastOptions={{
-                className: 'react-hot-toast',
-                duration: 4000,
-              }}
-            />
+            <Toaster position="bottom-right" />
             <RouterProvider fallbackElement={<LoadingBar />} router={router} />
             <LoadingBar />
           </BreadcrumbProvider>

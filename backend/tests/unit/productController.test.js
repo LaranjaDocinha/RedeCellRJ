@@ -1,6 +1,7 @@
 const productController = require('../../controllers/productController');
 const db = require('../../db');
 const { redisClient } = require('../../db');
+const { AppError } = require('../../utils/appError'); // Import AppError
 
 // Mock the db and redisClient modules
 jest.mock('../../db', () => ({
@@ -69,10 +70,12 @@ describe('productController', () => {
       redisClient.get.mockResolvedValueOnce(null);
       db.query.mockRejectedValueOnce(new Error('DB Error'));
 
-      await productController.getAllProducts(mockReq, mockRes);
+      await expect(productController.getAllProducts(mockReq, mockRes)).rejects.toThrow(
+        new AppError('Erro ao listar produtos.', 500)
+      );
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.send).toHaveBeenCalledWith('Erro do Servidor');
+      expect(mockRes.status).not.toHaveBeenCalled();
+      expect(mockRes.send).not.toHaveBeenCalled();
     });
   });
 });

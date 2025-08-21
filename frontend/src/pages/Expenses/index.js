@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Container, Row, Col } from 'reactstrap';
 import Breadcrumb from '../../components/Common/Breadcrumb';
 import ExpensesToolbar from './components/ExpensesToolbar';
@@ -11,7 +11,15 @@ const ExpensesPage = () => {
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [filters, setFilters] = useState({ page: 1, limit: 10 });
 
-  const { data, isLoading, error, refresh } = useApi('/api/expenses', { params: filters });
+  const { data, isLoading, error, request: fetchExpenses } = useApi('get');
+
+  const reFetchExpenses = useCallback(() => {
+    fetchExpenses('/api/expenses', { params: filters });
+  }, [fetchExpenses, filters]);
+
+  useEffect(() => {
+    reFetchExpenses();
+  }, [reFetchExpenses]);
 
   const toggleModal = () => {
     setModalOpen(!modalOpen);
@@ -32,7 +40,7 @@ const ExpensesPage = () => {
 
   const handleSuccess = () => {
     toggleModal();
-    refresh();
+    reFetchExpenses();
   };
 
   const handleFilterChange = useCallback((newFilters) => {
@@ -56,7 +64,7 @@ const ExpensesPage = () => {
                   isLoading={isLoading}
                   error={error}
                   onEdit={handleEdit}
-                  onDeleteSuccess={refresh}
+                  onDeleteSuccess={reFetchExpenses}
                   pagination={{
                     page: data?.page,
                     pages: data?.pages,

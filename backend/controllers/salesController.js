@@ -132,7 +132,7 @@ exports.createSale = async (req, res) => {
 // @route   GET /api/sales
 // @access  Private
 exports.getAllSales = async (req, res, next) => {
-    const { page = 1, limit = 10, sort = 'sale_date', order = 'desc', customer_id, startDate, endDate, payment_method, search } = req.query;
+    const { page = 1, limit = 10, sort = 'sale_date', order = 'desc', customer_id, startDate, endDate, payment_method, search, sessionId } = req.query;
     const offset = (page - 1) * limit;
 
     try {
@@ -142,25 +142,42 @@ exports.getAllSales = async (req, res, next) => {
         let paramIndex = 1;
 
         if (customer_id) {
-            conditions.push(`s.customer_id = $${paramIndex++}`);
+            conditions.push(`s.customer_id = ${paramIndex++}`);
             params.push(customer_id);
         }
         if (startDate) {
-            conditions.push(`s.sale_date >= $${paramIndex++}`);
+            conditions.push(`s.sale_date >= ${paramIndex++}`);
             params.push(startDate);
         }
         if (endDate) {
-            conditions.push(`s.sale_date <= $${paramIndex++}`);
+            conditions.push(`s.sale_date <= ${paramIndex++}`);
             params.push(endDate);
         }
         if (payment_method) {
-            conditions.push(`s.payment_method ILIKE $${paramIndex++}`);
+            conditions.push(`s.payment_method ILIKE ${paramIndex++}`);
             params.push(`%${payment_method}%`);
         }
         if (search) {
-            conditions.push(`(c.name ILIKE $${paramIndex} OR u.name ILIKE $${paramIndex} OR s.id::text ILIKE $${paramIndex})`);
+            conditions.push(`(c.name ILIKE ${paramIndex} OR u.name ILIKE ${paramIndex} OR s.id::text ILIKE ${paramIndex})`);
             params.push(`%${search}%`);
             paramIndex++;
+        }
+        if (sessionId) {
+            const sessionResult = await db.query(
+                'SELECT opening_time, closing_time FROM cash_sessions WHERE id = $1',
+                [sessionId]
+            );
+            if (sessionResult.rows.length > 0) {
+                const session = sessionResult.rows[0];
+                conditions.push(`s.sale_date >= ${paramIndex++}`);
+                params.push(session.opening_time);
+                if (session.closing_time) {
+                    conditions.push(`s.sale_date <= ${paramIndex++}`);
+                    params.push(session.closing_time);
+                }
+            } else {
+                return res.status(404).json({ message: 'Session not found.' });
+            }
         }
 
         if (conditions.length > 0) {
@@ -178,18 +195,18 @@ exports.getAllSales = async (req, res, next) => {
                 s.payment_method,
                 s.sale_date
             FROM sales s
-            JOIN customers c ON s.customer_id = c.id
+            LEFT JOIN customers c ON s.customer_id = c.id
             JOIN users u ON s.user_id = u.id
             ${whereClause}
             ORDER BY ${sort} ${order.toUpperCase()}
-            LIMIT $${paramIndex++} OFFSET $${paramIndex++};
+            LIMIT ${paramIndex++} OFFSET ${paramIndex++};
         `;
         const dataResult = await db.query(dataQuery, [...params, limit, offset]);
 
         const countQuery = `
             SELECT COUNT(*)
             FROM sales s
-            JOIN customers c ON s.customer_id = c.id
+            LEFT JOIN customers c ON s.customer_id = c.id
             JOIN users u ON s.user_id = u.id
             ${whereClause};
         `;

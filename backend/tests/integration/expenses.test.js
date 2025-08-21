@@ -23,7 +23,7 @@ describe('Expenses API', () => {
     const adminRoleId = adminRoleResult.rows[0].id;
 
     const userResult = await pool.query(
-      'INSERT INTO users (name, email, password, role_id, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      'INSERT INTO users (name, email, password_hash, role_id, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       ['Admin Expenses Test', 'admin-expenses@test.com', hashedPassword, adminRoleId, true]
     );
     testUser = userResult.rows[0];
@@ -132,6 +132,5 @@ describe('Expenses API', () => {
     // Limpar dados criados
     await pool.query("DELETE FROM expenses WHERE description LIKE 'Teste%';");
     await pool.query("DELETE FROM users WHERE email = 'admin-expenses@test.com';");
-    pool.end();
   });
 });

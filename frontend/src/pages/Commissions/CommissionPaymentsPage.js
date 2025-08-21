@@ -9,7 +9,6 @@ import useApi from '../../hooks/useApi'; // Adjust path as needed
 import { useDebounce } from '../../hooks/useDebounce'; // Assuming useDebounce is available
 import ConfirmationModal from '../../components/Common/ConfirmationModal';
 import CommissionPaymentForm from './components/CommissionPaymentForm'; // Will enhance this
-import { get, del } from '../../helpers/api_helper';
 
 import 'flatpickr/dist/themes/material_blue.css'; // Example theme
 import './CommissionPaymentsPage.scss'; // Page-specific styling
@@ -28,9 +27,9 @@ const CommissionPaymentsPage = () => {
 
   const debouncedFilters = useDebounce(filters, 500);
 
-  const { data: paymentsData, loading, error, request: fetchPayments } = useApi(() => get('/api/commissions/payouts', { params: debouncedFilters }));
-  const { request: deletePaymentApi, loading: isDeleting } = useApi(del);
-  const { data: salespersonsData, loading: loadingSalespersons, request: fetchSalespersons } = useApi(() => get('/api/users?role=salesperson'));
+  const { data: paymentsData, loading, error, request: fetchPayments } = useApi('get');
+  const { request: deletePaymentApi, loading: isDeleting } = useApi('delete');
+  const { data: salespersonsData, loading: loadingSalespersons, request: fetchSalespersons } = useApi('get');
 
   const payments = paymentsData?.payouts || [];
   const salespersonOptions = salespersonsData?.users?.map(s => ({ value: s.id, label: s.name })) || [];
@@ -49,12 +48,16 @@ const CommissionPaymentsPage = () => {
     setConfirmationModalOpen(true);
   };
 
+  const reFetchPayments = useCallback(() => {
+    fetchPayments('/api/commissions/payouts', { params: debouncedFilters });
+  }, [fetchPayments, debouncedFilters]);
+
   const confirmDelete = async () => {
     if (!paymentToDelete) return;
     try {
       await deletePaymentApi(`/api/commissions/payouts/${paymentToDelete.id}`);
       toast.success('Pagamento de comissão excluído com sucesso!');
-      fetchPayments();
+      reFetchPayments();
     } catch (err) {
       // Error is handled by the interceptor
     } finally {
@@ -64,17 +67,17 @@ const CommissionPaymentsPage = () => {
   };
 
   const handleFormSuccess = () => {
-    fetchPayments();
+    reFetchPayments();
     setModalOpen(false);
     setSelectedPayment(null);
   };
 
   useEffect(() => {
-    fetchPayments();
-  }, [debouncedFilters, fetchPayments]);
+    reFetchPayments();
+  }, [reFetchPayments]);
 
   useEffect(() => {
-    fetchSalespersons();
+    fetchSalespersons('/api/users?role=salesperson');
   }, [fetchSalespersons]);
 
   return (

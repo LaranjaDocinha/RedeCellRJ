@@ -1,6 +1,6 @@
 
 import React from 'react';
-import CalendarView from '../components/Calendar/CalendarView';
+import CalendarView from '@components/Calendar/CalendarView';
 
 // Mock data for demonstration purposes in Storybook
 const mockEvents = [

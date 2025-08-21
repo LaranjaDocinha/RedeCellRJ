@@ -6,7 +6,7 @@ import { ProductContext } from '../../context/ProductContext';
 import Breadcrumbs from '../../components/Common/Breadcrumb';
 import ConfirmationModal from '../../components/Common/ConfirmationModal';
 import useApi from '../../hooks/useApi';
-import { del } from '../../helpers/api_helper';
+
 
 import ProductCard from './components/ProductCard';
 import ProductTable from './components/ProductTable'; // Importa a nova tabela
@@ -41,7 +41,7 @@ const Products = () => {
   const [labelPrintModalOpen, setLabelPrintModalOpen] = useState(false); // Novo estado
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  const { request: deleteProductApi, loading: isDeleting } = useApi(del);
+  const { request: deleteProductApi, loading: isDeleting } = useApi('delete');
 
   const toggleModal = () => setModalOpen(!modalOpen);
   const toggleCategoryModal = () => setCategoryModalOpen(!categoryModalOpen);
@@ -70,7 +70,15 @@ const Products = () => {
 
   const onDeleteConfirm = () => {
     if (!selectedProduct) return;
-    deleteProductApi(`/api/products/${selectedProduct.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+    deleteProductApi(`/api/products/${selectedProduct.id}`)
+      .then(() => {
+        toast.success('Produto excluído com sucesso!');
+        reloadProducts();
+        toggleDeleteModal();
+      })
+      .catch(() => {
+        // Error is handled by the interceptor
+      });
   };
 
   const onBulkDeleteConfirm = () => {

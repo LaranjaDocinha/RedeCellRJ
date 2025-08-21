@@ -1,4 +1,28 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  CardBody,
+  CardTitle,
+  FormGroup,
+  Label,
+  Input,
+  Button,
+  Spinner,
+  Alert,
+  Table,
+  Badge,
+  CardHeader,
+  Breadcrumb
+} from 'reactstrap';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import Select from 'react-select';
 import { z } from 'zod';
+import { toast } from 'react-toastify';
+import useApi from '../hooks/useApi';
+
 
 const interactionSchema = z.object({
   customer_id: z.number({ required_error: 'O cliente é obrigatório.' }),
@@ -11,7 +35,7 @@ const CustomerInteractions = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [interactions, setInteractions] = useState([]);
 
-  const { data: customersData, isLoading: loadingCustomers, error: customersError } = useApi('/api/customers');
+  const { data: customersData, isLoading: loadingCustomers, error: customersError, request: fetchCustomers } = useApi('get');
   const { request: createInteraction, isLoading: creatingInteraction } = useApi('post');
   const { request: fetchInteractionsRequest, data: interactionsData, isLoading: loadingInteractions, error: interactionsError } = useApi('get'); // New useApi call
 
@@ -24,6 +48,10 @@ const CustomerInteractions = () => {
     { value: 'Nota', label: 'Nota' },
     { value: 'Outro', label: 'Outro' },
   ];
+
+  useEffect(() => {
+    fetchCustomers('/api/customers');
+  }, [fetchCustomers]);
 
   const fetchInteractions = useCallback(async () => {
     if (!selectedCustomer) {

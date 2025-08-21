@@ -1,0 +1,28 @@
+.nps-survey-page {
+  background-color: var(--page-bg); // Use a background color from your theme
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh; // Ensure it takes full viewport height
+
+  .container-fluid {
+    padding: 2rem;
+  }
+
+  // Adjustments for smaller screens
+  @media (max-width: 767.98px) {
+    .col-md-8.offset-md-2,
+    .col-lg-6.offset-lg-3 {
+      flex: 0 0 100%;
+      max-width: 100%;
+      padding: 0 1rem; // Add some horizontal padding
+    }
+  }
+}
+
+// Dark mode adjustments
+body.dark-mode {
+  .nps-survey-page {
+    background-color: var(--dark-page-bg);
+  }
+}

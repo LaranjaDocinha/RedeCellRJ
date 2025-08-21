@@ -63,11 +63,11 @@ const RepairPage = () => {
   const [selectedRepair, setSelectedRepair] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const { request: fetchRepairsApi, loading, error } = useApi(get);
-  const { request: updateRepairStatusApi } = useApi(put);
-  const { request: createRepairApi } = useApi(post);
-  const { request: fetchKanbanSettingsApi } = useApi(get);
-  const { request: assignRepairApi } = useApi(put);
+  const { request: fetchRepairsApi, loading, error } = useApi('get');
+  const { request: updateRepairStatusApi } = useApi('put');
+  const { request: createRepairApi } = useApi('post');
+  const { request: fetchKanbanSettingsApi } = useApi('get');
+  const { request: assignRepairApi } = useApi('put');
   const { showSuccess, showError, showInfo } = useNotification();
 
   const fetchRepairsAndSettings = useCallback(async () => {

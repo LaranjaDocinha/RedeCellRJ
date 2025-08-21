@@ -1,0 +1,61 @@
+.abc-summary-card-wrapper {
+  .abc-summary-card {
+    border-radius: 0.75rem;
+    box-shadow: var(--box-shadow-sm);
+    transition: all 0.3s ease;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--box-shadow-md);
+    }
+
+    .icon-wrapper {
+      font-size: 2.5rem;
+      color: var(--primary-color); // Use primary color for icons
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background-color: var(--primary-color-light); // Lighter primary color for background
+    }
+
+    .card-title {
+      font-size: 1rem;
+      color: var(--text-color-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .card-text {
+      font-size: 2rem;
+      color: var(--text-color);
+    }
+  }
+}
+
+// Dark mode adjustments
+body.dark-mode {
+  .abc-summary-card-wrapper {
+    .abc-summary-card {
+      background-color: var(--dark-card-bg);
+      color: var(--dark-text-color);
+
+      .icon-wrapper {
+        color: var(--dark-primary-color);
+        background-color: var(--dark-primary-color-light);
+      }
+
+      .card-title {
+        color: var(--dark-text-color-secondary);
+      }
+
+      .card-text {
+        color: var(--dark-text-color);
+      }
+    }
+  }
+}

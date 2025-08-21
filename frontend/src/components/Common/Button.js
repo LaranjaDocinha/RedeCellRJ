@@ -1,41 +1,29 @@
-import React, { useRef } from 'react';
+// Remember to create Storybook stories for new components in this directory.
+// Refer to TemplateComponent.stories.jsx for an example.
+
+import React from 'react';
 import PropTypes from 'prop-types';
-import { Button as ReactstrapButton } from 'reactstrap';
 
-import RippleEffect from './RippleEffect';
-
-const Button = ({ children, color, icon, className, onClick, ...props }) => {
-  const buttonRef = useRef(null);
-
+const Button = ({ children, onClick, className, type = 'button', disabled = false, ...props }) => {
   return (
-    <RippleEffect buttonRef={buttonRef} onButtonClick={onClick}>
-      <ReactstrapButton
-        className={`btn-custom ${className}`}
-        color={color}
-        innerRef={buttonRef}
-        onClick={() => {}} // onClick é tratado pelo RippleEffect
-        {...props}
-      >
-        {icon && <i className={`${icon} me-2`}></i>}
-        {children}
-      </ReactstrapButton>
-    </RippleEffect>
+    <button
+      type={type}
+      onClick={onClick}
+      className={`btn ${className || ''}`}
+      disabled={disabled}
+      {...props}
+    >
+      {children}
+    </button>
   );
 };
 
 Button.propTypes = {
   children: PropTypes.node.isRequired,
-  color: PropTypes.string,
-  icon: PropTypes.string,
+  onClick: PropTypes.func,
   className: PropTypes.string,
-  onClick: PropTypes.func, // Adiciona onClick aos propTypes
-};
-
-Button.defaultProps = {
-  color: 'primary',
-  icon: null,
-  className: '',
-  onClick: () => {}, // Define um onClick padrão
+  type: PropTypes.oneOf(['button', 'submit', 'reset']),
+  disabled: PropTypes.bool,
 };
 
 export default Button;

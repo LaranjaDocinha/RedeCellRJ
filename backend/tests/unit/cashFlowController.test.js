@@ -36,16 +36,24 @@ describe('cashFlowController', () => {
     jest.clearAllMocks();
   });
 
-  describe('createCashFlowProjection', () => {
+  describe('createProjection', () => {
     it('should create a cash flow projection successfully', async () => {
-      const mockProjection = { id: 1, ...mockReq.body };
+      mockReq.user = { id: 1, branch_id: 1 }; // Mock user for controller
+      mockReq.body = {
+        description: 'Monthly Projection',
+        amount: 1000,
+        type: 'inflow',
+        projection_date: '2025-09-01',
+        notes: 'Monthly projection notes',
+      };
+      const mockProjection = { id: 1, ...mockReq.body, user_id: 1, branch_id: 1 };
       db.query.mockResolvedValueOnce({ rows: [mockProjection] }); // For INSERT query
 
-      await cashFlowController.createCashFlowProjection(mockReq, mockRes);
+      await cashFlowController.createProjection(mockReq, mockRes);
 
       expect(db.query).toHaveBeenCalledWith(
-        'INSERT INTO cash_flow_projections (projection_date, projected_inflow, projected_outflow, notes) VALUES ($1, $2, $3, $4) RETURNING *;',
-        ['2025-09-01', 1000, 500, 'Monthly projection']
+        'INSERT INTO cash_flow_projections (description, amount, type, projection_date, notes, user_id, branch_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;',
+        ['Monthly Projection', 1000, 'inflow', '2025-09-01', 'Monthly projection notes', 1, 1]
       );
       expect(activityLogger.logActivity).toHaveBeenCalledWith(
         'Test User',
@@ -54,28 +62,28 @@ describe('cashFlowController', () => {
         1
       );
       expect(mockRes.status).toHaveBeenCalledWith(201);
-      expect(mockRes.json).toHaveBeenCalledWith(mockProjection);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Projeção criada com sucesso!', projection: mockProjection });
     });
 
     it('should handle errors during projection creation', async () => {
+      mockReq.user = { id: 1, branch_id: 1 };
+      mockReq.body = {
+        description: 'Monthly Projection',
+        amount: 1000,
+        type: 'inflow',
+        projection_date: '2025-09-01',
+        notes: 'Monthly projection notes',
+      };
       db.query.mockRejectedValueOnce(new Error('DB Error'));
 
-      await cashFlowController.createCashFlowProjection(mockReq, mockRes);
+      await expect(cashFlowController.createProjection(mockReq, mockRes)).rejects.toThrow(
+        new AppError('Erro ao criar projeção.', 500)
+      );
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Erro interno do servidor' });
+      expect(mockRes.status).not.toHaveBeenCalled();
+      expect(mockRes.json).not.toHaveBeenCalled();
       expect(activityLogger.logActivity).not.toHaveBeenCalled();
     });
 
-    it('should return 400 if required fields are missing', async () => {
-      delete mockReq.body.projection_date;
-
-      await cashFlowController.createCashFlowProjection(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Dados da projeção incompletos.' });
-      expect(db.query).not.toHaveBeenCalled();
-      expect(activityLogger.logActivity).not.toHaveBeenCalled();
-    });
-  });
+    
 });

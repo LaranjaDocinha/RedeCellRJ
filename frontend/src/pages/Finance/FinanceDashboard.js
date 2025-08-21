@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Container, Row, Col, Card, CardBody, CardTitle, Alert, Label, Input, Spinner, Button } from 'reactstrap';
 import ReactApexChart from 'react-apexcharts';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
@@ -17,11 +17,20 @@ const FinanceDashboard = () => {
     endDate: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
   });
 
-  const { data: dashboardData, isLoading, error, refresh } = useApi('/api/finance/dashboard', { params: filters });
+  const { data: dashboardData, isLoading, error, request: fetchDashboard } = useApi('get');
 
   const handleFilterChange = (e) => {
-    setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFilters(prev => ({ ...prev, [name]: value }));
   };
+
+  const reFetchDashboard = useCallback(() => {
+    fetchDashboard('/api/finance/dashboard', { params: filters });
+  }, [fetchDashboard, filters]);
+
+  useEffect(() => {
+    reFetchDashboard();
+  }, [reFetchDashboard]);
 
   const { salesByPaymentMethodOptions, salesByPaymentMethodSeries, expensesByCategoryOptions, expensesByCategorySeries, kpis } = useMemo(() => {
     if (!dashboardData) return { salesByPaymentMethodOptions: {}, salesByPaymentMethodSeries: [], expensesByCategoryOptions: {}, expensesByCategorySeries: [], kpis: {} };
@@ -133,10 +142,6 @@ const FinanceDashboard = () => {
     };
   }, [dashboardData]);
 
-  useEffect(() => {
-    refresh();
-  }, [filters, refresh]); // Re-fetch when filters change
-
   return (
     <motion.div
       className="finance-dashboard-page" // Added class for styling
@@ -154,7 +159,7 @@ const FinanceDashboard = () => {
               id='startDate'
               type='date'
               value={filters.startDate}
-              onChange={(e) => handleFilterChange(e.target.name, e.target.value)}
+              onChange={handleFilterChange}
               name="startDate"
             />
           </Col>
@@ -164,12 +169,12 @@ const FinanceDashboard = () => {
               id='endDate'
               type='date'
               value={filters.endDate}
-              onChange={(e) => handleFilterChange(e.target.name, e.target.value)}
+              onChange={handleFilterChange}
               name="endDate"
             />
           </Col>
           <Col md={6} className="text-end">
-            <Button color="primary" onClick={refresh}>
+            <Button color="primary" onClick={reFetchDashboard}>
               <i className="bx bx-refresh me-1"></i> Atualizar Dados
             </Button>
           </Col>
@@ -179,7 +184,7 @@ const FinanceDashboard = () => {
           <div className="text-center p-5"><Spinner /> Carregando dashboard...</div>
         ) : error ? (
           <Alert color="danger">Erro ao carregar dashboard: {error.message}</Alert>
-        ) : dashboardData && dashboardData.kpis ? (
+        ) : dashboardData && kpis ? (
           <>
             <Row>
               <Col md={4}>

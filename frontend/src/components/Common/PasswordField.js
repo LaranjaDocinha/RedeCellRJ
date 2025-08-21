@@ -95,11 +95,11 @@ const PasswordField = ({ name, label, placeholder, formik }) => {
         />
 
         <Tooltip
-          fade={false}
+          
           isOpen={tooltipOpen}
           placement='right'
           target={name}
-          timeout={0}
+          
           toggle={() => setTooltipOpen(!tooltipOpen)}
         >
           A senha deve conter:

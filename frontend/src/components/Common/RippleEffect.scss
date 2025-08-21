@@ -9,14 +9,19 @@
 .ripple {
   position: absolute;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.7); // Cor do ripple
+  background-color: rgba(var(--color-primary-rgb), 0.5); // Cor do ripple usando a cor primária do tema
   transform: scale(0);
-  animation: ripple-animation 0.6s linear;
+  animation: ripple-animation 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; // Easing mais suave e duração maior
   pointer-events: none; // Garante que o ripple não interfira com cliques
+  filter: blur(2px); // Adiciona um leve desfoque para um efeito mais suave
 }
 
 @keyframes ripple-animation {
-  to {
+  0% {
+    transform: scale(0);
+    opacity: 0.8;
+  }
+  100% {
     transform: scale(4); // Aumenta o tamanho do ripple
     opacity: 0;
   }

@@ -72,5 +72,11 @@ module.exports = {
         'no-console': 'off',
       },
     },
+    {
+      files: ['src/pages/Pdv/PdvNewView.js'],
+      rules: {
+        'no-console': 'error',
+      },
+    },
   ],
 };

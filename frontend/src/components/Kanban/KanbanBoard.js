@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Row, Col } from 'reactstrap';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import { motion } from 'framer-motion';
 import KanbanColumn from './KanbanColumn';
 
 const KanbanBoard = ({ columns, repairsByStatus, onStatusChange }) => {
@@ -23,22 +24,29 @@ const KanbanBoard = ({ columns, repairsByStatus, onStatusChange }) => {
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <Row className="flex-nowrap overflow-auto pb-3">
-        {columns.map((column) => (
-          <Col key={column.id} xs={12} sm={6} md={4} lg={3} xl={2} className="kanban-column-wrapper">
-            <Droppable droppableId={column.id}>
-              {(provided, snapshot) => (
-                <KanbanColumn
-                  column={column}
-                  repairs={repairsByStatus[column.id] || []}
-                  provided={provided}
-                  snapshot={snapshot}
-                />
-              )}
-            </Droppable>
-          </Col>
-        ))}
-      </Row>
+      <motion.div
+        className="kanban-board-container"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+      >
+        <Row className="flex-nowrap overflow-auto pb-3">
+          {columns.map((column) => (
+            <Col key={column.id} xs={12} sm={6} md={4} lg={3} xl={2} className="kanban-column-wrapper">
+              <Droppable droppableId={column.id}>
+                {(provided, snapshot) => (
+                  <KanbanColumn
+                    column={column}
+                    repairs={repairsByStatus[column.id] || []}
+                    provided={provided}
+                    snapshot={snapshot}
+                  />
+                )}
+              </Droppable>
+            </Col>
+          ))}
+        </Row>
+      </motion.div>
     </DragDropContext>
   );
 };

@@ -27,12 +27,6 @@ async function applyMigrations() {
       });
 
     for (const file of migrationFiles) {
-      // Skip migration_07_xx and migration_23_xx files
-      if (file.startsWith('migration_07_')) {
-        console.log(`Skipping problematic migration: ${file}`);
-        continue;
-      }
-
       const filePath = path.join(migrationsDir, file);
       const sql = fs.readFileSync(filePath, 'utf8');
       console.log(`Executing migration: ${file}`);
@@ -42,7 +36,8 @@ async function applyMigrations() {
         // 42701: column already exists
         // 42P07: table already exists
         // 42710: trigger already exists
-        if (err.code === '42701' || err.code === '42P07' || err.code === '42710') {
+        // 42703: column does not exist
+        if (err.code === '42701' || err.code === '42P07' || err.code === '42710' || err.code === '42703') {
           console.warn(`  -> Warning: Migration '${file}' likely already applied. Ignoring error: ${err.message}`);
         } else {
           // For any other error, re-throw to stop the process

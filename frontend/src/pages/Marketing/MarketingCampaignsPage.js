@@ -25,12 +25,13 @@ const MarketingCampaignsPage = () => {
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const [campaignToDelete, setCampaignToDelete] = useState(null);
-  const [refreshList, setRefreshList] = useState(false);
 
   const debouncedFilters = useDebounce(filters, 500);
 
-  const { data: campaigns, isLoading, error, refresh } = useApi('/api/marketing/campaigns', { params: debouncedFilters });
+  const { data: campaignsData, isLoading, error, request: fetchCampaigns } = useApi('get');
   const { request: deleteCampaignApi, isLoading: isDeleting } = useApi('delete');
+
+  const campaigns = campaignsData?.campaigns || [];
 
   const statusOptions = [
     { value: 'active', label: 'Ativa' },
@@ -60,11 +61,15 @@ const MarketingCampaignsPage = () => {
     setConfirmationModalOpen(true);
   };
 
+  const reFetchCampaigns = useCallback(() => {
+    fetchCampaigns('/api/marketing/campaigns', { params: debouncedFilters });
+  }, [fetchCampaigns, debouncedFilters]);
+
   const confirmDelete = async () => {
     try {
       await deleteCampaignApi(`/api/marketing/campaigns/${campaignToDelete.id}`);
       toast.success('Campanha excluída com sucesso!');
-      setRefreshList(prev => !prev);
+      reFetchCampaigns();
     } catch (err) {
       toast.error(err.message || 'Falha ao excluir campanha.');
     } finally {
@@ -74,13 +79,13 @@ const MarketingCampaignsPage = () => {
   };
 
   const handleFormSuccess = () => {
-    setRefreshList(prev => !prev);
+    reFetchCampaigns();
     setModalOpen(false);
   };
 
   useEffect(() => {
-    refresh(); // Initial fetch and re-fetch on filter/refreshList change
-  }, [debouncedFilters, refresh, refreshList]);
+    reFetchCampaigns(); // Initial fetch and re-fetch on filter/refreshList change
+  }, [reFetchCampaigns]);
 
   return (
     <motion.div

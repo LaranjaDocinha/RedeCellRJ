@@ -54,22 +54,37 @@
 
   .particle {
     position: absolute;
-    background-color: rgba(255, 255, 255, 0.3); // Partículas brancas semi-transparentes
+    background-color: rgba(255, 255, 255, 0.2); // Partículas brancas mais transparentes
     border-radius: 50%;
+    box-shadow: 0 0 12px 4px rgba(255, 255, 255, 0.5); // Brilho mais pronunciado
     animation: float-up 15s infinite ease-in-out; // Animação de flutuação
     opacity: 0; // Começa invisível
+    filter: blur(1px); // Adiciona um leve desfoque para aparência etérea
   }
 
   @keyframes float-up {
     0% {
-      transform: translateY(100vh) scale(0);
+      transform: translateY(100vh) translateX(0) scale(0.2);
       opacity: 0;
     }
-    50% {
+    20% {
+      opacity: 0.7;
+      transform: translateY(80vh) translateX(10vw) scale(0.6);
+    }
+    40% {
       opacity: 1;
+      transform: translateY(60vh) translateX(-10vw) scale(1);
+    }
+    60% {
+      opacity: 0.8;
+      transform: translateY(40vh) translateX(15vw) scale(0.8);
+    }
+    80% {
+      opacity: 0.4;
+      transform: translateY(20vh) translateX(-15vw) scale(0.4);
     }
     100% {
-      transform: translateY(-100vh) scale(1.2);
+      transform: translateY(-10vh) translateX(0) scale(0);
       opacity: 0;
     }
   }
@@ -125,6 +140,24 @@
     flex-grow: 0; // Prevenir que o card cresça
   }
 
+  .auth-card .alert-danger {
+    background-color: transparent; // Remove background
+    border: none; // Remove border
+    color: var(--color-danger); // Use danger color from design system
+    padding: 0.5rem 0; // Reduce padding
+    margin-bottom: 0; // Remove bottom margin if any
+    font-size: var(--font-size-sm); // Smaller font size
+  }
+
+  .logo-img {
+    max-width: 180px; // Ajuste conforme necessário
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    box-shadow: 0 0 15px rgba(var(--color-primary-rgb), 0.3); // Sombra sutil para contraste
+    border-radius: 8px; // Opcional: bordas levemente arredondadas
+  }
+
   [data-theme="dark"] {
     .auth-logo-dark {
       filter: invert(1);
@@ -139,7 +172,7 @@
       box-sizing: border-box; // Incluir padding e border no tamanho total
       min-width: 0; // Garantir que não haja um tamanho mínimo
       min-height: 0; // Garantir que não haja um tamanho mínimo
-      padding: 0 !important; // Remover padding para garantir o tamanho
+      /* padding: 0 !important; // Remover padding para garantir o tamanho */
     }
 
   .auth-card-body {
@@ -192,7 +225,8 @@
 
     .form-control:focus {
       border-color: var(--color-primary); // Cor da borda ao focar
-      box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25); // Sombra sutil ao focar
+      box-shadow: 0 0 0 0.15rem rgba(var(--color-primary-rgb), 0.4); // Sombra mais sutil e difusa
+      transform: scale(1.005); // Leve aumento no tamanho
     }
 
     .form-control:focus-visible {
@@ -222,6 +256,7 @@
 
       &:hover {
         color: var(--color-primary);
+        transform: translateY(-50%) scale(1.1); // Leve aumento no tamanho ao passar o mouse
       }
 
       &:focus-visible {
@@ -237,11 +272,12 @@
 
     .validation-icon {
       position: absolute;
-      right: 45px; // Ajuste para posicionar à esquerda do PasswordToggle
+      right: 10px; // Posição mais próxima da borda do input
       top: 50%;
       transform: translateY(-50%);
       z-index: 10; // Garante que o ícone esteja acima do input
-      font-size: 1.5rem; // Aumenta o tamanho do ícone
+      font-size: 1.2rem; // Tamanho do ícone
+      pointer-events: none; // Garante que o ícone não interfira com o input
     }
   }
 
@@ -292,27 +328,7 @@
     }
   }
 
-  .shake-animation {
-    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
-    transform: translate3d(0, 0, 0);
-    backface-visibility: hidden;
-    perspective: 1000px;
-  }
-
-  @keyframes shake {
-    10%, 90% {
-      transform: translate3d(-1px, 0, 0);
-    }
-    20%, 80% {
-      transform: translate3d(1px, 0, 0);
-    }
-    30%, 50%, 70% {
-      transform: translate3d(-2px, 0, 0);
-    }
-    40%, 60% {
-      transform: translate3d(2px, 0, 0);
-    }
-  }
+  
 
   .animated-link {
     display: inline-flex;
@@ -333,8 +349,90 @@
   }
 }
 
+.btn-social {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.full-page-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--color-background); // Usa a cor de fundo do tema
+  transition: background-color 0.5s ease; // Transição suave para o tema
+}
+
+.reduce-motion .auth-page {
+  .particle {
+    animation: none !important; // Desativa a animação das partículas
+    opacity: 0 !important; // Garante que as partículas não sejam visíveis
+  }
+
+  .auth-card {
+    animation: none !important; // Desativa a animação de entrada do card
+  }
+
+  .quote-carousel {
+    animation: none !important; // Desativa a animação do carrossel de citações
+  }
+
+  .background-video {
+    display: none !important; // Oculta o vídeo de fundo
+  }
+
+  .auth-page {
+    animation: none !important; // Desativa a animação de fundo
+  }
+}
+
 
 
     
   
 
+@media (max-width: 768px) {
+  .auth-card {
+    max-width: 90%; // Aumenta a largura do card em telas menores
+    margin: 1rem; // Adiciona margem para evitar que o card cole nas bordas
+  }
+
+  .auth-card .card-body {
+    padding: 1rem; // Reduz o padding interno em telas menores
+  }
+
+  .logo-img {
+    max-width: 150px; // Reduz o tamanho do logo em telas menores
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    max-width: 95%; // Ainda mais largo em telas muito pequenas
+    margin: 0.5rem;
+  }
+
+  .auth-card .card-body {
+    padding: 0.8rem;
+  }
+
+  .logo-img {
+    max-width: 120px; // Reduz ainda mais o tamanho do logo
+  }
+
+  .auth-footer {
+    font-size: var(--font-size-xs); // Reduz o tamanho da fonte do rodapé
+  }
+}

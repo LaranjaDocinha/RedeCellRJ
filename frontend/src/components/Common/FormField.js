@@ -32,7 +32,10 @@ const FormField = ({ name, label, type = 'text', placeholder, formik }) => {
           value={formik.values[name]}
           onBlur={formik.handleBlur}
           onChange={formik.handleChange}
+          autoComplete={name === 'email' ? 'email' : 'off'} // Adiciona autocomplete
         />
+        {isValid && <i className="bx bx-check-circle text-success validation-icon"></i>}
+        {hasError && <i className="bx bx-x-circle text-danger validation-icon"></i>}
       </div>
       {hasError && (
         <FormFeedback className='d-block' id={`${name}-feedback`} type='invalid'>

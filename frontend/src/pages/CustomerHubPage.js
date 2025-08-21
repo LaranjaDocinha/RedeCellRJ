@@ -15,20 +15,22 @@ const CustomerHubPage = () => {
   const [activeTab, setActiveTab] = useState('details'); // 'details', 'sales', 'repairs', 'interactions'
 
   // Fetch customer details
-  const { data: customerDetails, isLoading: loadingCustomer, error: customerError, refresh: refreshCustomerDetails } = useApi('get', `/api/customers/${customerId}`);
+  const { data: customerDetails, isLoading: loadingCustomer, error: customerError, request: fetchCustomerDetails } = useApi('get');
   // Fetch sales history
-  const { data: salesHistory, isLoading: loadingSales, error: salesError, refresh: refreshSalesHistory } = useApi('get', `/api/sales?customer_id=${customerId}`);
+  const { data: salesHistory, isLoading: loadingSales, error: salesError, request: fetchSalesHistory } = useApi('get');
   // Fetch repair history
-  const { data: repairHistory, isLoading: loadingRepairs, error: repairsError, refresh: refreshRepairHistory } = useApi('get', `/api/repairs?customer_id=${customerId}`);
+  const { data: repairHistory, isLoading: loadingRepairs, error: repairsError, request: fetchRepairHistory } = useApi('get');
   // Fetch customer interactions
-  const { data: interactions, isLoading: loadingInteractions, error: interactionsError, refresh: refreshInteractions } = useApi('get', `/api/customer-interactions?customer_id=${customerId}`);
+  const { data: interactions, isLoading: loadingInteractions, error: interactionsError, request: fetchInteractions } = useApi('get');
 
   useEffect(() => {
-    refreshCustomerDetails();
-    refreshSalesHistory();
-    refreshRepairHistory();
-    refreshInteractions();
-  }, [customerId, refreshCustomerDetails, refreshSalesHistory, refreshRepairHistory, refreshInteractions]);
+    if (customerId) {
+      fetchCustomerDetails(`/api/customers/${customerId}`);
+      fetchSalesHistory(`/api/sales?customer_id=${customerId}`);
+      fetchRepairHistory(`/api/repairs?customer_id=${customerId}`);
+      fetchInteractions(`/api/customer-interactions?customer_id=${customerId}`);
+    }
+  }, [customerId, fetchCustomerDetails, fetchSalesHistory, fetchRepairHistory, fetchInteractions]);
 
   const toggleTab = (tab) => {
     if (activeTab !== tab) setActiveTab(tab);

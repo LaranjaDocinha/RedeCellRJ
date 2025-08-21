@@ -6,13 +6,16 @@ const LoadingSpinner = ({ size = 24, color = '#fff' }) => {
   const spinnerVariants = {
     start: {
       rotate: 0,
+      scale: 0.8, // Começa um pouco menor
     },
     end: {
       rotate: 360,
+      scale: 1, // Aumenta para o tamanho normal
       transition: {
         loop: Infinity,
-        ease: 'linear',
-        duration: 1,
+        ease: 'easeInOut', // Easing mais suave
+        duration: 1.2, // Duração um pouco maior
+        repeatDelay: 0.1, // Pequeno atraso antes de repetir
       },
     },
   };

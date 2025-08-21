@@ -33,11 +33,11 @@ const RepairForm = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  const { request: fetchCustomersApi } = useApi(get);
-  const { request: fetchTechniciansApi } = useApi(get);
-  const { request: fetchRepairApi } = useApi(get);
-  const { request: createRepairApi } = useApi(post);
-  const { request: updateRepairApi } = useApi(put);
+  const { request: fetchCustomersApi } = useApi('get');
+  const { request: fetchTechniciansApi } = useApi('get');
+  const { request: fetchRepairApi } = useApi('get');
+  const { request: createRepairApi } = useApi('post');
+  const { request: updateRepairApi } = useApi('put');
 
   useEffect(() => {
     const fetchInitialData = async () => {

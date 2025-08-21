@@ -26,7 +26,7 @@ export const ProductProvider = ({ children }) => {
   const [quickViewProduct, setQuickViewProduct] = useState(null); // product object for modal
   const [selectedProducts, setSelectedProducts] = useState(new Set()); // Using a Set for efficient add/delete
 
-  const { request: fetchApi, loading: apiLoading } = useApi(get);
+  const { request: fetchApi, loading: apiLoading } = useApi('get');
   const { request: deleteProductsApi } = useApi(del); // For bulk delete
 
   const loadData = useCallback(() => {

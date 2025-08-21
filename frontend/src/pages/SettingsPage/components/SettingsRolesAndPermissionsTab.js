@@ -18,8 +18,8 @@ const SettingsRolesAndPermissionsTab = () => { // Renamed component
   const [permissionModalOpen, setPermissionModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
 
-  const { request: fetchRoles, loading, error } = useApi(get);
-  const { request: deleteRole } = useApi(del);
+  const { request: fetchRoles, loading, error } = useApi('get');
+  const { request: deleteRole } = useApi('delete');
   const { showSuccess, showError } = useNotification();
 
   const loadRoles = () => {

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import ProfileSecurityTab from './ProfileSecurityTab';
+import ProfileSecurityTab from '@components/Profile/ProfileSecurityTab';
 import { action } from '@storybook/addon-actions';
 
 export default {

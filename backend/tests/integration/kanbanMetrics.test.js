@@ -10,8 +10,7 @@ describe('Kanban Metrics API', () => {
     });
 
     afterAll(async () => {
-        await db.end();
-    });
+        });
 
     it('should fetch Kanban metrics successfully', async () => {
         const res = await request(app)

@@ -1,0 +1,97 @@
+.nps-score-selector {
+  text-align: center;
+  padding: 2rem;
+  background-color: var(--card-bg);
+  border-radius: 0.75rem;
+  box-shadow: var(--box-shadow-sm);
+  color: var(--text-color);
+
+  .nps-question {
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+    color: var(--text-color-secondary);
+  }
+
+  .score-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+
+    .score-button {
+      background-color: var(--light-gray);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      font-size: 1.1rem;
+      font-weight: bold;
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+
+      &:hover {
+        background-color: var(--primary-color-light);
+        color: var(--primary-color-dark);
+        border-color: var(--primary-color);
+      }
+
+      &.selected {
+        background-color: var(--primary-color);
+        color: var(--white);
+        border-color: var(--primary-color);
+        box-shadow: var(--box-shadow-sm);
+      }
+    }
+  }
+
+  .score-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--text-color-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 0.5rem;
+  }
+}
+
+// Dark mode adjustments
+body.dark-mode {
+  .nps-score-selector {
+    background-color: var(--dark-card-bg);
+    color: var(--dark-text-color);
+
+    .nps-question {
+      color: var(--dark-text-color-secondary);
+    }
+
+    .score-buttons {
+      .score-button {
+        background-color: var(--dark-light-gray);
+        border-color: var(--dark-border-color);
+        color: var(--dark-text-color);
+
+        &:hover {
+          background-color: var(--dark-primary-color-light);
+          color: var(--dark-primary-color-dark);
+          border-color: var(--dark-primary-color);
+        }
+
+        &.selected {
+          background-color: var(--dark-primary-color);
+          color: var(--dark-white);
+          border-color: var(--dark-primary-color);
+        }
+      }
+    }
+
+    .score-labels {
+      color: var(--dark-text-color-secondary);
+    }
+  }
+}

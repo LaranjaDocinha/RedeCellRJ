@@ -133,3 +133,96 @@
     }
   }
 }
+
+/* Styles for Spotify Player */
+.app-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1001; /* Above sidebar overlay */
+  background-color: var(--secondary-bg);
+  padding: 0;
+  margin-left: var(--sidebar-width-collapsed);
+  transition: margin-left 0.3s ease;
+
+  .spotify-player-footer-compact {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px; // Reduced padding
+    height: 80px; // Fixed height for compact player
+    background-color: var(--secondary-bg); // Ensure background matches footer
+    color: var(--text-color); // Ensure text is visible
+
+    .player-controls {
+      display: flex;
+      align-items: center;
+      gap: 15px; // Spacing between controls
+    }
+
+    .track-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      img {
+        width: 50px; // Smaller album art
+        height: 50px;
+        border-radius: 4px;
+      }
+      .details {
+        .track-name {
+          font-size: 0.9em; // Smaller font size
+          font-weight: 600;
+        }
+        .artist-name {
+          font-size: 0.8em; // Smaller font size
+          color: var(--text-muted);
+        }
+      }
+    }
+
+    .progress-bar-container {
+      flex-grow: 1; // Allow progress bar to take available space
+      margin: 0 20px; // Spacing from controls
+      .progress-bar {
+        height: 4px; // Thinner progress bar
+      }
+    }
+
+    .volume-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      input[type="range"] {
+        width: 80px; // Smaller volume slider
+      }
+    }
+
+    // Adjust button sizes if necessary
+    button {
+      background: none;
+      border: none;
+      color: var(--text-color);
+      font-size: 1.2em; // Slightly smaller icons
+      cursor: pointer;
+      &:hover {
+        color: var(--primary-color);
+      }
+    }
+  }
+}
+
+.sidebar-collapsed .app-footer {
+    margin-left: var(--sidebar-width-collapsed);
+}
+
+.main-content.with-player .content-page {
+    padding-bottom: 120px; /* Adjust based on player height */
+}
+
+@media (max-width: 768px) {
+  .app-footer {
+    margin-left: 0 !important;
+  }
+}

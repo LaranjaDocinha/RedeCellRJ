@@ -389,6 +389,20 @@ exports.loginUser = async (req, res, next) => {
                     return next(new AppError('Erro ao gerar token de autenticação.', 500));
                 }
 
+                // Gerar Refresh Token
+                const refreshToken = jwt.sign(
+                    { userId: user.id },
+                    process.env.REFRESH_TOKEN_SECRET || 'your_refresh_token_secret', // Use um segredo diferente para o refresh token
+                    { expiresIn: '7d' } // Refresh token expira em 7 dias
+                );
+
+                // Armazenar Refresh Token no banco de dados
+                const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 dias a partir de agora
+                await db.query(
+                    'INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)',
+                    [user.id, refreshToken, expiresAt]
+                );
+
                 // Inserir nova sessão na tabela user_sessions
                 try {
                     await db.query(
@@ -402,6 +416,7 @@ exports.loginUser = async (req, res, next) => {
 
                 res.json({
                     token,
+                    refreshToken,
                     user: { id: user.id, name: user.name, email: user.email, role: roleName }
                 });
             }
@@ -750,5 +765,27 @@ exports.impersonateUser = async (req, res, next) => {
     } catch (error) {
         console.error('Erro ao personificar usuário:', error);
         next(new AppError('Erro interno do servidor ao tentar personificar o usuário.', 500));
+    }
+};
+
+exports.logout = async (req, res, next) => {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+        return next(new AppError('Refresh Token ausente.', 400));
+    }
+
+    try {
+        // Invalidate the refresh token by deleting it from the database
+        const result = await db.query('DELETE FROM refresh_tokens WHERE token = $1', [refreshToken]);
+
+        if (result.rowCount === 0) {
+            return next(new AppError('Refresh Token não encontrado ou já invalidado.', 404));
+        }
+
+        res.status(200).json({ message: 'Logout realizado com sucesso.' });
+    } catch (error) {
+        console.error('Erro ao realizar logout:', error);
+        next(new AppError('Erro interno do servidor ao realizar logout.', 500));
     }
 };

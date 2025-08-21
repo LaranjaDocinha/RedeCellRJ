@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Container, Card, CardBody, CardTitle, Row, Col, Input, Button, Label } from 'reactstrap';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -6,7 +6,6 @@ import { ptBR } from 'date-fns/locale';
 import Breadcrumbs from '../../components/Common/Breadcrumb';
 import AdvancedTable from '../../components/Common/AdvancedTable';
 import useApi from '../../hooks/useApi';
-import { get } from '../../helpers/api_helper';
 import useNotification from '../../hooks/useNotification';
 
 const ProfitabilityReport = () => {
@@ -21,11 +20,11 @@ const ProfitabilityReport = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
 
-  const { request: fetchReport, loading, error } = useApi(get);
-  const { request: fetchProductsList } = useApi(get);
-  const { request: fetchCategoriesList } = useApi(get);
+  const { request: fetchReport, loading, error } = useApi('get');
+  const { request: fetchProductsListApi } = useApi('get');
+  const { request: fetchCategoriesListApi } = useApi('get');
 
-  const loadReport = async () => {
+  const loadReport = useCallback(async () => {
     try {
       const params = {
         startDate,
@@ -39,15 +38,29 @@ const ProfitabilityReport = () => {
       showError('Falha ao carregar relatório de lucratividade.');
       console.error(err);
     }
-  };
+  }, [startDate, endDate, productId, categoryId, fetchReport, showError]);
+
+  const loadProductsAndCategories = useCallback(async () => {
+    try {
+      const [productsResponse, categoriesResponse] = await Promise.all([
+        fetchProductsListApi('/api/products?limit=1000'),
+        fetchCategoriesListApi('/api/categories?limit=1000'),
+      ]);
+      setProducts(productsResponse.products || []);
+      setCategories(categoriesResponse.categories || []);
+    } catch (err) {
+      showError('Falha ao carregar listas de produtos/categorias.');
+      console.error(err);
+    }
+  }, [fetchProductsListApi, fetchCategoriesListApi, showError]);
 
   useEffect(() => {
     loadReport();
-    fetchProductsList('/api/products?limit=1000').then((data) => setProducts(data.products || []));
-    fetchCategoriesList('/api/categories?limit=1000').then((data) =>
-      setCategories(data.categories || []),
-    );
-  }, [startDate, endDate, productId, categoryId]); // Recarrega ao mudar filtros
+  }, [loadReport]);
+
+  useEffect(() => {
+    loadProductsAndCategories();
+  }, [loadProductsAndCategories]);
 
   const columns = useMemo(
     () => [

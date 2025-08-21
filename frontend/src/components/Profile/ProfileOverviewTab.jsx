@@ -14,7 +14,7 @@ const ProfileOverviewTab = ({ user, onProfileUpdate }) => {
     bio: '',
   });
 
-  const { request: updateProfileApi, loading: updatingProfile } = useApi(put);
+  const { request: updateProfileApi, loading: updatingProfile } = useApi('put');
   const { showSuccess, showError } = useNotification();
 
   useEffect(() => {

@@ -22,7 +22,7 @@ const Customers = lazy(() => import('./pages/Customers'));
 const Suppliers = lazy(() => import('./pages/Suppliers'));
 const PurchaseOrders = lazy(() => import('./pages/PurchaseOrders'));
 const ReturnsPage = lazy(() => import('./pages/Returns'));
-const CashierPage = lazy(() => import('./pages/Cashier'));
+
 const SalesHistory = lazy(() => import('./pages/SalesHistory'));
 const StockManagement = lazy(() => import('./pages/StockManagement'));
 const AccountsPayable = lazy(() => import('./pages/Finance/AccountsPayable'));
@@ -66,6 +66,10 @@ const ProductProfitabilityReportPage = lazy(() => import('./pages/Reports/Produc
 const ABCAnalysisPage = lazy(() => import('./pages/Reports/ABCAnalysis/ABCAnalysisPage'));
 const BIDashboardPage = lazy(() => import('./pages/BIDashboard/BIDashboardPage'));
 const PainelAdministrativo = lazy(() => import('./pages/PainelAdministrativo/PainelAdministrativo'));
+const WhatsAppIntegration = lazy(() => import('./pages/apps/WhatsApp'));
+const Instagram = lazy(() => import('./pages/apps/Instagram'));
+const Spotify = lazy(() => import('./pages/apps/Spotify'));
+const CashierHistory = lazy(() => import('./pages/CashierHistory'));
 
 const router = createBrowserRouter([
   {
@@ -88,7 +92,7 @@ const router = createBrowserRouter([
           { index: true, element: <Navigate replace to='/bi-dashboard' /> }, // Redirect / to /dashboard if authenticated
           { path: 'calendar', element: <CalendarPage />, handle: { title: 'Agenda', icon: 'calendar' } },
           { path: 'pdv', element: <Pdv />, handle: { title: 'PDV', icon: 'cart' } },
-          { path: 'cashier', element: <CashierPage />, handle: { title: 'Caixa', icon: 'wallet' } },
+          
           { 
             path: 'products', 
             element: <ProductProvider><Products /></ProductProvider>,
@@ -138,6 +142,7 @@ const router = createBrowserRouter([
           { path: 'finance/cash-flow-projections', element: <CashFlowProjectionsPage />, handle: { title: 'Projeção de Caixa', icon: 'trending-up' } },
           { path: 'finance/cash-flow-report', element: <CashFlowReportPage />, handle: { title: 'Relatório de Caixa', icon: 'file-blank' } },
           { path: 'finance/bank-accounts', element: <BankAccountsPage />, handle: { title: 'Contas Bancárias', icon: 'bank' } },
+          { path: 'cashier-history', element: <CashierHistory />, handle: { title: 'Histórico de Caixa', icon: 'cash-register' } },
           { path: 'commissions/rules', element: <CommissionRulesPage />, handle: { title: 'Regras de Comissão', icon: 'sitemap' } },
           { path: 'commissions/calculated', element: <CalculatedCommissionsPage />, handle: { title: 'Comissões Calculadas', icon: 'calculator' } },
           { path: 'commissions/payments', element: <CommissionPaymentsPage />, handle: { title: 'Pagamento de Comissões', icon: 'money-withdraw' } },
@@ -146,6 +151,9 @@ const router = createBrowserRouter([
           { path: 'reports/abc-analysis', element: <ABCAnalysisPage />, handle: { title: 'Análise ABC', icon: 'sort-a-z' } },
           { path: 'bi-dashboard', element: <BIDashboardPage />, handle: { title: 'BI Dashboard', icon: 'area' } },
           { path: 'painel-administrativo', element: <PainelAdministrativo />, handle: { title: 'Painel Administrativo', icon: 'shield-alt-2' } },
+          { path: '/apps/whatsapp', element: <WhatsAppIntegration />, handle: { title: 'WhatsApp', icon: 'bxl-whatsapp' } },
+          { path: '/apps/instagram', element: <Instagram />, handle: { title: 'Instagram', icon: 'bxl-instagram' } },
+          { path: '/apps/spotify', element: <Spotify />, handle: { title: 'Spotify', icon: 'bxl-spotify' } },
         ],
       },
     ],

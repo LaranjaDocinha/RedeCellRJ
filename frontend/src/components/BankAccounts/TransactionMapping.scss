@@ -1,0 +1,129 @@
+.transaction-mapping-container {
+  padding: 1.5rem;
+  background-color: var(--card-bg);
+  border-radius: 0.75rem;
+  box-shadow: var(--box-shadow-sm);
+  color: var(--text-color);
+
+  h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+  }
+
+  .text-muted {
+    color: var(--text-color-secondary);
+    margin-bottom: 1.5rem;
+  }
+
+  .mapping-table {
+    width: 100%;
+    margin-bottom: 1rem;
+    border-collapse: collapse;
+
+    th, td {
+      padding: 0.75rem;
+      vertical-align: middle;
+      border-top: 1px solid var(--border-color);
+      color: var(--text-color);
+    }
+
+    th {
+      background-color: var(--table-header-bg);
+      font-weight: bold;
+      text-align: left;
+      color: var(--text-color-secondary);
+    }
+
+    tr:nth-child(odd) {
+      background-color: var(--table-row-odd-bg);
+    }
+
+    tr:nth-child(even) {
+      background-color: var(--table-row-even-bg);
+    }
+
+    .form-check-inline {
+      margin-right: 1rem;
+    }
+
+    .form-check-input {
+      margin-top: 0.3rem;
+    }
+
+    .form-control {
+      background-color: var(--input-bg);
+      border-color: var(--border-color);
+      color: var(--text-color);
+
+      &:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(var(--primary-rgb), 0.25);
+      }
+    }
+  }
+
+  .btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    &:hover {
+      background-color: var(--primary-color-dark);
+      border-color: var(--primary-color-dark);
+    }
+  }
+}
+
+// Dark mode adjustments
+body.dark-mode {
+  .transaction-mapping-container {
+    background-color: var(--dark-card-bg);
+    color: var(--dark-text-color);
+
+    h3 {
+      color: var(--dark-primary-color);
+    }
+
+    .text-muted {
+      color: var(--dark-text-color-secondary);
+    }
+
+    .mapping-table {
+      th, td {
+        border-top-color: var(--dark-border-color);
+        color: var(--dark-text-color);
+      }
+
+      th {
+        background-color: var(--dark-table-header-bg);
+        color: var(--dark-text-color-secondary);
+      }
+
+      tr:nth-child(odd) {
+        background-color: var(--dark-table-row-odd-bg);
+      }
+
+      tr:nth-child(even) {
+        background-color: var(--dark-table-row-even-bg);
+      }
+
+      .form-control {
+        background-color: var(--dark-input-bg);
+        border-color: var(--dark-border-color);
+        color: var(--dark-text-color);
+
+        &:focus {
+          border-color: var(--dark-primary-color);
+          box-shadow: 0 0 0 0.2rem rgba(var(--dark-primary-rgb), 0.25);
+        }
+      }
+
+      .btn-primary {
+        background-color: var(--dark-primary-color);
+        border-color: var(--dark-primary-color);
+        &:hover {
+          background-color: var(--dark-primary-color-dark);
+          border-color: var(--dark-primary-color-dark);
+        }
+      }
+    }
+  }
+}

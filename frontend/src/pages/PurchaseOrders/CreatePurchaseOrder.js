@@ -26,9 +26,9 @@ const CreatePurchaseOrder = () => {
   const navigate = useNavigate();
 
   // API Hooks
-  const { data: suppliersData, loading: loadingSuppliers, request: fetchSuppliers } = useApi(get);
-  const { data: productsData, loading: loadingProducts, request: fetchProducts } = useApi(get);
-  const { request: createOrder, loading: creatingOrder } = useApi(post);
+  const { data: suppliersData, loading: loadingSuppliers, request: fetchSuppliers } = useApi('get');
+  const { data: productsData, loading: loadingProducts, request: fetchProducts } = useApi('get');
+  const { request: createOrder, loading: creatingOrder } = useApi('post');
 
   // Form State
   const [supplier, setSupplier] = useState(null);

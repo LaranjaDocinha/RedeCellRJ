@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { Container, Row, Col } from 'reactstrap';
 
 import { useGlobalFilter } from '../../../context/GlobalFilterContext';
@@ -16,11 +16,20 @@ const CustomerReport = () => {
 
   const {
     data: reportData,
-    loading,
+    isLoading: loading,
     error,
-  } = useApi('GET', `/reports/customers?period=${globalPeriod}`, null, {
-    keepPreviousData: true,
-  });
+    request: fetchReport,
+  } = useApi('get');
+
+  const reFetchReport = useCallback(() => {
+    fetchReport(`/reports/customers?period=${globalPeriod}`, null, {
+      keepPreviousData: true,
+    });
+  }, [fetchReport, globalPeriod]);
+
+  useEffect(() => {
+    reFetchReport();
+  }, [reFetchReport]);
 
   const kpis = [
     { title: 'Clientes Ativos', value: reportData?.summary?.activeCustomers, format: 'number' },

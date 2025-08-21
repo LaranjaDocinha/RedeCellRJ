@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Container, Row, Col, Card, CardBody, CardTitle, Button, FormGroup, Label, Input, Spinner, Alert, Table, Badge } from 'reactstrap';
 import { motion } from 'framer-motion';
 import Flatpickr from 'react-flatpickr';
@@ -7,12 +7,9 @@ import { format, startOfMonth, endOfMonth } from 'date-fns';
 import toast from 'react-hot-toast';
 import useApi from '../../hooks/useApi'; // Adjust path as needed
 import { useDebounce } from '../../hooks/useDebounce'; // Assuming useDebounce is available
-import { get } from '../../helpers/api_helper'; // Import get
 
 import 'flatpickr/dist/themes/material_blue.css'; // Example theme
 import './NPSReportsPage.scss'; // Page-specific styling
-
-const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value); // Re-add if not global
 
 const NpsReportsPage = () => {
   document.title = 'Relatórios NPS | PDV Web';
@@ -24,11 +21,20 @@ const NpsReportsPage = () => {
 
   const debouncedFilters = useDebounce(filters, 500);
 
-  const { data: npsData, loading, error, request: fetchNpsReports } = useApi(() => get('/api/nps/reports', { params: debouncedFilters }));
+  const { data: npsData, loading, error, request: fetchNpsReports } = useApi('get');
 
   const handleFilterChange = (e) => {
-    setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFilters(prev => ({ ...prev, [name]: value }));
   };
+
+  const reFetchNpsReports = useCallback(() => {
+    fetchNpsReports('/api/nps/reports', { params: debouncedFilters });
+  }, [fetchNpsReports, debouncedFilters]);
+
+  useEffect(() => {
+    reFetchNpsReports();
+  }, [reFetchNpsReports]);
 
   const { npsScore, promoterCount, passiveCount, detractorCount, totalResponses, scoreDistributionChart, npsTrendChart, detailedFeedback } = useMemo(() => {
     if (!npsData) return {};
@@ -85,10 +91,6 @@ const NpsReportsPage = () => {
     };
   }, [npsData]);
 
-  useEffect(() => {
-    fetchNpsReports();
-  }, [debouncedFilters, fetchNpsReports]);
-
   return (
     <motion.div
       className="nps-reports-page"
@@ -113,15 +115,25 @@ const NpsReportsPage = () => {
                 <Row>
                   <Col md={4}>
                     <FormGroup>
-                      <Label for="dateRange">Período:</Label>
-                      <Flatpickr
-                        className="form-control d-block"
-                        options={{ mode: 'range', dateFormat: 'Y-m-d' }}
-                        onChange={([start, end]) => {
-                          handleFilterChange('startDate', start ? format(start, 'yyyy-MM-dd') : '');
-                          handleFilterChange('endDate', end ? format(end, 'yyyy-MM-dd') : '');
-                        }}
-                        placeholder="Selecione o período"
+                      <Label for="startDate">Data Início</Label>
+                      <Input
+                        type="date"
+                        name="startDate"
+                        id="startDate"
+                        value={filters.startDate}
+                        onChange={handleFilterChange}
+                      />
+                    </FormGroup>
+                  </Col>
+                  <Col md={4}>
+                    <FormGroup>
+                      <Label for="endDate">Data Fim</Label>
+                      <Input
+                        type="date"
+                        name="endDate"
+                        id="endDate"
+                        value={filters.endDate}
+                        onChange={handleFilterChange}
                       />
                     </FormGroup>
                   </Col>
@@ -135,7 +147,7 @@ const NpsReportsPage = () => {
           <div className="text-center p-5"><Spinner /> Carregando relatórios NPS...</div>
         ) : error ? (
           <Alert color="danger">Erro ao carregar relatórios NPS: {error.message}</Alert>
-        ) : npsData && npsData.overallNPS !== undefined ? (
+        ) : npsData && npsScore !== undefined ? (
           <>
             <Row className="mt-4">
               <Col md={4}>

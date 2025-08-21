@@ -77,8 +77,8 @@ const SettingsPage = () => {
   const [validationErrors, setValidationErrors] = useState({}); // New state for validation errors
   const [tooltipOpen, setTooltipOpen] = useState(false); // State for CNPJ tooltip
 
-  const { loading: loadingSettings, request: fetchSettings } = useApi(get);
-  const { loading: savingSettings, request: saveSettings } = useApi(put);
+  const { loading: loadingSettings, request: fetchSettings } = useApi('get');
+  const { loading: savingSettings, request: saveSettings } = useApi('put');
   const { setPrimaryColor } = useTheme();
   const { showSuccess, showError, showInfo } = useNotification();
 

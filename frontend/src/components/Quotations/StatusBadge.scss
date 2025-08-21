@@ -1,0 +1,65 @@
+.status-badge-wrapper {
+  display: inline-block; // Ensures the motion div wraps the badge tightly
+  .badge {
+    padding: 0.4em 0.7em;
+    font-size: 0.75em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 1rem; // More rounded pills
+  }
+
+  // Custom colors for badges based on status
+  .badge-secondary {
+    background-color: var(--gray-500);
+    color: var(--white);
+  }
+  .badge-info {
+    background-color: var(--info-color);
+    color: var(--white);
+  }
+  .badge-success {
+    background-color: var(--success-color);
+    color: var(--white);
+  }
+  .badge-danger {
+    background-color: var(--danger-color);
+    color: var(--white);
+  }
+  .badge-primary {
+    background-color: var(--primary-color);
+    color: var(--white);
+  }
+  .badge-light {
+    background-color: var(--light-gray);
+    color: var(--text-color-secondary);
+  }
+}
+
+// Dark mode adjustments
+body.dark-mode {
+  .status-badge-wrapper {
+    .badge {
+      // No specific changes needed for text color if using white on colored backgrounds
+    }
+    .badge-secondary {
+      background-color: var(--dark-gray-500);
+    }
+    .badge-info {
+      background-color: var(--dark-info-color);
+    }
+    .badge-success {
+      background-color: var(--dark-success-color);
+    }
+    .badge-danger {
+      background-color: var(--dark-danger-color);
+    }
+    .badge-primary {
+      background-color: var(--dark-primary-color);
+    }
+    .badge-light {
+      background-color: var(--dark-light-gray);
+      color: var(--dark-text-color-secondary);
+    }
+  }
+}

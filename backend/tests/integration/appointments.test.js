@@ -8,7 +8,7 @@ describe('Appointments API', () => {
 
     beforeAll(async () => {
         // Create a dummy customer and technician for testing
-        const customerRes = await db.query('INSERT INTO customers (name, email) VALUES ($1, $2) RETURNING id', ['Appointment Customer', 'appointment@example.com']);
+        const customerRes = await db.query('INSERT INTO customers (name, email, branch_id) VALUES ($1, $2, $3) RETURNING id', ['Appointment Customer', 'appointment@example.com', 1]);
         customerId = customerRes.rows[0].id;
 
         const technicianRes = await db.query('INSERT INTO technicians (name, phone) VALUES ($1, $2) RETURNING id', ['Test Technician', '11987654321']);
@@ -23,7 +23,6 @@ describe('Appointments API', () => {
         await db.query('DELETE FROM appointments');
         await db.query('DELETE FROM customers WHERE id = $1', [customerId]);
         await db.query('DELETE FROM technicians WHERE id = $1', [technicianId]);
-        await db.end();
     });
 
     it('should create a new appointment', async () => {

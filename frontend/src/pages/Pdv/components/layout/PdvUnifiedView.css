@@ -1,119 +1,16 @@
-.pdv-unified-container {
+
+.cashier-status-indicator {
   display: flex;
-  flex-direction: column;
-  height: calc(100vh - 100px); /* Ajuste conforme o header/footer */
-}
-
-.pdv-search-section {
-  flex-shrink: 0;
-  margin-bottom: 15px;
-}
-
-.pdv-cart-section {
-  flex-grow: 1;
-  overflow-y: auto;
-  margin-bottom: 15px;
-}
-
-.pdv-total-section {
-  flex-shrink: 0;
-  text-align: center;
-  padding: 15px;
-  background-color: var(--color-component-secondary-bg); /* Usar variável de tema */
-  border-top: 1px solid var(--color-border);
-}
-
-.pdv-total-amount {
-  font-size: 100px; /* Fonte gigante para o total */
+  align-items: center;
   font-weight: bold;
-  color: #28a745; /* Cor de destaque */
-  line-height: 1;
+  color: var(--text-color);
 }
 
-.pdv-action-buttons {
-  flex-shrink: 0;
-  padding: 15px;
-  border-top: 1px solid #eee;
-}
-
-/* Estilos para a tabela do carrinho */
-.pdv-cart-table th,
-.pdv-cart-table td {
-  font-size: 24px; /* Tamanho da fonte para itens do carrinho */
-  vertical-align: middle;
-}
-
-.pdv-cart-table .form-control-lg {
-  font-size: 24px;
-  height: calc(2.5em + 1rem + 2px); /* Ajuste para input grande */
-}
-
-.pdv-cart-table .btn-lg {
-  font-size: 24px;
-  padding: 0.5rem 1rem;
-}
-
-.pdv-summary-item {
-  font-size: 28px; /* Tamanho da fonte para subtotal e descontos */
-  font-weight: bold;
-}
-
-.pdv-summary-item span:first-child {
-  color: #6c757d; /* Cor para os rótulos */
-}
-
-.pdv-summary-item span:last-child {
-  color: #343a40; /* Cor para os valores */
-}
-
-.pdv-summary-item.total {
-  font-size: 48px; /* Tamanho da fonte para o rótulo 'Total' */
-  color: #007bff; /* Cor para o rótulo 'Total' */
-}
-
-.pdv-summary-item.total span:last-child {
-  font-size: 100px; /* Tamanho da fonte para o valor 'Total' */
-  color: #28a745; /* Cor para o valor 'Total' */
-}
-
-/* Animação de pulso para o total */
-.pulse-animation {
-  animation: pulse 0.5s ease-in-out;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    color: #28a745;
-  }
-  50% {
-    transform: scale(1.05);
-    color: #ffc107; /* Cor de destaque durante o pulso */
-  }
-  100% {
-    transform: scale(1);
-    color: #28a745;
-  }
-}
-
-/* Realce para o item selecionado no dropdown de busca */
-.product-search-dropdown li.highlighted {
-  background-color: var(--color-component-secondary-bg);
-}
-
-/* Transição para botões */
-.btn {
-  transition: all 0.2s ease-in-out;
-}
-
-.btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Estilo para produtos esgotados no dropdown */
-.out-of-stock-product {
-  color: #dc3545; /* Cor vermelha para indicar esgotado */
-  text-decoration: line-through; /* Riscado */
-  font-style: italic;
+.cashier-status-indicator .status-dot {
+  width: 10px;
+  height: 10px;
+  background-color: #28a745; /* Green for open */
+  border-radius: 50%;
+  margin-right: 8px;
+  box-shadow: 0 0 5px 2px rgba(40, 167, 69, 0.5); /* Subtle glow */
 }

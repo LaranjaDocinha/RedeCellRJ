@@ -17,12 +17,17 @@ const SalesHistoryToolbar = ({ onFilterChange }) => {
   const debouncedDates = useDebounce(dates, 500);
 
   // Fetch customers for filter dropdown
-  const { data: customersData } = useApi('/api/customers');
+  const { data: customersData, request: fetchCustomers } = useApi('get');
   const customerOptions = customersData?.customers?.map(c => ({ value: c.id, label: c.name })) || [];
 
   // Fetch payment methods for filter dropdown
-  const { data: paymentMethodsData } = useApi('/api/payment-methods');
+  const { data: paymentMethodsData, request: fetchPaymentMethods } = useApi('get');
   const paymentMethodOptions = paymentMethodsData?.map(pm => ({ value: pm.name, label: pm.name })) || [];
+
+  useEffect(() => {
+    fetchCustomers('/api/customers');
+    fetchPaymentMethods('/api/payment-methods');
+  }, [fetchCustomers, fetchPaymentMethods]);
 
   const handleFilter = useCallback(() => {
     const filters = {};
@@ -55,6 +60,7 @@ const SalesHistoryToolbar = ({ onFilterChange }) => {
         <Label for="customerFilter">Cliente</Label>
         <Select
           options={customerOptions}
+          isLoading={!customersData}
           isClearable
           placeholder="Filtrar por cliente..."
           onChange={(selectedOption) => setCustomer(selectedOption)}
@@ -65,6 +71,7 @@ const SalesHistoryToolbar = ({ onFilterChange }) => {
         <Label for="paymentMethodFilter">Método de Pagamento</Label>
         <Select
           options={paymentMethodOptions}
+          isLoading={!paymentMethodsData}
           isClearable
           placeholder="Filtrar por método..."
           onChange={(selectedOption) => setPaymentMethod(selectedOption)}

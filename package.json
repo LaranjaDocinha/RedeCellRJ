@@ -15,7 +15,13 @@
 "multer": "^2.0.2",
   
   
+"rc-slider": "^11.1.8",
+  
+  
 "react-contextmenu": "^2.14.0",
+  
+  
+"react-icons": "^5.5.0",
   
   
 "react-table": "^7.8.0",
@@ -25,6 +31,9 @@
   
   
 "swagger-ui-express": "^5.0.1",
+  
+  
+"use-react-router-breadcrumbs": "^4.0.1",
   
   
 "yup": "^1.7.0"
