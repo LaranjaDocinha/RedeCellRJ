@@ -1,0 +1,24 @@
+
+# .github/workflows/chromatic.yml
+name: 'Chromatic'
+
+on: push
+
+jobs:
+  chromatic-deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required to retrieve git history
+
+      - name: Install dependencies
+        run: npm install # Assumes npm is used
+        working-directory: ./frontend
+
+      - name: Publish to Chromatic
+        uses: chromaui/action@v1
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          workingDir: ./frontend

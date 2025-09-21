@@ -1,0 +1,26 @@
+config:
+  target: "http://localhost:3000" # Assuming backend runs on this port
+  phases:
+    - duration: 10 # seconds
+      arrivalRate: 1 # requests per second
+      name: "Warm up"
+    - duration: 30 # seconds
+      arrivalRate: 5 # requests per second
+      rampTo: 10 # ramp up to 10 rps
+      name: "Load test"
+
+scenarios:
+  - name: "Login User"
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "admin@pdv.com"
+            password: "admin123"
+          capture:
+            json: "$.token"
+            as: "authToken"
+      - get:
+          url: "/dashboard"
+          headers:
+            Authorization: "Bearer {{ authToken }}"

@@ -1,0 +1,182 @@
+import { customerService } from '../../src/services/customerService';
+import { vi } from 'vitest';
+
+// Mock ../db/index.js
+vi.mock('../../src/db/index.js', () => {
+  const mockQuery = vi.fn();
+  const mockClient = {
+    query: vi.fn(),
+    release: vi.fn(),
+    begin: vi.fn(),
+    commit: vi.fn(),
+    rollback: vi.fn(),
+  };
+  const mockPool = {
+    query: mockQuery,
+    connect: vi.fn(() => Promise.resolve(mockClient)),
+  };
+
+  return {
+    __esModule: true,
+    default: mockPool,
+    query: mockQuery,
+  };
+});
+
+describe('customerService', () => {
+  let mockedDb: any; // Declare mockedDb here
+
+  beforeAll(async () => {
+    // Dynamically import mocked modules
+    mockedDb = vi.mocked(await import('../../src/db/index.js'));
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Clear specific mock implementations if needed for specific tests
+    mockedDb.query.mockClear();
+    mockedDb.default.query.mockClear(); // Clear mock for pool.query
+    mockedDb.default.connect.mockClear(); // Clear mock for pool.connect
+  });
+
+  describe('getAllCustomers', () => {
+    it('should return a list of customers', async () => {
+      const mockCustomers = [
+        { id: 1, name: 'Customer A', email: 'a@example.com' },
+        { id: 2, name: 'Customer B', email: 'b@example.com' },
+      ];
+      mockedDb.query.mockResolvedValueOnce({ rows: mockCustomers });
+
+      const customers = await customerService.getAllCustomers();
+
+      expect(customers).toEqual(mockCustomers);
+      expect(mockedDb.query).toHaveBeenCalledWith('SELECT * FROM customers ORDER BY name ASC');
+    });
+
+    it('should return an empty array if no customers are found', async () => {
+      mockedDb.query.mockResolvedValueOnce({ rows: [] });
+
+      const customers = await customerService.getAllCustomers();
+
+      expect(customers).toEqual([]);
+      expect(mockedDb.query).toHaveBeenCalledWith('SELECT * FROM customers ORDER BY name ASC');
+    });
+  });
+
+  describe('getCustomerById', () => {
+    it('should return customer data for a valid ID', async () => {
+      const mockCustomer = { id: 1, name: 'Customer A', email: 'a@example.com' };
+      mockedDb.query.mockResolvedValueOnce({ rows: [mockCustomer] });
+
+      const customer = await customerService.getCustomerById(1);
+
+      expect(customer).toEqual(mockCustomer);
+      expect(mockedDb.query).toHaveBeenCalledWith('SELECT * FROM customers WHERE id = $1', [1]);
+    });
+
+    it('should return undefined if no customer is found for the given ID', async () => {
+      mockedDb.query.mockResolvedValueOnce({ rows: [] });
+
+      const customer = await customerService.getCustomerById(999);
+
+      expect(customer).toBeUndefined();
+      expect(mockedDb.query).toHaveBeenCalledWith('SELECT * FROM customers WHERE id = $1', [999]);
+    });
+  });
+
+  describe('createCustomer', () => {
+    it('should successfully create a customer and return the new customer data', async () => {
+      const newCustomerData = { name: 'New Customer', email: 'new@example.com' };
+      const createdCustomer = { id: 3, ...newCustomerData };
+      mockedDb.query.mockResolvedValueOnce({ rows: [createdCustomer] });
+
+      const customer = await customerService.createCustomer(newCustomerData);
+
+      expect(customer).toEqual(createdCustomer);
+      expect(mockedDb.query).toHaveBeenCalledWith(
+        'INSERT INTO customers (name, email, phone, address) VALUES ($1, $2, $3, $4) RETURNING *;',
+        ['New Customer', 'new@example.com', undefined, undefined]
+      );
+    });
+
+    it('should create a customer with all fields', async () => {
+      const newCustomerData = { name: 'Full Customer', email: 'full@example.com', phone: '12345', address: '123 Main St' };
+      const createdCustomer = { id: 4, ...newCustomerData };
+      mockedDb.query.mockResolvedValueOnce({ rows: [createdCustomer] });
+
+      const customer = await customerService.createCustomer(newCustomerData);
+
+      expect(customer).toEqual(createdCustomer);
+      expect(mockedDb.query).toHaveBeenCalledWith(
+        'INSERT INTO customers (name, email, phone, address) VALUES ($1, $2, $3, $4) RETURNING *;',
+        ['Full Customer', 'full@example.com', '12345', '123 Main St']
+      );
+    });
+  });
+
+  describe('updateCustomer', () => {
+    const existingCustomer = { id: 1, name: 'Customer A', email: 'a@example.com' };
+
+    it('should successfully update a customer with partial data', async () => {
+      const updatedData = { email: 'updated@example.com' };
+      const updatedCustomer = { ...existingCustomer, ...updatedData };
+      mockedDb.query.mockResolvedValueOnce({ rows: [existingCustomer] }); // For getCustomerById
+      mockedDb.query.mockResolvedValueOnce({ rows: [updatedCustomer] });
+
+      const customer = await customerService.updateCustomer(1, updatedData);
+
+      expect(customer).toEqual(updatedCustomer);
+      expect(mockedDb.query).toHaveBeenCalledWith(
+        'UPDATE customers SET email = $1, updated_at = NOW() WHERE id = $2 RETURNING *;',
+        ['updated@example.com', 1]
+      );
+    });
+
+    it('should successfully update a customer with all data', async () => {
+      const updatedData = { name: 'Updated Name', email: 'updated@example.com', phone: '98765', address: 'New Address' };
+      const updatedCustomer = { ...existingCustomer, ...updatedData };
+      mockedDb.query.mockResolvedValueOnce({ rows: [existingCustomer] }); // For getCustomerById
+      mockedDb.query.mockResolvedValueOnce({ rows: [updatedCustomer] });
+
+      const customer = await customerService.updateCustomer(1, updatedData);
+
+      expect(customer).toEqual(updatedCustomer);
+      expect(mockedDb.query).toHaveBeenCalledWith(
+        'UPDATE customers SET name = $1, email = $2, phone = $3, address = $4, updated_at = NOW() WHERE id = $5 RETURNING *;',
+        ['Updated Name', 'updated@example.com', '98765', 'New Address', 1]
+      );
+    });
+
+    it('should return the existing customer if no data is provided for update', async () => {
+      // This test calls getCustomerById(id) internally, which makes a query.
+      // We need to mock that query call.
+      mockedDb.query.mockResolvedValueOnce({ rows: [existingCustomer] }); // For getCustomerById
+
+      const customer = await customerService.updateCustomer(1, {});
+
+      expect(customer).toEqual(existingCustomer);
+      expect(mockedDb.query).toHaveBeenCalledWith('SELECT * FROM customers WHERE id = $1', [1]);
+      expect(mockedDb.query).toHaveBeenCalledTimes(1); // Only getCustomerById should be called
+    });
+  });
+
+  describe('deleteCustomer', () => {
+    it('should successfully delete a customer', async () => {
+      mockedDb.query.mockResolvedValueOnce({ rowCount: 1 });
+
+      const result = await customerService.deleteCustomer(1);
+
+      expect(result).toBe(true);
+      expect(mockedDb.query).toHaveBeenCalledWith('DELETE FROM customers WHERE id = $1', [1]);
+    });
+
+    it('should return false if no customer is found for deletion', async () => {
+      mockedDb.query.mockResolvedValueOnce({ rowCount: 0 });
+
+      const result = await customerService.deleteCustomer(999);
+
+      expect(result).toBe(false);
+      expect(mockedDb.query).toHaveBeenCalledWith('DELETE FROM customers WHERE id = $1', [999]);
+    });
+  });
+});

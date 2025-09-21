@@ -1,0 +1,47 @@
+.pos-page {
+  padding: 20px;
+}
+
+.pos-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* Search takes 2/3, Cart takes 1/3 */
+  gap: 20px;
+}
+
+.pos-search-section,
+.pos-cart-section {
+  background-color: var(--color-surface);
+  padding: 20px;
+  border-radius: var(--border-radius-medium);
+  box-shadow: var(--shadow-elevation1);
+}
+
+.pos-search-section h2,
+.pos-cart-section h2 {
+  margin-top: 0;
+  color: var(--color-primary);
+}
+
+.pos-search-section input {
+  width: calc(100% - 24px); /* Adjust for padding */
+  margin-bottom: 20px;
+}
+
+.cart-summary {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(var(--color-on-surface-rgb), 0.12);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cart-summary h3 {
+  margin: 0;
+  color: var(--color-on-surface);
+}
+
+.cart-summary button {
+  padding: 10px 20px;
+  font-size: 16px;
+}

@@ -1,0 +1,43 @@
+import { Meta } from '@storybook/blocks';
+import { FaBeer, FaReact, FaNodeJs } from 'react-icons/fa';
+import { IoMdSettings } from 'react-icons/io';
+
+<Meta title="Design System/Foundations/Icons" />
+
+# Icons
+
+Utilizamos a biblioteca `react-icons` para uma vasta coleção de ícones populares, garantindo consistência e fácil integração.
+
+## Como Usar
+
+1.  **Importe o ícone desejado:**
+    ```jsx
+    import { FaIconName } from 'react-icons/fa'; // Para Font Awesome
+    import { IoIconName } from 'react-icons/io'; // Para Ionicons
+    // ... e outras coleções conforme necessário
+    ```
+
+2.  **Use o componente no seu JSX:**
+    ```jsx
+    <FaBeer />
+    <IoMdSettings size={24} color="#6200EE" />
+    ```
+
+## Exemplos
+
+<div style={{ display: 'flex', gap: '20px', fontSize: '30px' }}>
+  <FaBeer title="Beer Icon" />
+  <FaReact title="React Icon" />
+  <FaNodeJs title="Node.js Icon" />
+  <IoMdSettings title="Settings Icon" />
+</div>
+
+## Coleções Disponíveis
+
+`react-icons` inclui ícones de:
+
+*   Font Awesome (Fa)
+*   Ionicons (Io)
+*   Material Design Icons (Md)
+*   Ant Design Icons (Ai)
+*   ...e muitos outros. Consulte a [documentação oficial](https://react-icons.github.io/react-icons/) para a lista completa.

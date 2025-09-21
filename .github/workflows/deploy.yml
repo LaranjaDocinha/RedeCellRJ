@@ -1,0 +1,121 @@
+name: Deploy - Blue/Green Strategy
+
+on:
+  push:
+    branches:
+      - main # Trigger on push to main branch for production deployment
+
+jobs:
+  # This job determines the current active/inactive environments and sets them as outputs
+  determine-environments:
+    runs-on: ubuntu-latest
+    outputs:
+      active_env: ${{ steps.set_envs.outputs.active_env }}
+      inactive_env: ${{ steps.set_envs.outputs.inactive_env }}
+    steps:
+      - name: Determine Active/Inactive Environments
+        id: set_envs
+        run: |
+          # Placeholder: In a real scenario, this would query a load balancer, DNS, or a state file
+          # to determine which environment (e.g., 'blue' or 'green') is currently serving traffic.
+          # For demonstration, let's assume 'blue' is active initially, and we deploy to 'green'.
+          # This logic needs to be dynamic based on the actual infrastructure state.
+          ACTIVE_ENV="blue"
+          INACTIVE_ENV="green"
+          echo "active_env=$ACTIVE_ENV" >> $GITHUB_OUTPUT
+          echo "inactive_env=$INACTIVE_ENV" >> $GITHUB_OUTPUT
+          echo "Determined active: $ACTIVE_ENV, inactive: $INACTIVE_ENV"
+
+  terraform-validate:
+    name: Terraform Validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v2
+      - name: Terraform Init
+        run: terraform init
+        working-directory: infrastructure/terraform
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: infrastructure/terraform
+
+  deploy-to-inactive:
+    name: Deploy to Inactive Environment (${{ needs.determine-environments.outputs.inactive_env }})
+    runs-on: ubuntu-latest
+    needs: [determine-environments, terraform-validate] # Add dependency on terraform-validate
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Backend dependencies
+        run: npm install --prefix backend
+
+      - name: Build Backend
+        run: npm run build --prefix backend
+
+      - name: Run Database Migrations (on inactive environment's DB)
+        # IMPORTANT: Migrations should be backward-compatible if rollback is needed.
+        # Or, run migrations on a shared DB if schema changes are always additive.
+        run: npm run db:migrate --prefix backend up
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_INACTIVE }} # Use DB for inactive env
+
+      - name: Deploy Backend to Inactive Environment
+        run: echo "Deploying backend to ${{ needs.determine-environments.outputs.inactive_env }}... (Placeholder)"
+        # Add actual deployment commands here (e.g., ssh, rsync, docker deploy to specific server group)
+
+      - name: Install Frontend dependencies
+        run: npm install --prefix frontend
+
+      - name: Build Frontend
+        run: npm run build --prefix frontend
+
+      - name: Deploy Frontend to Inactive Environment
+        run: echo "Deploying frontend to ${{ needs.determine-environments.outputs.inactive_env }}... (Placeholder)"
+        # Add actual deployment commands here (e.g., npx vercel deploy to specific alias/project)
+
+  run-smoke-tests:
+    name: Run Smoke Tests on Inactive Environment
+    runs-on: ubuntu-latest
+    needs: deploy-to-inactive
+    steps:
+      - name: Run basic smoke tests (Placeholder)
+        run: echo "Running smoke tests against ${{ needs.determine-environments.outputs.inactive_env }}... (Placeholder)"
+        # Add commands to hit basic endpoints and verify health
+        # e.g., curl http://inactive-env-url/healthz | grep "OK"
+
+  switch-traffic:
+    name: Switch Traffic to New Environment (${{ needs.determine-environments.outputs.inactive_env }})
+    runs-on: ubuntu-latest
+    needs: run-smoke-tests
+    steps:
+      - name: Switch Load Balancer Traffic
+        run: echo "Switching traffic from ${{ needs.determine-environments.outputs.active_env }} to ${{ needs.determine-environments.outputs.inactive_env }}... (Placeholder)"
+        # This is the critical step. It requires interaction with your cloud provider's API (AWS, GCP, Azure)
+        # or load balancer API (e.g., Nginx, HAProxy, Kubernetes Ingress).
+        # Example: AWS CLI command to update target group for ALB.
+        # aws elbv2 modify-listener --listener-arn <ARN> --default-actions Type=forward,TargetGroupArn=<NEW_TARGET_GROUP_ARN>
+
+  post-deployment-checks:
+    name: Post-Deployment Checks on New Active Environment
+    runs-on: ubuntu-latest
+    needs: switch-traffic
+    steps:
+      - name: Run final checks (Placeholder)
+        run: echo "Running post-deployment checks on new active environment... (Placeholder)"
+        # More extensive tests, monitoring checks, etc.
+
+  send-notification:
+    name: Send Deployment Notification
+    runs-on: ubuntu-latest
+    needs: post-deployment-checks
+    if: success() || failure() # Always run notification
+    steps:
+      - name: Send notification (Placeholder)
+        run: echo "Deployment to ${{ needs.determine-environments.outputs.inactive_env }} completed with status ${{ job.status }} (Placeholder)"
+        # Add actual notification commands here (e.g., curl to Slack webhook, email action)

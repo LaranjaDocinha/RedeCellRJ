@@ -1,0 +1,79 @@
+name: Backend CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_DB: pdv_web
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }} # Use GitHub Secrets for password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - name: Install dependencies
+      run: npm install --prefix backend
+    - name: Run npm audit for vulnerabilities
+      run: npm audit --audit-level=high --prefix backend
+      continue-on-error: true # Allow CI to pass even if vulnerabilities are found
+    - name: Snyk Security Scan
+      uses: snyk/actions/node@master
+      with:
+        args: --file=backend/package.json --org=${{ secrets.SNYK_ORG_ID }}
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      continue-on-error: true # Allow CI to pass even if Snyk finds vulnerabilities for now
+    - name: Wait for PostgreSQL to be ready
+      run: |
+        # Wait for PostgreSQL to be ready
+        # This command will exit with 0 only when pg_isready returns 0
+        # which means the database is accepting connections
+        for i in $(seq 1 10); do
+          npm --prefix backend exec pg_isready -h localhost -p 5432 -U postgres && break
+          echo "Waiting for PostgreSQL... ($i/10)"
+          sleep 5
+        done
+    - name: Setup database schema
+      run: |
+        # Execute the init.sql script to set up the database schema
+        # Use the psql command directly, ensuring the path is correct for the runner
+        # and passing the password via PGPASSWORD environment variable
+        PGPASSWORD=${{ secrets.DB_PASSWORD }} psql -h localhost -p 5432 -U postgres -d pdv_web -f backend/src/db/migrations/init.sql
+    - name: Run tests and check coverage
+      run: npm test -- --coverage --prefix backend
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_USER: postgres
+        DB_NAME: pdv_web
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }} # Pass password to tests
+    - name: Run performance tests (requires backend server to be running)
+      run: npx artillery run backend/performance-test.yml --output backend/performance-report.json
+      # Note: For this step to succeed, the backend server must be running and accessible at the target URL defined in performance-test.yml.
+      # In a real CI/CD pipeline, this might be run in a separate job after deployment to a staging environment.
+      continue-on-error: true # Allow CI to pass even if performance tests fail for now
+    - name: Run lint
+      run: npm run lint --prefix backend
+    - name: Build backend
+      run: npm run build --prefix backend
+    - name: Run semantic-release
+      if: github.ref == 'refs/heads/main'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: npx semantic-release

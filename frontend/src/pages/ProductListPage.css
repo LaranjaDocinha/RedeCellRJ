@@ -1,0 +1,82 @@
+
+.product-list-page {
+  padding: var(--spacing-lg);
+  font-family: var(--typography-fontFamilyPrimary);
+  color: var(--colors-onSurface);
+}
+
+.product-list-page h1 {
+  font-size: var(--typography-headlineLarge-fontSize);
+  font-weight: var(--typography-headlineLarge-fontWeight);
+  line-height: var(--typography-headlineLarge-lineHeight);
+  margin-bottom: var(--spacing-lg);
+  color: var(--colors-primary);
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.product-card h2 {
+  font-size: var(--typography-titleLarge-fontSize);
+  font-weight: var(--typography-titleLarge-fontWeight);
+  line-height: var(--typography-titleLarge-lineHeight);
+  margin-bottom: var(--spacing-sm);
+  color: var(--colors-onSurface);
+}
+
+.product-card p {
+  font-size: var(--typography-bodyMedium-fontSize);
+  line-height: var(--typography-bodyMedium-lineHeight);
+  margin-bottom: var(--spacing-xs);
+}
+
+.product-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.button-primary,
+.button-secondary {
+  padding: var(--spacing-xs) var(--spacing-md);
+  border: none;
+  border-radius: var(--border-radius-small);
+  cursor: pointer;
+  font-size: var(--typography-labelLarge-fontSize);
+  font-weight: var(--typography-labelLarge-fontWeight);
+  line-height: var(--typography-labelLarge-lineHeight);
+  transition: background-color 0.3s ease;
+}
+
+.button-primary {
+  background-color: var(--colors-primary);
+  color: var(--colors-onPrimary);
+}
+
+.button-primary:hover {
+  background-color: var(--colors-primaryDark);
+}
+
+.button-secondary {
+  background-color: var(--colors-secondary);
+  color: var(--colors-onSecondary);
+}
+
+.button-secondary:hover {
+  background-color: var(--colors-secondaryDark);
+}
+
+.product-list-page.error {
+  color: var(--colors-error);
+  font-weight: var(--typography-bodyMedium-fontWeight);
+}

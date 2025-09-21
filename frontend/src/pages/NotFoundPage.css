@@ -1,0 +1,37 @@
+.not-found-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--color-background);
+  color: var(--color-on-background);
+  font-family: var(--font-family-primary);
+}
+
+.not-found-title {
+  font-size: 120px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 20px;
+}
+
+.not-found-message {
+  font-size: 24px;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.not-found-link {
+  display: inline-block;
+  padding: 12px 24px;
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  text-decoration: none;
+  border-radius: var(--border-radius-medium);
+  transition: background-color 0.3s ease;
+}
+
+.not-found-link:hover {
+  background-color: var(--color-primary-dark);
+}

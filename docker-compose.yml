@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: redev_db
+    restart: always
+    environment:
+      POSTGRES_DB: pdv_web
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: redev_backend
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: postgresql://postgres:password@db:5432/pdv_web
+      PORT: 3000
+      JAEGER_ENDPOINT: http://jaeger:14268/api/traces
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: redev_jaeger
+    restart: always
+    ports:
+      - "6831:6831/udp"
+      - "16686:16686"
+      - "14268:14268"
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+
+volumes:
+  postgres_data:

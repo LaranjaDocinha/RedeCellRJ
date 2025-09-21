@@ -1,0 +1,36 @@
+name: Frontend CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - name: Install dependencies
+      run: npm install --prefix frontend
+    - name: Run tests
+      run: npm test --prefix frontend
+    - name: Run lint
+      run: npm run lint --prefix frontend
+    - name: Build frontend application
+      run: npm run build --prefix frontend # Added step to build the main React app
+    - name: Analyze frontend bundle size
+      run: npx source-map-explorer 'frontend/build/static/js/*.js'
+      continue-on-error: true # Allow CI to pass even if analysis fails
+    - name: Build Storybook
+      run: npm run build-storybook --prefix frontend
+    - name: Publish to Chromatic
+      uses: chromaui/action@v1
+      with:
+        projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }} # TODO: Substituir pelo token real do Chromatic
+    - name: Run semantic-release
+      if: github.ref == 'refs/heads/main'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: npx semantic-release
