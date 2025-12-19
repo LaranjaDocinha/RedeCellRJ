@@ -1,8 +1,21 @@
 import { v4 as uuidv4 } from 'uuid';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-import { app, httpServer } from '../../src/app';
-import { getPool } from '../../src/db/index';
-import { setupTestCleanup } from '../setupTestCleanup';
+import { app, httpServer } from '../../src/app.js';
+import { getPool } from '../../src/db/index.js';
+import { setupTestCleanup } from '../setupTestCleanup.js';
+
+vi.mock('../../src/services/receiptService.js', async (importOriginal) => {
+  const actual = await importOriginal() as any;
+  return {
+    receiptService: {
+      ...actual.receiptService,
+      sendDocumentByEmail: vi.fn(() => Promise.resolve()),
+    }
+  };
+});
+
+import { receiptService } from '../../src/services/receiptService.js';
 import { seedSale, cleanupSale } from '../utils/seedTestData';
 import nodemailer from 'nodemailer';
 

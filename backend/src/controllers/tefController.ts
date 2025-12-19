@@ -7,15 +7,14 @@ import { z } from 'zod';
 
 // Zod Schemas
 export const processTefTransactionSchema = z.object({
+  transactionId: z.string().uuid().optional(),
   amount: z.number().positive('Amount must be positive'),
   paymentMethod: z.enum(['credit_card', 'debit_card']),
+  cardBrand: z.string().optional(),
+  nsu: z.string().optional(),
+  authorizationCode: z.string().optional(),
   installments: z.number().int().min(1).optional(),
-  cardData: z.object({
-    cardNumber: z.string(), // TODO: Adicionar validação de cartão de crédito
-    cardHolderName: z.string().min(1),
-    expirationDate: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, 'Invalid expiration date format (MM/YY)'),
-    cvv: z.string().min(3).max(4),
-  }),
+  status: z.string().optional(),
 });
 
 export const getTefStatusSchema = z.object({

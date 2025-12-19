@@ -5,18 +5,36 @@ import http from 'http';
 import * as Sentry from '@sentry/node'; // ADDED: Import Sentry for testing
 import { xssSanitizer } from '../../src/middlewares/sanitizationMiddleware.js';
 
-// Mockar todas as inicializações que não são relevantes para o teste da estrutura do express
-vi.mock('../src/listeners/whatsappListener.js', () => ({ default: vi.fn() }));
-vi.mock('../src/listeners/socketEvents.js', () => ({ initSocketListeners: vi.fn() }));
-vi.mock('../src/listeners/marketplaceListener.js', () => ({ initMarketplaceListener: vi.fn() }));
-vi.mock('../src/listeners/notificationEventListener.js', () => ({ initNotificationEventListener: vi.fn() }));
-vi.mock('../src/listeners/marketingAutomationListener.js', () => ({ default: vi.fn() }));
-vi.mock('../src/jobs/cronJobs.js', () => ({ initCronJobs: vi.fn() }));
-vi.mock('../src/jobs/workers.js', () => ({ initWorkers: vi.fn() }));
-vi.mock('../src/services/whatsappService.js', () => ({ initWhatsapp: vi.fn() }));
-vi.mock('../src/middlewares/chaos/chaos.js', () => ({ default: vi.fn((req, res, next) => next()) })); // Mock chaos middleware to just call next
-vi.mock('../src/middlewares/requestLoggerMiddleware.js', () => ({ requestLoggerMiddleware: vi.fn((req, res, next) => next()) })); // Mock requestLoggerMiddleware to just call next
+const mocks = vi.hoisted(() => ({
+  whatsappListener: vi.fn(),
+  initSocketListeners: vi.fn(),
+  initMarketplaceListener: vi.fn(),
+  initNotificationEventListener: vi.fn(),
+  marketingAutomationListener: vi.fn(),
+  initCronJobs: vi.fn(),
+  initWorkers: vi.fn(),
+  initWhatsapp: vi.fn(),
+  chaosMiddleware: vi.fn((req, res, next) => next()),
+  requestLoggerMiddleware: vi.fn((req, res, next) => next()),
+  healthController: {
+    check: vi.fn((req, res) => res.status(200).json({ message: 'OK' })),
+  },
+  authRouter: express.Router().get('/test', (req, res) => res.status(200).send('Auth Test')),
+}));
 
+// Mockar todas as inicializações que não são relevantes para o teste da estrutura do express
+vi.mock('../../src/listeners/whatsappListener.js', () => ({ default: mocks.whatsappListener }));
+vi.mock('../../src/listeners/socketEvents.js', () => ({ initSocketListeners: mocks.initSocketListeners }));
+vi.mock('../../src/listeners/marketplaceListener.js', () => ({ initMarketplaceListener: mocks.initMarketplaceListener }));
+vi.mock('../../src/listeners/notificationEventListener.js', () => ({ initNotificationEventListener: mocks.initNotificationEventListener }));
+vi.mock('../../src/listeners/marketingAutomationListener.js', () => ({ default: mocks.marketingAutomationListener }));
+vi.mock('../../src/jobs/cronJobs.js', () => ({ initCronJobs: mocks.initCronJobs }));
+vi.mock('../../src/jobs/workers.js', () => ({ initWorkers: mocks.initWorkers }));
+vi.mock('../../src/services/whatsappService.js', () => ({ initWhatsapp: mocks.initWhatsapp }));
+vi.mock('../../src/middlewares/chaos/chaos.js', () => ({ default: mocks.chaosMiddleware }));
+vi.mock('../../src/middlewares/requestLoggerMiddleware.js', () => ({ requestLoggerMiddleware: mocks.requestLoggerMiddleware }));
+vi.mock('../../src/controllers/healthController.js', () => ({ healthController: mocks.healthController }));
+vi.mock('../../src/routes/auth.js', () => ({ default: mocks.authRouter }));
 
 // Mockar Sentry para evitar chamadas externas e erros no ambiente de teste
 vi.mock('@sentry/node', () => ({
@@ -32,40 +50,16 @@ vi.mock('@sentry/node', () => ({
   },
 }));
 
-// Mockar rotas para evitar carregar toda a aplicação e suas dependências no teste de app.ts
-// Apenas um exemplo, as rotas reais seriam mockadas conforme a necessidade de teste de cada uma
-vi.mock('../src/routes/auth.js', () => ({ default: express.Router().get('/test', (req, res) => res.status(200).send('Auth Test')) }));
-
-// Mockar o healthController em vez da rota diretamente, pois a rota importa o controller
-vi.mock('../../src/controllers/healthController.js', () => ({
-  healthController: {
-    check: vi.fn((req, res) => res.status(200).send({ message: 'OK' })),
-  },
-}));
-
-
-const { app, httpServer, io } = await import('../../src/app.js'); // Importar app DEPOIS dos mocks
+const { app } = await import('../../src/app.js'); // Importar app DEPOIS dos mocks
 
 describe('app.ts', () => {
   beforeEach(() => {
-    // Garantir que o ambiente é de teste para desativar Sentry condicional e outras coisas
     process.env.NODE_ENV = 'test';
     vi.clearAllMocks();
-    // Dynamically add the mocked health route in beforeEach to ensure it's overridden
-    // and removed after each test.
-    const healthRouterMock = express.Router();
-    healthRouterMock.get('/', (req, res) => res.status(200).send('Health OK'));
-    app.use('/api/health', healthRouterMock);
   });
 
   afterEach(() => {
-    // Restaurar o ambiente para o padrão após cada teste se necessário
     vi.restoreAllMocks();
-  });
-
-  afterAll(() => {
-    // No need to close httpServer explicitly as supertest manages its own server lifecycle.
-    // The main httpServer from app.js is not started with httpServer.listen() in tests.
   });
 
   it('should return "API is running" for the root route', async () => {
@@ -90,7 +84,7 @@ describe('app.ts', () => {
 
   it('should apply XSS sanitization middleware', async () => {
     const localApp = express();
-    localApp.use(express.json()); // Needed for body parsing
+    localApp.use(express.json()); 
     localApp.use(xssSanitizer);
     localApp.post('/xss-test', (req, res) => res.status(200).json({ body: req.body }));
 
@@ -103,21 +97,15 @@ describe('app.ts', () => {
   });
 
   it('should correctly mount a mocked auth route', async () => {
-    const localApp = express();
-    const mockAuthRouter = express.Router();
-    mockAuthRouter.get('/test', (req, res) => res.status(200).send('Auth Test'));
-    localApp.use('/api/auth', mockAuthRouter);
-
-    const res = await request(localApp).get('/api/auth/test');
+    const res = await request(app).get('/api/auth/test');
     expect(res.statusCode).toEqual(200);
     expect(res.text).toEqual('Auth Test');
   });
 
   it('should correctly mount the mocked health route', async () => {
-    // The health route is now dynamically added in beforeEach
     const res = await request(app).get('/api/health');
     expect(res.statusCode).toEqual(200);
-    expect(res.text).toEqual('{"message":"OK"}');
+    expect(res.body).toEqual({ message: 'OK' });
   });
 
   it('should handle 404 errors with the errorMiddleware', async () => {

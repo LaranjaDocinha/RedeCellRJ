@@ -1,12 +1,11 @@
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { app, httpServer } from '../../src/app';
 import { getPool } from '../../src/db/index';
 import { setupTestCleanup } from '../setupTestCleanup';
-import { tefService } from '../../src/services/tefService';
 import { v4 as uuidv4 } from 'uuid';
 
-// Mock the tefService to prevent actual external API calls during tests
-vi.mock('../../src/services/tefService', () => ({
+const tefMocks = vi.hoisted(() => ({
   tefService: {
     processTefTransaction: vi.fn((data) => {
       if (data.status === 'denied') {
@@ -22,6 +21,11 @@ vi.mock('../../src/services/tefService', () => ({
     }),
   },
 }));
+
+// Mock the tefService to prevent actual external API calls during tests
+vi.mock('../../src/services/tefService.js', () => tefMocks);
+
+import { tefService } from '../../src/services/tefService.js';
 
 describe('TEF Integration API', () => {
   let adminToken: string;
