@@ -33,11 +33,15 @@ class PermissionService {
   async createPermission(payload: CreatePermissionPayload): Promise<Permission> {
     const { action, subject } = payload;
     try {
-      const result = await pool.query(
-        'INSERT INTO permissions (action, subject) VALUES ($1, $2) RETURNING *',
-        [action, subject],
-      );
-      return result.rows[0];
+      if (action && subject) {
+        const result = await pool.query(
+          'INSERT INTO permissions (action, subject) VALUES ($1, $2) RETURNING *',
+          [action, subject],
+        );
+        return result.rows[0];
+      }
+      // Fallback or error if payload doesn't match schema expectations (though interface suggests they are required)
+      throw new AppError('Action and Subject are required', 400);
     } catch (error: unknown) {
       if (error instanceof AppError) {
         throw error;
