@@ -1,17 +1,21 @@
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { app, httpServer } from '../../src/app';
 import { getPool } from '../../src/db/index';
 import { setupTestCleanup } from '../setupTestCleanup';
-import { cashDrawerService } from '../../src/services/cashDrawerService';
 
-// Mock the cashDrawerService to prevent actual hardware interaction during tests
-vi.mock('../../src/services/cashDrawerService', () => ({
+const cashDrawerMocks = vi.hoisted(() => ({
   cashDrawerService: {
     openCashDrawer: vi.fn(() =>
       Promise.resolve({ message: 'Cash drawer open command simulated successfully.' }),
     ),
   },
 }));
+
+// Mock the cashDrawerService to prevent actual hardware interaction during tests
+vi.mock('../../src/services/cashDrawerService.js', () => cashDrawerMocks);
+
+import { cashDrawerService } from '../../src/services/cashDrawerService.js';
 
 describe('Cash Drawer API', () => {
   let adminToken: string;

@@ -129,11 +129,20 @@ exports.up = (pgm) => {
     updated_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
   });
 
+  pgm.createTable('categories', {
+    id: { type: 'serial', primaryKey: true },
+    name: { type: 'varchar(255)', notNull: true, unique: true },
+    description: { type: 'text' },
+    created_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
+    updated_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
+  });
+
   pgm.createTable('products', {
     id: { type: 'serial', primaryKey: true },
     name: { type: 'varchar(255)', notNull: true },
     description: { type: 'text' },
     branch_id: { type: 'integer', references: 'branches(id)' },
+    category_id: { type: 'integer', references: 'categories(id)', onDelete: 'SET NULL' },
     sku: { type: 'varchar(100)' }, // SKU base
     is_serialized: { type: 'boolean', default: false },
     created_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
@@ -204,7 +213,7 @@ exports.up = (pgm) => {
   pgm.createTable('sales', {
     id: { type: 'serial', primaryKey: true },
     user_id: { type: 'uuid', references: 'users(id)', onDelete: 'SET NULL' },
-    customer_id: { type: 'integer', references: 'customers(id)' },
+    customer_id: { type: 'integer', references: 'customers(id)', onDelete: 'CASCADE' },
     branch_id: { type: 'integer', references: 'branches(id)' },
     total_amount: { type: 'decimal(10, 2)', notNull: true },
     external_order_id: { type: 'varchar(100)' },
@@ -280,14 +289,14 @@ exports.up = (pgm) => {
   // --- SERVICE ORDERS (OS) ---
   pgm.createTable('service_orders', {
     id: { type: 'serial', primaryKey: true },
-    customer_id: { type: 'integer', references: 'customers(id)', notNull: true },
+    customer_id: { type: 'integer', references: 'customers(id)', notNull: true, onDelete: 'CASCADE' },
     branch_id: { type: 'integer', references: 'branches(id)' },
-    user_id: { type: 'uuid', references: 'users(id)' }, // Técnico responsável inicial
-    device_name: { type: 'varchar(255)', notNull: true },
-    device_imei: { type: 'varchar(100)' },
+    user_id: { type: 'uuid', references: 'users(id)', onDelete: 'SET NULL' }, // Técnico responsável inicial
+    product_description: { type: 'varchar(255)', notNull: true },
+    imei: { type: 'varchar(100)' },
     device_password: { type: 'varchar(100)' },
-    problem_description: { type: 'text', notNull: true },
-    status: { type: 'varchar(50)', default: 'open' }, // open, analysis, waiting_approval, in_progress, finished, delivered, cancelled
+    issue_description: { type: 'text', notNull: true },
+    status: { type: 'varchar(50)', default: 'Aguardando Avaliação' },
     priority: { type: 'varchar(20)', default: 'normal' },
     estimated_cost: { type: 'decimal(10, 2)' },
     final_cost: { type: 'decimal(10, 2)' },
@@ -298,10 +307,47 @@ exports.up = (pgm) => {
     public_token: { type: 'varchar(64)', unique: true }, // Para acesso externo
     customer_approval_status: { type: 'varchar(20)', default: 'pending' }, // pending, approved, rejected
     customer_approval_date: { type: 'timestamp' },
-    inspection_checklist: { type: 'jsonb' }, // Checklist de entrada
+    entry_checklist: { type: 'jsonb' }, // Checklist de entrada
     notes: { type: 'text' },
     created_at: { type: 'timestamp', default: pgm.func('current_timestamp') },
     updated_at: { type: 'timestamp', default: pgm.func('current_timestamp') },
+  });
+
+  pgm.createTable('service_order_status_history', {
+    id: { type: 'serial', primaryKey: true },
+    service_order_id: { type: 'integer', notNull: true, references: 'service_orders(id)', onDelete: 'CASCADE' },
+    old_status: { type: 'varchar(50)' },
+    new_status: { type: 'varchar(50)', notNull: true },
+    changed_by_user_id: { type: 'uuid', references: 'users(id)', onDelete: 'SET NULL' },
+    changed_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
+  });
+
+  pgm.createTable('service_order_items', {
+    id: { type: 'serial', primaryKey: true },
+    service_order_id: { type: 'integer', notNull: true, references: 'service_orders(id)', onDelete: 'CASCADE' },
+    part_id: { type: 'integer', references: 'parts(id)', onDelete: 'SET NULL' },
+    service_description: { type: 'varchar(255)' },
+    quantity: { type: 'integer', notNull: true, default: 1 },
+    unit_price: { type: 'decimal(10, 2)', notNull: true },
+    created_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
+  });
+
+  pgm.createTable('service_order_attachments', {
+    id: { type: 'serial', primaryKey: true },
+    service_order_id: { type: 'integer', notNull: true, references: 'service_orders(id)', onDelete: 'CASCADE' },
+    file_path: { type: 'text', notNull: true },
+    file_type: { type: 'varchar(50)', notNull: true }, // 'image', 'video', 'document'
+    description: { type: 'text' },
+    uploaded_by_user_id: { type: 'uuid', references: 'users(id)', onDelete: 'SET NULL' },
+    uploaded_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
+  });
+
+  pgm.createTable('service_order_comments', {
+    id: { type: 'serial', primaryKey: true },
+    service_order_id: { type: 'integer', notNull: true, references: 'service_orders(id)', onDelete: 'CASCADE' },
+    user_id: { type: 'uuid', notNull: true, references: 'users(id)', onDelete: 'CASCADE' },
+    comment_text: { type: 'text', notNull: true },
+    created_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
   });
 
   // --- DIAGNOSTICS WIZARD ---
@@ -317,7 +363,7 @@ exports.up = (pgm) => {
 
   pgm.createTable('diagnostic_node_options', {
     id: { type: 'serial', primaryKey: true },
-    node_id: { type: 'integer', notNull: true, references: 'diagnostic_nodes(id)', onDelete: 'CASCADE' },
+    diagnostic_node_id: { type: 'integer', notNull: true, references: 'diagnostic_nodes(id)', onDelete: 'CASCADE' },
     option_text: { type: 'text', notNull: true },
     next_node_id: { type: 'integer', references: 'diagnostic_nodes(id)', onDelete: 'SET NULL' },
     created_at: { type: 'timestamp', default: pgm.func('current_timestamp') },
@@ -335,10 +381,11 @@ exports.up = (pgm) => {
 
   pgm.createTable('diagnostic_history', {
     id: { type: 'serial', primaryKey: true },
-    service_order_id: { type: 'integer', references: 'service_orders(id)', onDelete: 'CASCADE' },
-    path_taken: { type: 'jsonb' }, // Array of node IDs
-    result_node_id: { type: 'integer', references: 'diagnostic_nodes(id)' },
-    performed_by: { type: 'uuid', references: 'users(id)' },
+    user_id: { type: 'uuid', references: 'users(id)', onDelete: 'SET NULL' },
+    session_id: { type: 'uuid', notNull: true },
+    node_id: { type: 'integer', notNull: true, references: 'diagnostic_nodes(id)', onDelete: 'CASCADE' },
+    selected_option_id: { type: 'integer', references: 'diagnostic_node_options(id)', onDelete: 'SET NULL' },
+    action: { type: 'varchar(255)' },
     created_at: { type: 'timestamp', default: pgm.func('current_timestamp') },
   });
 
@@ -353,29 +400,6 @@ exports.up = (pgm) => {
     rejection_reason: { type: 'text' },
     created_at: { type: 'timestamp', default: pgm.func('current_timestamp') },
     updated_at: { type: 'timestamp', default: pgm.func('current_timestamp') },
-  });
-
-  pgm.createTable('service_items', {
-    id: { type: 'serial', primaryKey: true },
-    service_order_id: { type: 'integer', references: 'service_orders(id)', onDelete: 'CASCADE' },
-    description: { type: 'varchar(255)', notNull: true }, // Ex: "Troca de Tela" ou "Peça: Display"
-    variation_id: { type: 'integer', references: 'product_variations(id)' }, // Se for peça do estoque
-    quantity: { type: 'integer', default: 1 },
-    unit_price: { type: 'decimal(10, 2)', notNull: true },
-    cost_price: { type: 'decimal(10, 2)', default: 0 },
-    type: { type: 'varchar(20)', notNull: true }, // 'service' or 'product'
-    created_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
-    updated_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
-  });
-
-  pgm.createTable('service_order_photos', { // NEW: Tech App
-    id: { type: 'serial', primaryKey: true },
-    service_order_id: { type: 'integer', references: 'service_orders(id)', onDelete: 'CASCADE' },
-    url: { type: 'text', notNull: true },
-    type: { type: 'varchar(20)' }, // 'entry', 'exit', 'internal'
-    uploaded_at: { type: 'timestamp', default: pgm.func('current_timestamp') },
-    uploaded_by: { type: 'uuid', references: 'users(id)' },
-    updated_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
   });
 
   // --- MESSAGING & NOTIFICATIONS (MASTER PLAN) ---
@@ -532,10 +556,41 @@ exports.up = (pgm) => {
     }
   });
 
+  pgm.createTable('coupons', {
+    id: { type: 'serial', primaryKey: true },
+    code: { type: 'varchar(50)', notNull: true, unique: true },
+    type: { type: 'varchar(20)', notNull: true }, // 'percentage', 'fixed_amount'
+    value: { type: 'decimal(10, 2)', notNull: true },
+    start_date: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
+    end_date: { type: 'timestamp' },
+    min_purchase_amount: { type: 'decimal(10, 2)', default: 0 },
+    max_uses: { type: 'integer' },
+    uses_count: { type: 'integer', notNull: true, default: 0 },
+    is_active: { type: 'boolean', notNull: true, default: true },
+    created_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
+    updated_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
+  });
+
+  pgm.createTable('referrals', {
+    id: { type: 'serial', primaryKey: true },
+    referrer_customer_id: { type: 'integer', notNull: true, references: 'customers(id)', onDelete: 'CASCADE' },
+    referred_customer_id: { type: 'integer', references: 'customers(id)', onDelete: 'SET NULL' },
+    referral_code: { type: 'varchar(20)', notNull: true, unique: true },
+    status: { type: 'varchar(20)', notNull: true, default: 'pending' }, // 'pending', 'completed'
+    completed_at: { type: 'timestamp' },
+    created_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
+  });
+
 };
 
 exports.down = (pgm) => {
   // Drop em ordem reversa de dependência
+  pgm.dropTable('service_order_comments');
+  pgm.dropTable('service_order_attachments');
+  pgm.dropTable('service_order_items');
+  pgm.dropTable('service_order_status_history');
+  pgm.dropTable('referrals');
+  pgm.dropTable('coupons');
   pgm.dropTable('user_badges');
   pgm.dropTable('badges');
   pgm.dropTable('user_challenge_progress');
@@ -554,8 +609,6 @@ exports.down = (pgm) => {
   pgm.dropTable('diagnostic_feedback');
   pgm.dropTable('diagnostic_node_options');
   pgm.dropTable('diagnostic_nodes');
-  pgm.dropTable('service_order_photos');
-  pgm.dropTable('service_items');
   pgm.dropTable('service_orders');
   pgm.dropTable('return_items');
   pgm.dropTable('returns');
@@ -566,6 +619,7 @@ exports.down = (pgm) => {
   pgm.dropTable('branch_product_variations_stock'); // NEW
   pgm.dropTable('product_variations');
   pgm.dropTable('products');
+  pgm.dropTable('categories');
   pgm.dropTable('suppliers');
   pgm.dropTable('branches');
   pgm.dropTable('customers');

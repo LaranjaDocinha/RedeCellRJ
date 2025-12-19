@@ -15,14 +15,15 @@ const getZReportSchema = z.object({
 
 
 
-// TODO: A função do controller 'generateZReport' não foi encontrada. Rota comentada.
-// // Route to generate a Z-Report
-// zReportsRouter.get(
-//   '/',
-//   authMiddleware.authenticate,
-//   authMiddleware.authorize('read', 'ZReport'), // Assuming 'read' permission for ZReport
-//   validate(getZReportSchema),
-//   generateZReport,
-// );
+import { validate } from '../middlewares/validationMiddleware.js';
+
+// Route to generate a Z-Report
+zReportsRouter.get(
+  '/',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('read', 'ZReport'), // Assuming 'read' permission for ZReport
+  validate(getZReportSchema, 'query'),
+  zReportController.generateZReport,
+);
 
 export default zReportsRouter;

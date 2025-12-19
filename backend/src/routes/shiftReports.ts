@@ -18,14 +18,15 @@ const getShiftReportSchema = z.object({
 
 
 
+import { validate } from '../middlewares/validationMiddleware.js';
+
 // Route to get the current shift report
-// TODO: A função do controller 'getCurrentShiftReport' não foi encontrada. Rota comentada.
-// shiftReportsRouter.get(
-//   '/current',
-//   authMiddleware.authenticate,
-//   authMiddleware.authorize('read', 'ShiftReport'), // Assuming 'read' permission for ShiftReport
-//   validate(getShiftReportSchema),
-//   getCurrentShiftReport,
-// );
+shiftReportsRouter.get(
+  '/current',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('read', 'ShiftReport'), // Assuming 'read' permission for ShiftReport
+  validate(getShiftReportSchema, 'query'),
+  shiftReportController.getCurrentShiftReport,
+);
 
 export default shiftReportsRouter;

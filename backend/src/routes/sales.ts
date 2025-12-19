@@ -45,7 +45,7 @@ const createSaleSchema = z.object({
     .positive('Total installments must be a positive integer')
     .optional(),
   interest_rate: z.number().min(0, 'Interest rate cannot be negative').optional(),
-  customerId: z.string().uuid().nullable().optional(),
+  customerId: z.coerce.number().int().positive().nullable().optional(),
   branchId: z.number().int().positive().optional(),
 });
 

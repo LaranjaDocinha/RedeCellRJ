@@ -79,7 +79,7 @@ describe('Customer API - Integration', () => {
         .send({ points: 50 });
 
       expect(res.statusCode).toEqual(200);
-      expect(res.body.loyalty_points).toEqual('150.00');
+      expect(res.body.loyalty_points).toEqual(150);
     });
 
     it('should not subtract loyalty points below zero', async () => {
@@ -89,7 +89,7 @@ describe('Customer API - Integration', () => {
         .send({ points: 200 });
 
       expect(res.statusCode).toEqual(200);
-      expect(res.body.loyalty_points).toEqual('0.00');
+      expect(res.body.loyalty_points).toEqual(0);
     });
   });
 

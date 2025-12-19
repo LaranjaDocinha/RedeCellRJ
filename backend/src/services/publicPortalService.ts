@@ -10,7 +10,7 @@ export const publicPortalService = {
     const pool = getPool();
     const res = await pool.query(
       `SELECT 
-        so.id, so.device_name, so.problem_description, so.status, so.estimated_cost, so.final_cost,
+        so.id, so.product_description, so.issue_description, so.status, so.estimated_cost, so.final_cost,
         so.entry_date, so.delivery_date, so.customer_approval_status, so.notes,
         c.name as customer_name, b.name as branch_name
        FROM service_orders so
@@ -27,8 +27,8 @@ export const publicPortalService = {
     const order = res.rows[0];
 
     // Buscar itens e fotos
-    const itemsRes = await pool.query('SELECT * FROM service_items WHERE service_order_id = $1', [order.id]);
-    const photosRes = await pool.query("SELECT * FROM service_order_photos WHERE service_order_id = $1 AND type != 'internal'", [order.id]);
+    const itemsRes = await pool.query('SELECT * FROM service_order_items WHERE service_order_id = $1', [order.id]);
+    const photosRes = await pool.query("SELECT * FROM service_order_attachments WHERE service_order_id = $1 AND file_type = 'image'", [order.id]);
 
     return {
       ...order,
@@ -89,7 +89,7 @@ export const publicPortalService = {
     }
     const os = checkRes.rows[0];
 
-    if (['finished', 'delivered', 'cancelled'].includes(os.status)) {
+    if (['Finalizado', 'Entregue', 'Não Aprovado'].includes(os.status)) {
       throw new AppError('Cannot change approval for a finalized order', 400);
     }
 
@@ -103,7 +103,7 @@ export const publicPortalService = {
          SET customer_approval_status = $1, 
              customer_approval_date = NOW(),
              notes = CASE WHEN $3::text IS NOT NULL THEN notes || E'\n[Portal] Cliente ' || $1 || ': ' || $3 ELSE notes END,
-             status = CASE WHEN $1 = 'approved' THEN 'in_progress' ELSE 'cancelled' END -- Auto-move workflow (simplificado)
+             status = CASE WHEN $1 = 'approved' THEN 'Aprovado' ELSE 'Não Aprovado' END -- Auto-move workflow
          WHERE public_token = $2`,
         [status, token, feedback]
       );

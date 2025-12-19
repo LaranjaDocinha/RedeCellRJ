@@ -301,12 +301,13 @@ class CustomerService {
     relatedId: string,
     client: any,
   ): Promise<Customer | undefined> {
-    const result = await client.query(
+    const db = client || pool;
+    const result = await db.query(
       'UPDATE customers SET store_credit_balance = store_credit_balance - $1 WHERE id = $2 RETURNING *',
       [amount, customerId],
     );
     if (result.rows.length > 0) {
-      await client.query(
+      await db.query(
         'INSERT INTO store_credit_transactions (customer_id, amount, type, reason, related_id) VALUES ($1, $2, $3, $4, $5)',
         [customerId, amount, 'debit', 'Sale payment', relatedId],
       );
@@ -321,12 +322,13 @@ class CustomerService {
     client: any,
     reason: string = 'Manual adjustment', // Added reason parameter
   ): Promise<Customer | undefined> {
-    const result = await client.query(
+    const db = client || pool;
+    const result = await db.query(
       'UPDATE customers SET store_credit_balance = store_credit_balance + $1 WHERE id = $2 RETURNING *',
       [amount, customerId],
     );
     if (result.rows.length > 0) {
-      await client.query(
+      await db.query(
         'INSERT INTO store_credit_transactions (customer_id, amount, type, reason, related_id) VALUES ($1, $2, $3, $4, $5)',
         [customerId, amount, 'credit', reason, relatedId],
       );

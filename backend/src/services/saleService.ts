@@ -8,7 +8,7 @@ import { customerService } from './customerService.js'; // Import customerServic
 import * as activityFeedService from './activityFeedService.js';
 import { serializedItemService } from './serializedItemService.js'; // Import serializedItemService
 import * as gamificationService from './gamificationService.js'; // Import gamificationService
-import * as marketplaceSyncService from './marketplaceSyncService.js'; // Import marketplaceSyncService
+import { marketplaceSyncService } from './marketplaceSyncService.js'; // Import marketplaceSyncService
 
 // ... (interfaces remain the same)
 

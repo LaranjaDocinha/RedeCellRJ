@@ -142,7 +142,7 @@ describe('Diagnostic API', () => {
       expect(res.statusCode).toEqual(200);
       expect(res.body).toBeInstanceOf(Array);
       expect(res.body.length).toBeGreaterThan(0);
-      expect(res.body[0].node_id).toEqual(rootNodeId);
+      expect(res.body[0].diagnostic_node_id).toEqual(parseInt(rootNodeId, 10));
     });
 
     it('should return empty array if no options for node ID', async () => {
