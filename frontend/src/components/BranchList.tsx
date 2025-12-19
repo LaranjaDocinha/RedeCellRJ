@@ -1,12 +1,12 @@
 import React from 'react';
-
-interface Branch {
-  id: number;
-  name: string;
-  address?: string;
-  phone?: string;
-  email?: string;
-}
+import { FaEdit, FaTrash } from 'react-icons/fa';
+import {
+  StyledTableContainer,
+  StyledTable,
+  StyledTableHead,
+  StyledTableBody,
+  ActionButton,
+} from './BranchList.styled';
 
 interface BranchListProps {
   branches: Branch[];
@@ -16,50 +16,48 @@ interface BranchListProps {
 
 export const BranchList: React.FC<BranchListProps> = ({ branches, onEdit, onDelete }) => {
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-        <thead className="bg-gray-800 text-white">
+    <StyledTableContainer
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.3 }}
+    >
+      <StyledTable>
+        <StyledTableHead>
           <tr>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">ID</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Name</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Address</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Phone</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Email</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Actions</th>
+            <th>Name</th>
+            <th>Address</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Actions</th>
           </tr>
-        </thead>
-        <tbody className="text-gray-700">
-          {branches.length === 0 ? (
-            <tr>
-              <td colSpan={6} className="text-center py-4">No branches found.</td>
+        </StyledTableHead>
+        <StyledTableBody>
+          {branches.map((branch) => (
+            <tr key={branch.id}>
+              <td>{branch.name}</td>
+              <td>{branch.address || 'N/A'}</td>
+              <td>{branch.phone || 'N/A'}</td>
+              <td>{branch.email || 'N/A'}</td>
+              <td>
+                <ActionButton
+                  onClick={() => onEdit(branch.id)}
+                  color="edit"
+                  aria-label={`Edit ${branch.name}`}
+                >
+                  <FaEdit />
+                </ActionButton>
+                <ActionButton
+                  onClick={() => onDelete(branch.id)}
+                  color="delete"
+                  aria-label={`Delete ${branch.name}`}
+                >
+                  <FaTrash />
+                </ActionButton>
+              </td>
             </tr>
-          ) : (
-            branches.map((branch) => (
-              <tr key={branch.id} className="border-b border-gray-200 hover:bg-gray-100">
-                <td className="py-3 px-4">{branch.id}</td>
-                <td className="py-3 px-4">{branch.name}</td>
-                <td className="py-3 px-4">{branch.address || 'N/A'}</td>
-                <td className="py-3 px-4">{branch.phone || 'N/A'}</td>
-                <td className="py-3 px-4">{branch.email || 'N/A'}</td>
-                <td className="py-3 px-4">
-                  <button
-                    onClick={() => onEdit(branch.id)}
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs mr-2"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => onDelete(branch.id)}
-                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-xs"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+          ))}
+        </StyledTableBody>
+      </StyledTable>
+    </StyledTableContainer>
   );
 };

@@ -1,0 +1,35 @@
+import { Request, Response } from 'express';
+import * as carrierApiService from '../services/carrierApiService.js';
+
+export const activateChip = async (req: Request, res: Response) => {
+  try {
+    const { customerData, planDetails, carrier } = req.body;
+    const result = await carrierApiService.activateChip(customerData, planDetails, carrier);
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const activatePlan = async (req: Request, res: Response) => {
+  try {
+    const { customerData, planDetails, carrier } = req.body;
+    const result = await carrierApiService.activatePlan(customerData, planDetails, carrier);
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getStatus = async (req: Request, res: Response) => {
+  try {
+    const { carrier } = req.query;
+    if (!carrier) {
+      return res.status(400).json({ message: 'Carrier parameter is required.' });
+    }
+    const status = await carrierApiService.getCarrierStatus(carrier as string);
+    res.json(status);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};

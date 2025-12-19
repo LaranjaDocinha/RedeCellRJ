@@ -1,17 +1,20 @@
-
 import React from 'react';
-import DashboardWidget from './DashboardWidget';
+import { StyledSummaryValue } from './TotalSalesWidget.styled';
 
 interface TotalSalesWidgetProps {
   totalSales: number;
 }
 
-const TotalSalesWidget: React.FC<TotalSalesWidgetProps> = ({ totalSales }) => {
+const TotalSalesWidget: React.FC<TotalSalesWidgetProps> = React.memo(({ totalSales }) => {
   return (
-    <DashboardWidget title="Total Sales">
-      <p className="summary-value">${totalSales.toFixed(2)}</p>
-    </DashboardWidget>
+    <StyledSummaryValue
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.4 }}
+    >
+      R$ {totalSales.toFixed(2)}
+    </StyledSummaryValue>
   );
-};
+});
 
 export default TotalSalesWidget;

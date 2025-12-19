@@ -1,55 +1,30 @@
-import pool from '../db/index.js';
-
-interface Card {
-  id: number;
-  title: string;
-  description: string;
-  position: number;
-  column_id: number;
-  due_date?: Date; // New field
-  assignee_id?: number; // New field
-}
-
-interface Column {
-  id: number;
-  title: string;
-  position: number;
-  cards: Card[];
-}
-
-interface MoveCardArgs {
-  cardId: string | number;
-  newColumnId: string | number;
-  newPosition: string | number;
-}
-
-interface CreateCardArgs {
-  columnId: number;
-  title: string;
-  description?: string;
-}
-
+import { getPool } from '../db/index.js';
+import { Column, Card, MoveCardArgs, CreateCardArgs } from '../types/kanban.js';
 
 export const getBoard = async (): Promise<Column[]> => {
-  const { rows: columns } = await pool.query<Omit<Column, 'cards'>>(
-    'SELECT * FROM kanban_columns ORDER BY position ASC'
+  const { rows: columns } = await getPool().query<Omit<Column, 'cards'>>(
+    'SELECT * FROM kanban_columns ORDER BY position ASC',
   );
 
-  const { rows: cards } = await pool.query<Card>(
-    'SELECT * FROM kanban_cards ORDER BY position ASC'
+  const { rows: cards } = await getPool().query<Card>(
+    'SELECT * FROM kanban_cards ORDER BY position ASC',
   );
 
-  const board: Column[] = columns.map(column => ({
+  const board: Column[] = columns.map((column) => ({
     ...column,
-    cards: cards.filter(card => card.column_id === column.id),
+    cards: cards.filter((card) => card.column_id === column.id),
   }));
 
   return board;
 };
 
-export const moveCard = async ({ cardId, newColumnId, newPosition }: MoveCardArgs): Promise<void> => {
+export const moveCard = async ({
+  cardId,
+  newColumnId,
+  newPosition,
+}: MoveCardArgs): Promise<void> => {
   console.log('--- moveCard called with:', { cardId, newColumnId, newPosition });
-  const client = await pool.connect();
+  const client = await getPool().connect();
   try {
     await client.query('BEGIN');
 
@@ -57,9 +32,11 @@ export const moveCard = async ({ cardId, newColumnId, newPosition }: MoveCardArg
     const numNewColumnId = parseInt(String(newColumnId), 10);
     const numNewPosition = parseInt(String(newPosition), 10);
 
-    const { rows: [cardToMove] } = await client.query<{ column_id: number; position: number }>(
+    const {
+      rows: [cardToMove],
+    } = await client.query<{ column_id: number; position: number }>(
       'SELECT column_id, position FROM kanban_cards WHERE id = $1 FOR UPDATE',
-      [numCardId]
+      [numCardId],
     );
 
     if (!cardToMove) {
@@ -77,33 +54,34 @@ export const moveCard = async ({ cardId, newColumnId, newPosition }: MoveCardArg
       if (oldPosition < numNewPosition) {
         await client.query(
           `UPDATE kanban_cards SET position = position - 1 WHERE column_id = $1 AND position > $2 AND position <= $3`,
-          [oldColumnId, oldPosition, numNewPosition]
+          [oldColumnId, oldPosition, numNewPosition],
         );
       } else {
         await client.query(
           `UPDATE kanban_cards SET position = position + 1 WHERE column_id = $1 AND position >= $2 AND position < $3`,
-          [oldColumnId, numNewPosition, oldPosition]
+          [oldColumnId, numNewPosition, oldPosition],
         );
       }
     } else {
       await client.query(
         `UPDATE kanban_cards SET position = position - 1 WHERE column_id = $1 AND position > $2`,
-        [oldColumnId, oldPosition]
+        [oldColumnId, oldPosition],
       );
       await client.query(
         `UPDATE kanban_cards SET position = position + 1 WHERE column_id = $1 AND position >= $2`,
-        [numNewColumnId, numNewPosition]
+        [numNewColumnId, numNewPosition],
       );
     }
 
-    await client.query(
-      'UPDATE kanban_cards SET column_id = $1, position = $2 WHERE id = $3',
-      [numNewColumnId, numNewPosition, numCardId]
-    );
+    await client.query('UPDATE kanban_cards SET column_id = $1, position = $2 WHERE id = $3', [
+      numNewColumnId,
+      numNewPosition,
+      numCardId,
+    ]);
 
     await client.query('COMMIT');
   } catch (e) {
-    console.log("--- Error in moveCard transaction:", e);
+    console.log('--- Error in moveCard transaction:', e);
     await client.query('ROLLBACK');
     throw e;
   } finally {
@@ -111,16 +89,24 @@ export const moveCard = async ({ cardId, newColumnId, newPosition }: MoveCardArg
   }
 };
 
-export const createCard = async ({ columnId, title, description }: CreateCardArgs): Promise<Card> => {
-  const { rows: [maxPos] } = await pool.query<{ max_pos: string | null }>(
+export const createCard = async ({
+  columnId,
+  title,
+  description,
+}: CreateCardArgs): Promise<Card> => {
+  const {
+    rows: [maxPos],
+  } = await getPool().query<{ max_pos: string | null }>(
     'SELECT MAX(position) as max_pos FROM kanban_cards WHERE column_id = $1',
-    [columnId]
+    [columnId],
   );
   const newPosition = maxPos.max_pos === null ? 0 : parseInt(maxPos.max_pos, 10) + 1;
 
-  const { rows: [newCard] } = await pool.query<Card>(
+  const {
+    rows: [newCard],
+  } = await getPool().query<Card>(
     'INSERT INTO kanban_cards (title, description, column_id, position) VALUES ($1, $2, $3, $4) RETURNING *',
-    [title, description, columnId, newPosition]
+    [title, description, columnId, newPosition],
   );
   return newCard;
 };
@@ -133,36 +119,60 @@ interface UpdateCardArgs {
   assignee_id?: number | null;
 }
 
-export const updateCard = async ({ cardId, title, description, due_date, assignee_id }: UpdateCardArgs): Promise<Card | undefined> => {
+export const updateCard = async ({
+  cardId,
+  title,
+  description,
+  due_date,
+  assignee_id,
+}: UpdateCardArgs): Promise<Card | undefined> => {
   const fields: string[] = [];
   const values: any[] = [];
   let paramIndex = 1;
 
-  if (title !== undefined) { fields.push(`title = ${paramIndex++}`); values.push(title); }
-  if (description !== undefined) { fields.push(`description = ${paramIndex++}`); values.push(description); }
-  if (due_date !== undefined) { fields.push(`due_date = ${paramIndex++}`); values.push(due_date ? new Date(due_date) : null); }
-  if (assignee_id !== undefined) { fields.push(`assignee_id = ${paramIndex++}`); values.push(assignee_id); }
+  if (title !== undefined) {
+    fields.push(`title = $${paramIndex++}`);
+    values.push(title);
+  }
+  if (description !== undefined) {
+    fields.push(`description = $${paramIndex++}`);
+    values.push(description);
+  }
+  if (due_date !== undefined) {
+    fields.push(`due_date = $${paramIndex++}`);
+    values.push(due_date ? new Date(due_date) : null);
+  }
+  if (assignee_id !== undefined) {
+    fields.push(`assignee_id = $${paramIndex++}`);
+    values.push(assignee_id);
+  }
 
   if (fields.length === 0) {
-    const { rows: [existingCard] } = await pool.query('SELECT * FROM kanban_cards WHERE id = $1', [cardId]);
+    const {
+      rows: [existingCard],
+    } = await getPool().query('SELECT * FROM kanban_cards WHERE id = $1', [cardId]);
     return existingCard; // No fields to update, return existing card
   }
 
   values.push(cardId); // Add cardId for WHERE clause
-  const query = `UPDATE kanban_cards SET ${fields.join(', ')}, updated_at = current_timestamp WHERE id = ${paramIndex} RETURNING *`;
+  const query = `UPDATE kanban_cards SET ${fields.join(', ')}, updated_at = current_timestamp WHERE id = $${paramIndex} RETURNING *`;
 
-  const { rows: [updatedCard] } = await pool.query<Card>(query, values);
+  const {
+    rows: [updatedCard],
+  } = await getPool().query<Card>(query, values);
   return updatedCard;
 };
 
 export const deleteCard = async (cardId: number): Promise<{ message: string }> => {
-  const client = await pool.connect();
+  const client = await getPool().connect();
   try {
     await client.query('BEGIN');
 
-    const { rows: [cardToDelete] } = await client.query<{ column_id: number; position: number }>(
+    const {
+      rows: [cardToDelete],
+    } = await client.query<{ column_id: number; position: number }>(
       'SELECT column_id, position FROM kanban_cards WHERE id = $1 FOR UPDATE',
-      [cardId]
+      [cardId],
     );
 
     if (!cardToDelete) {
@@ -173,7 +183,7 @@ export const deleteCard = async (cardId: number): Promise<{ message: string }> =
 
     await client.query(
       'UPDATE kanban_cards SET position = position - 1 WHERE column_id = $1 AND position > $2',
-      [cardToDelete.column_id, cardToDelete.position]
+      [cardToDelete.column_id, cardToDelete.position],
     );
 
     await client.query('COMMIT');
@@ -193,16 +203,18 @@ interface MoveColumnArgs {
 
 export const moveColumn = async ({ columnId, newPosition }: MoveColumnArgs): Promise<void> => {
   console.log('--- moveColumn called with:', { columnId, newPosition });
-  const client = await pool.connect();
+  const client = await getPool().connect();
   try {
     await client.query('BEGIN');
 
     const numColumnId = parseInt(String(columnId), 10);
     const numNewPosition = parseInt(String(newPosition), 10);
 
-    const { rows: [columnToMove] } = await client.query<{ position: number }>(
+    const {
+      rows: [columnToMove],
+    } = await client.query<{ position: number }>(
       'SELECT position FROM kanban_columns WHERE id = $1 FOR UPDATE',
-      [numColumnId]
+      [numColumnId],
     );
 
     if (!columnToMove) {
@@ -219,23 +231,23 @@ export const moveColumn = async ({ columnId, newPosition }: MoveColumnArgs): Pro
     if (oldPosition < numNewPosition) {
       await client.query(
         `UPDATE kanban_columns SET position = position - 1 WHERE position > $1 AND position <= $2`,
-        [oldPosition, numNewPosition]
+        [oldPosition, numNewPosition],
       );
     } else {
       await client.query(
         `UPDATE kanban_columns SET position = position + 1 WHERE position >= $1 AND position < $2`,
-        [numNewPosition, oldPosition]
+        [numNewPosition, oldPosition],
       );
     }
 
-    await client.query(
-      'UPDATE kanban_columns SET position = $1 WHERE id = $2',
-      [numNewPosition, numColumnId]
-    );
+    await client.query('UPDATE kanban_columns SET position = $1 WHERE id = $2', [
+      numNewPosition,
+      numColumnId,
+    ]);
 
     await client.query('COMMIT');
   } catch (e) {
-    console.log("--- Error in moveColumn transaction:", e);
+    console.log('--- Error in moveColumn transaction:', e);
     await client.query('ROLLBACK');
     throw e;
   } finally {

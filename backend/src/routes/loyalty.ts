@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { loyaltyService } from '../services/loyaltyService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
+
 import { ValidationError } from '../utils/errors.js';
 
 const router = Router();
@@ -15,31 +16,40 @@ const pointsSchema = z.object({
 });
 
 // Validation Middleware
-const validate = (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
-  try {
-    schema.parse(req.body);
-    next();
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return next(new ValidationError('Validation failed', error.errors.map(err => ({ path: err.path.join('.'), message: err.message }))));
+const validate =
+  (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
+    try {
+      schema.parse(req.body);
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return next(
+          new ValidationError(
+            'Validation failed',
+            error.errors.map((err) => ({ path: err.path.join('.'), message: err.message })),
+          ),
+        );
+      }
+      next(error);
     }
-    next(error);
-  }
-};
+  };
 
-router.get('/points',
+router.get(
+  '/points',
   authMiddleware.authorize('read', 'Loyalty'),
   async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const userId = (req as any).user.id;
-    const points = await loyaltyService.getLoyaltyPoints(userId);
-    res.json({ loyalty_points: points });
-  } catch (error) {
-    next(error);
-  }
-});
+    try {
+      const userId = (req as any).user.id;
+      const points = await loyaltyService.getLoyaltyPoints(userId);
+      res.json({ loyalty_points: points });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
-router.post('/add-points',
+router.post(
+  '/add-points',
   authMiddleware.authorize('create', 'Loyalty'),
   validate(pointsSchema),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -50,10 +60,11 @@ router.post('/add-points',
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
-router.post('/redeem-points',
+router.post(
+  '/redeem-points',
   authMiddleware.authorize('update', 'Loyalty'),
   validate(pointsSchema),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -65,19 +76,21 @@ router.post('/redeem-points',
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
-router.get('/transactions',
+router.get(
+  '/transactions',
   authMiddleware.authorize('read', 'Loyalty'),
   async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const userId = (req as any).user.id;
-    const transactions = await loyaltyService.getLoyaltyTransactions(userId);
-    res.json(transactions);
-  } catch (error) {
-    next(error);
-  }
-});
+    try {
+      const userId = (req as any).user.id;
+      const transactions = await loyaltyService.getLoyaltyTransactions(userId);
+      res.json(transactions);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 export default router;

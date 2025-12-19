@@ -20,7 +20,11 @@ interface ProductKitFormProps {
   onCancel: () => void;
 }
 
-export const ProductKitForm: React.FC<ProductKitFormProps> = ({ initialData, onSubmit, onCancel }) => {
+export const ProductKitForm: React.FC<ProductKitFormProps> = ({
+  initialData,
+  onSubmit,
+  onCancel,
+}) => {
   const [formData, setFormData] = useState<ProductKitFormData>({
     name: '',
     description: '',
@@ -35,11 +39,13 @@ export const ProductKitForm: React.FC<ProductKitFormProps> = ({ initialData, onS
     }
   }, [initialData]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
     const { name, value, type, checked } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      [name]: type === 'checkbox' ? checked : (type === 'number' ? parseFloat(value) : value),
+      [name]: type === 'checkbox' ? checked : type === 'number' ? parseFloat(value) : value,
     }));
   };
 
@@ -75,7 +81,9 @@ export const ProductKitForm: React.FC<ProductKitFormProps> = ({ initialData, onS
   return (
     <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6 space-y-4">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+          Name
+        </label>
         <input
           type="text"
           name="name"
@@ -87,7 +95,9 @@ export const ProductKitForm: React.FC<ProductKitFormProps> = ({ initialData, onS
         />
       </div>
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+          Description
+        </label>
         <textarea
           name="description"
           id="description"
@@ -98,7 +108,9 @@ export const ProductKitForm: React.FC<ProductKitFormProps> = ({ initialData, onS
         ></textarea>
       </div>
       <div>
-        <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price</label>
+        <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+          Price
+        </label>
         <input
           type="number"
           name="price"
@@ -119,14 +131,21 @@ export const ProductKitForm: React.FC<ProductKitFormProps> = ({ initialData, onS
           onChange={handleChange}
           className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
         />
-        <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">Is Active</label>
+        <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
+          Is Active
+        </label>
       </div>
 
       <h3 className="text-lg font-semibold mb-2">Kit Items</h3>
       {formData.items.map((item, index) => (
         <div key={index} className="flex space-x-2 mb-2 items-end">
           <div className="flex-1">
-            <label htmlFor={`product_id-${index}`} className="block text-sm font-medium text-gray-700">Product ID</label>
+            <label
+              htmlFor={`product_id-${index}`}
+              className="block text-sm font-medium text-gray-700"
+            >
+              Product ID
+            </label>
             <input
               type="number"
               name="product_id"
@@ -138,7 +157,12 @@ export const ProductKitForm: React.FC<ProductKitFormProps> = ({ initialData, onS
             />
           </div>
           <div className="flex-1">
-            <label htmlFor={`variation_id-${index}`} className="block text-sm font-medium text-gray-700">Variation ID</label>
+            <label
+              htmlFor={`variation_id-${index}`}
+              className="block text-sm font-medium text-gray-700"
+            >
+              Variation ID
+            </label>
             <input
               type="number"
               name="variation_id"
@@ -150,7 +174,12 @@ export const ProductKitForm: React.FC<ProductKitFormProps> = ({ initialData, onS
             />
           </div>
           <div className="flex-1">
-            <label htmlFor={`quantity-${index}`} className="block text-sm font-medium text-gray-700">Quantity</label>
+            <label
+              htmlFor={`quantity-${index}`}
+              className="block text-sm font-medium text-gray-700"
+            >
+              Quantity
+            </label>
             <input
               type="number"
               name="quantity"

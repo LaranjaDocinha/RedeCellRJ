@@ -1,18 +1,47 @@
 import { Pool } from 'pg';
+import 'dotenv/config';
+import { logger } from '../utils/logger';
 
-// This configuration is now more robust.
-// It prioritizes the DATABASE_URL connection string if it exists,
-// otherwise it falls back to individual environment variables.
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  // The following are used if DATABASE_URL is not set
-  user: process.env.DB_USER || 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'pdv_web',
-  password: process.env.DB_PASSWORD,
-  port: parseInt(process.env.DB_PORT || '5432', 10),
-});
+import { Pool } from 'pg';
+import 'dotenv/config';
+import { logger } from '../utils/logger';
 
-export const query = (text: string, params?: any[]) => pool.query(text, params);
+let pool: Pool;
 
-export default pool;
+// This function allows the test setup to inject a specific pool.
+export function setPool(newPool: Pool) {
+  if (pool) {
+    pool.end(); // Close the old pool if it exists
+  }
+  pool = newPool;
+}
+
+// This function gets the pool, creating it if it doesn't exist.
+export function getPool(): Pool {
+  logger.debug(`[getPool] Called. Current pool state: ${pool ? 'initialized' : 'uninitialized'}`);
+  if (!pool) {
+    logger.info('Creating new production/development pool.');
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      // Add other production configurations here if needed
+    });
+    logger.debug('[getPool] New pool created.');
+
+    pool.on('error', (err) => {
+      logger.error('Unexpected error on idle client', err);
+      process.exit(-1);
+    });
+  }
+  logger.debug(`[getPool] Returning module-scoped pool instance.`);
+  return pool;
+}
+
+// Export a default instance for convenience in the app,
+// but tests should rely on getPool() after setPool() has been called.
+export const query = (text: string, params?: any[]) => getPool().query(text, params);
+export const connect = () => getPool().connect();
+
+export default {
+  query,
+  connect,
+};

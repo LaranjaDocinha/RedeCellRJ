@@ -1,15 +1,12 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-
-interface User {
-  id: number;
-  email: string;
-  role: string;
-}
+import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
+import { jwtDecode } from 'jwt-decode';
+import { User } from '../types/user';
+import * as Sentry from '@sentry/react'; // Importar Sentry
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (user: User, token: string) => void;
+  login: (user: User, token: string, rememberMe?: boolean) => void;
   logout: () => void;
   isAuthenticated: boolean;
   loading: boolean;
@@ -26,41 +23,86 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Tentar carregar o usuário e token do localStorage ao iniciar
-    const storedUser = localStorage.getItem('user');
-    const storedToken = localStorage.getItem('token');
-
-    if (storedUser && storedToken) {
-      try {
-        setUser(JSON.parse(storedUser));
-        setToken(storedToken);
-      } catch (e) {
-        console.error('Failed to parse stored user or token', e);
-        logout(); // Limpar dados inválidos
-      }
-    }
-    setLoading(false);
-  }, []);
-
-  const login = (userData: User, userToken: string) => {
-    setUser(userData);
-    setToken(userToken);
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('token', userToken);
-  };
-
   const logout = () => {
     setUser(null);
     setToken(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    Sentry.setUser(null); // Limpar o contexto do usuário no Sentry
+  };
+
+  useEffect(() => {
+    const loadAuthData = () => {
+      let storedUser = localStorage.getItem('user');
+      let storedToken = localStorage.getItem('token');
+
+      if (!storedUser || !storedToken) {
+        storedUser = sessionStorage.getItem('user');
+        storedToken = sessionStorage.getItem('token');
+      }
+
+      if (storedUser && storedToken) {
+        try {
+          const decodedToken: { exp: number } = jwtDecode(storedToken);
+          if (decodedToken.exp * 1000 < Date.now()) {
+            console.log('AuthContext: Token expired, logging out.');
+            logout();
+          } else {
+            const userData = JSON.parse(storedUser);
+            setUser(userData);
+            setToken(storedToken);
+            console.log('AuthContext: Token loaded:', storedToken ? 'yes' : 'no', 'isAuthenticated:', !!storedToken);
+            // Definir o contexto do usuário no Sentry ao carregar dados existentes
+            Sentry.setUser({
+              id: userData.id,
+              email: userData.email,
+              username: userData.name || userData.email,
+            });
+            Sentry.setTag('user_id', userData.id);
+            // Sentry.setTag('user_role', userData.role); // Assumindo que o role está no User object
+          }
+        } catch (e) {
+          console.error('Failed to parse or decode stored user or token', e);
+          logout();
+        }
+      }
+      setLoading(false);
+    };
+    loadAuthData();
+  }, []);
+
+  const login = (userData: User, userToken: string, rememberMe?: boolean) => {
+    setUser(userData);
+    setToken(userToken);
+    const storage = rememberMe ? localStorage : sessionStorage;
+    storage.setItem('user', JSON.stringify(userData));
+    storage.setItem('token', userToken);
+
+    // Adicionar contexto do usuário ao Sentry no login
+    Sentry.setUser({
+      id: userData.id,
+      email: userData.email,
+      username: userData.name || userData.email,
+    });
+    Sentry.setTag('user_id', userData.id);
+    // Sentry.setTag('user_role', userData.role); // Assumindo que o role está no User object
   };
 
   const isAuthenticated = !!user && !!token;
 
+  const authContextValue = React.useMemo(() => ({
+    user,
+    token,
+    login,
+    logout,
+    isAuthenticated,
+    loading,
+  }), [user, token, isAuthenticated, loading]);
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated, loading }}>
+    <AuthContext.Provider value={authContextValue}>
       {children}
     </AuthContext.Provider>
   );

@@ -29,7 +29,9 @@ export const UserList: React.FC<UserListProps> = ({ users, onEdit, onDelete }) =
         <tbody className="text-gray-700">
           {users.length === 0 ? (
             <tr>
-              <td colSpan={5} className="text-center py-4">No users found.</td>
+              <td colSpan={5} className="text-center py-4">
+                No users found.
+              </td>
             </tr>
           ) : (
             users.map((user) => (

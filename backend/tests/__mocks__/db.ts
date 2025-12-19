@@ -17,13 +17,16 @@ export const query = (text: string, params?: any[]) => {
 };
 
 // Mock do export default (o próprio pool)
-const mockDefaultPool = new Proxy({}, {
-  get: (_, prop) => {
-    if (!_mockPool) {
-      throw new Error('Mock pool has not been set. Call __setMockPool in globalSetup.');
-    }
-    return Reflect.get(_mockPool, prop);
+const mockDefaultPool = new Proxy(
+  {},
+  {
+    get: (_, prop) => {
+      if (!_mockPool) {
+        throw new Error('Mock pool has not been set. Call __setMockPool in globalSetup.');
+      }
+      return Reflect.get(_mockPool, prop);
+    },
   },
-});
+);
 
 export default mockDefaultPool;

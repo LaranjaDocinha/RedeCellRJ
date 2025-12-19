@@ -41,11 +41,12 @@ class BranchService {
     try {
       const result = await pool.query(
         'INSERT INTO branches (name, address, phone, email) VALUES ($1, $2, $3, $4) RETURNING *',
-        [name, address, phone, email]
+        [name, address, phone, email],
       );
       return result.rows[0];
     } catch (error: any) {
-      if (error.code === '23505') { // Unique violation error code
+      if (error.code === '23505') {
+        // Unique violation error code
         throw new AppError('Branch with this name already exists', 409);
       }
       throw error;
@@ -58,10 +59,22 @@ class BranchService {
     const values: any[] = [];
     let paramIndex = 1;
 
-    if (name !== undefined) { fields.push(`name = $${paramIndex++}`); values.push(name); }
-    if (address !== undefined) { fields.push(`address = $${paramIndex++}`); values.push(address); }
-    if (phone !== undefined) { fields.push(`phone = $${paramIndex++}`); values.push(phone); }
-    if (email !== undefined) { fields.push(`email = $${paramIndex++}`); values.push(email); }
+    if (name !== undefined) {
+      fields.push(`name = $${paramIndex++}`);
+      values.push(name);
+    }
+    if (address !== undefined) {
+      fields.push(`address = $${paramIndex++}`);
+      values.push(address);
+    }
+    if (phone !== undefined) {
+      fields.push(`phone = $${paramIndex++}`);
+      values.push(phone);
+    }
+    if (email !== undefined) {
+      fields.push(`email = $${paramIndex++}`);
+      values.push(email);
+    }
 
     if (fields.length === 0) {
       const existingBranch = await this.getBranchById(id);
@@ -78,7 +91,8 @@ class BranchService {
       const result = await pool.query(query, values);
       return result.rows[0];
     } catch (error: any) {
-      if (error.code === '23505') { // Unique violation error code
+      if (error.code === '23505') {
+        // Unique violation error code
         throw new AppError('Branch with this name already exists', 409);
       }
       throw error;

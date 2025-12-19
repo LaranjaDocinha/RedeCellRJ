@@ -16,7 +16,12 @@ interface PurchaseOrderListProps {
   onReceiveItems: (id: number) => void;
 }
 
-export const PurchaseOrderList: React.FC<PurchaseOrderListProps> = ({ orders, onViewDetails, onUpdateStatus, onReceiveItems }) => {
+export const PurchaseOrderList: React.FC<PurchaseOrderListProps> = ({
+  orders,
+  onViewDetails,
+  onUpdateStatus,
+  onReceiveItems,
+}) => {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
@@ -34,7 +39,9 @@ export const PurchaseOrderList: React.FC<PurchaseOrderListProps> = ({ orders, on
         <tbody className="text-gray-700">
           {orders.length === 0 ? (
             <tr>
-              <td colSpan={7} className="text-center py-4">No purchase orders found.</td>
+              <td colSpan={7} className="text-center py-4">
+                No purchase orders found.
+              </td>
             </tr>
           ) : (
             orders.map((order) => (
@@ -42,7 +49,11 @@ export const PurchaseOrderList: React.FC<PurchaseOrderListProps> = ({ orders, on
                 <td className="py-3 px-4">{order.id}</td>
                 <td className="py-3 px-4">{order.supplier_id}</td>
                 <td className="py-3 px-4">{new Date(order.order_date).toLocaleDateString()}</td>
-                <td className="py-3 px-4">{order.expected_delivery_date ? new Date(order.expected_delivery_date).toLocaleDateString() : 'N/A'}</td>
+                <td className="py-3 px-4">
+                  {order.expected_delivery_date
+                    ? new Date(order.expected_delivery_date).toLocaleDateString()
+                    : 'N/A'}
+                </td>
                 <td className="py-3 px-4">{order.status}</td>
                 <td className="py-3 px-4">${order.total_amount.toFixed(2)}</td>
                 <td className="py-3 px-4">
@@ -54,7 +65,12 @@ export const PurchaseOrderList: React.FC<PurchaseOrderListProps> = ({ orders, on
                   </button>
                   <select
                     value={order.status}
-                    onChange={(e) => onUpdateStatus(order.id, e.target.value as 'pending' | 'ordered' | 'received' | 'cancelled')}
+                    onChange={(e) =>
+                      onUpdateStatus(
+                        order.id,
+                        e.target.value as 'pending' | 'ordered' | 'received' | 'cancelled',
+                      )
+                    }
                     className="border rounded px-2 py-1 text-xs mr-2"
                   >
                     <option value="pending">Pending</option>

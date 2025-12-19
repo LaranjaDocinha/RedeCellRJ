@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { LoadingContainer, Spinner, LoadingText } from './Loading.styled';
 
@@ -12,4 +11,3 @@ const Loading: React.FC = () => {
 };
 
 export default Loading;
-

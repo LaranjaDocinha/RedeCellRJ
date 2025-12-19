@@ -1,0 +1,141 @@
+name: Backend CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_DB: pdv_web
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - name: Install dependencies
+      run: npm install --prefix backend
+    - name: Run npm audit for vulnerabilities
+      run: npm audit --audit-level=high --prefix backend
+      continue-on-error: true
+    - name: Snyk Security Scan
+      uses: snyk/actions/node@master
+      with:
+        args: --file=backend/package.json --org=${{ secrets.SNYK_ORG_ID }}
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      continue-on-error: true
+    - name: Wait for PostgreSQL to be ready
+      run: |
+        for i in $(seq 1 10); do
+          npm --prefix backend exec pg_isready -h localhost -p 5432 -U postgres && break
+          echo "Waiting for PostgreSQL... ($i/10)"
+          sleep 5
+        done
+    - name: Setup database schema
+      run: npm run migrate:up --prefix backend
+      env:
+        DATABASE_URL: postgres://postgres:${{ secrets.DB_PASSWORD }}@localhost:5432/pdv_web
+    - name: Run lint
+      run: npm run lint --prefix backend
+    - name: Run tests
+      run: npm run coverage --prefix backend
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_USER: postgres
+        DB_NAME: pdv_web
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+    - name: Build backend
+      run: npm run build --prefix backend
+    - name: Run performance tests
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_USER: postgres
+        DB_NAME: pdv_web
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      run: |
+        node backend/dist/index.js &
+        SERVER_PID=$!
+        echo "Waiting for server to start..."
+        sleep 10
+        if curl -f http://localhost:3000/; then
+          echo "Server is up. Running performance tests..."
+          npx artillery run backend/performance-test.yml --output backend/performance-report.json
+        else
+          echo "Server failed to start. Performance tests skipped."
+        fi
+        kill $SERVER_PID
+      continue-on-error: true
+    - name: Analyze for slow queries
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_USER: postgres
+        DB_NAME: pdv_web
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      run: npx ts-node backend/scripts/find-slow-queries.ts
+      continue-on-error: true
+    - name: Semantic Release
+      id: semantic
+      uses: cycjimmy/semantic-release-action@v3
+      with:
+        working_directory: backend
+        dry_run: true # Set to false to actually publish
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        push: true
+        tags: ghcr.io/${{ github.repository }}/backend:${{ steps.semantic.outputs.new_release_version || 'latest' }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build_and_test
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Deploy to Staging
+      run: echo "Deploying backend image ghcr.io/${{ github.repository }}/backend:${{ needs.build_and_test.outputs.new_release_version || 'latest' }} to staging..."
+      # Add your actual deployment steps here (e.g., using kubectl, AWS CLI, Ansible, Terraform)
+      # For example:
+      # - uses: azure/webapps-deploy@v2
+      #   with:
+      #     app-name: 'my-backend-staging'
+      #     slot-name: 'staging'
+      #     publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+      #     images: 'ghcr.io/${{ github.repository }}/backend:${{ needs.build_and_test.outputs.new_release_version || 'latest' }}'
+    - name: Notify Deployment Success
+      run: echo "Backend deployed successfully to staging!"
+      # You could also integrate with Slack/Teams for notifications

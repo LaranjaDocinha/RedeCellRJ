@@ -1,8 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { CouponList } from '../components/CouponList';
 import { CouponForm } from '../components/CouponForm';
 import { useAuth } from '../contexts/AuthContext';
-import { useNotification } from '../components/NotificationProvider';
+import { useNotification } from '../contexts/NotificationContext';
+import { StyledPageContainer, StyledPageTitle } from './AuditLogsPage.styled'; // Reutilizando componentes estilizados
+import { Button } from '../components/Button'; // Importar o componente Button
+import Loading from '../components/Loading'; // Importar o componente Loading
+import { StyledEmptyState } from '../components/AuditLogList.styled'; // Reutilizando StyledEmptyState
+import { FaTag } from 'react-icons/fa'; // Ícone para estado vazio
 
 interface Coupon {
   id: number;
@@ -21,16 +27,18 @@ const CouponsPage: React.FC = () => {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | undefined>(undefined);
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { token } = useAuth();
-  const { addNotification } = useNotification();
+  const { addToast } = useNotification();
 
   useEffect(() => {
     fetchCoupons();
   }, []);
 
   const fetchCoupons = async () => {
+    setLoading(true);
     try {
-      const response = await fetch('/coupons', {
+      const response = await fetch('/api/coupons', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -38,13 +46,15 @@ const CouponsPage: React.FC = () => {
       setCoupons(data);
     } catch (error: any) {
       console.error("Error fetching coupons:", error);
-      addNotification(`Failed to fetch coupons: ${error.message}`, 'error');
+      addToast(`Failed to fetch coupons: ${error.message}`, 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCreateCoupon = async (couponData: Omit<Coupon, 'id' | 'uses_count'>) => {
     try {
-      const response = await fetch('/coupons', {
+      const response = await fetch('/api/coupons', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(couponData),
@@ -53,16 +63,16 @@ const CouponsPage: React.FC = () => {
       await response.json();
       setShowForm(false);
       fetchCoupons();
-      addNotification('Coupon created successfully!', 'success');
+      addToast('Coupon created successfully!', 'success');
     } catch (error: any) {
       console.error("Error creating coupon:", error);
-      addNotification(`Failed to create coupon: ${error.message}`, 'error');
+      addToast(`Failed to create coupon: ${error.message}`, 'error');
     }
   };
 
   const handleUpdateCoupon = async (id: number, couponData: Omit<Coupon, 'id' | 'uses_count'>) => {
     try {
-      const response = await fetch(`/coupons/${id}`, {
+      const response = await fetch(`/api/coupons/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(couponData),
@@ -72,26 +82,26 @@ const CouponsPage: React.FC = () => {
       setEditingCoupon(undefined);
       setShowForm(false);
       fetchCoupons();
-      addNotification('Coupon updated successfully!', 'success');
+      addToast('Coupon updated successfully!', 'success');
     } catch (error: any) {
       console.error("Error updating coupon:", error);
-      addNotification(`Failed to update coupon: ${error.message}`, 'error');
+      addToast(`Failed to update coupon: ${error.message}`, 'error');
     }
   };
 
   const handleDeleteCoupon = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this coupon?')) return;
     try {
-      const response = await fetch(`/coupons/${id}`, {
+      const response = await fetch(`/api/coupons/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       fetchCoupons();
-      addNotification('Coupon deleted successfully!', 'success');
+      addToast('Coupon deleted successfully!', 'success');
     } catch (error: any) {
       console.error("Error deleting coupon:", error);
-      addNotification(`Failed to delete coupon: ${error.message}`, 'error');
+      addToast(`Failed to delete coupon: ${error.message}`, 'error');
     }
   };
 
@@ -109,43 +119,70 @@ const CouponsPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Coupon Management</h1>
+    <StyledPageContainer
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <StyledPageTitle
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        Coupon Management
+      </StyledPageTitle>
 
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Add New Coupon
-        </button>
-      </div>
+      {loading ? (
+        <Loading />
+      ) : (
+        <>
+          <div className="flex justify-end mb-4">
+            <Button
+              onClick={() => setShowForm(true)}
+              variant="contained"
+              color="primary"
+              label="Add New Coupon"
+            />
+          </div>
 
-      {showForm && (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-3">
-            {editingCoupon ? 'Edit Coupon' : 'Add New Coupon'}
-          </h2>
-          <CouponForm
-            initialData={editingCoupon}
-            onSubmit={(data) => {
-              if (editingCoupon) {
-                handleUpdateCoupon(editingCoupon.id, data);
-              } else {
-                handleCreateCoupon(data);
-              }
-            }}
-            onCancel={handleCancelForm}
-          />
-        </div>
+          {showForm && (
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold mb-3">
+                {editingCoupon ? 'Edit Coupon' : 'Add New Coupon'}
+              </h2>
+              <CouponForm
+                initialData={editingCoupon}
+                onSubmit={(data) => {
+                  if (editingCoupon) {
+                    handleUpdateCoupon(editingCoupon.id, data);
+                  } else {
+                    handleCreateCoupon(data);
+                  }
+                }}
+                onCancel={handleCancelForm}
+              />
+            </div>
+          )}
+
+          {coupons.length === 0 && !showForm ? (
+            <StyledEmptyState
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <FaTag />
+              <p>No coupons found. Click "Add New Coupon" to get started!</p>
+            </StyledEmptyState>
+          ) : (
+            <CouponList
+              coupons={coupons}
+              onEdit={handleEditClick}
+              onDelete={handleDeleteCoupon}
+            />
+          )}
+        </>
       )}
-
-      <CouponList
-        coupons={coupons}
-        onEdit={handleEditClick}
-        onDelete={handleDeleteCoupon}
-      />
-    </div>
+    </StyledPageContainer>
   );
 };
 

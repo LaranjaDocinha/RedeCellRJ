@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { ThemeProvider as StyledThemeProvider } from 'styled-components';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles'; // Import MUI ThemeProvider
 
+import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import { lightTheme, darkTheme } from '../styles/theme';
 
 type ThemeName = 'light' | 'dark';
@@ -8,6 +9,8 @@ type ThemeName = 'light' | 'dark';
 interface ThemeContextType {
   theme: ThemeName;
   toggleTheme: () => void;
+  highContrastMode: boolean;
+  toggleHighContrastMode: () => void;
 }
 
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -18,26 +21,47 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [theme, setTheme] = useState<ThemeName>(() => {
-    // Get theme from local storage or default to light
     const savedTheme = localStorage.getItem('theme');
     return (savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : 'light';
   });
 
+  const [highContrastMode, setHighContrastMode] = useState<boolean>(() => {
+    const savedHighContrast = localStorage.getItem('highContrastMode');
+    return savedHighContrast === 'true';
+  });
+
   useEffect(() => {
-    // Save theme to local storage whenever it changes
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  useEffect(() => {
+    localStorage.setItem('highContrastMode', String(highContrastMode));
+  }, [highContrastMode]);
+
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+    // Disable high contrast mode if theme is changed
+    if (highContrastMode) {
+      setHighContrastMode(false);
+    }
   };
 
-  const currentTheme = theme === 'light' ? lightTheme : darkTheme;
+  const toggleHighContrastMode = () => {
+    setHighContrastMode((prevMode) => !prevMode);
+    // Force dark theme when high contrast is enabled
+    if (!highContrastMode && theme !== 'dark') {
+      setTheme('dark');
+    }
+  };
+
+  const currentTheme = highContrastMode ? darkTheme : (theme === 'light' ? lightTheme : darkTheme);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, highContrastMode, toggleHighContrastMode }}>
       <StyledThemeProvider theme={currentTheme}>
-        {children}
+        <MuiThemeProvider theme={currentTheme}>
+          {children}
+        </MuiThemeProvider>
       </StyledThemeProvider>
     </ThemeContext.Provider>
   );

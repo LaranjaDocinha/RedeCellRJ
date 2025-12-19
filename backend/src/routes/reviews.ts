@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { reviewService } from '../services/reviewService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
+
 import { ValidationError, AppError } from '../utils/errors.js';
 
 const reviewsRouter = Router();
@@ -13,29 +14,38 @@ const createReviewSchema = z.object({
   comment: z.string().trim().optional(),
 });
 
-const updateReviewSchema = z.object({
-  rating: z.number().int().min(1).max(5, 'Rating must be between 1 and 5').optional(),
-  comment: z.string().trim().optional(),
-}).partial();
+const updateReviewSchema = z
+  .object({
+    rating: z.number().int().min(1).max(5, 'Rating must be between 1 and 5').optional(),
+    comment: z.string().trim().optional(),
+  })
+  .partial();
 
 // Validation Middleware
-const validate = (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
-  try {
-    schema.parse(req.body);
-    next();
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return next(new ValidationError('Validation failed', error.errors.map(err => ({ path: err.path.join('.'), message: err.message }))));
+const validate =
+  (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
+    try {
+      schema.parse(req.body);
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return next(
+          new ValidationError(
+            'Validation failed',
+            error.errors.map((err) => ({ path: err.path.join('.'), message: err.message })),
+          ),
+        );
+      }
+      next(error);
     }
-    next(error);
-  }
-};
+  };
 
 reviewsRouter.use(authMiddleware.authenticate);
 
 // Get all reviews for a product
 reviewsRouter.get(
   '/product/:productId',
+  authMiddleware.authorize('read', 'Review'), // Add authorization
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const productId = parseInt(req.params.productId);
@@ -44,12 +54,13 @@ reviewsRouter.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Get a single review by ID
 reviewsRouter.get(
   '/:id',
+  authMiddleware.authorize('read', 'Review'), // Add authorization
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const review = await reviewService.getReviewById(parseInt(req.params.id));
@@ -60,12 +71,13 @@ reviewsRouter.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Create a new review
 reviewsRouter.post(
   '/',
+  authMiddleware.authorize('create', 'Review'), // Add authorization
   validate(createReviewSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -75,12 +87,13 @@ reviewsRouter.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Update a review by ID (only by the user who created it or admin)
 reviewsRouter.put(
   '/:id',
+  authMiddleware.authorize('update', 'Review'), // Add authorization
   validate(updateReviewSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -94,12 +107,13 @@ reviewsRouter.put(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Delete a review by ID (only by the user who created it or admin)
 reviewsRouter.delete(
   '/:id',
+  authMiddleware.authorize('delete', 'Review'), // Add authorization
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = (req as any).user.id;
@@ -112,7 +126,7 @@ reviewsRouter.delete(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 export default reviewsRouter;

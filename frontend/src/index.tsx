@@ -1,15 +1,22 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import * as Sentry from "@sentry/react";
+import { showReportDialog } from "@sentry/react"; // Importar showReportDialog
 import './index.css';
+import './i18n'; // Importar a configuração do i18n
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { I18nextProvider } from 'react-i18next';
-import i18n from './i18n';
+import { GlobalStyle } from './styles/globalStyles';
 
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { SoundProvider } from './contexts/SoundContext';
+import { AnimationProvider } from './contexts/CartAnimationContext'; // Import AnimationProvider
+import { CartProvider } from './contexts/CartContext'; // Import CartProvider
+import { PermissionProvider } from './contexts/PermissionContext'; // Import PermissionProvider
 
 import * as serviceWorkerRegistration from './serviceWorkerRegistration.ts';
 
@@ -35,18 +42,28 @@ const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 
+const queryClient = new QueryClient();
+
 root.render(
   <React.StrictMode>
     <Sentry.ErrorBoundary fallback={<p>An unexpected error has occurred.</p>}>
-      <NotificationProvider>
+      <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <I18nextProvider i18n={i18n}>
+          <PermissionProvider> {/* Add PermissionProvider */}
             <ThemeProvider>
-              <App />
+              <SoundProvider>
+                <NotificationProvider>
+                  <AnimationProvider> {/* Add AnimationProvider */}
+                    <CartProvider> {/* Add CartProvider */}
+                      <App />
+                    </CartProvider>
+                  </AnimationProvider>
+                </NotificationProvider>
+              </SoundProvider>
             </ThemeProvider>
-          </I18nextProvider>
+          </PermissionProvider>
         </AuthProvider>
-      </NotificationProvider>
+      </QueryClientProvider>
     </Sentry.ErrorBoundary>
   </React.StrictMode>
 );

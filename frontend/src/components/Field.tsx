@@ -10,7 +10,10 @@ interface FieldProps {
 }
 
 const Field: React.FC<FieldProps> = ({ name, label, type = 'text', ...rest }) => {
-  const { register, formState: { errors } } = useFormContext();
+  const {
+    register,
+    formState: { errors },
+  } = useFormContext();
   const error = get(errors, name);
 
   return (

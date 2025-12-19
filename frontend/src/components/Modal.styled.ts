@@ -1,4 +1,3 @@
-
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 
@@ -19,7 +18,7 @@ export const ModalContent = styled(motion.div)`
   background-color: ${({ theme }) => theme.colors.surface};
   color: ${({ theme }) => theme.colors.onSurface};
   border-radius: ${({ theme }) => theme.spacing.xs};
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   padding: ${({ theme }) => theme.spacing.md};
   max-width: 500px;
   width: 90%;

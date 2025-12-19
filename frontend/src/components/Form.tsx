@@ -8,10 +8,18 @@ interface FormProps<TFormValues extends FieldValues> extends UseFormProps<TFormV
   className?: string;
 }
 
-const Form = <TFormValues extends FieldValues>({ onSubmit, children, className, ...useFormProps }: FormProps<TFormValues>) => {
+const Form = <TFormValues extends FieldValues>({
+  onSubmit,
+  children,
+  className,
+  ...useFormProps
+}: FormProps<TFormValues>) => {
   const methods = useForm<TFormValues>(useFormProps);
   return (
-    <StyledForm onSubmit={methods.handleSubmit((data) => onSubmit(data, methods))} className={className}>
+    <StyledForm
+      onSubmit={methods.handleSubmit((data) => onSubmit(data, methods))}
+      className={className}
+    >
       {children(methods)}
     </StyledForm>
   );

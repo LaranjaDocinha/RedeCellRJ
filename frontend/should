@@ -1,0 +1,35 @@
+
+> frontend@0.1.0 test
+> cross-env NODE_OPTIONS=--max-old-space-size=8192 vitest src/components/Button.test.tsx --testNamePattern 'Button \ \ have no accessibility violations for all variants$'
+
+
+[1m[44m DEV [49m[22m [34mv3.2.4 [39m[90mC:/Users/Dell/OneDrive/Documentos/RedecellRJ/frontend[39m
+
+ [2m[90m↓[39m[22m src/components/Radio.test.tsx [2m([22m[2m10 tests[22m[2m | [22m[33m10 skipped[39m[2m)[22m
+ [32m✓[39m src/components/ToggleButtonGroup.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 1117[2mms[22m[39m
+   [33m[2m✓[22m[39m ToggleButtonGroup Accessibility[2m > [22mshould not have any accessibility violations for exclusive selection [33m 561[2mms[22m[39m
+ [2m[90m↓[39m[22m src/pages/DashboardPage.test.tsx [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/components/Checkbox.test.tsx [2m([22m[2m10 tests[22m[2m | [22m[33m10 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/components/Switch.test.tsx [2m([22m[2m10 tests[22m[2m | [22m[33m10 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/components/QuantitySelector.test.tsx [2m([22m[2m5 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/components/CategoryFilter.test.tsx [2m([22m[2m4 tests[22m[2m | [22m[33m4 skipped[39m[2m)[22m
+ [32m✓[39m src/temp/mui-styled-combo.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 554[2mms[22m[39m
+   [33m[2m✓[22m[39m MUI and Styled Components Combo Test with Project ThemeProvider and GlobalStyle[2m > [22mshould render a MUI Button inside a styled component with Project ThemeProvider and GlobalStyle and have no accessibility violations [33m 551[2mms[22m[39m
+ [2m[90m↓[39m[22m src/hooks/useCounter.test.ts [2m([22m[2m4 tests[22m[2m | [22m[33m4 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/pages/KanbanPage.test.tsx [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/components/ProductCard.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[33m2 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/App.test.tsx [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/temp/styled-button.test.tsx [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/components/Accordion.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[33m2 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/components/RatingStars.test.tsx [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/components/ScrollToTopButton.test.tsx [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/components/EmptyState.test.tsx [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [32m✓[39m src/temp/mui-button.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 144[2mms[22m[39m
+ [2m[90m↓[39m[22m src/components/ProductCardSkeleton.test.tsx [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/components/AnimatedStepper.test.tsx [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/components/PriceRangeSlider.test.tsx [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/components/Dropdown.test.tsx [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/components/HeroSection.test.tsx [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/components/Snackbar.test.tsx [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/components/Modal.test.tsx [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m src/components/LoadingSpinner.test.tsx [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m

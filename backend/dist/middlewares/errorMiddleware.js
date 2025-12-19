@@ -1,18 +1,31 @@
-import { AppError } from '../utils/errors.js';
+import { AppError, ValidationError, NotFoundError, AuthenticationError, AuthorizationError, } from '../utils/errors.js';
 const errorMiddleware = (err, req, res, next) => {
-    if (err instanceof AppError) {
-        const appError = err; // Explicitly cast to AppError
-        // Log the error unless in a test environment
-        if (process.env.NODE_ENV !== 'test') {
-            console.error(`AppError: ${appError.statusCode} - ${appError.message}`, appError.errors ? JSON.stringify(appError.errors) : '');
-        }
-        return res.status(appError.statusCode).json(Object.assign({ status: 'error', message: appError.message }, (appError.errors && { errors: appError.errors })));
-    }
-    // Log the full error for unexpected errors, unless in a test environment
+    // Log a todos os erros, exceto em teste
     if (process.env.NODE_ENV !== 'test') {
-        console.error('Internal Server Error:', err);
+        console.error(err);
     }
-    // In a development environment, send detailed error information
+    // Tratamento específico para cada tipo de erro conhecido
+    if (err instanceof ValidationError) {
+        return res.status(err.statusCode).json({
+            status: 'error',
+            message: err.message,
+            errors: err.errors,
+        });
+    }
+    if (err instanceof NotFoundError || err instanceof AuthenticationError || err instanceof AuthorizationError) {
+        return res.status(err.statusCode).json({
+            status: 'error',
+            message: err.message,
+        });
+    }
+    // Tratamento genérico para AppError (caso outras subclasses existam)
+    if (err instanceof AppError) {
+        return res.status(err.statusCode).json({
+            status: 'error',
+            message: err.message,
+        });
+    }
+    // Tratamento para erros inesperados
     if (process.env.NODE_ENV === 'development') {
         return res.status(500).json({
             status: 'error',
@@ -20,7 +33,6 @@ const errorMiddleware = (err, req, res, next) => {
             stack: err.stack,
         });
     }
-    // In a production environment, send a generic message
     return res.status(500).json({
         status: 'error',
         message: 'Internal Server Error',

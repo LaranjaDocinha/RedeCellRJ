@@ -1,0 +1,220 @@
+import { getPool } from '../db/index.js';
+import { AppError } from '../utils/errors.js';
+export const loyaltyService = {
+    async getLoyaltyPoints(userId) {
+        const { rows } = await getPool().query('SELECT loyalty_points FROM users WHERE id = $1', [
+            userId,
+        ]);
+        if (rows.length === 0) {
+            throw new AppError('User not found', 404);
+        }
+        return rows[0].loyalty_points;
+    },
+    async addLoyaltyPoints(userId, points, reason) {
+        const client = await getPool().connect();
+        try {
+            await client.query('BEGIN');
+            // Update user's points
+            const { rows: [user], } = await client.query('UPDATE users SET loyalty_points = loyalty_points + $1 WHERE id = $2 RETURNING loyalty_points', [points, userId]);
+            if (!user) {
+                throw new AppError('User not found.', 404);
+            }
+            // Log transaction
+            await client.query('INSERT INTO loyalty_transactions (user_id, points_change, reason) VALUES ($1, $2, $3)', [userId, points, reason]);
+            await client.query('COMMIT');
+            return user.loyalty_points;
+        }
+        catch (error) {
+            await client.query('ROLLBACK');
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw error;
+        }
+        finally {
+            client.release();
+        }
+    },
+    async redeemLoyaltyPoints(userId, points, reason) {
+        const client = await getPool().connect();
+        try {
+            await client.query('BEGIN');
+            // Check if user has enough points
+            const { rows: [user], } = await client.query('SELECT loyalty_points FROM users WHERE id = $1 FOR UPDATE', [userId]);
+            if (!user) {
+                throw new AppError('User not found', 404);
+            }
+            if (user.loyalty_points < points) {
+                throw new AppError('Insufficient loyalty points.', 400);
+            }
+            // Deduct points
+            const { rows: [updatedUser], } = await client.query('UPDATE users SET loyalty_points = loyalty_points - $1 WHERE id = $2 RETURNING loyalty_points', [points, userId]);
+            // Log transaction
+            await client.query('INSERT INTO loyalty_transactions (user_id, points_change, reason) VALUES ($1, $2, $3)', [userId, -points, reason]);
+            await client.query('COMMIT');
+            return updatedUser.loyalty_points;
+        }
+        catch (error) {
+            await client.query('ROLLBACK');
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw error;
+        }
+        finally {
+            client.release();
+        }
+    },
+    async getLoyaltyTransactions(userId) {
+        const { rows: userCheck } = await getPool().query('SELECT id FROM users WHERE id = $1', [
+            userId,
+        ]);
+        if (userCheck.length === 0) {
+            throw new AppError('User not found', 404);
+        }
+        const { rows } = await getPool().query('SELECT points_change, reason, created_at FROM loyalty_transactions WHERE user_id = $1 ORDER BY created_at DESC', [userId]);
+        return rows;
+    },
+    // Loyalty Tier Management
+    async getAllLoyaltyTiers() {
+        const result = await getPool().query('SELECT * FROM loyalty_tiers ORDER BY min_points ASC');
+        return result.rows;
+    },
+    async getLoyaltyTierById(id) {
+        const result = await getPool().query('SELECT * FROM loyalty_tiers WHERE id = $1', [id]);
+        return result.rows[0];
+    },
+    async createLoyaltyTier(payload) {
+        const { name, min_points, description, benefits } = payload;
+        try {
+            const result = await getPool().query('INSERT INTO loyalty_tiers (name, min_points, description, benefits) VALUES ($1, $2, $3, $4) RETURNING *', [name, min_points, description, benefits]);
+            return result.rows[0];
+        }
+        catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            if (error instanceof Error && error.code === '23505') {
+                // Unique violation error code
+                throw new AppError('Loyalty tier with this name or min_points already exists', 409);
+            }
+            throw error;
+        }
+    },
+    async updateLoyaltyTier(id, payload) {
+        const { name, min_points, description, benefits } = payload;
+        const fields = [];
+        const values = [];
+        let paramIndex = 1;
+        if (name !== undefined) {
+            fields.push(`name = $${paramIndex++}`);
+            values.push(name);
+        }
+        if (min_points !== undefined) {
+            fields.push(`min_points = $${paramIndex++}`);
+            values.push(min_points);
+        }
+        if (description !== undefined) {
+            fields.push(`description = $${paramIndex++}`);
+            values.push(description);
+        }
+        if (benefits !== undefined) {
+            fields.push(`benefits = $${paramIndex++}`);
+            values.push(benefits);
+        }
+        if (fields.length === 0) {
+            const existingTier = await this.getLoyaltyTierById(id);
+            if (!existingTier) {
+                return undefined; // No tier found to update
+            }
+            return existingTier; // No fields to update, return existing tier
+        }
+        values.push(id); // Add id for WHERE clause
+        const query = `UPDATE loyalty_tiers SET ${fields.join(', ')}, updated_at = current_timestamp WHERE id = $${paramIndex} RETURNING *`;
+        try {
+            const result = await getPool().query(query, values);
+            return result.rows[0];
+        }
+        catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            if (error instanceof Error && error.code === '23505') {
+                // Unique violation error code
+                throw new AppError('Loyalty tier with this name or min_points already exists', 409);
+            }
+            throw error;
+        }
+    },
+    async deleteLoyaltyTier(id) {
+        const result = await getPool().query('DELETE FROM loyalty_tiers WHERE id = $1 RETURNING id', [
+            id,
+        ]);
+        return (result?.rowCount ?? 0) > 0;
+    },
+    async getUserLoyaltyTier(userId) {
+        const userPoints = await this.getLoyaltyPoints(userId);
+        const result = await getPool().query('SELECT * FROM loyalty_tiers WHERE min_points <= $1 ORDER BY min_points DESC LIMIT 1', [userPoints]);
+        return result.rows[0];
+    },
+    async updateAllCustomerTiers() {
+        const client = await getPool().connect();
+        try {
+            await client.query('BEGIN');
+            // 1. Get all tiers, ordered from highest to lowest
+            const tiersResult = await client.query('SELECT * FROM loyalty_tiers ORDER BY min_points DESC');
+            const tiers = tiersResult.rows;
+            if (tiers.length === 0) {
+                console.log('No loyalty tiers defined. Skipping tier update.');
+                await client.query('COMMIT');
+                return;
+            }
+            // 2. Get all customers with their loyalty points (joining on email)
+            const customersResult = await client.query(`
+        SELECT c.id, c.loyalty_tier_id, u.loyalty_points
+        FROM customers c
+        JOIN users u ON c.email = u.email
+      `);
+            const customers = customersResult.rows;
+            const updates = [];
+            // 3. Determine the new tier for each customer
+            for (const customer of customers) {
+                let newTierId = null;
+                for (const tier of tiers) {
+                    if (customer.loyalty_points >= tier.min_points) {
+                        newTierId = tier.id;
+                        break; // Found the highest applicable tier
+                    }
+                }
+                if (customer.loyalty_tier_id !== newTierId) {
+                    updates.push({ customerId: customer.id, newTierId });
+                }
+            }
+            if (updates.length === 0) {
+                console.log('All customer loyalty tiers are up to date.');
+                await client.query('COMMIT');
+                return;
+            }
+            // 4. Batch update the customers table
+            const values = updates.map((u) => `(${u.customerId}, ${u.newTierId})`).join(',');
+            const updateQuery = `
+        UPDATE customers SET loyalty_tier_id = temp.new_tier_id
+        FROM (VALUES
+          ${values}
+        ) AS temp(customer_id, new_tier_id)
+        WHERE customers.id = temp.customer_id;
+      `;
+            await client.query(updateQuery);
+            await client.query('COMMIT');
+            console.log(`Updated loyalty tiers for ${updates.length} customers.`);
+        }
+        catch (error) {
+            await client.query('ROLLBACK');
+            console.error('Error updating customer loyalty tiers:', error);
+            throw error;
+        }
+        finally {
+            client.release();
+        }
+    },
+};

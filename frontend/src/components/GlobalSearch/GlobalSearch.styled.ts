@@ -1,4 +1,3 @@
-
 import styled, { css } from 'styled-components';
 import { motion } from 'framer-motion';
 
@@ -71,9 +70,11 @@ export const ResultItem = styled.div<{ isSelected: boolean }>`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
 
-  ${({ isSelected, theme }) => isSelected && css`
-    background: ${theme.colors.primary}22;
-  `}
+  ${({ isSelected, theme }) =>
+    isSelected &&
+    css`
+      background: ${theme.colors.primary}22;
+    `}
 
   &:hover {
     background: ${({ theme }) => theme.colors.primary}11;

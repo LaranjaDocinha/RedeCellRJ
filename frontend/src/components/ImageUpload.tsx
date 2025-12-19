@@ -33,7 +33,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, current
     formData.append('image', selectedFile);
 
     try {
-      const response = await fetch('/uploads', { // Assuming proxy is set up for /uploads to backend
+      const response = await fetch('/api/uploads', {
+        // Assuming proxy is set up for /uploads to backend
         method: 'POST',
         body: formData,
       });
@@ -68,7 +69,11 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, current
       />
       {previewUrl && (
         <div className="mt-4">
-          <img src={previewUrl} alt="Image Preview" className="max-w-xs max-h-48 object-contain rounded-md" />
+          <img
+            src={previewUrl}
+            alt="Image Preview"
+            className="max-w-xs max-h-48 object-contain rounded-md"
+          />
         </div>
       )}
       <button

@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { returnService } from '../services/returnService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
+
 import { ValidationError, AppError } from '../utils/errors.js';
 
 const returnsRouter = Router();
@@ -19,56 +20,70 @@ const createReturnSchema = z.object({
   items: z.array(createReturnItemSchema).min(1, 'At least one item must be returned'),
 });
 
-const updateReturnSchema = z.object({
-  reason: z.string().trim().optional(),
-  status: z.enum(['pending', 'approved', 'rejected', 'completed'], { message: 'Invalid return status' }).optional(),
-  refund_amount: z.number().positive('Refund amount must be a positive number').optional(),
-}).partial();
+const updateReturnSchema = z
+  .object({
+    reason: z.string().trim().optional(),
+    status: z
+      .enum(['pending', 'approved', 'rejected', 'completed'], { message: 'Invalid return status' })
+      .optional(),
+    refund_amount: z.number().positive('Refund amount must be a positive number').optional(),
+  })
+  .partial();
 
 // Validation Middleware
-const validate = (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
-  try {
-    schema.parse(req.body);
-    next();
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return next(new ValidationError('Validation failed', error.errors.map(err => ({ path: err.path.join('.'), message: err.message }))));
+const validate =
+  (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
+    try {
+      schema.parse(req.body);
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return next(
+          new ValidationError(
+            'Validation failed',
+            error.errors.map((err) => ({ path: err.path.join('.'), message: err.message })),
+          ),
+        );
+      }
+      next(error);
     }
-    next(error);
-  }
-};
+  };
 
 returnsRouter.use(authMiddleware.authenticate);
-returnsRouter.use(authMiddleware.authorize('manage', 'Returns')); // Only users with manage:Returns permission can access these routes
+returnsRouter.use(authMiddleware.authorize('manage', 'Return')); // Only users with manage:Returns permission can access these routes
 
 // Get all returns
-returnsRouter.get(
-  '/',
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const returns = await returnService.getAllReturns();
-      res.status(200).json(returns);
-    } catch (error) {
-      next(error);
-    }
+returnsRouter.get('/', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const returns = await returnService.getAllReturns();
+    res.status(200).json(returns);
+  } catch (error) {
+    next(error);
   }
-);
+});
+
+// Get all items pending quarantine inspection
+returnsRouter.get('/quarantine', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const items = await returnService.getPendingInspectionItems();
+    res.status(200).json(items);
+  } catch (error) {
+    next(error);
+  }
+});
 
 // Get return by ID
-returnsRouter.get(
-  '/:id',
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const returnRecord = await returnService.getReturnById(parseInt(req.params.id));
-      if (!returnRecord) {
-        throw new AppError('Return not found', 404);
-      }
-      res.status(200).json(returnRecord);
-    } catch (error) {
-      next(error);
+returnsRouter.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const returnRecord = await returnService.getReturnById(parseInt(req.params.id));
+    if (!returnRecord) {
+      throw new AppError('Return not found', 404);
     }
+    res.status(200).json(returnRecord);
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 // Create a new return
 returnsRouter.post(
@@ -81,7 +96,7 @@ returnsRouter.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Update a return by ID
@@ -98,23 +113,20 @@ returnsRouter.put(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Delete a return by ID
-returnsRouter.delete(
-  '/:id',
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const deleted = await returnService.deleteReturn(parseInt(req.params.id));
-      if (!deleted) {
-        throw new AppError('Return not found', 404);
-      }
-      res.status(204).send();
-    } catch (error) {
-      next(error);
+returnsRouter.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const deleted = await returnService.deleteReturn(parseInt(req.params.id));
+    if (!deleted) {
+      throw new AppError('Return not found', 404);
     }
+    res.status(204).send();
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 export default returnsRouter;

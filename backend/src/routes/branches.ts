@@ -9,37 +9,43 @@ const branchesRouter = Router();
 // Zod Schemas
 const createBranchSchema = z.object({
   name: z.string().trim().nonempty('Branch name is required'),
-  address: z.string().trim().optional(),
+  address: z.string().trim().nonempty('Address is required'),
   phone: z.string().trim().optional(),
-  email: z.string().email('Invalid email format').optional(),
 });
 
-const updateBranchSchema = z.object({
-  name: z.string().trim().nonempty('Branch name cannot be empty').optional(),
-  address: z.string().trim().optional(),
-  phone: z.string().trim().optional(),
-  email: z.string().email('Invalid email format').optional(),
-}).partial();
+const updateBranchSchema = z
+  .object({
+    name: z.string().trim().nonempty('Branch name cannot be empty').optional(),
+    address: z.string().trim().nonempty('Address cannot be empty').optional(),
+    phone: z.string().trim().optional(),
+  })
+  .partial();
 
 // Validation Middleware
-const validate = (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
-  try {
-    schema.parse(req.body);
-    next();
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return next(new ValidationError('Validation failed', error.errors.map(err => ({ path: err.path.join('.'), message: err.message }))));
+const validate =
+  (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
+    try {
+      schema.parse(req.body);
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return next(
+          new ValidationError(
+            'Validation failed',
+            error.errors.map((err) => ({ path: err.path.join('.'), message: err.message })),
+          ),
+        );
+      }
+      next(error);
     }
-    next(error);
-  }
-};
+  };
 
 branchesRouter.use(authMiddleware.authenticate);
-branchesRouter.use(authMiddleware.authorize('manage', 'Branches')); // New permission for managing branches
 
 // Get all branches
 branchesRouter.get(
   '/',
+  authMiddleware.authorize('read', 'Branch'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const branches = await branchService.getAllBranches();
@@ -47,15 +53,20 @@ branchesRouter.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Get branch by ID
 branchesRouter.get(
   '/:id',
+  authMiddleware.authorize('read', 'Branch'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const branch = await branchService.getBranchById(parseInt(req.params.id));
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        throw new AppError('Invalid branch ID', 400);
+      }
+      const branch = await branchService.getBranchById(id);
       if (!branch) {
         throw new AppError('Branch not found', 404);
       }
@@ -63,12 +74,13 @@ branchesRouter.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Create a new branch
 branchesRouter.post(
   '/',
+  authMiddleware.authorize('create', 'Branch'),
   validate(createBranchSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -77,16 +89,21 @@ branchesRouter.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Update a branch by ID
 branchesRouter.put(
   '/:id',
+  authMiddleware.authorize('update', 'Branch'),
   validate(updateBranchSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const updatedBranch = await branchService.updateBranch(parseInt(req.params.id), req.body);
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        throw new AppError('Invalid branch ID', 400);
+      }
+      const updatedBranch = await branchService.updateBranch(id, req.body);
       if (!updatedBranch) {
         throw new AppError('Branch not found', 404);
       }
@@ -94,15 +111,20 @@ branchesRouter.put(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Delete a branch by ID
 branchesRouter.delete(
   '/:id',
+  authMiddleware.authorize('delete', 'Branch'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const deleted = await branchService.deleteBranch(parseInt(req.params.id));
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        throw new AppError('Invalid branch ID', 400);
+      }
+      const deleted = await branchService.deleteBranch(id);
       if (!deleted) {
         throw new AppError('Branch not found', 404);
       }
@@ -110,7 +132,7 @@ branchesRouter.delete(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 export default branchesRouter;

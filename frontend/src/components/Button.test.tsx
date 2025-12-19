@@ -1,10 +1,10 @@
-
 import React from 'react';
-import { render, screen } from '../test-utils/TestWrapper';
-import { axe, toHaveNoViolations } from 'jest-axe';
+import { render } from '@testing-library/react';
 import { Button } from './Button';
-import '@testing-library/jest-dom';
+import { toHaveNoViolations } from 'jest-axe';
+import { axe } from 'jest-axe';
 
+// Adiciona toHaveNoViolations ao expect do Vitest
 expect.extend(toHaveNoViolations);
 
 describe('Button Accessibility', () => {
@@ -14,20 +14,14 @@ describe('Button Accessibility', () => {
     expect(results).toHaveNoViolations();
   });
 
-  it('should not have any accessibility violations for a disabled button', async () => {
+  it('should not have any accessibility violations when disabled', async () => {
     const { container } = render(<Button label="Disabled Button" disabled />);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 
-  it('should not have any accessibility violations for an outlined button', async () => {
-    const { container } = render(<Button label="Outlined Button" variant="outlined" />);
-    const results = await axe(container);
-    expect(results).toHaveNoViolations();
-  });
-
-  it('should not have any accessibility violations for a text button', async () => {
-    const { container } = render(<Button label="Text Button" variant="text" />);
+  it('should not have any accessibility violations when loading', async () => {
+    const { container } = render(<Button label="Loading Button" loading />);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });

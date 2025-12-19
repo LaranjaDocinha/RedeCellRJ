@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { tagService } from '../services/tagService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
+
 import { ValidationError, AppError } from '../utils/errors.js';
 
 const tagsRouter = Router();
@@ -11,22 +12,30 @@ const createTagSchema = z.object({
   name: z.string().trim().nonempty('Tag name is required'),
 });
 
-const updateTagSchema = z.object({
-  name: z.string().trim().nonempty('Tag name cannot be empty').optional(),
-}).partial();
+const updateTagSchema = z
+  .object({
+    name: z.string().trim().nonempty('Tag name cannot be empty').optional(),
+  })
+  .partial();
 
 // Validation Middleware
-const validate = (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
-  try {
-    schema.parse(req.body);
-    next();
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return next(new ValidationError('Validation failed', error.errors.map(err => ({ path: err.path.join('.'), message: err.message }))));
+const validate =
+  (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
+    try {
+      schema.parse(req.body);
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return next(
+          new ValidationError(
+            'Validation failed',
+            error.errors.map((err) => ({ path: err.path.join('.'), message: err.message })),
+          ),
+        );
+      }
+      next(error);
     }
-    next(error);
-  }
-};
+  };
 
 tagsRouter.use(authMiddleware.authenticate);
 
@@ -41,7 +50,7 @@ tagsRouter.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Get tag by ID
@@ -58,7 +67,7 @@ tagsRouter.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Create a new tag
@@ -73,7 +82,7 @@ tagsRouter.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Update a tag by ID
@@ -91,7 +100,7 @@ tagsRouter.put(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Delete a tag by ID
@@ -108,7 +117,7 @@ tagsRouter.delete(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 export default tagsRouter;

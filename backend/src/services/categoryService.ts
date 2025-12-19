@@ -35,11 +35,12 @@ class CategoryService {
     try {
       const result = await pool.query(
         'INSERT INTO categories (name, description) VALUES ($1, $2) RETURNING *',
-        [name, description]
+        [name, description],
       );
       return result.rows[0];
     } catch (error: any) {
-      if (error.code === '23505') { // Unique violation error code
+      if (error.code === '23505') {
+        // Unique violation error code
         throw new AppError('Category with this name already exists', 409);
       }
       throw error;
@@ -52,8 +53,14 @@ class CategoryService {
     const values: any[] = [];
     let paramIndex = 1;
 
-    if (name !== undefined) { fields.push(`name = $${paramIndex++}`); values.push(name); }
-    if (description !== undefined) { fields.push(`description = $${paramIndex++}`); values.push(description); }
+    if (name !== undefined) {
+      fields.push(`name = $${paramIndex++}`);
+      values.push(name);
+    }
+    if (description !== undefined) {
+      fields.push(`description = $${paramIndex++}`);
+      values.push(description);
+    }
 
     if (fields.length === 0) {
       const existingCategory = await this.getCategoryById(id);
@@ -70,7 +77,8 @@ class CategoryService {
       const result = await pool.query(query, values);
       return result.rows[0];
     } catch (error: any) {
-      if (error.code === '23505') { // Unique violation error code
+      if (error.code === '23505') {
+        // Unique violation error code
         throw new AppError('Category with this name already exists', 409);
       }
       throw error;

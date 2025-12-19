@@ -22,7 +22,7 @@ const SuppliersPage: React.FC = () => {
 
   const fetchSuppliers = async () => {
     try {
-      const response = await fetch('/suppliers'); // Assuming proxy is set up for /suppliers to backend
+      const response = await fetch('/api/suppliers'); // Assuming proxy is set up for /suppliers to backend
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -36,7 +36,7 @@ const SuppliersPage: React.FC = () => {
 
   const handleCreateSupplier = async (supplierData: Omit<Supplier, 'id'>) => {
     try {
-      const response = await fetch('/suppliers', {
+      const response = await fetch('/api/suppliers', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -57,7 +57,7 @@ const SuppliersPage: React.FC = () => {
 
   const handleUpdateSupplier = async (id: number, supplierData: Omit<Supplier, 'id'>) => {
     try {
-      const response = await fetch(`/suppliers/${id}`, {
+      const response = await fetch(`/api/suppliers/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ const SuppliersPage: React.FC = () => {
       return;
     }
     try {
-      const response = await fetch(`/suppliers/${id}`, {
+      const response = await fetch(`/api/suppliers/${id}`, {
         method: 'DELETE',
       });
       if (!response.ok) {

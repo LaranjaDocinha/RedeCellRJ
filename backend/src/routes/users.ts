@@ -11,7 +11,10 @@ const usersRouter = Router(); // Changed from customersRouter
 const createUserSchema = z.object({
   name: z.string().nonempty('Name is required'),
   email: z.string().email('Invalid email format').nonempty('Email is required'),
-  password: z.string().min(6, 'Password must be at least 6 characters long').nonempty('Password is required'),
+  password: z
+    .string()
+    .min(6, 'Password must be at least 6 characters long')
+    .nonempty('Password is required'),
   role: z.string().optional(),
 });
 
@@ -23,21 +26,26 @@ const updateUserSchema = z.object({
 });
 
 // Validation Middleware
-const validate = (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
-  try {
-    schema.parse(req.body);
-    next();
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return next(new ValidationError('Validation failed', error.errors.map(err => ({ path: err.path.join('.'), message: err.message }))));
+const validate =
+  (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
+    try {
+      schema.parse(req.body);
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return next(
+          new ValidationError(
+            'Validation failed',
+            error.errors.map((err) => ({ path: err.path.join('.'), message: err.message })),
+          ),
+        );
+      }
+      next(error);
     }
-    next(error);
-  }
-};
+  };
 
-
-
-usersRouter.get( // Changed from customersRouter
+usersRouter.get(
+  // Changed from customersRouter
   '/',
   authMiddleware.authenticate,
   authMiddleware.authorize('read', 'User'),
@@ -48,10 +56,11 @@ usersRouter.get( // Changed from customersRouter
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
-usersRouter.get( // Changed from customersRouter
+usersRouter.get(
+  // Changed from customersRouter
   '/:id',
   authMiddleware.authenticate,
   authMiddleware.authorize('read', 'User'),
@@ -65,10 +74,11 @@ usersRouter.get( // Changed from customersRouter
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
-usersRouter.post( // Changed from customersRouter
+usersRouter.post(
+  // Changed from customersRouter
   '/',
   authMiddleware.authenticate,
   authMiddleware.authorize('create', 'User'),
@@ -80,10 +90,11 @@ usersRouter.post( // Changed from customersRouter
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
-usersRouter.put( // Changed from customersRouter
+usersRouter.put(
+  // Changed from customersRouter
   '/:id',
   authMiddleware.authenticate,
   authMiddleware.authorize('update', 'User'),
@@ -98,10 +109,11 @@ usersRouter.put( // Changed from customersRouter
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
-usersRouter.delete( // Changed from customersRouter
+usersRouter.delete(
+  // Changed from customersRouter
   '/:id',
   authMiddleware.authenticate,
   authMiddleware.authorize('delete', 'User'),
@@ -115,7 +127,7 @@ usersRouter.delete( // Changed from customersRouter
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 export { usersRouter }; // Changed from customersRouter

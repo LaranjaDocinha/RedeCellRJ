@@ -1,65 +1,51 @@
 import React from 'react';
+import { FaEdit, FaTrash, FaEye } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
+import { ActionButton, StyledTableContainer, StyledTable, StyledTableBody } from './CustomerList.styled'; // Assuming these are styled components
 
-interface Customer {
-  id: number;
+interface Customer { // Assuming a basic Customer interface
+  id: string;
   name: string;
-  email: string;
-  phone?: string;
-  address?: string;
+  // Add other customer properties as needed
 }
 
 interface CustomerListProps {
   customers: Customer[];
-  onEdit: (id: number) => void;
-  onDelete: (id: number) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 export const CustomerList: React.FC<CustomerListProps> = ({ customers, onEdit, onDelete }) => {
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-        <thead className="bg-gray-800 text-white">
-          <tr>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">ID</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Name</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Email</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Phone</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Address</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="text-gray-700">
-          {customers.length === 0 ? (
-            <tr>
-              <td colSpan={6} className="text-center py-4">No customers found.</td>
+    <StyledTableContainer>
+      <StyledTable>
+        <StyledTableBody>
+          {customers.map((customer) => (
+            <tr key={customer.id}>
+              <td>{customer.name}</td>
+              <td>
+                <ActionButton as={Link} to={`/customers/${customer.id}`} color="view" aria-label={`View ${customer.name}`}>
+                  <FaEye />
+                </ActionButton>
+                <ActionButton
+                  onClick={() => onEdit(customer.id)}
+                  color="edit"
+                  aria-label={`Edit ${customer.name}`}
+                >
+                  <FaEdit />
+                </ActionButton>
+                <ActionButton
+                  onClick={() => onDelete(customer.id)}
+                  color="delete"
+                  aria-label={`Delete ${customer.name}`}
+                >
+                  <FaTrash />
+                </ActionButton>
+              </td>
             </tr>
-          ) : (
-            customers.map((customer) => (
-              <tr key={customer.id} className="border-b border-gray-200 hover:bg-gray-100">
-                <td className="py-3 px-4">{customer.id}</td>
-                <td className="py-3 px-4">{customer.name}</td>
-                <td className="py-3 px-4">{customer.email}</td>
-                <td className="py-3 px-4">{customer.phone || 'N/A'}</td>
-                <td className="py-3 px-4">{customer.address || 'N/A'}</td>
-                <td className="py-3 px-4">
-                  <button
-                    onClick={() => onEdit(customer.id)}
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs mr-2"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => onDelete(customer.id)}
-                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-xs"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+          ))}
+        </StyledTableBody>
+      </StyledTable>
+    </StyledTableContainer>
   );
 };

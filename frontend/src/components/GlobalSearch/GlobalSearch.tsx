@@ -1,17 +1,17 @@
-
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaSearch, FaBoxOpen, FaUser, FaExclamationTriangle } from 'react-icons/fa';
 import { AnimatePresence } from 'framer-motion';
-import { 
-  Overlay, 
-  SearchContainer, 
-  SearchInputWrapper, 
-  SearchInput, 
-  ResultsContainer, 
-  ResultGroupTitle, 
-  ResultItem, 
-  NoResults 
+import { useAnimationPreference } from '../../contexts/AnimationPreferenceContext'; // Importar o hook
+import {
+  Overlay,
+  SearchContainer,
+  SearchInputWrapper,
+  SearchInput,
+  ResultsContainer,
+  ResultGroupTitle,
+  ResultItem,
+  NoResults,
 } from './GlobalSearch.styled';
 
 // Debounce hook
@@ -32,14 +32,17 @@ interface SearchResult {
   id: string;
   name: string;
   type: 'product' | 'customer';
+  imageUrl?: string;
 }
 
 interface GlobalSearchProps {
-  isOpen: boolean;
+  $isOpen: boolean;
   onClose: () => void;
 }
 
-const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) => {
+const GlobalSearch: React.FC<GlobalSearchProps> = React.memo(({ $isOpen, onClose }) => {
+  const { prefersReducedMotion } = useAnimationPreference(); // Usar o hook
+
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,10 +53,10 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isOpen) {
+    if ($isOpen) {
       inputRef.current?.focus();
     }
-  }, [isOpen]);
+  }, [$isOpen]);
 
   useEffect(() => {
     if (debouncedQuery) {
@@ -62,13 +65,13 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) => {
       setSelectedIndex(0);
       // A requisição agora usará o proxy configurado no package.json
       fetch(`/api/search?q=${debouncedQuery}`)
-        .then(res => {
+        .then((res) => {
           if (!res.ok) {
             throw new Error('Search request failed');
           }
           return res.json();
         })
-        .then(data => {
+        .then((data) => {
           const combinedResults: SearchResult[] = [
             ...data.products.map((p: any) => ({ ...p, type: 'product' })),
             ...data.customers.map((c: any) => ({ ...c, type: 'customer' })),
@@ -76,7 +79,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) => {
           setResults(combinedResults);
           setLoading(false);
         })
-        .catch(err => {
+        .catch((err) => {
           console.error('Search failed:', err);
           setError('Could not fetch search results. Please try again.');
           setLoading(false);
@@ -92,32 +95,38 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) => {
     onClose();
   }, [onClose]);
 
-  const handleNavigation = useCallback((item: SearchResult) => {
-    if (!item) return;
-    if (item.type === 'product') {
-      navigate(`/products/${item.id}`);
-    } else if (item.type === 'customer') {
-      // TODO: Create a customer detail page and navigate to it.
-      console.log(`Navigate to customer: ${item.name} (id: ${item.id})`);
-      navigate(`/dashboard`); // Navigate to a safe page for now
-    }
-    handleClose();
-  }, [navigate, handleClose]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex(prev => (prev + 1) % results.length);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex(prev => (prev - 1 + results.length) % results.length);
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (results[selectedIndex]) {
-        handleNavigation(results[selectedIndex]);
+  const handleNavigation = useCallback(
+    (item: SearchResult) => {
+      if (!item) return;
+      if (item.type === 'product') {
+        navigate(`/products/${item.id}`);
+      } else if (item.type === 'customer') {
+        // TODO: Create a customer detail page and navigate to it.
+        console.log(`Navigate to customer: ${item.name} (id: ${item.id})`);
+        navigate(`/dashboard`); // Navigate to a safe page for now
       }
-    }
-  }, [results, selectedIndex, handleNavigation]);
+      handleClose();
+    },
+    [navigate, handleClose],
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev + 1) % results.length);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev - 1 + results.length) % results.length);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (results[selectedIndex]) {
+          handleNavigation(results[selectedIndex]);
+        }
+      }
+    },
+    [results, selectedIndex, handleNavigation],
+  );
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -135,7 +144,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) => {
   };
 
   const containerVariants = {
-    hidden: { opacity: 0, scale: 0.95 },
+    hidden: { opacity: 0, scale: prefersReducedMotion ? 1 : 0.95 }, // Simplificar para movimento reduzido
     visible: { opacity: 1, scale: 1 },
   };
 
@@ -143,18 +152,18 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) => {
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      {$isOpen && (
         <Overlay
           initial="hidden"
           animate="visible"
           exit="hidden"
           variants={overlayVariants}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: prefersReducedMotion ? 0.1 : 0.2 }} // Duração menor para movimento reduzido
           onClick={handleClose}
         >
           <SearchContainer
             variants={containerVariants}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: prefersReducedMotion ? 0.1 : 0.2 }} // Duração menor para movimento reduzido
             onClick={(e) => e.stopPropagation()}
             onKeyDown={handleKeyDown}
           >
@@ -169,34 +178,44 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) => {
             </SearchInputWrapper>
             <ResultsContainer>
               {loading && <ResultItem isSelected={false}>Loading...</ResultItem>}
-              {error && <ResultItem isSelected={false}><FaExclamationTriangle /> {error}</ResultItem>}
+              {error && (
+                <ResultItem isSelected={false}>
+                  <FaExclamationTriangle /> {error}
+                </ResultItem>
+              )}
               {!loading && !error && debouncedQuery && !results.length && (
                 <NoResults>No results found for "{debouncedQuery}"</NoResults>
               )}
-              
-              {!loading && !error && results.map((item, index) => {
-                const showTitle = item.type !== lastType;
-                lastType = item.type;
-                return (
-                  <React.Fragment key={item.id}>
-                    {showTitle && <ResultGroupTitle>{item.type}s</ResultGroupTitle>}
-                    <ResultItem
-                      isSelected={selectedIndex === index}
-                      onClick={() => handleNavigation(item)}
-                      onMouseMove={() => setSelectedIndex(index)}
-                    >
-                      {item.type === 'product' ? <FaBoxOpen /> : <FaUser />}
-                      {item.name}
-                    </ResultItem>
-                  </React.Fragment>
-                );
-              })}
+
+              {!loading &&
+                !error &&
+                results.map((item, index) => {
+                  const showTitle = item.type !== lastType;
+                  lastType = item.type;
+                  return (
+                    <React.Fragment key={item.id}>
+                      {showTitle && <ResultGroupTitle>{item.type}s</ResultGroupTitle>}
+                      <ResultItem
+                        isSelected={selectedIndex === index}
+                        onClick={() => handleNavigation(item)}
+                        onMouseMove={() => setSelectedIndex(index)}
+                      >
+                        {item.imageUrl ? (
+                          <img src={item.imageUrl} alt={item.name} style={{ width: 32, height: 32, borderRadius: 4, marginRight: 12 }} />
+                        ) : (
+                          item.type === 'product' ? <FaBoxOpen /> : <FaUser />
+                        )}
+                        {item.name}
+                      </ResultItem>
+                    </React.Fragment>
+                  );
+                })}
             </ResultsContainer>
           </SearchContainer>
         </Overlay>
       )}
     </AnimatePresence>
   );
-};
+});
 
 export default GlobalSearch;

@@ -1,6 +1,5 @@
-
 import React from 'react';
-import styled from 'styled-components';
+import { PaginationContainer, PageButton } from './Pagination.styled';
 
 interface PaginationProps {
   currentPage: number;
@@ -8,55 +7,65 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
-const PaginationContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: ${({ theme }) => theme.spacing.md};
-  gap: ${({ theme }) => theme.spacing.xs};
-`;
-
-const PageButton = styled.button<{ isActive?: boolean }>`
-  background-color: ${({ theme, isActive }) => (isActive ? theme.colors.primary : theme.colors.surface)};
-  color: ${({ theme, isActive }) => (isActive ? theme.colors.onPrimary : theme.colors.onSurface)};
-  border: 1px solid ${({ theme }) => theme.colors.primary};
-  border-radius: ${({ theme }) => theme.spacing.xxs};
-  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-
-  &:hover {
-    background-color: ${({ theme, isActive }) => (isActive ? theme.colors.primaryDark : theme.colors.primaryLight)};
-    color: ${({ theme }) => theme.colors.onPrimary};
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-
 const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPageChange }) => {
-  const pageNumbers = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pageNumbers.push(i);
-  }
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxPagesToShow = 5; // Número máximo de botões de página a serem exibidos
+
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+      let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+      if (endPage - startPage + 1 < maxPagesToShow) {
+        startPage = Math.max(1, endPage - maxPagesToShow + 1);
+      }
+
+      if (startPage > 1) {
+        pageNumbers.push(1);
+        if (startPage > 2) {
+          pageNumbers.push('...');
+        }
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+      }
+
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          pageNumbers.push('...');
+        }
+        pageNumbers.push(totalPages);
+      }
+    }
+    return pageNumbers;
+  };
+
+  const pageNumbersToRender = getPageNumbers();
 
   return (
     <PaginationContainer>
       <PageButton onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}>
         Previous
       </PageButton>
-      {pageNumbers.map((number) => (
+      {pageNumbersToRender.map((number, index) => (
         <PageButton
-          key={number}
-          onClick={() => onPageChange(number)}
+          key={index}
+          onClick={() => typeof number === 'number' && onPageChange(number)}
           isActive={number === currentPage}
+          disabled={typeof number !== 'number'}
         >
           {number}
         </PageButton>
       ))}
-      <PageButton onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}>
+      <PageButton
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+      >
         Next
       </PageButton>
     </PaginationContainer>

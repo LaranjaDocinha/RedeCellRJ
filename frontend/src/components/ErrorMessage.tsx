@@ -1,6 +1,9 @@
-
 import React from 'react';
-import { ErrorMessageContainer, ErrorMessageText, ErrorMessageDetails } from './ErrorMessage.styled';
+import {
+  ErrorMessageContainer,
+  ErrorMessageText,
+  ErrorMessageDetails,
+} from './ErrorMessage.styled';
 
 interface ErrorMessageProps {
   message: string;
@@ -15,4 +18,3 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({ message, details }) 
     </ErrorMessageContainer>
   );
 };
-

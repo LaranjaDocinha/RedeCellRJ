@@ -42,7 +42,9 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({ initialData, onSubmi
   return (
     <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6 space-y-4">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+          Name
+        </label>
         <input
           type="text"
           name="name"
@@ -54,7 +56,9 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({ initialData, onSubmi
         />
       </div>
       <div>
-        <label htmlFor="contact_person" className="block text-sm font-medium text-gray-700">Contact Person</label>
+        <label htmlFor="contact_person" className="block text-sm font-medium text-gray-700">
+          Contact Person
+        </label>
         <input
           type="text"
           name="contact_person"
@@ -65,7 +69,9 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({ initialData, onSubmi
         />
       </div>
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          Email
+        </label>
         <input
           type="email"
           name="email"
@@ -76,7 +82,9 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({ initialData, onSubmi
         />
       </div>
       <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
+        <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+          Phone
+        </label>
         <input
           type="text"
           name="phone"
@@ -87,7 +95,9 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({ initialData, onSubmi
         />
       </div>
       <div>
-        <label htmlFor="address" className="block text-sm font-medium text-gray-700">Address</label>
+        <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+          Address
+        </label>
         <textarea
           name="address"
           id="address"

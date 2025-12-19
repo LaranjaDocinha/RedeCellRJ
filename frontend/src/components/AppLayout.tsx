@@ -1,67 +1,53 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Topbar from './Topbar';
 import Sidebar from './Sidebar';
 import { AppContainer, ContentArea, MainContentArea } from './AppLayout.styled';
-import { Outlet } from 'react-router-dom';
-import GlobalSearch from './GlobalSearch/GlobalSearch'; // Import the component
-import { LanguageSelector } from './LanguageSelector'; // Import LanguageSelector
+import { Outlet, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 
-const AppLayout: React.FC = () => {
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const [isSearchOpen, setSearchOpen] = useState(false); // State for search modal
+import GlobalSearch from './GlobalSearch/GlobalSearch';
+import GuidedTour from './GuidedTour';
+import FeedbackButton from './FeedbackButton';
+import OfflineIndicator from './OfflineIndicator';
+import { offlineSyncService } from '../services/offlineSyncService';
+import AccessibilityMenu from './AccessibilityMenu';
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!isSidebarOpen);
-  };
-
-  // Keyboard shortcut handler
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.key === 'k' && (event.metaKey || event.ctrlKey)) {
-      event.preventDefault();
-      setSearchOpen(isOpen => !isOpen);
-    }
-  }, []);
-
+const AppLayout: React.FC = React.memo(() => {
+  const location = useLocation();
+  // ... (rest of code)
+  
   useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [handleKeyDown]);
+    offlineSyncService.init();
+  }, []);
 
   return (
     <AppContainer>
-      <Topbar onToggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} id="main-sidebar" />
-      <ContentArea sidebarOpen={isSidebarOpen}>
+      <Topbar
+        onToggleSidebar={toggleSidebar}
+        isSidebarOpen={isSidebarOpen}
+        onSearchClick={() => setSearchOpen(true)}
+      />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={useCallback(() => setSidebarOpen(false), [])}
+        id="main-sidebar"
+      />
+      <ContentArea $sidebarOpen={isSidebarOpen}>
         <MainContentArea>
-          <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 9999 }}>
-            <LanguageSelector />
-          </div>
-          {/* Temporary Sentry Test Button - Remove after verification */}
-          <button
-            onClick={() => { throw new Error("Sentry Test Error - This is a test!"); }}
-            style={{
-              position: 'absolute',
-              top: '50px',
-              right: '10px',
-              zIndex: 9999,
-              padding: '5px 10px',
-              backgroundColor: '#f99',
-              border: '1px solid #c00',
-              borderRadius: '5px',
-              cursor: 'pointer'
-            }}
-          >
-            Test Sentry
-          </button>
-          <Outlet />
+          <AnimatePresence mode="wait">
+            <Outlet location={location} key={location.pathname} />
+          </AnimatePresence>
         </MainContentArea>
       </ContentArea>
-      <GlobalSearch isOpen={isSearchOpen} onClose={() => setSearchOpen(false)} />
+      <GlobalSearch $isOpen={isSearchOpen} onClose={useCallback(() => setSearchOpen(false), [])} />
+      <GuidedTour tourKey="dashboardTour" steps={dashboardTourSteps} />
+      <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 10000 }}>
+        <FeedbackButton />
+      </div>
+      <OfflineIndicator />
+      <AccessibilityMenu />
     </AppContainer>
   );
-};
+});
 
 export default AppLayout;

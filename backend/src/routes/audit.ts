@@ -1,42 +1,57 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { z } from 'zod';
-import { auditService } from '../services/auditService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
-import { ValidationError } from '../utils/errors.js';
+import { auditService } from '../services/auditService.js';
+import { z } from 'zod'; // Importar Zod
+import { ValidationError } from '../utils/errors.js'; // Importar ValidationError
 
 const auditRouter = Router();
 
-// Zod Schema for query parameters
-const getAuditLogsSchema = z.object({
-  limit: z.string().regex(/^\d+$/, 'Limit must be a number string').transform(Number).optional(),
-  offset: z.string().regex(/^\d+$/, 'Offset must be a number string').transform(Number).optional(),
+// Zod Schema para os query parameters de logs de auditoria
+const getAuditLogsQuerySchema = z.object({
+  limit: z.preprocess((val) => parseInt(val as string, 10), z.number().int().positive()).default(100),
+  offset: z.preprocess((val) => parseInt(val as string, 10), z.number().int().nonnegative()).default(0),
+  entityType: z.string().optional(),
+  entityId: z.string().optional(),
+  action: z.string().optional(),
+  userId: z.string().optional(),
+  startDate: z.string().datetime().optional(), // Novo filtro
+  endDate: z.string().datetime().optional(),   // Novo filtro
 });
 
-// Validation Middleware for query parameters
-const validateQuery = (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
-  try {
-    schema.parse(req.query);
-    next();
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return next(new ValidationError('Validation failed', error.errors.map(err => ({ path: err.path.join('.'), message: err.message }))));
+// Validation Middleware (reutilizado do search.ts, pode ser movido para um common/middleware)
+const validateQuery =
+  (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
+    try {
+      req.query = schema.parse(req.query);
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return next(
+          new ValidationError(
+            'Validation failed',
+            error.errors.map((err) => ({ path: err.path.join('.'), message: err.message })),
+          ),
+        );
+      }
+      next(error);
     }
-    next(error);
-  }
-};
+  };
 
-auditRouter.use(authMiddleware.authenticate);
-auditRouter.use(authMiddleware.authorize('read', 'AuditLog')); // Only users with read:AuditLog permission can access these routes
-
-// Get audit logs
 auditRouter.get(
   '/',
-  validateQuery(getAuditLogsSchema),
-  async (req: Request, res: Response, next: NextFunction) => {
+  authMiddleware.authenticate,
+  authMiddleware.authorize('read', 'Audit'),
+  validateQuery(getAuditLogsQuerySchema), // Aplicar validação
+  async (req, res, next) => {
     try {
-      const { limit, offset } = req.query;
-      const logs = await auditService.getAuditLogs(Number(limit), Number(offset));
-      res.status(200).json(logs);
+      const { limit, offset, entityType, entityId, action, userId, startDate, endDate } = req.query as unknown as z.infer<typeof getAuditLogsQuerySchema>;
+
+      const filters = {
+        limit, offset, entityType, entityId, action, userId, startDate, endDate,
+      };
+
+      const { logs, totalCount } = await auditService.getAuditLogs(filters); // Chamar com um objeto filters
+      res.status(200).json({ logs, totalCount }); // Retornar logs e totalCount
     } catch (error) {
       next(error);
     }

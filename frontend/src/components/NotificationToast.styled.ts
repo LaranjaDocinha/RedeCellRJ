@@ -1,4 +1,3 @@
-
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 
@@ -23,11 +22,13 @@ const slideIn = keyframes`
   }
 `;
 
-export const StyledNotificationToast = styled(motion.div)<{ type: 'success' | 'error' | 'info' | 'warning' }>`
+export const StyledNotificationToast = styled(motion.div)<{
+  type: 'success' | 'error' | 'info' | 'warning';
+}>`
   padding: 12px 20px;
   border-radius: ${({ theme }) => theme.spacing.xxs};
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-  color: #FFFFFF;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  color: #ffffff;
   font-family: ${({ theme }) => theme.typography.primaryFont};
   font-size: 14px;
   opacity: 0;

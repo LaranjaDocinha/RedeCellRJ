@@ -3,7 +3,7 @@ import { RoleList } from '../components/RoleList';
 import { RoleForm } from '../components/RoleForm';
 import { PermissionList } from '../components/PermissionList';
 import { useAuth } from '../contexts/AuthContext';
-import { useNotification } from '../components/NotificationProvider';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface Role {
   id: number;
@@ -31,7 +31,7 @@ const RolesPage: React.FC = () => {
 
   const fetchRoles = async () => {
     try {
-      const response = await fetch('/roles', {
+      const response = await fetch('/api/roles', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -45,7 +45,7 @@ const RolesPage: React.FC = () => {
 
   const fetchPermissions = async () => {
     try {
-      const response = await fetch('/permissions', {
+      const response = await fetch('/api/permissions', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -59,7 +59,7 @@ const RolesPage: React.FC = () => {
 
   const handleCreateRole = async (roleData: Omit<Role, 'id'>) => {
     try {
-      const response = await fetch('/roles', {
+      const response = await fetch('/api/roles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(roleData),
@@ -77,7 +77,7 @@ const RolesPage: React.FC = () => {
 
   const handleUpdateRole = async (id: number, roleData: Omit<Role, 'id'>) => {
     try {
-      const response = await fetch(`/roles/${id}`, {
+      const response = await fetch(`/api/roles/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(roleData),
@@ -97,7 +97,7 @@ const RolesPage: React.FC = () => {
   const handleDeleteRole = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this role?')) return;
     try {
-      const response = await fetch(`/roles/${id}`, {
+      const response = await fetch(`/api/roles/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -132,7 +132,7 @@ const RolesPage: React.FC = () => {
 
   const handleAssignPermission = async (roleId: number, permissionId: number) => {
     try {
-      const response = await fetch(`/roles/${roleId}/permissions`, {
+      const response = await fetch(`/api/roles/${roleId}/permissions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ permissionId }),
@@ -148,7 +148,7 @@ const RolesPage: React.FC = () => {
 
   const handleRemovePermission = async (roleId: number, permissionId: number) => {
     try {
-      const response = await fetch(`/roles/${roleId}/permissions/${permissionId}`, {
+      const response = await fetch(`/api/roles/${roleId}/permissions/${permissionId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -219,7 +219,7 @@ const RolesPage: React.FC = () => {
           {/* TODO: Add UI to assign/unassign permissions to the current role */}
           <div className="mt-4 p-4 border rounded-md">
             <h3 className="text-lg font-semibold mb-2">Assign/Remove Permissions</h3>
-            {/* This is a simplified example. In a real app, you'd have checkboxes or a multi-select */}
+            {/* This is a simplified example. In a real app, you'd have a checkboxes or a multi-select */}
             <p>Available Permissions:</p>
             <ul>
               {permissions.map(p => (

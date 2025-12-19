@@ -21,7 +21,12 @@ interface PurchaseOrderFormProps {
   suppliers: Array<{ id: number; name: string }>;
 }
 
-export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ initialData, onSubmit, onCancel, suppliers }) => {
+export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
+  initialData,
+  onSubmit,
+  onCancel,
+  suppliers,
+}) => {
   const [formData, setFormData] = useState<PurchaseOrderFormData>({
     supplier_id: suppliers[0]?.id || 0,
     expected_delivery_date: '',
@@ -33,12 +38,16 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ initialDat
     if (initialData) {
       setFormData({
         ...initialData,
-        expected_delivery_date: initialData.expected_delivery_date ? new Date(initialData.expected_delivery_date).toISOString().slice(0, 16) : '',
+        expected_delivery_date: initialData.expected_delivery_date
+          ? new Date(initialData.expected_delivery_date).toISOString().slice(0, 16)
+          : '',
       });
     }
   }, [initialData]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
     const { name, value, type } = e.target;
     setFormData((prevData) => ({
       ...prevData,
@@ -51,7 +60,10 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ initialDat
     const newItems = [...formData.items];
     newItems[index] = {
       ...newItems[index],
-      [name]: name === 'product_id' || name === 'variation_id' || name === 'quantity' ? parseInt(value) : parseFloat(value),
+      [name]:
+        name === 'product_id' || name === 'variation_id' || name === 'quantity'
+          ? parseInt(value)
+          : parseFloat(value),
     };
     setFormData((prevData) => ({ ...prevData, items: newItems }));
   };
@@ -78,7 +90,9 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ initialDat
   return (
     <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6 space-y-4">
       <div>
-        <label htmlFor="supplier_id" className="block text-sm font-medium text-gray-700">Supplier</label>
+        <label htmlFor="supplier_id" className="block text-sm font-medium text-gray-700">
+          Supplier
+        </label>
         <select
           name="supplier_id"
           id="supplier_id"
@@ -95,7 +109,9 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ initialDat
         </select>
       </div>
       <div>
-        <label htmlFor="expected_delivery_date" className="block text-sm font-medium text-gray-700">Expected Delivery Date</label>
+        <label htmlFor="expected_delivery_date" className="block text-sm font-medium text-gray-700">
+          Expected Delivery Date
+        </label>
         <input
           type="datetime-local"
           name="expected_delivery_date"
@@ -107,7 +123,9 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ initialDat
       </div>
       {initialData && (
         <div>
-          <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
+          <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+            Status
+          </label>
           <select
             name="status"
             id="status"
@@ -127,7 +145,12 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ initialDat
       {formData.items.map((item, index) => (
         <div key={index} className="flex space-x-2 mb-2 items-end">
           <div className="flex-1">
-            <label htmlFor={`product_id-${index}`} className="block text-sm font-medium text-gray-700">Product ID</label>
+            <label
+              htmlFor={`product_id-${index}`}
+              className="block text-sm font-medium text-gray-700"
+            >
+              Product ID
+            </label>
             <input
               type="number"
               name="product_id"
@@ -139,7 +162,12 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ initialDat
             />
           </div>
           <div className="flex-1">
-            <label htmlFor={`variation_id-${index}`} className="block text-sm font-medium text-gray-700">Variation ID</label>
+            <label
+              htmlFor={`variation_id-${index}`}
+              className="block text-sm font-medium text-gray-700"
+            >
+              Variation ID
+            </label>
             <input
               type="number"
               name="variation_id"
@@ -151,7 +179,12 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ initialDat
             />
           </div>
           <div className="flex-1">
-            <label htmlFor={`quantity-${index}`} className="block text-sm font-medium text-gray-700">Quantity</label>
+            <label
+              htmlFor={`quantity-${index}`}
+              className="block text-sm font-medium text-gray-700"
+            >
+              Quantity
+            </label>
             <input
               type="number"
               name="quantity"
@@ -163,7 +196,12 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ initialDat
             />
           </div>
           <div className="flex-1">
-            <label htmlFor={`unit_price-${index}`} className="block text-sm font-medium text-gray-700">Unit Price</label>
+            <label
+              htmlFor={`unit_price-${index}`}
+              className="block text-sm font-medium text-gray-700"
+            >
+              Unit Price
+            </label>
             <input
               type="number"
               name="unit_price"

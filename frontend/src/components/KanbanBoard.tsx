@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { KanbanColumn } from './KanbanColumn';
@@ -60,4 +59,3 @@ export const KanbanBoard: React.FC = () => {
     </DragDropContext>
   );
 };
-

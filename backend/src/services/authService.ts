@@ -1,101 +1,206 @@
-
-import { query } from '../db/index.js';
 import { AppError } from '../utils/errors.js';
 import bcrypt from 'bcrypt';
 import pkg from 'jsonwebtoken';
-const { sign, verify } = pkg;
-import { emailService } from './emailService.js'; // Import emailService
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  password_hash: string;
-  loyalty_points: number;
-}
-
-interface Permission {
-  id: number;
-  name: string;
-}
+const { sign } = pkg;
+import { emailService } from './emailService.js';
+import { logActivityService } from './logActivityService.js';
+import crypto from 'crypto';
+import { userRepository, Permission } from '../repositories/user.repository.js';
+import { logger } from '../utils/logger.js';
 
 interface JwtPayload {
-  id: number;
+  id: string;
   email: string;
-  role: string; // Keep for now, but permissions will be primary for authZ
+  role: string;
   permissions: Permission[];
-}
-
-async function getUserPermissions(userId: number): Promise<Permission[]> {
-  const { rows } = await query(
-    `SELECT p.id, p.name
-     FROM permissions p
-     JOIN role_permissions rp ON p.id = rp.permission_id
-     JOIN user_roles ur ON rp.role_id = ur.role_id
-     WHERE ur.user_id = $1`,
-    [userId]
-  );
-  return rows;
 }
 
 export const authService = {
   async register(name: string, email: string, password: string, roleName: string = 'user') {
+    const existingUser = await userRepository.findByEmail(email);
+    if (existingUser) {
+      throw new AppError('User with this email already exists', 409);
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Find the role ID
-    const roleResult = await query('SELECT id FROM roles WHERE name = $1', [roleName]);
-    if (roleResult.rows.length === 0) {
-      throw new AppError(`Role '${roleName}' not found`, 400);
+    try {
+      // 1. Create User
+      const user = await userRepository.create({
+        name,
+        email,
+        password_hash: hashedPassword,
+      });
+
+      // 2. Assign Role
+      try {
+        await userRepository.assignRole(user.id, roleName);
+      } catch (roleError) {
+        throw new AppError(`Role '${roleName}' not found`, 400);
+      }
+
+      // 3. Get Permissions & Role Name (Confirmação)
+      const permissions = await userRepository.getUserPermissions(user.id);
+      
+      const payload: JwtPayload = {
+        id: user.id,
+        email: user.email,
+        role: roleName,
+        permissions,
+      };
+      
+      const token = sign(payload, process.env.JWT_SECRET || 'supersecretjwtkey', {
+        expiresIn: '1h',
+      });
+
+      // Log activity
+      await logActivityService.logActivity({
+        userId: user.id,
+        action: 'User Registered',
+        resourceType: 'User',
+        resourceId: user.id,
+        newValue: { name: user.name, email: user.email, role: roleName },
+      });
+
+      return {
+        user: { id: user.id, name: user.name, email: user.email, role: roleName, permissions },
+        token,
+      };
+    } catch (error: unknown) {
+      if (error instanceof AppError) throw error;
+      throw error;
     }
-    const roleId = roleResult.rows[0].id;
-
-    const { rows: [user] } = await query(
-      'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email, loyalty_points',
-      [name, email, hashedPassword]
-    );
-
-    // Link user to role
-    await query('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)', [user.id, roleId]);
-
-    const permissions = await getUserPermissions(user.id);
-
-    const payload: JwtPayload = { id: user.id, email: user.email, role: roleName, permissions };
-    const token = sign(payload, process.env.JWT_SECRET || 'supersecretjwtkey', { expiresIn: '1h' });
-
-    return { user: { ...user, role: roleName, permissions }, token };
   },
 
   async login(email: string, password: string) {
-    const { rows: [user] } = await query(
-      'SELECT u.id, u.name, u.email, u.password_hash, r.name as role FROM users u JOIN user_roles ur ON u.id = ur.user_id JOIN roles r ON ur.role_id = r.id WHERE u.email = $1',
-      [email]
-    );
+    logger.info(`Login attempt for: ${email}`);
+    
+    const user = await userRepository.findByEmail(email);
 
-    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+    if (!user || !user.password_hash) {
+      logger.info('User not found or has no password set');
       throw new AppError('Invalid credentials', 401);
     }
 
-    const permissions = await getUserPermissions(user.id);
+    const passwordMatch = await bcrypt.compare(password, user.password_hash);
 
-    const payload: JwtPayload = { id: user.id, email: user.email, role: user.role, permissions };
+    if (!passwordMatch) {
+      logger.info('Password does not match');
+      throw new AppError('Invalid credentials', 401);
+    }
+
+    const permissions = await userRepository.getUserPermissions(user.id);
+    const userRoleName = await userRepository.getUserRole(user.id);
+
+    const payload: JwtPayload = { id: user.id, email: user.email, role: userRoleName, permissions };
     const token = sign(payload, process.env.JWT_SECRET || 'supersecretjwtkey', { expiresIn: '1h' });
 
-    return { user: { id: user.id, name: user.name, email: user.email, role: user.role, permissions }, token };
+    // Log activity
+    await logActivityService.logActivity({
+      userId: user.id,
+      action: 'User Logged In',
+      resourceType: 'User',
+      resourceId: user.id,
+    });
+
+    return {
+      user: { id: user.id, name: user.name, email: user.email, role: userRoleName, permissions },
+      token,
+    };
   },
 
-  // TODO: Implement password reset flow
   async requestPasswordReset(email: string) {
-    // Generate a reset token and save it to the database with an expiry
-    // Send email to user with reset link
-    // await emailService.sendEmail({
-    //   to: email,
-    //   subject: 'Password Reset Request',
-    //   text: 'Click this link to reset your password: [link]',
-    //   html: '<p>Click this link to reset your password: <a href="[link]">[link]</a></p>',
-    // });
+    const user = await userRepository.findByEmail(email);
+
+    if (!user) {
+      // Don't reveal if user exists
+      return;
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    const passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await userRepository.update(user.id, {
+      reset_password_token: hashedToken,
+      reset_password_expires: passwordResetExpires
+    });
+
+    // TODO: Use environment variable for frontend URL
+    const resetURL = `http://localhost:3000/reset-password/${resetToken}`;
+
+    const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
+
+    try {
+      await emailService.sendEmail(email, 'Your password reset token (valid for 10 min)', message);
+    } catch (err) {
+      await userRepository.update(user.id, {
+        reset_password_token: null, // any works here as null implies clear
+        reset_password_expires: null as any 
+      });
+      throw new AppError('There was an error sending the email. Try again later!', 500);
+    }
   },
 
   async resetPassword(token: string, newPassword: string) {
-    // Verify token, update password, invalidate token
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    
+    const user = await userRepository.findUserValidForReset(hashedToken);
+
+    if (!user) {
+      throw new AppError('Token is invalid or has expired', 400);
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await userRepository.update(user.id, {
+      password_hash: hashedPassword,
+      reset_password_token: null, // Limpa o token
+      reset_password_expires: null as any // Limpa a data
+    });
+
+    // Auto login
+    const permissions = await userRepository.getUserPermissions(user.id);
+    const userRoleName = await userRepository.getUserRole(user.id);
+
+    const payload: JwtPayload = {
+      id: user.id,
+      email: user.email,
+      role: userRoleName,
+      permissions,
+    };
+    const jwtToken = sign(payload, process.env.JWT_SECRET || 'supersecretjwtkey', {
+      expiresIn: '1h',
+    });
+
+    return { token: jwtToken };
+  },
+
+  async generateTokenFor2FA(userId: string) {
+    // Find user details by userId
+    const user = await userRepository.findById(userId);
+
+    if (!user) {
+      throw new AppError('User not found.', 404);
+    }
+
+    const permissions = await userRepository.getUserPermissions(user.id);
+    const userRoleName = await userRepository.getUserRole(user.id);
+
+    const payload: JwtPayload = { id: user.id, email: user.email, role: userRoleName, permissions };
+    const token = sign(payload, process.env.JWT_SECRET || 'supersecretjwtkey', { expiresIn: '1h' });
+
+    // Log activity
+    await logActivityService.logActivity({
+      userId: user.id,
+      action: 'User Logged In (2FA Verified)',
+      resourceType: 'User',
+      resourceId: user.id,
+    });
+
+    return {
+      user: { id: user.id, name: user.name, email: user.email, role: userRoleName, permissions },
+      token,
+    };
   },
 };

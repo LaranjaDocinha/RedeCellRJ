@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ReturnList } from '../components/ReturnList';
 import { ReturnForm } from '../components/ReturnForm';
 import { useAuth } from '../contexts/AuthContext';
-import { useNotification } from '../components/NotificationProvider';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface Return {
   id: number;
@@ -25,7 +25,7 @@ const ReturnsPage: React.FC = () => {
   const [editingReturn, setEditingReturn] = useState<Return | undefined>(undefined);
   const [showForm, setShowForm] = useState(false);
   const { token } = useAuth();
-  const { addNotification } = useNotification();
+  const { addToast } = useNotification();
 
   useEffect(() => {
     fetchReturns();
@@ -33,7 +33,7 @@ const ReturnsPage: React.FC = () => {
 
   const fetchReturns = async () => {
     try {
-      const response = await fetch('/returns', {
+      const response = await fetch('/api/returns', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -41,13 +41,13 @@ const ReturnsPage: React.FC = () => {
       setReturns(data);
     } catch (error: any) {
       console.error("Error fetching returns:", error);
-      addNotification(`Failed to fetch returns: ${error.message}`, 'error');
+      addToast(`Failed to fetch returns: ${error.message}`, 'error');
     }
   };
 
   const handleCreateReturn = async (returnData: ReturnFormData) => {
     try {
-      const response = await fetch('/returns', {
+      const response = await fetch('/api/returns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(returnData),
@@ -56,16 +56,16 @@ const ReturnsPage: React.FC = () => {
       await response.json();
       setShowForm(false);
       fetchReturns();
-      addNotification('Return created successfully!', 'success');
+      addToast('Return created successfully!', 'success');
     } catch (error: any) {
       console.error("Error creating return:", error);
-      addNotification(`Failed to create return: ${error.message}`, 'error');
+      addToast(`Failed to create return: ${error.message}`, 'error');
     }
   };
 
   const handleUpdateReturn = async (id: number, returnData: Partial<ReturnFormData>) => {
     try {
-      const response = await fetch(`/returns/${id}`, {
+      const response = await fetch(`/api/returns/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(returnData),
@@ -75,26 +75,26 @@ const ReturnsPage: React.FC = () => {
       setEditingReturn(undefined);
       setShowForm(false);
       fetchReturns();
-      addNotification('Return updated successfully!', 'success');
+      addToast('Return updated successfully!', 'success');
     } catch (error: any) {
       console.error("Error updating return:", error);
-      addNotification(`Failed to update return: ${error.message}`, 'error');
+      addToast(`Failed to update return: ${error.message}`, 'error');
     }
   };
 
   const handleDeleteReturn = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this return?')) return;
     try {
-      const response = await fetch(`/returns/${id}`, {
+      const response = await fetch(`/api/returns/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       fetchReturns();
-      addNotification('Return deleted successfully!', 'success');
+      addToast('Return deleted successfully!', 'success');
     } catch (error: any) {
       console.error("Error deleting return:", error);
-      addNotification(`Failed to delete return: ${error.message}`, 'error');
+      addToast(`Failed to delete return: ${error.message}`, 'error');
     }
   };
 
@@ -108,7 +108,7 @@ const ReturnsPage: React.FC = () => {
 
   const handleUpdateStatus = async (id: number, status: 'pending' | 'approved' | 'rejected' | 'completed') => {
     try {
-      const response = await fetch(`/returns/${id}`, {
+      const response = await fetch(`/api/returns/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ status }),
@@ -116,10 +116,10 @@ const ReturnsPage: React.FC = () => {
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       await response.json();
       fetchReturns();
-      addNotification('Return status updated successfully!', 'success');
+      addToast('Return status updated successfully!', 'success');
     } catch (error: any) {
       console.error("Error updating return status:", error);
-      addNotification(`Failed to update return status: ${error.message}`, 'error');
+      addToast(`Failed to update return status: ${error.message}`, 'error');
     }
   };
 

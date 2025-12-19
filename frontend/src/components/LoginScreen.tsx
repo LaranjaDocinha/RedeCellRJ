@@ -65,18 +65,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         </motion.p>
         <form onSubmit={handleSubmit(onSubmit)}>
           <Input
-            label={t('email')} {/* Translate email label */}
+            label={t('email')}
             type="email"
-            {...register('email')}
+            // {...register('email')}
             error={errors.email?.message}
           />
           <Input
-            label={t('password')} {/* Translate password label */}
+            label={t('password')}
             type="password"
-            {...register('password')}
+            // {...register('password')}
             error={errors.password?.message}
           />
-          <Button label={t('enter')} type="submit" /> {/* Translate button label */}
+          <Button label={t('enter')} type="submit" />
         </form>
       </LoginCard>
     </LoginScreenContainer>

@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { supplierService } from '../services/supplierService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
+
 import { ValidationError, AppError } from '../utils/errors.js';
 
 const suppliersRouter = Router();
@@ -15,26 +16,34 @@ const createSupplierSchema = z.object({
   address: z.string().trim().optional(),
 });
 
-const updateSupplierSchema = z.object({
-  name: z.string().trim().nonempty('Supplier name cannot be empty').optional(),
-  contact_person: z.string().trim().optional(),
-  email: z.string().email('Invalid email format').optional(),
-  phone: z.string().trim().optional(),
-  address: z.string().trim().optional(),
-}).partial();
+const updateSupplierSchema = z
+  .object({
+    name: z.string().trim().nonempty('Supplier name cannot be empty').optional(),
+    contact_person: z.string().trim().optional(),
+    email: z.string().email('Invalid email format').optional(),
+    phone: z.string().trim().optional(),
+    address: z.string().trim().optional(),
+  })
+  .partial();
 
 // Validation Middleware
-const validate = (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
-  try {
-    schema.parse(req.body);
-    next();
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return next(new ValidationError('Validation failed', error.errors.map(err => ({ path: err.path.join('.'), message: err.message }))));
+const validate =
+  (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
+    try {
+      schema.parse(req.body);
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return next(
+          new ValidationError(
+            'Validation failed',
+            error.errors.map((err) => ({ path: err.path.join('.'), message: err.message })),
+          ),
+        );
+      }
+      next(error);
     }
-    next(error);
-  }
-};
+  };
 
 suppliersRouter.use(authMiddleware.authenticate);
 
@@ -49,7 +58,7 @@ suppliersRouter.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Get supplier by ID
@@ -66,7 +75,7 @@ suppliersRouter.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Create a new supplier
@@ -81,7 +90,7 @@ suppliersRouter.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Update a supplier by ID
@@ -91,7 +100,10 @@ suppliersRouter.put(
   validate(updateSupplierSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const updatedSupplier = await supplierService.updateSupplier(parseInt(req.params.id), req.body);
+      const updatedSupplier = await supplierService.updateSupplier(
+        parseInt(req.params.id),
+        req.body,
+      );
       if (!updatedSupplier) {
         throw new AppError('Supplier not found', 404);
       }
@@ -99,7 +111,7 @@ suppliersRouter.put(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Delete a supplier by ID
@@ -116,7 +128,7 @@ suppliersRouter.delete(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 export default suppliersRouter;

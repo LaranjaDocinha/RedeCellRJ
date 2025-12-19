@@ -18,7 +18,7 @@ const TagsPage: React.FC = () => {
 
   const fetchTags = async () => {
     try {
-      const response = await fetch('/tags'); // Assuming proxy is set up for /tags to backend
+      const response = await fetch('/api/tags'); // Assuming proxy is set up for /tags to backend
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -32,7 +32,7 @@ const TagsPage: React.FC = () => {
 
   const handleCreateTag = async (tagData: Omit<Tag, 'id'>) => {
     try {
-      const response = await fetch('/tags', {
+      const response = await fetch('/api/tags', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -53,7 +53,7 @@ const TagsPage: React.FC = () => {
 
   const handleUpdateTag = async (id: number, tagData: Omit<Tag, 'id'>) => {
     try {
-      const response = await fetch(`/tags/${id}`, {
+      const response = await fetch(`/api/tags/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -78,7 +78,7 @@ const TagsPage: React.FC = () => {
       return;
     }
     try {
-      const response = await fetch(`/tags/${id}`, {
+      const response = await fetch(`/api/tags/${id}`, {
         method: 'DELETE',
       });
       if (!response.ok) {

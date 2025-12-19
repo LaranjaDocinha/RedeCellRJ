@@ -34,7 +34,9 @@ export const RoleForm: React.FC<RoleFormProps> = ({ initialData, onSubmit, onCan
   return (
     <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6 space-y-4">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+          Name
+        </label>
         <input
           type="text"
           name="name"

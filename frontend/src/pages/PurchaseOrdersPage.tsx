@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PurchaseOrderList } from '../components/PurchaseOrderList';
 import { PurchaseOrderForm } from '../components/PurchaseOrderForm';
 import { useAuth } from '../contexts/AuthContext';
-import { useNotification } from '../components/NotificationProvider';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface PurchaseOrder {
   id: number;
@@ -41,7 +41,7 @@ const PurchaseOrdersPage: React.FC = () => {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('/purchase-orders', {
+      const response = await fetch('/api/purchase-orders', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -55,7 +55,7 @@ const PurchaseOrdersPage: React.FC = () => {
 
   const fetchSuppliers = async () => {
     try {
-      const response = await fetch('/suppliers', {
+      const response = await fetch('/api/suppliers', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -69,7 +69,7 @@ const PurchaseOrdersPage: React.FC = () => {
 
   const handleCreateOrder = async (orderData: PurchaseOrderFormData) => {
     try {
-      const response = await fetch('/purchase-orders', {
+      const response = await fetch('/api/purchase-orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(orderData),
@@ -87,7 +87,7 @@ const PurchaseOrdersPage: React.FC = () => {
 
   const handleUpdateOrder = async (id: number, orderData: PurchaseOrderFormData) => {
     try {
-      const response = await fetch(`/purchase-orders/${id}`, {
+      const response = await fetch(`/api/purchase-orders/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(orderData),
@@ -107,7 +107,7 @@ const PurchaseOrdersPage: React.FC = () => {
   const handleDeleteOrder = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this purchase order?')) return;
     try {
-      const response = await fetch(`/purchase-orders/${id}`, {
+      const response = await fetch(`/api/purchase-orders/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -130,7 +130,7 @@ const PurchaseOrdersPage: React.FC = () => {
 
   const handleUpdateStatus = async (id: number, status: 'pending' | 'ordered' | 'received' | 'cancelled') => {
     try {
-      const response = await fetch(`/purchase-orders/${id}`, {
+      const response = await fetch(`/api/purchase-orders/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ status }),
@@ -160,7 +160,7 @@ const PurchaseOrdersPage: React.FC = () => {
     }));
 
     try {
-      const response = await fetch(`/purchase-orders/${id}/receive`, {
+      const response = await fetch(`/api/purchase-orders/${id}/receive`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ items: receivedItemsPayload }),

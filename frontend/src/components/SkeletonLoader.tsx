@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { StyledSkeletonLoader } from './SkeletonLoader.styled';
 
@@ -9,7 +8,12 @@ interface SkeletonLoaderProps {
   className?: string;
 }
 
-const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ width, height, variant = 'rect', className }) => {
+const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
+  width,
+  height,
+  variant = 'rect',
+  className,
+}) => {
   return (
     <StyledSkeletonLoader
       width={width}

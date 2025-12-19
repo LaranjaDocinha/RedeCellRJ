@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { BranchList } from '../components/BranchList';
-import { BranchForm } from '../components/BranchForm';
-import { useAuth } from '../contexts/AuthContext';
-import { useNotification } from '../components/NotificationProvider';
+import Loading from '../components/Loading';
+import { StyledPageContainer, StyledPageTitle } from './AuditLogsPage.styled'; // Reutilizando componentes estilizados
+import { Button } from '../components/Button';
+import { StyledEmptyState } from '../components/AuditLogList.styled'; // Reutilizando StyledEmptyState
+import { FaStore } from 'react-icons/fa'; // Ícone para estado vazio
 
 interface Branch {
   id: number;
@@ -16,6 +16,7 @@ const BranchesPage: React.FC = () => {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [editingBranch, setEditingBranch] = useState<Branch | undefined>(undefined);
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { token } = useAuth();
   const { addNotification } = useNotification();
 
@@ -24,8 +25,9 @@ const BranchesPage: React.FC = () => {
   }, []);
 
   const fetchBranches = async () => {
+    setLoading(true);
     try {
-      const response = await fetch('/branches', {
+      const response = await fetch('/api/branches', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -34,12 +36,14 @@ const BranchesPage: React.FC = () => {
     } catch (error: any) {
       console.error("Error fetching branches:", error);
       addNotification(`Failed to fetch branches: ${error.message}`, 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCreateBranch = async (branchData: Omit<Branch, 'id'>) => {
     try {
-      const response = await fetch('/branches', {
+      const response = await fetch('/api/branches', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(branchData),
@@ -57,7 +61,7 @@ const BranchesPage: React.FC = () => {
 
   const handleUpdateBranch = async (id: number, branchData: Omit<Branch, 'id'>) => {
     try {
-      const response = await fetch(`/branches/${id}`, {
+      const response = await fetch(`/api/branches/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(branchData),
@@ -77,7 +81,7 @@ const BranchesPage: React.FC = () => {
   const handleDeleteBranch = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this branch?')) return;
     try {
-      const response = await fetch(`/branches/${id}`, {
+      const response = await fetch(`/api/branches/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -104,43 +108,70 @@ const BranchesPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Branch Management</h1>
+    <StyledPageContainer
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <StyledPageTitle
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        Branch Management
+      </StyledPageTitle>
 
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Add New Branch
-        </button>
-      </div>
+      {loading ? (
+        <Loading />
+      ) : (
+        <>
+          <div className="flex justify-end mb-4">
+            <Button
+              onClick={() => setShowForm(true)}
+              variant="contained"
+              color="primary"
+              label="Add New Branch"
+            />
+          </div>
 
-      {showForm && (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-3">
-            {editingBranch ? 'Edit Branch' : 'Add New Branch'}
-          </h2>
-          <BranchForm
-            initialData={editingBranch}
-            onSubmit={(data) => {
-              if (editingBranch) {
-                handleUpdateBranch(editingBranch.id, data);
-              } else {
-                handleCreateBranch(data);
-              }
-            }}
-            onCancel={handleCancelForm}
-          />
-        </div>
+          {showForm && (
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold mb-3">
+                {editingBranch ? 'Edit Branch' : 'Add New Branch'}
+              </h2>
+              <BranchForm
+                initialData={editingBranch}
+                onSubmit={(data) => {
+                  if (editingBranch) {
+                    handleUpdateBranch(editingBranch.id, data);
+                  } else {
+                    handleCreateBranch(data);
+                  }
+                }}
+                onCancel={handleCancelForm}
+              />
+            </div>
+          )}
+
+          {branches.length === 0 && !showForm ? (
+            <StyledEmptyState
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <FaStore />
+              <p>No branches found. Click "Add New Branch" to get started!</p>
+            </StyledEmptyState>
+          ) : (
+            <BranchList
+              branches={branches}
+              onEdit={handleEditClick}
+              onDelete={handleDeleteBranch}
+            />
+          )}
+        </>
       )}
-
-      <BranchList
-        branches={branches}
-        onEdit={handleEditClick}
-        onDelete={handleDeleteBranch}
-      />
-    </div>
+    </StyledPageContainer>
   );
 };
 

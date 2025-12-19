@@ -1,51 +1,87 @@
-
-import React, { useEffect, useState } from 'react';
-import DashboardWidget from './DashboardWidget';
+import React, { useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNotification } from '../../components/NotificationProvider';
-import { useTranslation } from 'react-i18next';
+import { useNotification } from '../../contexts/NotificationContext';
+import { useQuery } from '@tanstack/react-query';
+import DashboardWidgetSkeleton from './DashboardWidgetSkeleton';
+import { Typography, Box } from '@mui/material';
 
+/**
+ * @interface LoyaltyPointsWidgetProps
+ * @description Propriedades para o componente LoyaltyPointsWidget.
+ * @property {string} selectedPeriod - O período selecionado para filtrar os dados.
+ */
 interface LoyaltyPointsWidgetProps {
-  // No specific props needed, fetches its own data
+  selectedPeriod: string;
 }
 
-const LoyaltyPointsWidget: React.FC<LoyaltyPointsWidgetProps> = () => {
-  const [loyaltyPoints, setLoyaltyPoints] = useState<number | null>(null);
+/**
+ * @interface LoyaltyPointsData
+ * @description Define a estrutura dos dados de pontos de fidelidade.
+ * @property {number} loyalty_points - O número de pontos de fidelidade.
+ */
+interface LoyaltyPointsData {
+  loyalty_points: number;
+}
+
+/**
+ * @function fetchLoyaltyPoints
+ * @description Função assíncrona para buscar os dados de pontos de fidelidade.
+ * @param {string} token - Token de autenticação do usuário.
+ * @param {string} selectedPeriod - O período selecionado para a busca.
+ * @returns {Promise<LoyaltyPointsData>} Uma promessa que resolve com os dados de pontos de fidelidade.
+ * @throws {Error} Se a requisição HTTP falhar.
+ */
+const fetchLoyaltyPoints = async (token: string, selectedPeriod: string): Promise<LoyaltyPointsData> => {
+  const response = await fetch(`/api/loyalty/points?period=${selectedPeriod}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+};
+
+/**
+ * @function LoyaltyPointsWidget
+ * @description Componente de widget que exibe os pontos de fidelidade do usuário.
+ * @param {LoyaltyPointsWidgetProps} props - As propriedades do componente.
+ * @returns {React.FC} O componente LoyaltyPointsWidget.
+ */
+const LoyaltyPointsWidget: React.FC<LoyaltyPointsWidgetProps> = React.memo(({ selectedPeriod }) => {
   const { token, isAuthenticated } = useAuth();
-  const { addNotification } = useNotification();
-  const { t } = useTranslation();
+  const { addToast } = useNotification();
+
+  const { data, isLoading, isError, error } = useQuery<LoyaltyPointsData, Error>({
+    queryKey: ['loyaltyPoints', token, selectedPeriod],
+    queryFn: () => fetchLoyaltyPoints(token!, selectedPeriod),
+    enabled: isAuthenticated,
+  });
 
   useEffect(() => {
-    const fetchLoyaltyPoints = async () => {
-      if (!isAuthenticated) return;
-      try {
-        const response = await fetch('/api/loyalty/points', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        setLoyaltyPoints(data.loyalty_points);
-      } catch (error: any) {
-        addNotification(`Failed to fetch loyalty points: ${error.message}`, 'error');
-      }
-    };
+    if (isError && error) {
+      addToast(`Falha ao buscar pontos de fidelidade: ${error.message}`, 'error');
+    }
+  }, [isError, error, addToast]);
 
-    fetchLoyaltyPoints();
-  }, [token, isAuthenticated, addNotification]);
+  if (isLoading) {
+    return <DashboardWidgetSkeleton />;
+  }
 
   return (
-    <DashboardWidget title={t('loyalty_points')}>
-      {loyaltyPoints !== null ? (
-        <p className="summary-value">{loyaltyPoints}</p>
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', p: 2 }}>
+      {data?.loyalty_points !== undefined ? (
+        <Typography variant="h3" component="p" color="primary" fontWeight="bold">
+          {data.loyalty_points}
+        </Typography>
       ) : (
-        <p>{t('loading_points')}</p>
+        <Typography variant="body1" color="text.secondary">
+          Nenhum ponto de fidelidade disponível.
+        </Typography>
       )}
-    </DashboardWidget>
+    </Box>
   );
-};
+});
 
 export default LoyaltyPointsWidget;

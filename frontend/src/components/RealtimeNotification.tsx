@@ -6,7 +6,11 @@ interface RealtimeNotificationProps {
   onClose: () => void;
 }
 
-export const RealtimeNotification: React.FC<RealtimeNotificationProps> = ({ message, type, onClose }) => {
+export const RealtimeNotification: React.FC<RealtimeNotificationProps> = ({
+  message,
+  type,
+  onClose,
+}) => {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
@@ -35,7 +39,13 @@ export const RealtimeNotification: React.FC<RealtimeNotificationProps> = ({ mess
       role="alert"
     >
       <span>{message}</span>
-      <button onClick={() => { setIsVisible(false); onClose(); }} className="ml-4 text-white font-bold">
+      <button
+        onClick={() => {
+          setIsVisible(false);
+          onClose();
+        }}
+        className="ml-4 text-white font-bold"
+      >
         &times;
       </button>
     </div>

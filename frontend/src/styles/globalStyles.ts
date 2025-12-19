@@ -1,4 +1,3 @@
-
 // frontend/src/styles/globalStyles.ts
 import { createGlobalStyle } from 'styled-components';
 

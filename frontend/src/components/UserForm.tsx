@@ -14,7 +14,12 @@ interface UserFormProps {
   availableRoles: string[];
 }
 
-export const UserForm: React.FC<UserFormProps> = ({ initialData, onSubmit, onCancel, availableRoles }) => {
+export const UserForm: React.FC<UserFormProps> = ({
+  initialData,
+  onSubmit,
+  onCancel,
+  availableRoles,
+}) => {
   const [formData, setFormData] = useState<UserFormData>({
     name: '',
     email: '',
@@ -41,7 +46,9 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, onSubmit, onCan
   return (
     <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6 space-y-4">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+          Name
+        </label>
         <input
           type="text"
           name="name"
@@ -53,7 +60,9 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, onSubmit, onCan
         />
       </div>
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          Email
+        </label>
         <input
           type="email"
           name="email"
@@ -65,7 +74,9 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, onSubmit, onCan
         />
       </div>
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          Password
+        </label>
         <input
           type="password"
           name="password"
@@ -77,7 +88,9 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, onSubmit, onCan
         />
       </div>
       <div>
-        <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
+        <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+          Role
+        </label>
         <select
           name="role"
           id="role"

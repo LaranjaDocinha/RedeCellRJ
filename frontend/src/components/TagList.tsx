@@ -25,7 +25,9 @@ export const TagList: React.FC<TagListProps> = ({ tags, onEdit, onDelete }) => {
         <tbody className="text-gray-700">
           {tags.length === 0 ? (
             <tr>
-              <td colSpan={3} className="text-center py-4">No tags found.</td>
+              <td colSpan={3} className="text-center py-4">
+                No tags found.
+              </td>
             </tr>
           ) : (
             tags.map((tag) => (

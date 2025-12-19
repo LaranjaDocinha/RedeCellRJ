@@ -1,4 +1,3 @@
-
 import styled, { css } from 'styled-components';
 import { motion } from 'framer-motion';
 
@@ -7,7 +6,11 @@ export const BoardContainer = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing.sm};
   padding: 20px;
-  background: linear-gradient(135deg, ${({ theme }) => theme.colors.background} 0%, ${({ theme }) => theme.colors.surface} 100%);
+  background: linear-gradient(
+    135deg,
+    ${({ theme }) => theme.colors.background} 0%,
+    ${({ theme }) => theme.colors.surface} 100%
+  );
   min-height: 100vh;
   align-items: flex-start;
   overflow-x: auto;
@@ -40,8 +43,11 @@ export const AddColumnButton = styled.button`
 
 // KanbanColumn styles
 export const ColumnContainer = styled(motion.div)<{ $isWipLimitExceeded: boolean }>`
-  background-color: ${({ theme, $isWipLimitExceeded }) => ($isWipLimitExceeded ? theme.colors.error : theme.colors.surface)};
-  border: 2px solid ${({ theme, $isWipLimitExceeded }) => ($isWipLimitExceeded ? theme.colors.error : 'transparent')};
+  background-color: ${({ theme, $isWipLimitExceeded }) =>
+    $isWipLimitExceeded ? theme.colors.error : theme.colors.surface};
+  border: 2px solid
+    ${({ theme, $isWipLimitExceeded }) =>
+      $isWipLimitExceeded ? theme.colors.error : 'transparent'};
   border-radius: ${({ theme }) => theme.spacing.xs};
   padding: 10px;
   width: 280px;
@@ -50,7 +56,9 @@ export const ColumnContainer = styled(motion.div)<{ $isWipLimitExceeded: boolean
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.3s ease, background-color 0.3s ease;
+  transition:
+    box-shadow 0.3s ease,
+    background-color 0.3s ease;
 
   &:hover {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
@@ -65,7 +73,7 @@ export const ColumnHeader = styled.div`
   padding: 0 8px;
 `;
 
-export const ColumnTitle = styled.h3`
+export const ColumnTitle = styled.h2`
   font-size: 1.2em;
   font-weight: bold;
   cursor: pointer;
@@ -99,7 +107,8 @@ export const CardList = styled.div<{ $isDraggingOver: boolean }>`
   padding: 8px;
   transition: background-color 0.2s ease;
   background-color: ${({ $isDraggingOver }) => ($isDraggingOver ? '#c7d0d9' : 'transparent')};
-  border: 2px dashed ${({ $isDraggingOver, theme }) => ($isDraggingOver ? theme.colors.primary : 'transparent')};
+  border: 2px dashed
+    ${({ $isDraggingOver, theme }) => ($isDraggingOver ? theme.colors.primary : 'transparent')};
   border-radius: ${({ theme }) => theme.spacing.xs};
 `;
 
@@ -143,7 +152,9 @@ export const CardContainer = styled(motion.div)<{ $isDragging: boolean }>`
   padding: 12px;
   margin-bottom: 8px;
   box-shadow: 0 1px 0 rgba(9, 30, 66, 0.25);
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
   cursor: grab;
   position: relative;
 
@@ -151,11 +162,13 @@ export const CardContainer = styled(motion.div)<{ $isDragging: boolean }>`
     cursor: grabbing;
   }
 
-  ${({ $isDragging }) => $isDragging && css`
-    background-color: #e6fcff;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    transform: rotate(2deg);
-  `}
+  ${({ $isDragging }) =>
+    $isDragging &&
+    css`
+      background-color: #e6fcff;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      transform: rotate(2deg);
+    `}
 `;
 
 export const CardContentWrapper = styled.div`
@@ -197,6 +210,37 @@ export const CardRemoveButton = styled.button`
 
   &:hover {
     color: ${({ theme }) => theme.colors.onSurface};
+  }
+`;
+
+export const DragHandle = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  cursor: grab;
+  color: ${({ theme }) => theme.colors.onSurface}66;
+  opacity: 0;
+  transition:
+    opacity 0.2s ease,
+    color 0.2s ease;
+
+  ${CardContainer}:hover & {
+    opacity: 1;
+  }
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.onSurface};
+  }
+
+  &::before {
+    content: '\u283F'; // Braille pattern for a grip
+    font-size: 1.5em;
+    transform: rotate(90deg);
   }
 `;
 

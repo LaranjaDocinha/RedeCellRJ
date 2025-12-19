@@ -1,0 +1,9 @@
+{
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.3",
+    "unplugin-swc": "^1.5.7"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1"
+  }
+}

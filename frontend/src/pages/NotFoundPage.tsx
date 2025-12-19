@@ -1,14 +1,38 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import './NotFoundPage.css';
+import { StyledNotFoundContainer, StyledNotFoundTitle, StyledNotFoundMessage, StyledNotFoundLink } from './NotFoundPage.styled';
+import { FaQuestionCircle } from 'react-icons/fa';
 
 const NotFoundPage: React.FC = () => {
   return (
-    <div className="not-found-container">
-      <h1 className="not-found-title">404</h1>
-      <p className="not-found-message">Oops! The page you're looking for doesn't exist.</p>
-      <Link to="/" className="not-found-link">Go to Homepage</Link>
-    </div>
+    <StyledNotFoundContainer
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <FaQuestionCircle size={80} color="#FFC107" />
+      <StyledNotFoundTitle
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        404
+      </StyledNotFoundTitle>
+      <StyledNotFoundMessage
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
+        Oops! The page you're looking for doesn't exist.
+      </StyledNotFoundMessage>
+      <StyledNotFoundLink
+        to="/"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.6 }}
+      >
+        Go to Homepage
+      </StyledNotFoundLink>
+    </StyledNotFoundContainer>
   );
 };
 

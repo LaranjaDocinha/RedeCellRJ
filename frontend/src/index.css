@@ -1,11 +1,11 @@
 :root {
   /* Default Light Theme Variables */
-  --color-primary: #6200EE;
-  --color-primary-dark: #3700B3;
-  --color-primary-light: #BB86FC;
-  --color-secondary: #03DAC6;
-  --color-secondary-dark: #018786;
-  --color-secondary-light: #66FFF9;
+  --primary-color: #6200EE; /* Renamed from --color-primary */
+  --primary-color-dark: #3700B3;
+  --primary-color-light: #BB86FC;
+  --secondary-color: #03DAC6; /* Renamed from --color-secondary */
+  --secondary-color-dark: #018786;
+  --secondary-color-light: #66FFF9;
   --color-error: #B00020;
   --color-success: #4CAF50;
   --color-warning: #FFC107;
@@ -18,7 +18,7 @@
   --color-on-background: #000000;
 
   /* Typography */
-  --font-family-primary: 'Roboto', sans-serif;
+  --font-family: 'Roboto', sans-serif; /* Renamed from --font-family-primary */
   --font-family-secondary: 'Open Sans', sans-serif;
 
   --typography-display-large-font-size: 57px;
@@ -91,7 +91,7 @@
 
 body {
   margin: 0;
-  font-family: var(--font-family-primary);
+  font-family: var(--font-family); /* Changed from --font-family-primary */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--color-background);
@@ -110,4 +110,25 @@ body.dark-theme {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dash {
+  0% {
+    stroke-dasharray: 1, 200;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 89, 200;
+    stroke-dashoffset: -35px;
+  }
+  100% {
+    stroke-dasharray: 89, 200;
+    stroke-dashoffset: -124px;
+  }
 }

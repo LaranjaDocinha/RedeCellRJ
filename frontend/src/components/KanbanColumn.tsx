@@ -130,10 +130,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
           }}
           disabled={isWipLimitExceeded}
         />
-        <AddCardButton
-          onClick={handleAddCard}
-          disabled={isWipLimitExceeded}
-        >
+        <AddCardButton onClick={handleAddCard} disabled={isWipLimitExceeded}>
           +
         </AddCardButton>
       </AddCardSection>

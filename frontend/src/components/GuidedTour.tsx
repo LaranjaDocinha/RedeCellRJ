@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import introJs from 'intro.js';
 import 'intro.js/introjs.css';
@@ -10,7 +9,7 @@ interface GuidedTourProps {
   steps: any[];
 }
 
-const GuidedTour: React.FC<GuidedTourProps> = ({ tourKey, steps }) => {
+const GuidedTour: React.FC<GuidedTourProps> = React.memo(({ tourKey, steps }) => {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
   const [tourStarted, setTourStarted] = useState(false);
@@ -34,7 +33,7 @@ const GuidedTour: React.FC<GuidedTourProps> = ({ tourKey, steps }) => {
 
       // Ensure elements are rendered before starting the tour
       const checkElements = setInterval(() => {
-        const allElementsExist = steps.every(step => {
+        const allElementsExist = steps.every((step) => {
           if (step.element) {
             return document.querySelector(step.element);
           }
@@ -62,6 +61,6 @@ const GuidedTour: React.FC<GuidedTourProps> = ({ tourKey, steps }) => {
   }, [isAuthenticated, tourKey, steps, tourStarted, location.pathname]); // Rerun effect if path changes
 
   return null; // This component doesn't render anything directly
-};
+});
 
 export default GuidedTour;

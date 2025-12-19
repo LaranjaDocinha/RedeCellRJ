@@ -1,25 +1,31 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-import pool from '../db/index.js';
-// TODO: Upgrade to PostgreSQL Full-Text Search for better performance and relevance.
-export const performSearch = (query) => __awaiter(void 0, void 0, void 0, function* () {
-    const searchQuery = `%${query}%`;
-    // Search for products and customers in parallel
-    const productsPromise = pool.query('SELECT id, name FROM products WHERE name ILIKE $1 LIMIT 5', [searchQuery]);
-    const customersPromise = pool.query('SELECT id, name FROM users WHERE name ILIKE $1 LIMIT 5', [searchQuery]);
-    const [productsResult, customersResult] = yield Promise.all([
-        productsPromise,
-        customersPromise,
-    ]);
+import { getPool } from '../db/index.js';
+// Upgraded to PostgreSQL Full-Text Search
+export const performSearch = async (query) => {
+    const pool = getPool();
+    // Use plainto_tsquery which handles natural language input well.
+    // Searching name, description, and sku for products.
+    // Searching name and email for customers.
+    // Product Search
+    const productsPromise = pool.query(`
+    SELECT id, name, 
+           ts_rank(to_tsvector('portuguese', name || ' ' || coalesce(description, '') || ' ' || coalesce(sku, '')), plainto_tsquery('portuguese', $1)) as rank
+    FROM products 
+    WHERE to_tsvector('portuguese', name || ' ' || coalesce(description, '') || ' ' || coalesce(sku, '')) @@ plainto_tsquery('portuguese', $1)
+    ORDER BY rank DESC 
+    LIMIT 5
+  `, [query]);
+    // Customer Search
+    const customersPromise = pool.query(`
+    SELECT id, name,
+           ts_rank(to_tsvector('portuguese', name || ' ' || coalesce(email, '')), plainto_tsquery('portuguese', $1)) as rank
+    FROM customers 
+    WHERE to_tsvector('portuguese', name || ' ' || coalesce(email, '')) @@ plainto_tsquery('portuguese', $1)
+    ORDER BY rank DESC
+    LIMIT 5
+  `, [query]);
+    const [productsResult, customersResult] = await Promise.all([productsPromise, customersPromise]);
     return {
         products: productsResult.rows,
         customers: customersResult.rows,
     };
-});
+};

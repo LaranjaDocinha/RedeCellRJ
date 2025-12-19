@@ -51,27 +51,56 @@ jobs:
         done
     - name: Setup database schema
       run: |
-        # Execute the init.sql script to set up the database schema
-        # Use the psql command directly, ensuring the path is correct for the runner
-        # and passing the password via PGPASSWORD environment variable
-        PGPASSWORD=${{ secrets.DB_PASSWORD }} psql -h localhost -p 5432 -U postgres -d pdv_web -f backend/src/db/migrations/init.sql
-    - name: Run tests and check coverage
-      run: npm test -- --coverage --prefix backend
+        # Run migrations to set up the database schema
+        npm run migrate:up --prefix backend
+      env:
+        DATABASE_URL: postgres://postgres:${{ secrets.DB_PASSWORD }}@localhost:5432/pdv_web
+    - name: Run lint
+      run: npm run lint --prefix backend
+    - name: Run tests
+      run: npm run coverage --prefix backend
       env:
         DB_HOST: localhost
         DB_PORT: 5432
         DB_USER: postgres
         DB_NAME: pdv_web
         DB_PASSWORD: ${{ secrets.DB_PASSWORD }} # Pass password to tests
-    - name: Run performance tests (requires backend server to be running)
-      run: npx artillery run backend/performance-test.yml --output backend/performance-report.json
-      # Note: For this step to succeed, the backend server must be running and accessible at the target URL defined in performance-test.yml.
-      # In a real CI/CD pipeline, this might be run in a separate job after deployment to a staging environment.
-      continue-on-error: true # Allow CI to pass even if performance tests fail for now
-    - name: Run lint
-      run: npm run lint --prefix backend
     - name: Build backend
       run: npm run build --prefix backend
+    - name: Run performance tests
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_USER: postgres
+        DB_NAME: pdv_web
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      run: |
+        # Start the server in the background
+        node backend/dist/index.js &
+        SERVER_PID=$!
+        # Wait for the server to be ready
+        echo "Waiting for server to start..."
+        sleep 10
+        # Check if server is up, then run Artillery
+        if curl -f http://localhost:3000/; then
+          echo "Server is up. Running performance tests..."
+          npx artillery run backend/performance-test.yml --output backend/performance-report.json
+        else
+          echo "Server failed to start. Performance tests skipped."
+        fi
+        # Stop the server
+        echo "Stopping server..."
+        kill $SERVER_PID
+      continue-on-error: true
+    - name: Analyze for slow queries
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_USER: postgres
+        DB_NAME: pdv_web
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      run: npx ts-node backend/scripts/find-slow-queries.ts
+      continue-on-error: true # Do not fail the build if slow queries are found for now
     - name: Run semantic-release
       if: github.ref == 'refs/heads/main'
       env:

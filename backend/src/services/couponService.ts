@@ -55,11 +55,12 @@ class CouponService {
   }
 
   async createCoupon(payload: CreateCouponPayload): Promise<Coupon> {
-    const { code, type, value, start_date, end_date, min_purchase_amount, max_uses, is_active } = payload;
+    const { code, type, value, start_date, end_date, min_purchase_amount, max_uses, is_active } =
+      payload;
     try {
       const result = await pool.query(
-        'INSERT INTO coupons (code, type, value, start_date, end_date, min_purchase_amount, max_uses, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *'
-        , [code, type, value, start_date, end_date, min_purchase_amount, max_uses, is_active]
+        'INSERT INTO coupons (code, type, value, start_date, end_date, min_purchase_amount, max_uses, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+        [code, type, value, start_date, end_date, min_purchase_amount, max_uses, is_active],
       );
       return result.rows[0];
     } catch (error) {
@@ -73,13 +74,34 @@ class CouponService {
     const values: any[] = [];
     let paramIndex = 1;
 
-    if (type !== undefined) { fields.push(`type = $${paramIndex++}`); values.push(type); }
-    if (value !== undefined) { fields.push(`value = $${paramIndex++}`); values.push(value); }
-    if (start_date !== undefined) { fields.push(`start_date = $${paramIndex++}`); values.push(start_date); }
-    if (end_date !== undefined) { fields.push(`end_date = $${paramIndex++}`); values.push(end_date); }
-    if (min_purchase_amount !== undefined) { fields.push(`min_purchase_amount = $${paramIndex++}`); values.push(min_purchase_amount); }
-    if (max_uses !== undefined) { fields.push(`max_uses = $${paramIndex++}`); values.push(max_uses); }
-    if (is_active !== undefined) { fields.push(`is_active = $${paramIndex++}`); values.push(is_active); }
+    if (type !== undefined) {
+      fields.push(`type = $${paramIndex++}`);
+      values.push(type);
+    }
+    if (value !== undefined) {
+      fields.push(`value = $${paramIndex++}`);
+      values.push(value);
+    }
+    if (start_date !== undefined) {
+      fields.push(`start_date = $${paramIndex++}`);
+      values.push(start_date);
+    }
+    if (end_date !== undefined) {
+      fields.push(`end_date = $${paramIndex++}`);
+      values.push(end_date);
+    }
+    if (min_purchase_amount !== undefined) {
+      fields.push(`min_purchase_amount = $${paramIndex++}`);
+      values.push(min_purchase_amount);
+    }
+    if (max_uses !== undefined) {
+      fields.push(`max_uses = $${paramIndex++}`);
+      values.push(max_uses);
+    }
+    if (is_active !== undefined) {
+      fields.push(`is_active = $${paramIndex++}`);
+      values.push(is_active);
+    }
 
     if (fields.length === 0) {
       const existingCoupon = await this.getCouponByCode(code);
@@ -112,7 +134,13 @@ class CouponService {
 
   async applyCoupon(couponCode: string, currentAmount: number): Promise<number> {
     const coupon = await this.getCouponByCode(couponCode);
-    if (!coupon || !coupon.is_active || (coupon.end_date && new Date() > coupon.end_date) || (coupon.max_uses && coupon.uses_count >= coupon.max_uses) || (coupon.min_purchase_amount && currentAmount < coupon.min_purchase_amount)) {
+    if (
+      !coupon ||
+      !coupon.is_active ||
+      (coupon.end_date && new Date() > coupon.end_date) ||
+      (coupon.max_uses && coupon.uses_count >= coupon.max_uses) ||
+      (coupon.min_purchase_amount && currentAmount < coupon.min_purchase_amount)
+    ) {
       throw new AppError('Coupon not applicable', 400);
     }
 
@@ -124,7 +152,9 @@ class CouponService {
     }
 
     // Increment uses count
-    await pool.query('UPDATE coupons SET uses_count = uses_count + 1 WHERE code = $1', [couponCode]);
+    await pool.query('UPDATE coupons SET uses_count = uses_count + 1 WHERE code = $1', [
+      couponCode,
+    ]);
 
     return Math.max(0, finalAmount); // Ensure amount doesn't go below zero
   }

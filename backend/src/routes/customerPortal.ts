@@ -1,0 +1,30 @@
+import { Router } from 'express';
+import * as customerPortalController from '../controllers/customerPortalController.js';
+import { authMiddleware } from '../middlewares/authMiddleware.js';
+
+const router = Router();
+
+router.use(authMiddleware.authenticate);
+
+router.get(
+  '/:customerId/history',
+  authMiddleware.authorize('view', 'CustomerPortal'),
+  customerPortalController.getCustomerHistory,
+);
+router.put(
+  '/:customerId/data',
+  authMiddleware.authorize('manage', 'CustomerPortal'),
+  customerPortalController.updateCustomerData,
+);
+router.get(
+  '/:customerId/invoices',
+  authMiddleware.authorize('view', 'CustomerPortal'),
+  customerPortalController.getCustomerInvoices,
+);
+router.get(
+  '/:customerId/warranties',
+  authMiddleware.authorize('view', 'CustomerPortal'),
+  customerPortalController.getCustomerWarranties,
+);
+
+export default router;

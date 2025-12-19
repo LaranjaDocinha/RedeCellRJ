@@ -1,4 +1,3 @@
-
 import styled, { keyframes } from 'styled-components';
 
 export const LoadingContainer = styled.div`

@@ -1,13 +1,12 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useNotification } from '../components/NotificationProvider';
+import { useNotification } from './NotificationContext'; // Correct path
 
 interface SocketContextType {
   socket: Socket | null;
 }
 
-const SocketContext = createContext<SocketContextType | undefined>(undefined);
+export const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
 interface SocketProviderProps {
   children: React.ReactNode;
@@ -15,10 +14,10 @@ interface SocketProviderProps {
 
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
-  const { addNotification } = useNotification();
+  const { addToast } = useNotification(); // Use addToast
 
   useEffect(() => {
-    const newSocket = io('http://localhost:3000'); // Connect to backend Socket.IO server
+    const newSocket = io('http://localhost:5000'); // Correct URL
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
@@ -29,14 +28,29 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       console.log('Disconnected from Socket.IO server');
     });
 
+    // Listeners from App.tsx are now here
     newSocket.on('newOrderNotification', (data) => {
-      addNotification(data.message, 'info');
+      const message = `New Order: ${data.orderId} - ${data.message}`;
+      console.log('Socket newOrderNotification:', message);
+      addToast(message, 'success');
+    });
+
+    newSocket.on('lowStockNotification', (data) => {
+      const message = `Low Stock: Product ${data.productId}, Variation ${data.variationId} - ${data.currentStock} units (Threshold: ${data.threshold})`
+      console.log('Socket lowStockNotification:', message);
+      addToast(message, 'warning');
+    });
+
+    newSocket.on('customer_birthday', (data) => {
+      const message = `Aniversário: Hoje é o aniversário de ${data.name}! Deseje a ele(a) felicidades!`
+      console.log('Socket customer_birthday:', message);
+      addToast(message, 'info');
     });
 
     return () => {
       newSocket.disconnect();
     };
-  }, [addNotification]);
+  }, [addToast]);
 
   return (
     <SocketContext.Provider value={{ socket }}>

@@ -1,7 +1,7 @@
 import React from 'react';
 import Form from '../components/Form';
 import Field from '../components/Field';
-import Button from '../components/Button';
+import { Button } from '../components/Button';
 import { useFormContext } from 'react-hook-form';
 import { ImageUpload } from './ImageUpload'; // Import ImageUpload
 
@@ -20,7 +20,9 @@ interface ProductFormProps {
 }
 
 const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSubmit }) => {
-  const [currentImageUrl, setCurrentImageUrl] = React.useState<string | undefined>(initialData?.imageUrl);
+  const [currentImageUrl, setCurrentImageUrl] = React.useState<string | undefined>(
+    initialData?.imageUrl,
+  );
 
   const defaultValues = initialData || {
     name: '',

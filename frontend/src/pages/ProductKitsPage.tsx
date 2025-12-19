@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ProductKitList } from '../components/ProductKitList';
 import { ProductKitForm } from '../components/ProductKitForm';
 import { useAuth } from '../contexts/AuthContext';
-import { useNotification } from '../components/NotificationProvider';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface ProductKit {
   id: number;
@@ -34,7 +34,7 @@ const ProductKitsPage: React.FC = () => {
 
   const fetchKits = async () => {
     try {
-      const response = await fetch('/product-kits', {
+      const response = await fetch('/api/product-kits', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -48,7 +48,7 @@ const ProductKitsPage: React.FC = () => {
 
   const handleCreateKit = async (kitData: ProductKitFormData) => {
     try {
-      const response = await fetch('/product-kits', {
+      const response = await fetch('/api/product-kits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(kitData),
@@ -66,7 +66,7 @@ const ProductKitsPage: React.FC = () => {
 
   const handleUpdateKit = async (id: number, kitData: ProductKitFormData) => {
     try {
-      const response = await fetch(`/product-kits/${id}`, {
+      const response = await fetch(`/api/product-kits/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(kitData),
@@ -86,7 +86,7 @@ const ProductKitsPage: React.FC = () => {
   const handleDeleteKit = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this product kit?')) return;
     try {
-      const response = await fetch(`/product-kits/${id}`, {
+      const response = await fetch(`/api/product-kits/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });

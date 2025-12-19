@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { motion } from 'framer-motion';
 
 export const StyledTableContainer = styled.div`
   width: 100%;
@@ -11,8 +12,8 @@ export const StyledTable = styled.table`
   border-collapse: collapse;
   background-color: ${({ theme }) => theme.colors.surface};
   color: ${({ theme }) => theme.colors.onSurface};
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-radius: ${({ theme }) => theme.spacing.xxs};
+  box-shadow: ${({ theme }) => theme.shadows.elevation1};
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
 
   th,
   td {
@@ -25,7 +26,7 @@ export const StyledTable = styled.table`
     background-color: ${({ theme }) => theme.colors.background};
     font-weight: bold;
     text-transform: uppercase;
-    font-size: 0.85em;
+    font-size: ${({ theme }) => theme.typography.button.fontSize};
     color: ${({ theme }) => theme.colors.onBackground};
   }
 
@@ -41,5 +42,17 @@ export const StyledTable = styled.table`
     text-align: center;
     font-style: italic;
     color: ${({ theme }) => theme.colors.onSurface}99;
+  }
+`;
+
+export const StyledTableControls = styled(motion.div)`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.md};
+
+  > div {
+    flex-grow: 1;
   }
 `;

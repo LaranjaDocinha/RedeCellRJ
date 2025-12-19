@@ -1,5 +1,4 @@
-
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { motion } from 'framer-motion';
 
 export const ModalOverlay = styled(motion.div)`
@@ -63,7 +62,7 @@ export const WidgetItem = styled.label`
   color: ${({ theme }) => theme.colors.onSurface};
   cursor: pointer;
 
-  input[type="checkbox"] {
+  input[type='checkbox'] {
     width: 20px;
     height: 20px;
     cursor: pointer;
@@ -79,7 +78,9 @@ export const ModalActions = styled.div`
   margin-top: ${({ theme }) => theme.spacing.md};
 `;
 
-export const ModalButton = styled.button<{ primary?: boolean }>`
+export const ModalButton = styled.button.attrs<any>(({ primary }) => ({
+  primary: primary, // Keep primary for styled-components logic
+}))<{ primary?: boolean }>`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
   border: none;
   border-radius: ${({ theme }) => theme.borderRadius.medium};
@@ -87,17 +88,20 @@ export const ModalButton = styled.button<{ primary?: boolean }>`
   font-size: 1rem;
   transition: background-color 0.2s ease-in-out;
 
-  ${({ primary, theme }) => primary ? css`
-    background-color: ${theme.colors.primary};
-    color: ${theme.colors.onPrimary};
-    &:hover {
-      background-color: ${theme.colors.primaryDark};
-    }
-  ` : css`
-    background-color: ${theme.colors.surface}44;
-    color: ${theme.colors.onSurface};
-    &:hover {
-      background-color: ${theme.colors.surface}66;
-    }
-  `}
+  ${({ primary, theme }) =>
+    primary
+      ? css`
+          background-color: ${theme.colors.primary};
+          color: ${theme.colors.onPrimary};
+          &:hover {
+            background-color: ${theme.colors.primaryDark};
+          }
+        `
+      : css`
+          background-color: ${theme.colors.surface}44;
+          color: ${theme.colors.onSurface};
+          &:hover {
+            background-color: ${theme.colors.surface}66;
+          }
+        `}
 `;

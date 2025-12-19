@@ -12,7 +12,12 @@ interface RoleListProps {
   onManagePermissions: (id: number) => void;
 }
 
-export const RoleList: React.FC<RoleListProps> = ({ roles, onEdit, onDelete, onManagePermissions }) => {
+export const RoleList: React.FC<RoleListProps> = ({
+  roles,
+  onEdit,
+  onDelete,
+  onManagePermissions,
+}) => {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
@@ -26,7 +31,9 @@ export const RoleList: React.FC<RoleListProps> = ({ roles, onEdit, onDelete, onM
         <tbody className="text-gray-700">
           {roles.length === 0 ? (
             <tr>
-              <td colSpan={3} className="text-center py-4">No roles found.</td>
+              <td colSpan={3} className="text-center py-4">
+                No roles found.
+              </td>
             </tr>
           ) : (
             roles.map((role) => (

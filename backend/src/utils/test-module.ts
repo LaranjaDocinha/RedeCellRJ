@@ -1,1 +1,1 @@
-export const testFunction = () => "Hello from test module";
+export const testFunction = () => 'Hello from test module';

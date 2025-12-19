@@ -1,0 +1,12 @@
+import { Router } from 'express';
+import * as appointmentController from '../controllers/appointmentController.js';
+import { authMiddleware } from '../middlewares/authMiddleware.js';
+const router = Router();
+router.use(authMiddleware.authenticate);
+router.post('/', authMiddleware.authorize('manage', 'Appointments'), appointmentController.createAppointment);
+router.get('/', authMiddleware.authorize('view', 'Appointments'), appointmentController.getAppointments);
+router.put('/:id/status', authMiddleware.authorize('manage', 'Appointments'), appointmentController.updateAppointmentStatus);
+router.delete('/:id', authMiddleware.authorize('manage', 'Appointments'), appointmentController.deleteAppointment);
+router.get('/available-slots', authMiddleware.authorize('view', 'Appointments'), appointmentController.getAvailableSlots);
+router.post('/:id/confirm', authMiddleware.authorize('manage', 'Appointments'), appointmentController.confirmAppointment);
+export default router;

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Draggable } from '@hello-pangea/dnd';
-import { 
-  CardContainer, 
-  CardContentWrapper, 
-  CardTextarea, 
-  CardRemoveButton 
+import { motion } from 'framer-motion';
+import {
+  CardContainer,
+  CardContentWrapper,
+  CardTextarea,
+  CardRemoveButton,
+  DragHandle,
 } from './Kanban.styled';
 
 interface Card {
@@ -42,33 +44,37 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({ card, index, onRemove, o
   return (
     <Draggable draggableId={card.id} index={index}>
       {(provided, snapshot) => (
-        <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-          <CardContainer
-            data-testid={`card-${card.id}`}
-            $isDragging={snapshot.isDragging}
+        <div ref={provided.innerRef} {...provided.draggableProps}>
+          <motion.div // Adicionar motion.div aqui
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
             whileDrag={{ scale: 1.05, boxShadow: '0 5px 15px rgba(0, 0, 0, 0.3)' }}
           >
-            <CardContentWrapper>
-              {isEditing ? (
-                <CardTextarea
-                  value={newContent}
-                  onChange={handleContentChange}
-                  onBlur={handleContentBlur}
-                  onKeyDown={handleKeyDown}
-                  autoFocus
-                />
-              ) : (
-                <p onClick={() => setIsEditing(true)}>{card.content}</p>
-              )}
-              <CardRemoveButton onClick={() => onRemove(card.id)} aria-label="Remove card">
-                ×
-              </CardRemoveButton>
-            </CardContentWrapper>
-          </CardContainer>
+            <CardContainer
+              data-testid={`card-${card.id}`}
+              $isDragging={snapshot.isDragging}
+            >
+              <DragHandle {...provided.dragHandleProps} />
+              <CardContentWrapper>
+                {isEditing ? (
+                  <CardTextarea
+                    value={newContent}
+                    onChange={handleContentChange}
+                    onBlur={handleContentBlur}
+                    onKeyDown={handleKeyDown}
+                    autoFocus
+                  />
+                ) : (
+                  <p onClick={() => setIsEditing(true)}>{card.content}</p>
+                )}
+                <CardRemoveButton onClick={() => onRemove(card.id)} aria-label="Remove card">
+                  ×
+                </CardRemoveButton>
+              </CardContentWrapper>
+            </CardContainer>
+          </motion.div>
         </div>
       )}
     </Draggable>

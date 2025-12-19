@@ -39,7 +39,9 @@ export const ProductKitList: React.FC<ProductKitListProps> = ({ kits, onEdit, on
         <tbody className="text-gray-700">
           {kits.length === 0 ? (
             <tr>
-              <td colSpan={7} className="text-center py-4">No product kits found.</td>
+              <td colSpan={7} className="text-center py-4">
+                No product kits found.
+              </td>
             </tr>
           ) : (
             kits.map((kit) => (
@@ -53,7 +55,9 @@ export const ProductKitList: React.FC<ProductKitListProps> = ({ kits, onEdit, on
                   {kit.items && kit.items.length > 0 ? (
                     <ul className="list-disc list-inside text-xs">
                       {kit.items.map((item, idx) => (
-                        <li key={idx}>P: {item.product_id}, V: {item.variation_id}, Q: {item.quantity}</li>
+                        <li key={idx}>
+                          P: {item.product_id}, V: {item.variation_id}, Q: {item.quantity}
+                        </li>
                       ))}
                     </ul>
                   ) : (

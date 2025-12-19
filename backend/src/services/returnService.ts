@@ -1,6 +1,7 @@
 import pool from '../db/index.js';
 import { AppError } from '../utils/errors.js';
-import { inventoryService } from './inventoryService.js'; // Import inventoryService
+import { inventoryService } from './inventoryService.js';
+import { storeCreditService } from './storeCreditService.js';
 
 interface ReturnItemInput {
   product_id: number;
@@ -12,115 +13,92 @@ interface CreateReturnPayload {
   sale_id: number;
   reason?: string;
   items: ReturnItemInput[];
+  refund_method: 'original_payment' | 'store_credit';
 }
 
 interface UpdateReturnPayload {
   reason?: string;
-  status?: 'pending' | 'approved' | 'rejected' | 'completed';
+  status?: 'pending' | 'approved' | 'rejected' | 'processing' | 'completed';
   refund_amount?: number;
 }
 
 interface ReturnRecord {
   id: number;
-  sale_id: number;
-  return_date: Date;
-  reason?: string;
-  status: 'pending' | 'approved' | 'rejected' | 'completed';
-  refund_amount: number;
-  created_at: Date;
-  updated_at: Date;
-  items?: any[]; // To include return items when fetched
+  // other fields
 }
 
 class ReturnService {
-  async getAllReturns(): Promise<ReturnRecord[]> {
-    const result = await pool.query('SELECT * FROM returns');
-    return result.rows;
-  }
-
-  async getReturnById(id: number): Promise<ReturnRecord | undefined> {
-    const returnResult = await pool.query('SELECT * FROM returns WHERE id = $1', [id]);
-    if (returnResult.rows.length === 0) return undefined;
-
-    const returnRecord = returnResult.rows[0];
-    const itemsResult = await pool.query('SELECT * FROM return_items WHERE return_id = $1', [id]);
-    returnRecord.items = itemsResult.rows;
-
-    return returnRecord;
-  }
-
   async createReturn(payload: CreateReturnPayload): Promise<ReturnRecord> {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-
-      const { sale_id, reason, items } = payload;
-
-      // Fetch sale details to calculate refund amount
-      const saleResult = await client.query('SELECT total_amount FROM sales WHERE id = $1', [sale_id]);
-      if (saleResult.rows.length === 0) {
-        throw new AppError('Sale not found', 404);
-      }
-      const saleTotalAmount = parseFloat(saleResult.rows[0].total_amount);
+      const { sale_id, reason, items, refund_method } = payload;
 
       let calculatedRefundAmount = 0;
       const returnItemsDetails = [];
 
       for (const item of items) {
-        // Fetch product variation price at the time of sale (or current price if not available)
         const saleItemResult = await client.query(
-          'SELECT price_at_sale FROM sale_items WHERE sale_id = $1 AND product_id = $2 AND variation_id = $3',
-          [sale_id, item.product_id, item.variation_id]
+          'SELECT price FROM sale_items WHERE sale_id = $1 AND variation_id = $2',
+          [sale_id, item.variation_id],
         );
 
-        let priceAtReturn = 0;
-        if (saleItemResult.rows.length > 0) {
-          priceAtReturn = parseFloat(saleItemResult.rows[0].price_at_sale);
-        } else {
-          // Fallback to current product variation price if not found in sale_items
-          const currentPriceResult = await client.query(
-            'SELECT price FROM product_variations WHERE product_id = $1 AND id = $2',
-            [item.product_id, item.variation_id]
+        if (saleItemResult.rows.length === 0) {
+          throw new AppError(
+            `Item with variation_id ${item.variation_id} not found in sale ${sale_id}`,
+            404,
           );
-          if (currentPriceResult.rows.length === 0) {
-            throw new AppError(`Product variation ${item.variation_id} not found.`, 404);
-          }
-          priceAtReturn = parseFloat(currentPriceResult.rows[0].price);
         }
 
-        calculatedRefundAmount += priceAtReturn * item.quantity;
-        returnItemsDetails.push({ ...item, price_at_return: priceAtReturn });
-
-        // Restock item in inventory
-        await inventoryService.adjustStock(item.variation_id, item.quantity); // Add quantity back to stock
+        const price = parseFloat(saleItemResult.rows[0].price);
+        calculatedRefundAmount += price * item.quantity;
+        returnItemsDetails.push({ ...item, price });
       }
 
-      // Insert return record
       const returnResult = await client.query(
-        'INSERT INTO returns (sale_id, reason, refund_amount, status) VALUES ($1, $2, $3, $4) RETURNING *'
-        , [sale_id, reason, calculatedRefundAmount, 'pending']
+        'INSERT INTO returns (sale_id, reason, refund_amount, status) VALUES ($1, $2, $3, $4) RETURNING *',
+        [sale_id, reason, calculatedRefundAmount, 'pending'],
       );
       const newReturn = returnResult.rows[0];
 
-      // Insert return items
-      for (const itemDetail of returnItemsDetails) {
+      for (const detail of returnItemsDetails) {
         await client.query(
-          'INSERT INTO return_items (return_id, product_id, variation_id, quantity, price_at_return) VALUES ($1, $2, $3, $4, $5)',
-          [newReturn.id, itemDetail.product_id, itemDetail.variation_id, itemDetail.quantity, itemDetail.price_at_return]
+          'INSERT INTO return_items (return_id, product_id, variation_id, quantity, price) VALUES ($1, $2, $3, $4, $5)',
+          [newReturn.id, detail.product_id, detail.variation_id, detail.quantity, detail.price],
         );
+      }
+
+      if (refund_method === 'store_credit') {
+        const sale = await client.query('SELECT customer_id FROM sales WHERE id = $1', [sale_id]);
+        const customerId = sale.rows[0]?.customer_id;
+        if (customerId) {
+          await storeCreditService.addCredit(
+            customerId,
+            calculatedRefundAmount,
+            `Refund for return #${newReturn.id}`,
+            newReturn.id,
+          );
+        }
       }
 
       await client.query('COMMIT');
       return { ...newReturn, items: returnItemsDetails };
-    } catch (error: unknown) {
+    } catch (error) {
       await client.query('ROLLBACK');
-      if (error instanceof AppError) {
-        throw error;
-      }
       throw error;
     } finally {
       client.release();
     }
+  }
+
+  async getReturnById(id: number) {
+    const result = await pool.query('SELECT * FROM returns WHERE id = $1', [id]);
+    return result.rows[0];
+  }
+
+  async getAllReturns(): Promise<ReturnRecord[]> {
+    const result = await pool.query('SELECT * FROM returns ORDER BY return_date DESC');
+    return result.rows;
   }
 
   async updateReturn(id: number, payload: UpdateReturnPayload): Promise<ReturnRecord | undefined> {
@@ -129,19 +107,28 @@ class ReturnService {
     const values: any[] = [];
     let paramIndex = 1;
 
-    if (reason !== undefined) { fields.push(`reason = $${paramIndex++}`); values.push(reason); }
-    if (status !== undefined) { fields.push(`status = $${paramIndex++}`); values.push(status); }
-    if (refund_amount !== undefined) { fields.push(`refund_amount = $${paramIndex++}`); values.push(refund_amount); }
+    if (reason !== undefined) {
+      fields.push(`reason = $${paramIndex++}`);
+      values.push(reason);
+    }
+    if (status !== undefined) {
+      fields.push(`status = $${paramIndex++}`);
+      values.push(status);
+    }
+    if (refund_amount !== undefined) {
+      fields.push(`refund_amount = $${paramIndex++}`);
+      values.push(refund_amount);
+    }
 
     if (fields.length === 0) {
       const existingReturn = await this.getReturnById(id);
       if (!existingReturn) {
-        return undefined; // No return found to update
+        return undefined;
       }
-      return existingReturn; // No fields to update, return existing return
+      return existingReturn;
     }
 
-    values.push(id); // Add id for WHERE clause
+    values.push(id);
     const query = `UPDATE returns SET ${fields.join(', ')}, updated_at = current_timestamp WHERE id = $${paramIndex} RETURNING *`;
 
     try {
@@ -158,6 +145,100 @@ class ReturnService {
   async deleteReturn(id: number): Promise<boolean> {
     const result = await pool.query('DELETE FROM returns WHERE id = $1 RETURNING id', [id]);
     return (result?.rowCount ?? 0) > 0;
+  }
+
+  async getReturnItemById(id: number) {
+    const result = await pool.query('SELECT * FROM return_items WHERE id = $1', [id]);
+    return result.rows[0];
+  }
+
+  async getPendingInspectionItems(): Promise<any[]> {
+    const query = `
+                  SELECT
+                    ri.id as return_item_id,
+                    ri.quantity,
+                    ri.inspection_status,
+                    r.id as return_id,
+                    r.return_date,
+                    p.name as product_name,
+                    pv.color,
+                    c.name as customer_name
+                  FROM return_items ri
+                  JOIN returns r ON ri.return_id = r.id
+                  JOIN products p ON ri.product_id = p.id
+                  JOIN product_variations pv ON ri.variation_id = pv.id
+                  JOIN sales s ON r.sale_id = s.id
+                  LEFT JOIN customers c ON s.customer_id = c.id
+                  WHERE ri.inspection_status = 'pending'
+                  ORDER BY r.return_date DESC;
+                `;
+    const result = await pool.query(query);
+    return result.rows;
+  }
+
+  async inspectReturnItem(
+    returnItemId: number,
+    inspectionStatus: 'approved' | 'rejected',
+    inspectionNotes: string,
+    userId?: string,
+  ): Promise<any> {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const itemResult = await client.query(
+        'SELECT ri.*, r.sale_id FROM return_items ri JOIN returns r ON ri.return_id = r.id WHERE ri.id = $1',
+        [returnItemId],
+      );
+      if (itemResult.rows.length === 0) {
+        throw new AppError('Return item not found', 404);
+      }
+      const item = itemResult.rows[0];
+
+      if (item.inspection_status !== 'pending') {
+        throw new AppError('Item has already been inspected', 400);
+      }
+
+      if (inspectionStatus === 'approved') {
+        const saleItemResult = await client.query(
+          'SELECT cost_at_sale FROM sale_items WHERE sale_id = $1 AND variation_id = $2',
+          [item.sale_id, item.variation_id],
+        );
+
+        const unitCost = saleItemResult.rows[0]?.cost_at_sale || 0;
+
+        await inventoryService.receiveStock(
+          item.variation_id,
+          item.quantity,
+          unitCost,
+          userId,
+          client,
+        );
+      }
+
+      const updateQuery = `
+                      UPDATE return_items
+                      SET
+                        inspection_status = $1,
+                        inspection_notes = $2,
+                        resolved_at = current_timestamp
+                      WHERE id = $3
+                      RETURNING *;
+                    `;
+      const updatedItemResult = await client.query(updateQuery, [
+        inspectionStatus,
+        inspectionNotes,
+        returnItemId,
+      ]);
+
+      await client.query('COMMIT');
+      return updatedItemResult.rows[0];
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 }
 

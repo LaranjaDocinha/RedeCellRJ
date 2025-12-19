@@ -1,4 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import {
+  StyledForm,
+  StyledFormField,
+  StyledLabel,
+  StyledInput,
+  StyledTextArea,
+  StyledButtonContainer,
+} from './BranchForm.styled';
+import { Button } from '../components/Button';
 
 interface BranchFormData {
   name: string;
@@ -38,67 +47,68 @@ export const BranchForm: React.FC<BranchFormProps> = ({ initialData, onSubmit, o
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6 space-y-4">
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
-        <input
+    <StyledForm
+      onSubmit={handleSubmit}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.2 }}
+    >
+      <StyledFormField>
+        <StyledLabel htmlFor="name">Name</StyledLabel>
+        <StyledInput
           type="text"
           name="name"
           id="name"
           value={formData.name}
           onChange={handleChange}
           required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
         />
-      </div>
-      <div>
-        <label htmlFor="address" className="block text-sm font-medium text-gray-700">Address</label>
-        <textarea
+      </StyledFormField>
+      <StyledFormField>
+        <StyledLabel htmlFor="address">Address</StyledLabel>
+        <StyledTextArea
           name="address"
           id="address"
           value={formData.address || ''}
           onChange={handleChange}
           rows={3}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        ></textarea>
-      </div>
-      <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
-        <input
+        ></StyledTextArea>
+      </StyledFormField>
+      <StyledFormField>
+        <StyledLabel htmlFor="phone">Phone</StyledLabel>
+        <StyledInput
           type="text"
           name="phone"
           id="phone"
           value={formData.phone || ''}
           onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
         />
-      </div>
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-        <input
+      </StyledFormField>
+      <StyledFormField>
+        <StyledLabel htmlFor="email">Email</StyledLabel>
+        <StyledInput
           type="email"
           name="email"
           id="email"
           value={formData.email || ''}
           onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
         />
-      </div>
-      <div className="flex justify-end space-x-3">
-        <button
+      </StyledFormField>
+      <StyledButtonContainer>
+        <Button
           type="button"
           onClick={onCancel}
-          className="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          Cancel
-        </button>
-        <button
+          variant="outlined"
+          color="secondary"
+          label="Cancel"
+        />
+        <Button
           type="submit"
-          className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          {initialData ? 'Update Branch' : 'Add Branch'}
-        </button>
-      </div>
-    </form>
+          variant="contained"
+          color="primary"
+          label={initialData ? 'Update Branch' : 'Add Branch'}
+        />
+      </StyledButtonContainer>
+    </StyledForm>
   );
 };

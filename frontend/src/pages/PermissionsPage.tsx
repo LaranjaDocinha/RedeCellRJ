@@ -1,8 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { PermissionList } from '../components/PermissionList';
 import { PermissionForm } from '../components/PermissionForm';
 import { useAuth } from '../contexts/AuthContext';
-import { useNotification } from '../components/NotificationProvider';
+import { useNotification } from '../contexts/NotificationContext';
+import { StyledPageContainer, StyledPageTitle } from './AuditLogsPage.styled'; // Reutilizando componentes estilizados
+import { Button } from '../components/Button'; // Importar o componente Button
+import Loading from '../components/Loading'; // Importar o componente Loading
+import { StyledEmptyState } from '../components/AuditLogList.styled'; // Reutilizando StyledEmptyState
+import { FaKey } from 'react-icons/fa'; // Ícone para estado vazio
 
 interface Permission {
   id: number;
@@ -13,16 +19,18 @@ const PermissionsPage: React.FC = () => {
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [editingPermission, setEditingPermission] = useState<Permission | undefined>(undefined);
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { token } = useAuth();
-  const { addNotification } = useNotification();
+  const { addToast } = useNotification();
 
   useEffect(() => {
     fetchPermissions();
   }, []);
 
   const fetchPermissions = async () => {
+    setLoading(true);
     try {
-      const response = await fetch('/permissions', {
+      const response = await fetch('/api/permissions', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -30,13 +38,15 @@ const PermissionsPage: React.FC = () => {
       setPermissions(data);
     } catch (error: any) {
       console.error("Error fetching permissions:", error);
-      addNotification(`Failed to fetch permissions: ${error.message}`, 'error');
+      addToast(`Failed to fetch permissions: ${error.message}`, 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCreatePermission = async (permissionData: Omit<Permission, 'id'>) => {
     try {
-      const response = await fetch('/permissions', {
+      const response = await fetch('/api/permissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(permissionData),
@@ -45,16 +55,16 @@ const PermissionsPage: React.FC = () => {
       await response.json();
       setShowForm(false);
       fetchPermissions();
-      addNotification('Permission created successfully!', 'success');
+      addToast('Permission created successfully!', 'success');
     } catch (error: any) {
       console.error("Error creating permission:", error);
-      addNotification(`Failed to create permission: ${error.message}`, 'error');
+      addToast(`Failed to create permission: ${error.message}`, 'error');
     }
   };
 
   const handleUpdatePermission = async (id: number, permissionData: Omit<Permission, 'id'>) => {
     try {
-      const response = await fetch(`/permissions/${id}`, {
+      const response = await fetch(`/api/permissions/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(permissionData),
@@ -64,26 +74,26 @@ const PermissionsPage: React.FC = () => {
       setEditingPermission(undefined);
       setShowForm(false);
       fetchPermissions();
-      addNotification('Permission updated successfully!', 'success');
+      addToast('Permission updated successfully!', 'success');
     } catch (error: any) {
       console.error("Error updating permission:", error);
-      addNotification(`Failed to update permission: ${error.message}`, 'error');
+      addToast(`Failed to update permission: ${error.message}`, 'error');
     }
   };
 
   const handleDeletePermission = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this permission?')) return;
     try {
-      const response = await fetch(`/permissions/${id}`, {
+      const response = await fetch(`/api/permissions/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       fetchPermissions();
-      addNotification('Permission deleted successfully!', 'success');
+      addToast('Permission deleted successfully!', 'success');
     } catch (error: any) {
       console.error("Error deleting permission:", error);
-      addNotification(`Failed to delete permission: ${error.message}`, 'error');
+      addToast(`Failed to delete permission: ${error.message}`, 'error');
     }
   };
 
@@ -101,43 +111,70 @@ const PermissionsPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Permission Management</h1>
+    <StyledPageContainer
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <StyledPageTitle
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        Permission Management
+      </StyledPageTitle>
 
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Add New Permission
-        </button>
-      </div>
+      {loading ? (
+        <Loading />
+      ) : (
+        <>
+          <div className="flex justify-end mb-4">
+            <Button
+              onClick={() => setShowForm(true)}
+              variant="contained"
+              color="primary"
+              label="Add New Permission"
+            />
+          </div>
 
-      {showForm && (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-3">
-            {editingPermission ? 'Edit Permission' : 'Add New Permission'}
-          </h2>
-          <PermissionForm
-            initialData={editingPermission}
-            onSubmit={(data) => {
-              if (editingPermission) {
-                handleUpdatePermission(editingPermission.id, data);
-              } else {
-                handleCreatePermission(data);
-              }
-            }}
-            onCancel={handleCancelForm}
-          />
-        </div>
+          {showForm && (
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold mb-3">
+                {editingPermission ? 'Edit Permission' : 'Add New Permission'}
+              </h2>
+              <PermissionForm
+                initialData={editingPermission}
+                onSubmit={(data) => {
+                  if (editingPermission) {
+                    handleUpdatePermission(editingPermission.id, data);
+                  } else {
+                    handleCreatePermission(data);
+                  }
+                }}
+                onCancel={handleCancelForm}
+              />
+            </div>
+          )}
+
+          {permissions.length === 0 && !showForm ? (
+            <StyledEmptyState
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <FaKey />
+              <p>No permissions found. Click "Add New Permission" to get started!</p>
+            </StyledEmptyState>
+          ) : (
+            <PermissionList
+              permissions={permissions}
+              onEdit={handleEditClick}
+              onDelete={handleDeletePermission}
+            />
+          )}
+        </>
       )}
-
-      <PermissionList
-        permissions={permissions}
-        onEdit={handleEditClick}
-        onDelete={handleDeletePermission}
-      />
-    </div>
+    </StyledPageContainer>
   );
 };
 

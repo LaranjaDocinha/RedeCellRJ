@@ -27,7 +27,7 @@ class ReviewService {
   async getReviewsByProductId(productId: number): Promise<Review[]> {
     const result = await pool.query(
       'SELECT pr.*, u.email as user_email, u.name as user_name FROM product_reviews pr JOIN users u ON pr.user_id = u.id WHERE pr.product_id = $1 ORDER BY pr.created_at DESC',
-      [productId]
+      [productId],
     );
     return result.rows;
   }
@@ -43,36 +43,47 @@ class ReviewService {
       // Check if user has already reviewed this product
       const existingReview = await pool.query(
         'SELECT id FROM product_reviews WHERE product_id = $1 AND user_id = $2',
-        [product_id, user_id]
+        [product_id, user_id],
       );
       if (existingReview.rows.length > 0) {
         throw new AppError('You have already reviewed this product', 409);
       }
 
       const result = await pool.query(
-        'INSERT INTO product_reviews (product_id, user_id, rating, comment) VALUES ($1, $2, $3, $4) RETURNING *'
-        , [product_id, user_id, rating, comment]
+        'INSERT INTO product_reviews (product_id, user_id, rating, comment) VALUES ($1, $2, $3, $4) RETURNING *',
+        [product_id, user_id, rating, comment],
       );
       return result.rows[0];
     } catch (error: unknown) {
       if (error instanceof AppError) {
         throw error;
       }
-      if (error instanceof Error && (error as any).code === '23505') { // Unique violation error code
+      if (error instanceof Error && (error as any).code === '23505') {
+        // Unique violation error code
         throw new AppError('You have already reviewed this product', 409);
       }
       throw error;
     }
   }
 
-  async updateReview(id: number, userId: number, payload: UpdateReviewPayload): Promise<Review | undefined> {
+  async updateReview(
+    id: number,
+    userId: number,
+    payload: UpdateReviewPayload,
+  ): Promise<Review | undefined> {
     const { rating, comment } = payload;
     const fields: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
 
-    if (rating !== undefined) { fields.push(`rating = $${paramIndex++}`); values.push(rating); }
-    if (comment !== undefined) { fields.push(`comment = $${paramIndex++}`); values.push(comment); }
+    if (rating !== undefined) {
+      fields.push(`rating = $${paramIndex++}`);
+      values.push(rating);
+    }
+    if (comment !== undefined) {
+      fields.push(`comment = $${paramIndex++}`);
+      values.push(comment);
+    }
 
     if (fields.length === 0) {
       const existingReview = await this.getReviewById(id);
@@ -98,7 +109,10 @@ class ReviewService {
   }
 
   async deleteReview(id: number, userId: number): Promise<boolean> {
-    const result = await pool.query('DELETE FROM product_reviews WHERE id = $1 AND user_id = $2 RETURNING id', [id, userId]);
+    const result = await pool.query(
+      'DELETE FROM product_reviews WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, userId],
+    );
     return (result?.rowCount ?? 0) > 0;
   }
 }

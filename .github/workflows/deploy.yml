@@ -1,121 +1,138 @@
-name: Deploy - Blue/Green Strategy
+name: Deploy
 
 on:
   push:
     branches:
-      - main # Trigger on push to main branch for production deployment
+      - main
+  workflow_dispatch: # Permite disparar manualmente
+    inputs:
+      strategy:
+        description: 'Deployment Strategy'
+        required: true
+        default: 'canary'
+        type: choice
+        options:
+          - canary
+          - blue-green # Placeholder para futura implementação
 
 jobs:
-  # This job determines the current active/inactive environments and sets them as outputs
-  determine-environments:
-    runs-on: ubuntu-latest
-    outputs:
-      active_env: ${{ steps.set_envs.outputs.active_env }}
-      inactive_env: ${{ steps.set_envs.outputs.inactive_env }}
-    steps:
-      - name: Determine Active/Inactive Environments
-        id: set_envs
-        run: |
-          # Placeholder: In a real scenario, this would query a load balancer, DNS, or a state file
-          # to determine which environment (e.g., 'blue' or 'green') is currently serving traffic.
-          # For demonstration, let's assume 'blue' is active initially, and we deploy to 'green'.
-          # This logic needs to be dynamic based on the actual infrastructure state.
-          ACTIVE_ENV="blue"
-          INACTIVE_ENV="green"
-          echo "active_env=$ACTIVE_ENV" >> $GITHUB_OUTPUT
-          echo "inactive_env=$INACTIVE_ENV" >> $GITHUB_OUTPUT
-          echo "Determined active: $ACTIVE_ENV, inactive: $INACTIVE_ENV"
-
-  terraform-validate:
-    name: Terraform Validate
+  build_and_package: # Renomeado para maior clareza
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v2
-      - name: Terraform Init
-        run: terraform init
-        working-directory: infrastructure/terraform
-      - name: Terraform Validate
-        run: terraform validate
-        working-directory: infrastructure/terraform
-
-  deploy-to-inactive:
-    name: Deploy to Inactive Environment (${{ needs.determine-environments.outputs.inactive_env }})
-    runs-on: ubuntu-latest
-    needs: [determine-environments, terraform-validate] # Add dependency on terraform-validate
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: '20'
-
-      - name: Install Backend dependencies
-        run: npm install --prefix backend
-
+          node-version: '20.x'
+      - name: Install dependencies (Backend)
+        run: |
+          cd backend
+          npm install
       - name: Build Backend
-        run: npm run build --prefix backend
-
-      - name: Run Database Migrations (on inactive environment's DB)
-        # IMPORTANT: Migrations should be backward-compatible if rollback is needed.
-        # Or, run migrations on a shared DB if schema changes are always additive.
-        run: npm run db:migrate --prefix backend up
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_INACTIVE }} # Use DB for inactive env
-
-      - name: Deploy Backend to Inactive Environment
-        run: echo "Deploying backend to ${{ needs.determine-environments.outputs.inactive_env }}... (Placeholder)"
-        # Add actual deployment commands here (e.g., ssh, rsync, docker deploy to specific server group)
-
-      - name: Install Frontend dependencies
-        run: npm install --prefix frontend
-
+        run: |
+          cd backend
+          npm run build
+      - name: Install dependencies (Frontend)
+        run: |
+          cd frontend
+          npm install
       - name: Build Frontend
-        run: npm run build --prefix frontend
+        run: |
+          cd frontend
+          npm run build
+      - name: Archive Production Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: production-artifacts
+          path: |
+            backend/dist/
+            frontend/build/ # Ou frontend/dist/, dependendo do seu build
 
-      - name: Deploy Frontend to Inactive Environment
-        run: echo "Deploying frontend to ${{ needs.determine-environments.outputs.inactive_env }}... (Placeholder)"
-        # Add actual deployment commands here (e.g., npx vercel deploy to specific alias/project)
-
-  run-smoke-tests:
-    name: Run Smoke Tests on Inactive Environment
+  deploy_to_canary:
+    needs: build_and_package
     runs-on: ubuntu-latest
-    needs: deploy-to-inactive
+    environment:
+      name: canary
+      url: https://canary.example.com # URL do ambiente Canary
     steps:
-      - name: Run basic smoke tests (Placeholder)
-        run: echo "Running smoke tests against ${{ needs.determine-environments.outputs.inactive_env }}... (Placeholder)"
-        # Add commands to hit basic endpoints and verify health
-        # e.g., curl http://inactive-env-url/healthz | grep "OK"
+      - uses: actions/download-artifact@v3
+        with:
+          name: production-artifacts
+          path: ./artifacts # Baixa os artefatos para esta folder
+      - name: Deploy Backend to Canary
+        run: |
+          echo "Deploying backend to canary environment..."
+          # Ex: scp -r ./artifacts/backend/dist user@canary-server:/app/backend
+          # Ex: kubectl apply -f kubernetes/canary-backend.yaml
+          echo "Deployment script for backend on canary goes here."
+      - name: Deploy Frontend to Canary
+        run: |
+          echo "Deploying frontend to canary environment..."
+          # Ex: scp -r ./artifacts/frontend/build user@canary-server:/app/frontend
+          # Ex: kubectl apply -f kubernetes/canary-frontend.yaml
+          echo "Deployment script for frontend on canary goes here."
+      - name: Update Canary Load Balancer/Traffic Split (Placeholder)
+        run: echo "Updating load balancer to send small percentage of traffic to canary..."
+        # Ex: update-loadbalancer-traffic --target canary --weight 5%
 
-  switch-traffic:
-    name: Switch Traffic to New Environment (${{ needs.determine-environments.outputs.inactive_env }})
+  monitor_canary:
+    needs: deploy_to_canary
     runs-on: ubuntu-latest
-    needs: run-smoke-tests
     steps:
-      - name: Switch Load Balancer Traffic
-        run: echo "Switching traffic from ${{ needs.determine-environments.outputs.active_env }} to ${{ needs.determine-environments.outputs.inactive_env }}... (Placeholder)"
-        # This is the critical step. It requires interaction with your cloud provider's API (AWS, GCP, Azure)
-        # or load balancer API (e.g., Nginx, HAProxy, Kubernetes Ingress).
-        # Example: AWS CLI command to update target group for ALB.
-        # aws elbv2 modify-listener --listener-arn <ARN> --default-actions Type=forward,TargetGroupArn=<NEW_TARGET_GROUP_ARN>
+      - name: Wait for Canary to Stabilize (Placeholder)
+        run: sleep 60 # Esperar por 1 minuto para o serviço subir e estabilizar
+      - name: Run Automated Smoke/Health Checks
+        run: echo "Running automated health checks and basic smoke tests on canary..."
+        # Ex: curl --fail http://canary.example.com/health || exit 1
+      - name: Monitor Performance and Errors (Placeholder)
+        run: echo "Integrate with APM/Observability tools (Sentry, Prometheus) to monitor canary for 15 minutes."
+        # Ex: your-monitoring-tool --check-canary --duration 15m
 
-  post-deployment-checks:
-    name: Post-Deployment Checks on New Active Environment
+  promote_or_rollback:
+    needs: monitor_canary
     runs-on: ubuntu-latest
-    needs: switch-traffic
+    environment:
+      name: production
+      url: https://your-production.com # Replace with your actual production URL
     steps:
-      - name: Run final checks (Placeholder)
-        run: echo "Running post-deployment checks on new active environment... (Placeholder)"
-        # More extensive tests, monitoring checks, etc.
+      - name: Approval for Production Promotion
+        if: github.event_name == 'push' # Apenas para push no main
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: 'seu-usuario-github' # Substitua pelo seu usuário ou equipe
+          minimum-approvals: 1
+          issue-title: "Promover Canary para Produção"
+          issue-body: "Aprovar promoção do build ${{ github.sha }} para produção após monitoramento Canary."
+          exclude-workflow-initiator: false # O iniciador do workflow pode aprovar
 
-  send-notification:
-    name: Send Deployment Notification
-    runs-on: ubuntu-latest
-    needs: post-deployment-checks
-    if: success() || failure() # Always run notification
-    steps:
-      - name: Send notification (Placeholder)
-        run: echo "Deployment to ${{ needs.determine-environments.outputs.inactive_env }} completed with status ${{ job.status }} (Placeholder)"
-        # Add actual notification commands here (e.g., curl to Slack webhook, email action)
+      - name: Perform Full Production Rollout (Canary)
+        if: github.event.inputs.strategy == 'canary' || github.event_name == 'push' # Executa se for canary ou push no main
+        run: |
+          echo "Automated tests and monitoring passed. Shifting traffic 100% to new version..."
+          # Ex: update-loadbalancer-traffic --target new-version --weight 100%
+          # Ex: kubectl rollout promote deployment/production-app
+          echo "Script for full production traffic shift goes here."
+
+      - name: Deploy to Production (Blue/Green Placeholder)
+        if: github.event.inputs.strategy == 'blue-green'
+        run: |
+          echo "Deploying to the 'Green' environment..."
+          # Ex: scp -r ./artifacts/backend/dist user@green-server:/app/backend
+          # Ex: kubectl apply -f kubernetes/green-app.yaml
+          echo "Deployment script for Blue/Green 'Green' environment goes here."
+
+      - name: Switch Traffic (Blue/Green Placeholder)
+        if: github.event.inputs.strategy == 'blue-green'
+        run: |
+          echo "Switching load balancer traffic from 'Blue' to 'Green'..."
+          # Ex: update-loadbalancer-traffic --target green
+          echo "Script for Blue/Green traffic switch goes here."
+
+      - name: Rollback on Failure (Placeholder)
+        if: failure() && (github.event.inputs.strategy == 'canary' || github.event.inputs.strategy == 'blue-green')
+        run: |
+          echo "Deployment failed. Initiating automated rollback..."
+          # Ex: rollback-to-previous-version.sh
+          echo "Script for automated rollback goes here."
+          # Notificar equipe sobre o rollback

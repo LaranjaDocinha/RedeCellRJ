@@ -33,7 +33,10 @@ export const ReturnForm: React.FC<ReturnFormProps> = ({ initialData, onSubmit, o
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [name]: name === 'sale_id' ? parseInt(value) : value }));
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: name === 'sale_id' ? parseInt(value) : value,
+    }));
   };
 
   const handleItemChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,7 +71,9 @@ export const ReturnForm: React.FC<ReturnFormProps> = ({ initialData, onSubmit, o
   return (
     <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6 space-y-4">
       <div>
-        <label htmlFor="sale_id" className="block text-sm font-medium text-gray-700">Sale ID</label>
+        <label htmlFor="sale_id" className="block text-sm font-medium text-gray-700">
+          Sale ID
+        </label>
         <input
           type="number"
           name="sale_id"
@@ -80,7 +85,9 @@ export const ReturnForm: React.FC<ReturnFormProps> = ({ initialData, onSubmit, o
         />
       </div>
       <div>
-        <label htmlFor="reason" className="block text-sm font-medium text-gray-700">Reason</label>
+        <label htmlFor="reason" className="block text-sm font-medium text-gray-700">
+          Reason
+        </label>
         <textarea
           name="reason"
           id="reason"
@@ -95,7 +102,12 @@ export const ReturnForm: React.FC<ReturnFormProps> = ({ initialData, onSubmit, o
       {formData.items.map((item, index) => (
         <div key={index} className="flex space-x-2 mb-2 items-end">
           <div className="flex-1">
-            <label htmlFor={`product_id-${index}`} className="block text-sm font-medium text-gray-700">Product ID</label>
+            <label
+              htmlFor={`product_id-${index}`}
+              className="block text-sm font-medium text-gray-700"
+            >
+              Product ID
+            </label>
             <input
               type="number"
               name="product_id"
@@ -107,7 +119,12 @@ export const ReturnForm: React.FC<ReturnFormProps> = ({ initialData, onSubmit, o
             />
           </div>
           <div className="flex-1">
-            <label htmlFor={`variation_id-${index}`} className="block text-sm font-medium text-gray-700">Variation ID</label>
+            <label
+              htmlFor={`variation_id-${index}`}
+              className="block text-sm font-medium text-gray-700"
+            >
+              Variation ID
+            </label>
             <input
               type="number"
               name="variation_id"
@@ -119,7 +136,12 @@ export const ReturnForm: React.FC<ReturnFormProps> = ({ initialData, onSubmit, o
             />
           </div>
           <div className="flex-1">
-            <label htmlFor={`quantity-${index}`} className="block text-sm font-medium text-gray-700">Quantity</label>
+            <label
+              htmlFor={`quantity-${index}`}
+              className="block text-sm font-medium text-gray-700"
+            >
+              Quantity
+            </label>
             <input
               type="number"
               name="quantity"

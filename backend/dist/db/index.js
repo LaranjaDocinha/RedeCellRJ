@@ -1,15 +1,31 @@
 import { Pool } from 'pg';
-// This configuration is now more robust.
-// It prioritizes the DATABASE_URL connection string if it exists,
-// otherwise it falls back to individual environment variables.
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    // The following are used if DATABASE_URL is not set
-    user: process.env.DB_USER || 'postgres',
-    host: process.env.DB_HOST || 'localhost',
-    database: process.env.DB_NAME || 'pdv_web',
-    password: process.env.DB_PASSWORD,
-    port: parseInt(process.env.DB_PORT || '5432', 10),
-});
-export const query = (text, params) => pool.query(text, params);
-export default pool;
+import 'dotenv/config';
+let pool;
+// This function allows the test setup to inject a specific pool.
+export function setPool(newPool) {
+    if (pool) {
+        pool.end(); // Close the old pool if it exists
+    }
+    pool = newPool;
+}
+// This function gets the pool, creating it if it doesn't exist.
+export function getPool() {
+    if (!pool) {
+        console.log('Creating new production/development pool.');
+        pool = new Pool({
+            connectionString: process.env.DATABASE_URL,
+            // Add other production configurations here if needed
+        });
+        pool.on('error', (err) => {
+            console.error('Unexpected error on idle client', err);
+            process.exit(-1);
+        });
+    }
+    return pool;
+}
+// Export a default instance for convenience in the app,
+// but tests should rely on getPool() after setPool() has been called.
+export default {
+    query: (text, params) => getPool().query(text, params),
+    connect: () => getPool().connect(),
+};

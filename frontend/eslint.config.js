@@ -6,13 +6,14 @@ import pluginReactConfig from "eslint-plugin-react/configs/recommended.js";
 import prettierConfig from "eslint-config-prettier";
 import prettierPlugin from "eslint-plugin-prettier";
 import pluginJsxA11y from "eslint-plugin-jsx-a11y";
+import react from "eslint-plugin-react";
 
 export default [
   {
-    files: ["src/**/*.{js,jsx,ts,tsx}"], // Add this line
+    files: ["src/**/*.{js,jsx,ts,tsx}"],
     languageOptions: {
       globals: globals.browser,
-      parser: tseslintParser, // Use the parser here
+      parser: tseslintParser,
       parserOptions: {
         ecmaFeatures: {
           jsx: true,
@@ -22,17 +23,48 @@ export default [
       },
     },
     plugins: {
-      "@typescript-eslint": tseslintPlugin, // Register the plugin
-      prettier: prettierPlugin, // Register prettier plugin here as well
+      "@typescript-eslint": tseslintPlugin,
+      prettier: prettierPlugin,
       "jsx-a11y": pluginJsxA11y,
+      react: react,
     },
     rules: {
-      ...tseslintPlugin.configs.recommended.rules, // Spread recommended rules
+      ...tseslintPlugin.configs.recommended.rules,
       "prettier/prettier": "error",
       ...pluginJsxA11y.configs.recommended.rules,
+      "react/react-in-jsx-scope": "off",
+      "react/display-name": "off",
+      "react/jsx-uses-react": "off",
+      "react/jsx-uses-vars": "off",
+      "no-unused-vars": "warn",
+      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-explicit-any": "warn",
+    },
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
+  },
+  {
+    files: ["src/**/*.test.{js,jsx,ts,tsx}"],
+    languageOptions: {
+      globals: {
+        ...globals.jest,
+        ...globals.vitest,
+      },
+    },
+    rules: {
+      // Regras específicas para testes, se houver
     },
   },
   pluginJs.configs.recommended,
   pluginReactConfig,
   prettierConfig,
+  {
+    rules: {
+      "react/react-in-jsx-scope": "off",
+      "react/display-name": "off",
+    },
+  },
 ];

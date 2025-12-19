@@ -1,81 +1,106 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import { AppError } from '../utils/errors.js';
 import pool from '../db/index.js';
-import { notificationEmitter } from '../utils/notificationEmitter.js'; // Import notificationEmitter
+const NOTIFICATIONS_MICROSERVICE_URL = process.env.NOTIFICATIONS_MICROSERVICE_URL || 'http://localhost:3002';
 export const inventoryService = {
-    getLowStockProducts() {
-        return __awaiter(this, arguments, void 0, function* (threshold = 10) {
-            const { rows } = yield pool.query(`SELECT
-        pv.id as variation_id,
-        p.name as product_name,
-        pv.color,
-        pv.stock_quantity,
-        pv.price,
-        pv.low_stock_threshold
-      FROM product_variations pv
-      JOIN products p ON pv.product_id = p.id
-      WHERE pv.stock_quantity <= pv.low_stock_threshold
-      ORDER BY pv.stock_quantity ASC, p.name ASC`);
-            return rows;
-        });
+    async getLowStockProducts(threshold = 10) {
+        // ... (existing code)
     },
-    adjustStock(variationId, quantityChange) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const client = yield pool.connect();
-            try {
-                yield client.query('BEGIN');
-                // Get current stock
-                const { rows: [variation] } = yield client.query('SELECT stock_quantity, low_stock_threshold FROM product_variations WHERE id = $1 FOR UPDATE', [variationId]);
-                if (!variation) {
-                    throw new Error('Product variation not found.');
-                }
-                const newStock = variation.stock_quantity + quantityChange;
-                if (newStock < 0) {
-                    throw new Error('Stock quantity cannot be negative.');
-                }
-                // Update stock
-                const { rows: [updatedVariation] } = yield client.query('UPDATE product_variations SET stock_quantity = $1 WHERE id = $2 RETURNING *', [newStock, variationId]);
-                // Check for low stock after update
-                if (updatedVariation.stock_quantity <= updatedVariation.low_stock_threshold) {
-                    notificationEmitter.emitLowStock(updatedVariation.product_id, updatedVariation.id, updatedVariation.stock_quantity, updatedVariation.low_stock_threshold); // Emit notification
-                }
-                yield client.query('COMMIT');
-                return updatedVariation;
+    async adjustStock(variationId, quantityChange, reason, userId, dbClient, unitCost) {
+        const client = dbClient || (await pool.connect());
+        const shouldManageTransaction = !dbClient;
+        try {
+            if (shouldManageTransaction)
+                await client.query('BEGIN');
+            const { rows: [variation], } = await client.query('SELECT stock_quantity, low_stock_threshold, product_id, branch_id FROM product_variations WHERE id = $1 FOR UPDATE', [variationId]);
+            if (!variation) {
+                throw new AppError('Product variation not found.', 404);
             }
-            catch (error) {
-                yield client.query('ROLLBACK');
-                if (error instanceof AppError) {
-                    throw error;
+            const newStock = variation.stock_quantity + quantityChange;
+            if (newStock < 0) {
+                throw new AppError('Stock quantity cannot be negative.', 400);
+            }
+            if (quantityChange > 0 && unitCost === undefined) {
+                throw new AppError('Unit cost is required when adding stock.', 400);
+            }
+            // Update stock quantity
+            const { rows: [updatedVariation], } = await client.query('UPDATE product_variations SET stock_quantity = $1 WHERE id = $2 RETURNING *', [newStock, variationId]);
+            // Record inventory movement
+            await client.query('INSERT INTO inventory_movements (product_variation_id, branch_id, quantity_change, reason, user_id, unit_cost, quantity_remaining) VALUES ($1, $2, $3, $4, $5, $6, $7)', [
+                variationId,
+                variation.branch_id,
+                quantityChange,
+                reason,
+                userId,
+                unitCost,
+                quantityChange > 0 ? quantityChange : null,
+            ]);
+            // If stock is going out, update quantity_remaining in FIFO layers
+            if (quantityChange < 0) {
+                let stockToRemove = Math.abs(quantityChange);
+                const purchaseLayers = await client.query(`SELECT id, quantity_remaining
+           FROM inventory_movements
+           WHERE product_variation_id = $1 AND quantity_change > 0 AND quantity_remaining > 0
+           ORDER BY created_at ASC`, [variationId]);
+                for (const layer of purchaseLayers.rows) {
+                    if (stockToRemove <= 0)
+                        break;
+                    const available = layer.quantity_remaining;
+                    const toRemoveFromLayer = Math.min(stockToRemove, available);
+                    await client.query('UPDATE inventory_movements SET quantity_remaining = quantity_remaining - $1 WHERE id = $2', [toRemoveFromLayer, layer.id]);
+                    stockToRemove -= toRemoveFromLayer;
                 }
+                if (stockToRemove > 0) {
+                    // This should not happen if stock levels are consistent. Throw an error.
+                    throw new AppError('Not enough stock layers to fulfill the order. Inventory data is inconsistent.', 500);
+                }
+            }
+            // Check for low stock after update
+            if (updatedVariation.stock_quantity <= updatedVariation.low_stock_threshold) {
+                // Emitir notificação de estoque baixo via microservice
+                await fetch(`${NOTIFICATIONS_MICROSERVICE_URL}/send/in-app`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: `Estoque baixo para o produto ${updatedVariation.product_id}, variação ${updatedVariation.id}. Quantidade atual: ${updatedVariation.stock_quantity}, Limite: ${updatedVariation.low_stock_threshold}.`,
+                        type: 'low_stock_alert',
+                        productId: updatedVariation.product_id,
+                        variationId: updatedVariation.id,
+                        currentStock: updatedVariation.stock_quantity,
+                        threshold: updatedVariation.low_stock_threshold,
+                    }),
+                });
+            }
+            if (shouldManageTransaction)
+                await client.query('COMMIT');
+            return updatedVariation;
+        }
+        catch (error) {
+            if (shouldManageTransaction)
+                await client.query('ROLLBACK');
+            console.error('Error in adjustStock:', error);
+            if (error instanceof AppError) {
                 throw error;
             }
-            finally {
+            throw error;
+        }
+        finally {
+            if (shouldManageTransaction)
                 client.release();
-            }
-        });
+        }
     },
-    receiveStock(variationId, quantity) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (quantity <= 0) {
-                throw new Error('Quantity must be positive to receive stock.');
-            }
-            return this.adjustStock(variationId, quantity);
-        });
+    async receiveStock(variationId, quantity, unitCost, userId, dbClient) {
+        if (quantity <= 0) {
+            throw new AppError('Quantity must be positive to receive stock.', 400);
+        }
+        return this.adjustStock(variationId, quantity, 'stock_received', userId, dbClient, unitCost);
     },
-    dispatchStock(variationId, quantity) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (quantity <= 0) {
-                throw new Error('Quantity must be positive to dispatch stock.');
-            }
-            return this.adjustStock(variationId, -quantity);
-        });
+    async dispatchStock(variationId, quantity, userId, dbClient) {
+        if (quantity <= 0) {
+            throw new AppError('Quantity must be positive to dispatch stock.', 400);
+        }
+        return this.adjustStock(variationId, -quantity, 'stock_dispatched', userId, dbClient);
     },
+    // ... (existing recordInventoryMovement method)
 };

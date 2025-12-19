@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import * as kanbanService from '../services/kanbanService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
+
 import { z } from 'zod';
 import { ValidationError, AppError } from '../utils/errors.js';
 
@@ -20,17 +21,23 @@ const moveCardSchema = z.object({
 });
 
 // Validation Middleware
-const validate = (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
-  try {
-    schema.parse(req.body);
-    next();
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return next(new ValidationError('Validation failed', error.errors.map(err => ({ path: err.path.join('.'), message: err.message }))));
+const validate =
+  (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
+    try {
+      schema.parse(req.body);
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return next(
+          new ValidationError(
+            'Validation failed',
+            error.errors.map((err) => ({ path: err.path.join('.'), message: err.message })),
+          ),
+        );
+      }
+      next(error);
     }
-    next(error);
-  }
-};
+  };
 
 router.get(
   '/',
@@ -43,7 +50,7 @@ router.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 router.put(
@@ -59,7 +66,7 @@ router.put(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 router.put(
@@ -74,7 +81,7 @@ router.put(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 router.post(
@@ -90,15 +97,22 @@ router.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
-const updateCardSchema = z.object({
-  title: z.string().trim().nonempty('Card title is required').optional(),
-  description: z.string().trim().optional(),
-  due_date: z.string().datetime('Invalid due date format').nullable().optional(),
-  assignee_id: z.number().int().positive('Assignee ID must be a positive integer').nullable().optional(),
-}).partial();
+const updateCardSchema = z
+  .object({
+    title: z.string().trim().nonempty('Card title is required').optional(),
+    description: z.string().trim().optional(),
+    due_date: z.string().datetime('Invalid due date format').nullable().optional(),
+    assignee_id: z
+      .number()
+      .int()
+      .positive('Assignee ID must be a positive integer')
+      .nullable()
+      .optional(),
+  })
+  .partial();
 
 router.put(
   '/cards/:id',
@@ -116,7 +130,7 @@ router.put(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 router.delete(
@@ -131,7 +145,7 @@ router.delete(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // TODO: Adicionar rotas para criar, atualizar e deletar cards

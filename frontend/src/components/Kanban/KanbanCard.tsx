@@ -1,66 +1,113 @@
-
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { CardContainer, CardActions, CardActionButton } from './Kanban.styled';
-import { FaTrash } from 'react-icons/fa';
+import {
+  CardContainer,
+  CardActions,
+  ActionButton,
+  AssigneeContainer,
+  DueDateContainer,
+} from './Kanban.styled';
+import { FaEdit, FaTrash, FaUser, FaCalendarAlt, FaBars, FaExternalLinkAlt } from 'react-icons/fa'; // Import FaBars
 import { motion } from 'framer-motion'; // Import motion
+import styled from 'styled-components'; // Import styled
+import { Link } from 'react-router-dom';
 
-interface Card {
-  id: string;
-  title: string;
-  description?: string;
-  due_date?: string;
-  assignee_id?: number;
-  column_id: string;
-  position: number;
-}
+// Styled component for the drag handle
+const DragHandle = styled.div`
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  padding: ${({ theme }) => theme.spacing.xxs} 0;
+  margin-bottom: ${({ theme }) => theme.spacing.xxs};
+  color: ${({ theme }) => theme.colors.onSurfaceVariant};
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.primary};
+  }
+`;
 
 interface KanbanCardProps {
-  card: Card;
+  card: any;
   onDeleteCard: (cardId: string, columnId: string) => void;
-  onEditCard: (card: Card) => void; // New prop for editing
+  onEditCard: (card: any) => void; // Add onEditCard
   columnId: string;
-  triggerHapticFeedback: () => void; // Add triggerHapticFeedback
+  triggerHapticFeedback: () => void;
 }
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 50 },
-  visible: { opacity: 1, y: 0 },
-};
-
-const KanbanCard: React.FC<KanbanCardProps> = ({ card, onDeleteCard, columnId, triggerHapticFeedback }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: card.id });
+const KanbanCard: React.FC<KanbanCardProps> = ({
+  card,
+  onDeleteCard,
+  onEditCard,
+  columnId,
+  triggerHapticFeedback,
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: card.id,
+    data: { type: 'Card', columnId: columnId }, // Add type and columnId to data
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    boxShadow: isDragging ? '0 15px 30px rgba(0,0,0,0.3)' : undefined,
+    zIndex: isDragging ? 1000 : 'auto',
   };
 
   return (
-    <motion.div
-      variants={itemVariants}
-      initial="hidden"
-      animate="visible"
-      exit="hidden"
-      layout // For smooth reordering animations
+    <motion.div // Envolve o CardContainer com motion.div
+      ref={setNodeRef}
+      style={style}
+      layout // Permite animações de layout com o dnd-kit
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -50 }}
+      transition={{ duration: 0.3 }}
     >
-      <CardContainer ref={setNodeRef} style={style} {...attributes} {...listeners}>
-        <p className="font-semibold">{card.title}</p>
-        {card.description && <p className="text-sm text-gray-600">{card.description}</p>}
-        {card.due_date && <p className="text-xs text-gray-500">Due: {new Date(card.due_date).toLocaleDateString()}</p>}
-        {card.assignee_id && <p className="text-xs text-gray-500">Assignee ID: {card.assignee_id}</p>}
-        <CardActions>
-          <CardActionButton onClick={() => onEditCard(card)}>
-            Edit
-          </CardActionButton>
-          <CardActionButton onClick={() => onDeleteCard(card.id, columnId)}>
-            <FaTrash />
-          </CardActionButton>
-        </CardActions>
-      </CardContainer>
+      <Link to={`/service-orders/${card.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+        <CardContainer> {/* CardContainer não precisa mais do ref e style diretamente */}
+          <DragHandle {...attributes} {...listeners}>
+            <FaBars />
+            <h3>{card.title}</h3>
+          </DragHandle>
+          {card.description && <p>{card.description}</p>}
+          {card.assignee && (
+            <AssigneeContainer>
+              <FaUser />
+              <span>{card.assignee.name}</span>
+            </AssigneeContainer>
+          )}
+          {card.due_date && (
+            <DueDateContainer>
+              <FaCalendarAlt />
+              <span>{new Date(card.due_date).toLocaleDateString()}</span>
+            </DueDateContainer>
+          )}
+          <CardActions>
+            <ActionButton
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onEditCard(card);
+              }}
+              aria-label="Edit card"
+            >
+              <FaEdit />
+            </ActionButton>
+            <ActionButton
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDeleteCard(card.id, columnId);
+              }}
+              aria-label="Delete card"
+            >
+              <FaTrash />
+            </ActionButton>
+          </CardActions>
+        </CardContainer>
+      </Link>
     </motion.div>
   );
 };

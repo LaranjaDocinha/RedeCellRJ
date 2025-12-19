@@ -43,19 +43,19 @@ class SupplierService {
     const { name, contact_person, email, phone, address } = payload;
     try {
       const result = await pool.query(
-        'INSERT INTO suppliers (name, contact_person, email, phone, address) VALUES ($1, $2, $3, $4, $5) RETURNING *'
-        , [name, contact_person, email, phone, address]
+        'INSERT INTO suppliers (name, contact_person, email, phone, address) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [name, contact_person, email, phone, address],
       );
       return result.rows[0];
     } catch (error: unknown) {
       if (error instanceof AppError) {
         throw error;
       }
-      if (error instanceof Error && (error as any).code === '23505') { // Unique violation error code
+      if (error instanceof Error && (error as any).code === '23505') {
+        // Unique violation error code
         if ((error as any).detail.includes('name')) {
           throw new AppError('Supplier with this name already exists', 409);
-        }
-        else if ((error as any).detail.includes('email')) {
+        } else if ((error as any).detail.includes('email')) {
           throw new AppError('Supplier with this email already exists', 409);
         }
       }
@@ -69,11 +69,26 @@ class SupplierService {
     const values: any[] = [];
     let paramIndex = 1;
 
-    if (name !== undefined) { fields.push(`name = $${paramIndex++}`); values.push(name); }
-    if (contact_person !== undefined) { fields.push(`contact_person = $${paramIndex++}`); values.push(contact_person); }
-    if (email !== undefined) { fields.push(`email = $${paramIndex++}`); values.push(email); }
-    if (phone !== undefined) { fields.push(`phone = $${paramIndex++}`); values.push(phone); }
-    if (address !== undefined) { fields.push(`address = $${paramIndex++}`); values.push(address); }
+    if (name !== undefined) {
+      fields.push(`name = $${paramIndex++}`);
+      values.push(name);
+    }
+    if (contact_person !== undefined) {
+      fields.push(`contact_person = $${paramIndex++}`);
+      values.push(contact_person);
+    }
+    if (email !== undefined) {
+      fields.push(`email = $${paramIndex++}`);
+      values.push(email);
+    }
+    if (phone !== undefined) {
+      fields.push(`phone = $${paramIndex++}`);
+      values.push(phone);
+    }
+    if (address !== undefined) {
+      fields.push(`address = $${paramIndex++}`);
+      values.push(address);
+    }
 
     if (fields.length === 0) {
       const existingSupplier = await this.getSupplierById(id);
@@ -93,7 +108,8 @@ class SupplierService {
       if (error instanceof AppError) {
         throw error;
       }
-      if (error instanceof Error && (error as any).code === '23505') { // Unique violation error code
+      if (error instanceof Error && (error as any).code === '23505') {
+        // Unique violation error code
         if ((error as any).detail.includes('name')) {
           throw new AppError('Supplier with this name already exists', 409);
         } else if ((error as any).detail.includes('email')) {

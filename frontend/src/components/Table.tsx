@@ -1,21 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { StyledTableContainer, StyledTable } from './Table.styled';
+import { StyledTableContainer, StyledTable, StyledTableControls } from './Table.styled';
 import Pagination from './Pagination';
-import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
+import { FaSort, FaSortUp, FaSortDown, FaTable } from 'react-icons/fa';
 import Input from './Input'; // Assuming Input component is now default export
-import styled from 'styled-components';
-
-const TableControls = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing.md};
-  gap: ${({ theme }) => theme.spacing.md};
-
-  > div {
-    flex-grow: 1;
-  }
-`;
+import { StyledEmptyState } from './AuditLogList.styled'; // Reutilizando StyledEmptyState
 
 interface Column<T> {
   key: keyof T | string;
@@ -31,7 +19,12 @@ interface TableProps<T> {
   onPageChange?: (page: number) => void;
 }
 
-const Table = <T extends object>({ data, columns, itemsPerPage = 10, onPageChange }: TableProps<T>) => {
+const Table = <T extends object>({
+  data,
+  columns,
+  itemsPerPage = 10,
+  onPageChange,
+}: TableProps<T>) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortColumn, setSortColumn] = useState<keyof T | string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
@@ -42,11 +35,11 @@ const Table = <T extends object>({ data, columns, itemsPerPage = 10, onPageChang
       return data;
     }
     const lowercasedFilter = filterText.toLowerCase();
-    return data.filter(item =>
-      columns.some(column => {
+    return data.filter((item) =>
+      columns.some((column) => {
         const value = (item as any)[column.key];
         return String(value).toLowerCase().includes(lowercasedFilter);
-      })
+      }),
     );
   }, [data, filterText, columns]);
 
@@ -101,7 +94,7 @@ const Table = <T extends object>({ data, columns, itemsPerPage = 10, onPageChang
 
   return (
     <StyledTableContainer>
-      <TableControls>
+      <StyledTableControls>
         <Input
           label="Filtrar"
           type="text"
@@ -109,7 +102,7 @@ const Table = <T extends object>({ data, columns, itemsPerPage = 10, onPageChang
           value={filterText}
           onChange={(e) => setFilterText(e.target.value)}
         />
-      </TableControls>
+      </StyledTableControls>
       <StyledTable>
         <thead>
           <tr>
@@ -123,8 +116,15 @@ const Table = <T extends object>({ data, columns, itemsPerPage = 10, onPageChang
         <tbody>
           {paginatedData.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="no-data">
-                No data available
+              <td colSpan={columns.length}>
+                <StyledEmptyState
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                >
+                  <FaTable />
+                  <p>No data available</p>
+                </StyledEmptyState>
               </td>
             </tr>
           ) : (

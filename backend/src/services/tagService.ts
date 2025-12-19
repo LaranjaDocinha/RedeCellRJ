@@ -30,16 +30,14 @@ class TagService {
   async createTag(payload: CreateTagPayload): Promise<Tag> {
     const { name } = payload;
     try {
-      const result = await pool.query(
-        'INSERT INTO tags (name) VALUES ($1) RETURNING *'
-        , [name]
-      );
+      const result = await pool.query('INSERT INTO tags (name) VALUES ($1) RETURNING *', [name]);
       return result.rows[0];
     } catch (error: unknown) {
       if (error instanceof AppError) {
         throw error;
       }
-      if (error instanceof Error && (error as any).code === '23505') { // Unique violation error code
+      if (error instanceof Error && (error as any).code === '23505') {
+        // Unique violation error code
         throw new AppError('Tag with this name already exists', 409);
       }
       throw error;
@@ -52,7 +50,10 @@ class TagService {
     const values: any[] = [];
     let paramIndex = 1;
 
-    if (name !== undefined) { fields.push(`name = $${paramIndex++}`); values.push(name); }
+    if (name !== undefined) {
+      fields.push(`name = $${paramIndex++}`);
+      values.push(name);
+    }
 
     if (fields.length === 0) {
       const existingTag = await this.getTagById(id);
@@ -72,7 +73,8 @@ class TagService {
       if (error instanceof AppError) {
         throw error;
       }
-      if (error instanceof Error && (error as any).code === '23505') { // Unique violation error code
+      if (error instanceof Error && (error as any).code === '23505') {
+        // Unique violation error code
         throw new AppError('Tag with this name already exists', 409);
       }
       throw error;

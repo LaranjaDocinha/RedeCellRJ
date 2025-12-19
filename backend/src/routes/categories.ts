@@ -2,7 +2,9 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { categoryService } from '../services/categoryService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
+
 import { ValidationError, AppError } from '../utils/errors.js';
+import { cacheMiddleware } from '../middlewares/cacheMiddleware.js'; // Importar cacheMiddleware
 
 const categoriesRouter = Router();
 
@@ -12,23 +14,31 @@ const createCategorySchema = z.object({
   description: z.string().trim().optional(),
 });
 
-const updateCategorySchema = z.object({
-  name: z.string().trim().nonempty('Category name cannot be empty').optional(),
-  description: z.string().trim().optional(),
-}).partial();
+const updateCategorySchema = z
+  .object({
+    name: z.string().trim().nonempty('Category name cannot be empty').optional(),
+    description: z.string().trim().optional(),
+  })
+  .partial();
 
 // Validation Middleware
-const validate = (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
-  try {
-    schema.parse(req.body);
-    next();
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return next(new ValidationError('Validation failed', error.errors.map(err => ({ path: err.path.join('.'), message: err.message }))));
+const validate =
+  (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
+    try {
+      schema.parse(req.body);
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return next(
+          new ValidationError(
+            'Validation failed',
+            error.errors.map((err) => ({ path: err.path.join('.'), message: err.message })),
+          ),
+        );
+      }
+      next(error);
     }
-    next(error);
-  }
-};
+  };
 
 categoriesRouter.use(authMiddleware.authenticate);
 
@@ -36,6 +46,7 @@ categoriesRouter.use(authMiddleware.authenticate);
 categoriesRouter.get(
   '/',
   authMiddleware.authorize('read', 'Category'),
+  cacheMiddleware(), // Aplicar cacheMiddleware aqui
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const categories = await categoryService.getAllCategories();
@@ -43,7 +54,7 @@ categoriesRouter.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Get category by ID
@@ -60,7 +71,7 @@ categoriesRouter.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Create a new category
@@ -75,7 +86,7 @@ categoriesRouter.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Update a category by ID
@@ -85,7 +96,10 @@ categoriesRouter.put(
   validate(updateCategorySchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const updatedCategory = await categoryService.updateCategory(parseInt(req.params.id), req.body);
+      const updatedCategory = await categoryService.updateCategory(
+        parseInt(req.params.id),
+        req.body,
+      );
       if (!updatedCategory) {
         throw new AppError('Category not found', 404);
       }
@@ -93,7 +107,7 @@ categoriesRouter.put(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Delete a category by ID
@@ -110,7 +124,7 @@ categoriesRouter.delete(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 export default categoriesRouter;

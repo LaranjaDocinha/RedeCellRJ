@@ -25,7 +25,9 @@ export const PriceHistoryTable: React.FC<PriceHistoryTableProps> = ({ history })
         <tbody className="text-gray-700">
           {history.length === 0 ? (
             <tr>
-              <td colSpan={3} className="text-center py-4">No price history available.</td>
+              <td colSpan={3} className="text-center py-4">
+                No price history available.
+              </td>
             </tr>
           ) : (
             history.map((entry) => (

@@ -3,17 +3,20 @@ import { AppError } from '../utils/errors.js';
 
 interface Permission {
   id: number;
-  name: string;
+  action: string;
+  subject: string;
   created_at: Date;
   updated_at: Date;
 }
 
 interface CreatePermissionPayload {
-  name: string;
+  action: string;
+  subject: string;
 }
 
 interface UpdatePermissionPayload {
-  name?: string;
+  action?: string;
+  subject?: string;
 }
 
 class PermissionService {
@@ -28,31 +31,42 @@ class PermissionService {
   }
 
   async createPermission(payload: CreatePermissionPayload): Promise<Permission> {
-    const { name } = payload;
+    const { action, subject } = payload;
     try {
       const result = await pool.query(
-        'INSERT INTO permissions (name) VALUES ($1) RETURNING *',
-        [name]
+        'INSERT INTO permissions (action, subject) VALUES ($1, $2) RETURNING *',
+        [action, subject],
       );
       return result.rows[0];
     } catch (error: unknown) {
       if (error instanceof AppError) {
         throw error;
       }
-      if (error instanceof Error && (error as any).code === '23505') { // Unique violation error code
-        throw new AppError('Permission with this name already exists', 409);
+      if (error instanceof Error && (error as any).code === '23505') {
+        // Unique violation error code
+        throw new AppError('Permission with this action and subject already exists', 409);
       }
       throw error;
     }
   }
 
-  async updatePermission(id: number, payload: UpdatePermissionPayload): Promise<Permission | undefined> {
-    const { name } = payload;
+  async updatePermission(
+    id: number,
+    payload: UpdatePermissionPayload,
+  ): Promise<Permission | undefined> {
+    const { action, subject } = payload;
     const fields: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
 
-    if (name !== undefined) { fields.push(`name = $${paramIndex++}`); values.push(name); }
+    if (action !== undefined) {
+      fields.push(`action = $${paramIndex++}`);
+      values.push(action);
+    }
+    if (subject !== undefined) {
+      fields.push(`subject = $${paramIndex++}`);
+      values.push(subject);
+    }
 
     if (fields.length === 0) {
       const existingPermission = await this.getPermissionById(id);
@@ -72,8 +86,9 @@ class PermissionService {
       if (error instanceof AppError) {
         throw error;
       }
-      if (error instanceof Error && (error as any).code === '23505') { // Unique violation error code
-        throw new AppError('Permission with this name already exists', 409);
+      if (error instanceof Error && (error as any).code === '23505') {
+        // Unique violation error code
+        throw new AppError('Permission with this action and subject already exists', 409);
       }
       throw error;
     }
@@ -83,6 +98,9 @@ class PermissionService {
     const result = await pool.query('DELETE FROM permissions WHERE id = $1 RETURNING id', [id]);
     return (result?.rowCount ?? 0) > 0;
   }
+
+  // Not used but updated for consistency (if needed later)
+  // async checkUserPermission(userId: string, action: string, subject: string): Promise<boolean> { ... }
 }
 
 export const permissionService = new PermissionService();

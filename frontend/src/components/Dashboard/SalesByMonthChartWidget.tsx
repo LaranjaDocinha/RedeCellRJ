@@ -1,35 +1,66 @@
-
 import React from 'react';
 import Chart from 'react-apexcharts';
-import DashboardWidget from './DashboardWidget';
-
-interface SalesByMonthChartWidgetProps {
-  salesByMonth: Array<{ month: string; monthly_sales: number }>;
-}
-
-const SalesByMonthChartWidget: React.FC<SalesByMonthChartWidgetProps> = ({ salesByMonth }) => {
+const SalesByMonthChartWidget: React.FC<SalesByMonthChartWidgetProps> = React.memo(({ salesByMonth }) => {
   const salesChartOptions = {
     chart: {
       id: 'sales-by-month',
       toolbar: { show: false },
+      animations: { // Enable and configure animations
+        enabled: true,
+        easing: 'easeinout',
+        speed: 800,
+        animateGradually: {
+          enabled: true,
+          delay: 150
+        },
+        dynamicAnimation: {
+          enabled: true,
+          speed: 350
+        }
+      }
     },
     xaxis: {
-      categories: salesByMonth.map(s => s.month),
+      categories: salesByMonth.map((s) => s.month),
     },
     colors: ['#6200EE'],
+    tooltip: { // Configure detailed tooltips
+      y: {
+        formatter: function (val: number) {
+          return "R$ " + val.toFixed(2);
+        }
+      },
+      x: {
+        formatter: function (val: string) {
+          return `Mês: ${val}`;
+        }
+      }
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    stroke: {
+      curve: 'smooth'
+    },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.7,
+        opacityTo: 0.9,
+        stops: [0, 100]
+      }
+    },
   };
   const salesChartSeries = [
     {
-      name: 'Monthly Sales',
-      data: salesByMonth.map(s => s.monthly_sales),
+      name: 'Vendas no Mês',
+      data: salesByMonth.map((s) => s.monthly_sales),
     },
   ];
 
   return (
-    <DashboardWidget title="Sales by Month">
-      <Chart options={salesChartOptions} series={salesChartSeries} type="area" height={350} />
-    </DashboardWidget>
+    <Chart options={salesChartOptions} series={salesChartSeries} type="area" height={350} />
   );
-};
+});
 
 export default SalesByMonthChartWidget;

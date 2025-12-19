@@ -2,14 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { UserList } from '../components/UserList';
 import { UserForm } from '../components/UserForm';
 import { useAuth } from '../contexts/AuthContext';
-import { useNotification } from '../components/NotificationProvider';
+import { useNotification } from '../contexts/NotificationContext';
 
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-}
+import { User } from '../types/user';
 
 interface Role {
   id: number;
@@ -31,7 +26,7 @@ const UsersPage: React.FC = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/users', {
+      const response = await fetch('/api/users', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -45,7 +40,7 @@ const UsersPage: React.FC = () => {
 
   const fetchRoles = async () => {
     try {
-      const response = await fetch('/roles', {
+      const response = await fetch('/api/roles', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -59,7 +54,7 @@ const UsersPage: React.FC = () => {
 
   const handleCreateUser = async (userData: Omit<User, 'id'>) => {
     try {
-      const response = await fetch('/users', {
+      const response = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(userData),
@@ -77,7 +72,7 @@ const UsersPage: React.FC = () => {
 
   const handleUpdateUser = async (id: number, userData: Omit<User, 'id'>) => {
     try {
-      const response = await fetch(`/users/${id}`, {
+      const response = await fetch(`/api/users/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(userData),
@@ -97,7 +92,7 @@ const UsersPage: React.FC = () => {
   const handleDeleteUser = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     try {
-      const response = await fetch(`/users/${id}`, {
+      const response = await fetch(`/api/users/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });

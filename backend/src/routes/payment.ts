@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { paymentService } from '../services/paymentService.js';
+import { paymentGatewayService } from '../services/paymentGatewayService.js'; // Added import
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { ValidationError } from '../utils/errors.js';
 import { z } from 'zod';
@@ -16,18 +17,30 @@ const confirmPaymentSchema = z.object({
   paymentIntentId: z.string().nonempty('Payment Intent ID is required'),
 });
 
+const processMultiGatewaySchema = z.object({
+  gatewayId: z.number().int().positive('Gateway ID must be a positive integer'),
+  amount: z.number().positive('Amount must be a positive number'),
+  paymentData: z.any().optional(), // Generic data for card, pix, etc.
+});
+
 // Validation Middleware
-const validate = (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
-  try {
-    schema.parse(req.body);
-    next();
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return next(new ValidationError('Validation failed', error.errors.map(err => ({ path: err.path.join('.'), message: err.message }))));
+const validate =
+  (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
+    try {
+      schema.parse(req.body);
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return next(
+          new ValidationError(
+            'Validation failed',
+            error.errors.map((err) => ({ path: err.path.join('.'), message: err.message })),
+          ),
+        );
+      }
+      next(error);
     }
-    next(error);
-  }
-};
+  };
 
 router.post(
   '/create-payment-intent',
@@ -42,7 +55,7 @@ router.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 router.post(
@@ -58,7 +71,23 @@ router.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
+);
+
+router.post(
+  '/process-multi-gateway',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('create', 'Payment'), // Or a more specific permission
+  validate(processMultiGatewaySchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { gatewayId, amount, paymentData } = req.body;
+      const result = await paymentGatewayService.processPayment(gatewayId, amount, paymentData);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
 );
 
 export default router;
