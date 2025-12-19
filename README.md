@@ -8,6 +8,15 @@ Bem-vindo ao **RedeCellRJ**, um sistema de Ponto de Venda (PDV) de última gera�
 
 O RedeCellRJ foi projetado com foco em **performance, segurança e design**. Com uma interface rica em detalhes, sombras suaves e animações fluidas (via Framer Motion), o sistema transforma a gestão de vendas em uma tarefa intuitiva e profissional.
 
+## 📂 Estrutura do Projeto
+
+O repositório está organizado como um monorepo simplificado:
+
+- **`/backend`**: API REST em Node.js, TypeScript e PostgreSQL. Contém toda a lógica de negócio, integrações e processamento de dados.
+- **`/frontend`**: Aplicação Single Page (SPA) em React e TypeScript. Focada em uma experiência de usuário rica e intuitiva.
+- **`/docs`**: Documentação técnica, ADRs (Architectural Decision Records) e roadmaps do projeto.
+- **`/infrastructure`**: Arquivos de configuração para deploy (Docker, Terraform).
+
 ---
 
 ## 🛠️ Tecnologias Utilizadas

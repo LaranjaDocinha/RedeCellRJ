@@ -1,46 +1,65 @@
-# Getting Started with Create React App
+# RedeCellRJ - Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Este é o módulo de interface do usuário do sistema RedeCellRJ, desenvolvido para proporcionar uma experiência de gestão de PDV fluida, moderna e visualmente rica.
 
-## Available Scripts
+## 🎨 Design e UX
 
-In the project directory, you can run:
+O frontend foi construído seguindo princípios de **Material Design**, com uma camada de personalização profunda para refletir a identidade visual da RedeCellRJ.
+
+- **Framer Motion:** Utilizado para microinterações, transições de página e animações de feedback.
+- **Styled Components:** Para uma estilização modular e altamente dinâmica.
+- **Responsividade:** Totalmente adaptável para desktops, tablets e dispositivos móveis.
+- **Tema Personalizado:** Suporte a Light/Dark mode com cores e sombras otimizadas para longas jornadas de trabalho.
+
+## 🚀 Tecnologias Principais
+
+- **React 18 & TypeScript:** Base sólida para uma aplicação escalável e tipada.
+- **React Router 6:** Gerenciamento de rotas com loaders para pré-carregamento de dados.
+- **Context API:** Gerenciamento de estado global para Autenticação, Tema e Notificações.
+- **ApexCharts:** Visualização de dados complexos através de gráficos interativos.
+- **Storybook:** Nosso guia de estilo vivo, onde cada componente é documentado e testado isoladamente.
+- **Cypress:** Testes de ponta a ponta (E2E) para garantir o funcionamento dos fluxos críticos.
+
+## 📁 Estrutura de Pastas
+
+```text
+src/
+├── components/   # Componentes reutilizáveis (botões, cards, modais)
+├── contexts/     # Provedores de estado global
+├── hooks/        # Hooks customizados para lógica reutilizável
+├── pages/        # Telas principais da aplicação
+├── services/     # Integração com a API do Backend
+├── store/        # Gerenciamento de estado (se aplicável)
+├── stories/      # Documentação visual do Storybook
+└── styles/       # Tokens de design, temas e estilos globais
+```
+
+## 🛠️ Comandos de Desenvolvimento
+
+No diretório `frontend`, você pode executar:
 
 ### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+Inicia a aplicação em modo de desenvolvimento em `http://localhost:3000`.
 
 ### `npm test`
+Executa os testes unitários via Jest/React Testing Library.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### `npm run storybook`
+Inicia o Storybook em `http://localhost:6006` para visualizar a biblioteca de componentes.
 
 ### `npm run build`
+Gera o pacote de produção otimizado na pasta `build`.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### `npm run lint`
+Executa o ESLint para garantir a padronização do código.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 🧪 Qualidade Visual
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Utilizamos o **Storybook** como nossa fonte da verdade para o design. Antes de implementar qualquer componente na aplicação, ele deve ser criado e validado no Storybook. Isso garante:
+1.  **Consistência:** Componentes idênticos em todo o sistema.
+2.  **Acessibilidade:** Testes de contraste e navegação via teclado.
+3.  **No Rework:** Evita a criação de componentes duplicados.
 
-### `npm run eject`
+---
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+<p align="center">Parte do ecossistema RedeCellRJ</p>
