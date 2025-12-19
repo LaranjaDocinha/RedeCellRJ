@@ -1,138 +1,107 @@
-# RedecellRJ POS System
+# RedeCellRJ - Sistema de PDV Inteligente
 
-Welcome to the RedecellRJ Point of Sale (POS) system! This project aims to provide a robust, visually appealing, and highly functional solution for managing sales, products, and customers in a retail environment.
+![RedeCellRJ Banner](https://raw.githubusercontent.com/LaranjaDocinha/RedeCellRJ/main/frontend/public/logo512.png)
 
-## Table of Contents
+Bem-vindo ao **RedeCellRJ**, um sistema de Ponto de Venda (PDV) de última geração, desenvolvido para oferecer uma experiência robusta, visualmente impactante e extremamente funcional. Este projeto une o que há de mais moderno no desenvolvimento Full-Stack para entregar uma solução completa de gestão comercial.
 
-- [Features](#features)
-- [Architecture](#architecture)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Running the Application](#running-the-application)
-- [Development](#development)
-  - [Backend](#backend)
-  - [Frontend](#frontend)
-  - [Database](#database)
-- [Testing](#testing)
-- [Deployment](#deployment)
-- [Contributing](#contributing)
-- [License](#license)
+## 🚀 Visão Geral
 
-## Features
+O RedeCellRJ foi projetado com foco em **performance, segurança e design**. Com uma interface rica em detalhes, sombras suaves e animações fluidas (via Framer Motion), o sistema transforma a gestão de vendas em uma tarefa intuitiva e profissional.
 
-- **User Authentication & Authorization:** Secure login, registration, and role-based access control.
-- **Product Management:** Comprehensive CRUD operations for products and their variations.
-- **Sales & POS:** Intuitive point-of-sale interface for efficient transaction processing.
-- **Customer Management:** Manage customer information.
-- **Dashboard & Reporting:** Visual insights into sales data and top-selling products.
-- **Robust Design System:** Consistent UI/UX with theming capabilities.
-- **Automated CI/CD:** Streamlined development and deployment workflows.
+---
 
-## Architecture
+## 🛠️ Tecnologias Utilizadas
 
-The application follows a modular, full-stack architecture:
+### **Backend (Cérebro)**
+- **Node.js & Express:** API robusta e escalável.
+- **TypeScript:** Tipagem estática para código limpo e livre de bugs.
+- **PostgreSQL:** Banco de dados relacional de alta performance.
+- **Vitest:** Testes unitários e de integração com cobertura rigorosa.
+- **BullMQ & Redis:** Processamento de filas e tarefas em segundo plano.
 
-- **Backend:** Node.js with Express.js, TypeScript, and PostgreSQL.
-- **Frontend:** React with TypeScript, React Router, and a custom Design System.
-- **Database:** PostgreSQL.
-- **Testing:** Jest (unit/integration), Cypress (E2E), Chromatic (visual regression).
-- **CI/CD:** GitHub Actions for automated testing, releases, and deployments.
+### **Frontend (Experiência)**
+- **React & TypeScript:** Interface moderna e reativa.
+- **Material UI & Custom Design System:** Visual profissional e personalizável.
+- **Framer Motion:** Animações com propósito para uma UX premium.
+- **ApexCharts:** Gráficos interativos para dashboards inteligentes.
+- **Storybook:** Documentação e testes visuais de componentes de UI.
 
-## Getting Started
+---
 
-### Prerequisites
+## ✨ Funcionalidades Principais
 
-- Node.js (v20 or higher)
-- npm (v10 or higher)
-- PostgreSQL (v13 or higher)
+- 🔐 **Autenticação & Autorização:** Controle de acesso seguro com permissões baseadas em funções (RBAC).
+- 📦 **Gestão de Inventário:** Controle total de produtos, variações, números de série (IMEI) e alertas de estoque baixo.
+- 💰 **PDV Intuitivo:** Checkout rápido, suporte a múltiplos métodos de pagamento e divisão de conta.
+- 👤 **Gestão de Clientes:** Visão 360º do cliente, histórico de compras e programas de fidelidade.
+- 📊 **Dashboards & Relatórios:** Insights em tempo real sobre vendas, produtos mais vendidos e metas da equipe.
+- 💬 **Integração WhatsApp:** Automação de notificações e templates para comunicação direta.
+- 🧩 **Arquitetura Modular:** Sistema preparado para crescimento e fácil manutenção.
 
-### Installation
+---
 
-1.  **Clone the repository:**
+## 🚦 Começando
+
+### Pré-requisitos
+
+- **Node.js:** v20 ou superior
+- **PostgreSQL:** v13 ou superior
+- **Redis:** Para gerenciamento de filas
+
+### Instalação
+
+1.  **Clone o repositório:**
     ```bash
-    git clone https://github.com/your-username/RedecellRJ.git
-    cd RedecellRJ
+    git clone https://github.com/LaranjaDocinha/RedeCellRJ.git
+    cd RedeCellRJ
     ```
 
-2.  **Install Backend Dependencies:**
+2.  **Instale as dependências do Backend:**
     ```bash
-    npm install --prefix backend
+    cd backend && npm install
     ```
 
-3.  **Install Frontend Dependencies:**
+3.  **Instale as dependências do Frontend:**
     ```bash
-    npm install --prefix frontend
+    cd ../frontend && npm install
     ```
 
-4.  **Database Setup:**
-    - Ensure your PostgreSQL server is running.
-    - Create a database named `pdv_web`.
-    - Update the `.env.test` file in the `backend` directory with your PostgreSQL connection details.
-      ```
-      DB_HOST=localhost
-      DB_PORT=5432
-      DB_USER=postgres
-      DB_PASSWORD=your_password
-      JWT_SECRET=supersecretjwtkey # Change this in production!
-      ```
+4.  **Configuração do Banco de Dados:**
+    - Certifique-se que o PostgreSQL está rodando.
+    - Crie um banco de dados chamado `pdv_web`.
+    - Configure os arquivos `.env` no backend conforme a sua necessidade.
 
-5.  **Run Database Migrations & Seed Data:**
-    The backend will automatically run migrations and seed initial data when it starts.
+---
 
-### Running the Application
+## 💻 Desenvolvimento
 
-1.  **Start the Backend Server:**
-    ```bash
-    npm start --prefix backend
-    ```
-    The backend will run on `http://localhost:3000` (or your configured port).
+### Comandos Úteis
 
-2.  **Start the Frontend Development Server:**
-    ```bash
-    npm start --prefix frontend
-    ```
-    The frontend will run on `http://localhost:3001` (or your configured port).
+#### **Backend**
+- `npm run dev`: Inicia o servidor em modo de desenvolvimento.
+- `npm test`: Roda a suite de testes unitários e integração.
+- `npm run build`: Compila o código TypeScript para JavaScript.
 
-    You can now access the application in your browser at `http://localhost:3001`.
+#### **Frontend**
+- `npm start`: Inicia o servidor de desenvolvimento do React.
+- `npm run storybook`: Abre a documentação visual de componentes.
+- `npm run build`: Gera a versão de produção do frontend.
 
-## Development
+---
 
-### Backend
+## 🧪 Qualidade e Testes
 
-- **Run Tests:** `npm test --prefix backend`
-- **Run Lint:** `npm run lint --prefix backend`
-- **Build:** `npm run build --prefix backend`
+O projeto segue a filosofia **TDD (Test-Driven Development)**, garantindo que cada funcionalidade seja testada antes de ir para produção.
+- **Backend:** Cobertura de testes > 90%.
+- **Frontend:** Testes de componentes e regressão visual no Storybook.
+- **E2E:** Testes de fluxo completo com Cypress.
 
-### Frontend
+---
 
-- **Run Tests:** `npm test --prefix frontend`
-- **Run Lint:** `npm run lint --prefix frontend`
-- **Build:** `npm run build --prefix frontend`
-- **Storybook:** `npm run storybook --prefix frontend`
+## 📄 Licença
 
-### Database
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
-- **Access PSQL:** `psql -U postgres -d pdv_web` (using your PostgreSQL password)
+---
 
-## Testing
-
-- **Unit & Integration Tests (Backend):** `npm test --prefix backend`
-- **Unit Tests (Frontend):** `npm test --prefix frontend`
-- **End-to-End Tests (Cypress):** `npm run cypress:open --prefix frontend`
-- **Visual Regression Tests (Chromatic):** Configured via GitHub Actions.
-
-## Deployment
-
-Deployment is automated via GitHub Actions:
-
-- **Release Workflow:** Triggered on push to `main` branch. Automates versioning, tagging, and changelog generation.
-- **Deploy Workflow:** Triggered on new GitHub Releases. Deploys frontend (e.g., Vercel) and backend (e.g., Heroku).
-
-## Contributing
-
-We welcome contributions! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines.
-
-## License
-
-This project is licensed under the MIT License.
+<p align="center">Desenvolvido com ❤️ para a RedeCellRJ</p>
