@@ -58,6 +58,18 @@ tmp/
 .prettierignore-sync
 tsconfig.tsbuildinfo
 
+# --- Local Automation & Scratch Scripts ---
+# Ignores local fix/maintenance scripts often created in root
+fix_*.ps1
+fix_*.sh
+fix_*.mjs
+fix_*.js
+add_*.ps1
+temp_*.ts
+scratch_*.ts
+*.local.ps1
+*.local.sh
+
 # --- Backend Specific ---
 # WhatsApp Session Data (CRITICAL: Contains sensitive session files)
 backend/.wwebjs_auth/
