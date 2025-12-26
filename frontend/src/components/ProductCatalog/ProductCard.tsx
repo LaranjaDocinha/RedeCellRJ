@@ -33,7 +33,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
     >
       {/* Placeholder image with lazy loading */}
       <img
-        src={product.image_url || 'https://via.placeholder.com/150'} // Use product image_url or a placeholder
+        src={product.image_url || 'https://placehold.co/150'} // Use product image_url or a placeholder
         alt={product.name}
         style={{ maxWidth: '100%', height: 'auto', marginBottom: '10px' }}
         loading="lazy" // Lazy loading attribute

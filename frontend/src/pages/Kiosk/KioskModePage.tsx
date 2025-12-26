@@ -285,10 +285,10 @@ const KioskModePage: React.FC = () => {
       <ProductGrid container spacing={3}>
         {products.length > 0 ? (
           products.map((product) => (
-            <Grid item key={product.id} xs={12} sm={6} md={4} lg={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={product.id}>
               <ProductCardStyled onClick={() => handleProductClick(product)}>
                 <ProductImage
-                  image="https://via.placeholder.com/300x200?text=Product+Image" // Placeholder image
+                  image="https://placehold.co/300x200?text=Product+Image" // Placeholder image
                   title={product.name}
                 />
                 <CardContent>
@@ -307,7 +307,7 @@ const KioskModePage: React.FC = () => {
             </Grid>
           ))
         ) : (
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Typography variant="h6" align="center">
               No products found.
             </Typography>
@@ -335,15 +335,15 @@ const KioskModePage: React.FC = () => {
         <DialogContent dividers>
           {selectedProduct && (
             <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <img
-                  src="https://via.placeholder.com/400x300?text=Product+Image" // Placeholder image
+                  src="https://placehold.co/400x300?text=Product+Image" // Placeholder image
                   alt={selectedProduct.name}
                   style={{ width: '100%', height: 'auto', borderRadius: 8 }}
                 />
                 {/* TODO: Implement image gallery */}
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Typography variant="h4" gutterBottom>
                   {selectedProduct.name}
                 </Typography>

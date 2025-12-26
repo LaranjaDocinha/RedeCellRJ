@@ -54,22 +54,24 @@ import { validate } from '../middlewares/validationMiddleware.js';
 const createProductRouter = () => {
   const router = Router();
 
-  // Rotas que exigem autenticação
+  // Autenticação é obrigatória para todas as rotas
   router.use(authMiddleware.authenticate);
-  router.use(authMiddleware.authorize('manage', 'Product')); // Permissão geral para gerenciar produtos
 
-  router.get('/variations', async (req: Request, res: Response, next: NextFunction) => {
+  // Rota de variações (leitura)
+  router.get('/variations', authMiddleware.authorize('read', 'Product'), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const variations = await productService.getAllProductVariations(); // Novo método no service
+        const variations = await productService.getAllProductVariations();
         res.status(200).json(variations);
     } catch (error) {
         next(error);
     }
   });
 
+  // Listagem de produtos (leitura)
   router.get(
     '/',
-    cacheMiddleware(), // Aplicar cacheMiddleware aqui
+    authMiddleware.authorize('read', 'Product'),
+    cacheMiddleware(),
     async (req: Request, res: Response, next: NextFunction) => {
     try {
       const {
@@ -105,24 +107,19 @@ const createProductRouter = () => {
     }
   });
 
+  // Criar produto (manage)
   router.post(
     '/',
+    authMiddleware.authorize('manage', 'Product'),
     validate(createProductSchema),
     async (req: Request, res: Response, next: NextFunction) => {
       const newProduct = await productService.createProduct(req.body);
       res.status(201).json(newProduct);
-      // Audit Log (temporariamente desativado para testes de integração)
-      // auditService.recordAuditLog({
-      //   userId: (req as any).user?.id,
-      //   action: 'CREATE',
-      //   // entityType: 'Product', // Removido
-      //   // entityId: newProduct.id,
-      //   details: newProduct,
-      // });
     },
   );
 
-  router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+  // Ver produto por ID (leitura)
+  router.get('/:id', authMiddleware.authorize('read', 'Product'), async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -139,8 +136,10 @@ const createProductRouter = () => {
     }
   });
 
+  // Histórico de preços (leitura)
   router.get(
     '/:productId/variations/:variationId/price-history',
+    authMiddleware.authorize('read', 'Product'),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const productId = parseInt(req.params.productId);
@@ -158,8 +157,10 @@ const createProductRouter = () => {
     },
   );
 
+  // Sugestão de preço (leitura)
   router.get(
     '/:id/suggested-used-price',
+    authMiddleware.authorize('read', 'Product'),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const productId = parseInt(req.params.id);
@@ -178,8 +179,10 @@ const createProductRouter = () => {
     },
   );
 
+  // Solicitar sugestão de preço (manage/update)
   router.post(
     '/:id/suggest-price',
+    authMiddleware.authorize('manage', 'Product'),
     validate(suggestPriceSchema),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
@@ -196,8 +199,10 @@ const createProductRouter = () => {
     }
   );
 
+  // Atualizar produto (manage)
   router.put(
     '/:id',
+    authMiddleware.authorize('manage', 'Product'),
     validate(updateProductSchema),
     async (req: Request, res: Response, next: NextFunction) => {
       try {
@@ -209,14 +214,6 @@ const createProductRouter = () => {
 
         if (updatedProduct) {
           res.status(200).json(updatedProduct);
-          // Audit Log (temporariamente desativado para testes de integração)
-          // auditService.recordAuditLog({
-          //   userId: (req as any).user?.id,
-          //   action: 'UPDATE',
-          //   entityType: 'Product',
-          //   entityId: updatedProduct ? (updatedProduct.id as number) : undefined,
-          //   details: { oldData: req.body, newData: updatedProduct }, // You might want to fetch old data for a more complete log
-          // });
         } else {
           throw new NotFoundError('Product not found');
         }
@@ -226,7 +223,8 @@ const createProductRouter = () => {
     },
   );
 
-  router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
+  // Excluir produto (manage)
+  router.delete('/:id', authMiddleware.authorize('manage', 'Product'), async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -236,12 +234,9 @@ const createProductRouter = () => {
 
       if (deleted) {
         res.status(204).send();
-        // Audit Log
         auditService.recordAuditLog({
           userId: (req as any).user?.id,
           action: 'DELETE',
-          // entityType: 'Product',
-          // entityId: id,
           details: { productId: id, entityType: 'Product' },
         });
       } else {

@@ -44,7 +44,7 @@ const validate =
   };
 
 loyaltyTiersRouter.use(authMiddleware.authenticate);
-loyaltyTiersRouter.use(authMiddleware.authorize('manage', 'LoyaltyTiers')); // New permission for managing tiers
+loyaltyTiersRouter.use(authMiddleware.authorize('manage', 'LoyaltyTier')); // New permission for managing tiers
 
 // Get all loyalty tiers
 loyaltyTiersRouter.get('/', async (req: Request, res: Response, next: NextFunction) => {

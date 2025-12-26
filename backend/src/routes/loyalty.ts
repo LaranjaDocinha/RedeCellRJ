@@ -39,8 +39,9 @@ router.get(
   authMiddleware.authorize('read', 'Loyalty'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user.id;
-      const points = await loyaltyService.getLoyaltyPoints(userId);
+      const customerId = (req as any).user.customer_id;
+      if (!customerId) return res.json({ loyalty_points: 0 });
+      const points = await loyaltyService.getLoyaltyPoints(customerId);
       res.json({ loyalty_points: points });
     } catch (error) {
       next(error);
@@ -54,8 +55,8 @@ router.post(
   validate(pointsSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { userId, points, reason } = req.body; // Admin/Manager can add points to any user
-      const newPoints = await loyaltyService.addLoyaltyPoints(userId, points, reason);
+      const { customerId, points, reason } = req.body; 
+      const newPoints = await loyaltyService.addLoyaltyPoints(customerId, points, reason);
       res.status(200).json({ loyalty_points: newPoints });
     } catch (error) {
       next(error);
@@ -69,9 +70,10 @@ router.post(
   validate(pointsSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user.id; // User redeems their own points
+      const customerId = (req as any).user.customer_id;
+      if (!customerId) throw new AppError('User not associated with a customer account.', 400);
       const { points, reason } = req.body;
-      const newPoints = await loyaltyService.redeemLoyaltyPoints(userId, points, reason);
+      const newPoints = await loyaltyService.redeemLoyaltyPoints(customerId, points, reason);
       res.status(200).json({ loyalty_points: newPoints });
     } catch (error) {
       next(error);
@@ -84,8 +86,9 @@ router.get(
   authMiddleware.authorize('read', 'Loyalty'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user.id;
-      const transactions = await loyaltyService.getLoyaltyTransactions(userId);
+      const customerId = (req as any).user.customer_id;
+      if (!customerId) return res.json([]);
+      const transactions = await loyaltyService.getLoyaltyTransactions(customerId);
       res.json(transactions);
     } catch (error) {
       next(error);

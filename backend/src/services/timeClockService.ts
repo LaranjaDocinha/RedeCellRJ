@@ -1,20 +1,25 @@
 import { getPool } from '../db/index.js';
 
 export const clockIn = async (userId: string, branchId: number) => {
-  // Check for an open clock-in
-  const existing = await getPool().query(
-    'SELECT * FROM time_clock_entries WHERE user_id = $1 AND clock_out_time IS NULL',
-    [userId],
-  );
-  if (existing.rows.length > 0) {
-    throw new Error('User is already clocked in.');
-  }
+  try {
+    // Check for an open clock-in
+    const existing = await getPool().query(
+      'SELECT * FROM time_clock_entries WHERE user_id = $1 AND clock_out_time IS NULL',
+      [userId],
+    );
+    if (existing.rows.length > 0) {
+      throw new Error('User is already clocked in.');
+    }
 
-  const result = await getPool().query(
-    'INSERT INTO time_clock_entries (user_id, branch_id, clock_in_time) VALUES ($1, $2, NOW()) RETURNING *',
-    [userId, branchId],
-  );
-  return result.rows[0];
+    const result = await getPool().query(
+      'INSERT INTO time_clock_entries (user_id, branch_id, clock_in_time) VALUES ($1, $2, NOW()) RETURNING *',
+      [userId, branchId],
+    );
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error in clockIn service:', error);
+    throw error;
+  }
 };
 
 export const clockOut = async (userId: string) => {

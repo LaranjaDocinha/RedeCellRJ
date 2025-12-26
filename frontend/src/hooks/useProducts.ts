@@ -5,13 +5,24 @@ import { useNotification } from '../contexts/NotificationContext';
 
 export const useProducts = (searchTerm?: string, category?: string, page: number = 1, limit: number = 10, sortBy?: string, sortOrder?: 'asc' | 'desc') => {
   const { token } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
   const queryClient = useQueryClient();
 
   const productsQuery = useQuery({
     queryKey: ['products', searchTerm, category, page, limit, sortBy, sortOrder],
     queryFn: () => fetchAllProducts(token!, searchTerm, category, page, limit, sortBy, sortOrder), // Ensure token is available
     enabled: !!token, // Only run query if token exists
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: (id: number) => deleteProduct(token!, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      showNotification('Produto excluído com sucesso', 'success');
+    },
+    onError: (error: any) => {
+      showNotification(`Erro ao excluir produto: ${error.message}`, 'error');
+    },
   });
 
   return {

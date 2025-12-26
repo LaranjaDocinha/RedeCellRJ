@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Fab, Dialog, DialogTitle, DialogContent, FormControlLabel, Switch, Slider, Typography, Box } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, FormControlLabel, Switch, Slider, Typography, Box, IconButton } from '@mui/material';
 import { AccessibilityNew } from '@mui/icons-material';
 import { createGlobalStyle } from 'styled-components';
 
@@ -39,8 +39,12 @@ const AccessibilityGlobalStyles = createGlobalStyle<{ highContrast: boolean; fon
   }
 `;
 
-const AccessibilityMenu: React.FC = () => {
-  const [open, setOpen] = useState(false);
+interface AccessibilityMenuProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({ open, onClose }) => {
   const [preferences, setPreferences] = useState({
     highContrast: false,
     fontSize: 16,
@@ -59,10 +63,10 @@ const AccessibilityMenu: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('accessibility_prefs', JSON.stringify(preferences));
     
-    // Apply reduce motion
     if (preferences.reduceMotion) {
       document.documentElement.style.setProperty('--framer-motion-duration', '0s');
-      // Framer motion uses standard CSS var check usually, or we disable globally via Context
+    } else {
+      document.documentElement.style.removeProperty('--framer-motion-duration');
     }
   }, [preferences]);
 
@@ -70,20 +74,11 @@ const AccessibilityMenu: React.FC = () => {
     <>
       <AccessibilityGlobalStyles highContrast={preferences.highContrast} fontSize={preferences.fontSize} />
       
-      <Fab 
-        color="primary" 
-        aria-label="Acessibilidade" 
-        sx={{ position: 'fixed', bottom: 20, left: 20, zIndex: 11000 }}
-        onClick={() => setOpen(true)}
-      >
-        <AccessibilityNew />
-      </Fab>
-
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Ferramentas de Acessibilidade</DialogTitle>
+      <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '20px' } }}>
+        <DialogTitle sx={{ fontWeight: 800 }}>Acessibilidade</DialogTitle>
         <DialogContent>
           <Box mb={3} mt={1}>
-            <Typography gutterBottom>Tamanho da Fonte ({preferences.fontSize}px)</Typography>
+            <Typography variant="body2" fontWeight={700} gutterBottom>Tamanho da Fonte ({preferences.fontSize}px)</Typography>
             <Slider
               value={preferences.fontSize}
               min={12}
@@ -101,7 +96,7 @@ const AccessibilityMenu: React.FC = () => {
                 onChange={(e) => setPreferences(prev => ({ ...prev, highContrast: e.target.checked }))}
               />
             }
-            label="Alto Contraste"
+            label={<Typography variant="body2" fontWeight={700}>Alto Contraste</Typography>}
             sx={{ mb: 2, display: 'block' }}
           />
 
@@ -112,7 +107,7 @@ const AccessibilityMenu: React.FC = () => {
                 onChange={(e) => setPreferences(prev => ({ ...prev, reduceMotion: e.target.checked }))}
               />
             }
-            label="Reduzir Animações"
+            label={<Typography variant="body2" fontWeight={700}>Reduzir Animações</Typography>}
           />
         </DialogContent>
       </Dialog>

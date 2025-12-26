@@ -39,11 +39,11 @@ const GlobalSearchInput: React.FC<GlobalSearchInputProps> = ({
   const [selectedEntityType, setSelectedEntityType] = useState<EntityType>(initialEntityType);
   const { token } = useAuth();
   const debouncedInputValue = useDebounce(inputValue, 300); // Debounce input para evitar muitas requisições
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   const fetchSuggestions = useCallback(async (query: string, entityType: EntityType) => {
     if (!token) {
-        addToast('Erro de autenticação. Por favor, faça login novamente.', 'error');
+        showNotification('Erro de autenticação. Por favor, faça login novamente.', 'error');
         setLoading(false);
         return;
     }
@@ -69,12 +69,12 @@ const GlobalSearchInput: React.FC<GlobalSearchInputProps> = ({
       setOptions(data);
     } catch (err: any) {
       console.error('Failed to fetch suggestions:', err);
-      addToast('Falha ao buscar sugestões.', 'error');
+      showNotification('Falha ao buscar sugestões.', 'error');
       setOptions([]);
     } finally {
       setLoading(false);
     }
-  }, [token, addToast]);
+  }, [token, showNotification]);
 
   useEffect(() => {
     if (debouncedInputValue) {

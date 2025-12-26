@@ -39,6 +39,7 @@ export const Modal: React.FC<ModalProps> = ({ open, onClose, title, children }) 
             initial: "hidden",
             animate: "visible",
             exit: "exit",
+            sx: { borderRadius: 3 }
           }}
           BackdropComponent={MotionDivWithProps}
           BackdropProps={{
@@ -72,3 +73,5 @@ export const Modal: React.FC<ModalProps> = ({ open, onClose, title, children }) 
     </AnimatePresence>
   );
 };
+
+export default Modal;

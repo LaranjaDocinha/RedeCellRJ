@@ -98,6 +98,27 @@ export const getUserBadges = async (userId: string) => {
   return result.rows;
 };
 
+export const getUserStats = async (userId: string) => {
+  const pool = getPool();
+  const result = await pool.query(
+    'SELECT xp, level, name FROM users WHERE id = $1',
+    [userId]
+  );
+  if (result.rows.length === 0) return null;
+  
+  const user = result.rows[0];
+  // Calcula XP necessário para o próximo nível (exemplo: level * 1000)
+  const nextLevelXp = user.level * 1000;
+  const currentLevelXp = (user.level - 1) * 1000;
+  const progress = ((user.xp - currentLevelXp) / (nextLevelXp - currentLevelXp)) * 100;
+
+  return {
+    ...user,
+    nextLevelXp,
+    progress: Math.min(100, Math.max(0, progress))
+  };
+};
+
 // Refinado para ser mais explícito sobre métricas e recompensas
 export const createChallenge = async (
   title: string,

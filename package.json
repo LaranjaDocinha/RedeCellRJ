@@ -1,9 +1,18 @@
 {
-  "devDependencies": {
-    "@vitest/coverage-v8": "^4.0.3",
-    "unplugin-swc": "^1.5.7"
+  "name": "redecell-rj",
+  "version": "1.0.0",
+  "description": "Sistema de PDV Inteligente - Monorepo",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"bgBlue.bold,bgMagenta.bold\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend && npm test",
+    "build:all": "cd backend && npm run build && cd ../frontend && npm run build"
   },
-  "dependencies": {
-    "@google/generative-ai": "^0.24.1"
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }

@@ -9,13 +9,13 @@ export const fetchAllProducts = async (token: string, searchTerm?: string, categ
   if (category) {
     params.append('category', category);
   }
-  params.append('_page', page.toString());
-  params.append('_limit', limit.toString());
+  params.append('limit', limit.toString());
+  params.append('offset', ((page - 1) * limit).toString());
   if (sortBy) {
-    params.append('_sort', sortBy);
+    params.append('sortBy', sortBy);
   }
   if (sortOrder) {
-    params.append('_order', sortOrder);
+    params.append('sortDirection', sortOrder.toUpperCase());
   }
 
   const queryString = params.toString();
@@ -28,9 +28,12 @@ export const fetchAllProducts = async (token: string, searchTerm?: string, categ
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
-  const totalCount = parseInt(response.headers.get('X-Total-Count') || '0', 10);
-  const products: Product[] = await response.json();
-  return { products, totalCount };
+  const data = await response.json();
+  // Backend returns { products, totalCount }
+  return { 
+    products: data.products || [], 
+    totalCount: data.totalCount || 0 
+  };
 };
 
 export const deleteProduct = async (id: number, token: string): Promise<void> => {
@@ -54,3 +57,65 @@ export const fetchProductById = async (id: string, token: string): Promise<Produ
 };
 
 // Add other product-related API calls here as needed (e.g., createProduct, updateProduct)
+
+export const createProduct = async (productData: any, token: string): Promise<Product> => {
+
+  const response = await fetch(`${API_BASE_URL}/api/products`, {
+
+    method: 'POST',
+
+    headers: {
+
+      'Content-Type': 'application/json',
+
+      'Authorization': `Bearer ${token}`
+
+    },
+
+    body: JSON.stringify(productData),
+
+  });
+
+  if (!response.ok) {
+
+    const errorData = await response.json();
+
+    throw new Error(errorData.message || 'Failed to create product');
+
+  }
+
+  return response.json();
+
+};
+
+
+
+export const updateProduct = async (id: number | string, productData: any, token: string): Promise<Product> => {
+
+  const response = await fetch(`${API_BASE_URL}/api/products/${id}`, {
+
+    method: 'PUT',
+
+    headers: {
+
+      'Content-Type': 'application/json',
+
+      'Authorization': `Bearer ${token}`
+
+    },
+
+    body: JSON.stringify(productData),
+
+  });
+
+  if (!response.ok) {
+
+    const errorData = await response.json();
+
+    throw new Error(errorData.message || 'Failed to update product');
+
+  }
+
+  return response.json();
+
+};

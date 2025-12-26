@@ -1,9 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, Grid, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Select, MenuItem, FormControl, InputLabel, TextField, Modal } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  Box, 
+  Typography, 
+  Paper, 
+  Grid, 
+  CircularProgress, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  Button, 
+  Select, 
+  MenuItem, 
+  FormControl, 
+  InputLabel, 
+  TextField, 
+  Modal,
+  Stack,
+  alpha,
+  useTheme,
+  Chip
+} from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 import moment from 'moment';
+import { FaMoneyBillWave, FaFileInvoiceDollar, FaPlus, FaCalendarAlt } from 'react-icons/fa';
 
 const AccountsReportPage: React.FC = () => {
+  const theme = useTheme();
+  const { addNotification } = useNotification();
   const [payables, setPayables] = useState<any[]>([]);
   const [receivables, setReceivables] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,9 +50,10 @@ const AccountsReportPage: React.FC = () => {
       if (!token) return;
       try {
         const res = await fetch('/api/branches', { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) throw new Error('Falha ao carregar filiais');
         const data = await res.json();
-        setBranches(data);
-        if (data.length > 0) setSelectedBranch(data[0].id);
+        setBranches(Array.isArray(data) ? data : []);
+        if (Array.isArray(data) && data.length > 0) setSelectedBranch(data[0].id);
       } catch (error) {
         console.error('Error fetching branches:', error);
       }
@@ -33,236 +61,295 @@ const AccountsReportPage: React.FC = () => {
     fetchBranches();
   }, [token]);
 
-  useEffect(() => {
-    const fetchAccountsData = async () => {
-      if (!token || !selectedBranch) return;
-      setLoading(true);
-      try {
-        const payableRes = await fetch(
-          `/api/accounts/payable?branchId=${selectedBranch}&status=${payableStatusFilter}&startDate=${startDate}&endDate=${endDate}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const payableData = await payableRes.json();
-        setPayables(payableData);
+  const fetchAccountsData = useCallback(async () => {
+    if (!token || !selectedBranch) return;
+    setLoading(true);
+    try {
+      const payableRes = await fetch(
+        `/api/accounts/payable?branchId=${selectedBranch}&status=${payableStatusFilter}&startDate=${startDate}&endDate=${endDate}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const payableData = await payableRes.json();
+      setPayables(Array.isArray(payableData) ? payableData : []);
 
-        const receivableRes = await fetch(
-          `/api/accounts/receivable?branchId=${selectedBranch}&status=${receivableStatusFilter}&startDate=${startDate}&endDate=${endDate}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const receivableData = await receivableRes.json();
-        setReceivables(receivableData);
-      } catch (error) {
-        console.error('Error fetching accounts data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      const receivableRes = await fetch(
+        `/api/accounts/receivable?branchId=${selectedBranch}&status=${receivableStatusFilter}&startDate=${startDate}&endDate=${endDate}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const receivableData = await receivableRes.json();
+      setReceivables(Array.isArray(receivableData) ? receivableData : []);
+    } catch (error) {
+      console.error('Error fetching accounts data:', error);
+      addNotification('Erro ao carregar dados financeiros', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [token, selectedBranch, payableStatusFilter, receivableStatusFilter, startDate, endDate, addNotification]);
+
+  useEffect(() => {
     fetchAccountsData();
-  }, [token, selectedBranch, payableStatusFilter, receivableStatusFilter, startDate, endDate]);
+  }, [fetchAccountsData]);
 
   const handleUpdatePayableStatus = async (id: number, status: string) => {
     if (!token) return;
     try {
-      await fetch(`/api/accounts/payable/${id}/status`, {
+      const res = await fetch(`/api/accounts/payable/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status, paidDate: status === 'paid' ? moment().toISOString() : null }),
       });
-      window.location.reload();
+      if (res.ok) {
+          addNotification('Status atualizado com sucesso', 'success');
+          fetchAccountsData();
+      }
     } catch (error) {
-      console.error('Error updating payable status:', error);
+      addNotification('Erro ao atualizar status', 'error');
     }
   };
 
   const handleUpdateReceivableStatus = async (id: number, status: string) => {
     if (!token) return;
     try {
-      await fetch(`/api/accounts/receivable/${id}/status`, {
+      const res = await fetch(`/api/accounts/receivable/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status, receivedDate: status === 'received' ? moment().toISOString() : null }),
       });
-      window.location.reload();
+      if (res.ok) {
+          addNotification('Status atualizado com sucesso', 'success');
+          fetchAccountsData();
+      }
     } catch (error) {
-      console.error('Error updating receivable status:', error);
+      addNotification('Erro ao atualizar status', 'error');
     }
   };
 
   const handleAddPayable = async (formData: any) => {
     if (!token) return;
     try {
-      await fetch('/api/accounts/payable', {
+      const res = await fetch('/api/accounts/payable', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...formData, branch_id: selectedBranch }),
       });
-      setIsPayableModalOpen(false);
-      window.location.reload();
+      if (res.ok) {
+          setIsPayableModalOpen(false);
+          addNotification('Conta adicionada com sucesso', 'success');
+          fetchAccountsData();
+      }
     } catch (error) {
-      console.error('Error adding payable:', error);
+      addNotification('Erro ao adicionar conta', 'error');
     }
   };
 
   const handleAddReceivable = async (formData: any) => {
     if (!token) return;
     try {
-      await fetch('/api/accounts/receivable', {
+      const res = await fetch('/api/accounts/receivable', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...formData, branch_id: selectedBranch }),
       });
-      setIsReceivableModalOpen(false);
-      window.location.reload();
+      if (res.ok) {
+          setIsReceivableModalOpen(false);
+          addNotification('Conta adicionada com sucesso', 'success');
+          fetchAccountsData();
+      }
     } catch (error) {
-      console.error('Error adding receivable:', error);
+      addNotification('Erro ao adicionar conta', 'error');
     }
   };
 
-  if (loading) {
-    return <CircularProgress />;
+  if (loading && branches.length === 0) {
+    return <Box display="flex" justifyContent="center" py={10}><CircularProgress /></Box>;
   }
 
   return (
-    <Box p={3}>
-      <Typography variant="h4" gutterBottom>Contas a Pagar e Receber</Typography>
+    <Box p={4}>
+      <Typography variant="h3" fontWeight={900} gutterBottom sx={{ letterSpacing: '-2px', mb: 4 }}>
+        Gestão Financeira
+      </Typography>
 
-      <Grid container spacing={3} mb={3}>
-        <Grid item xs={12} sm={4}>
-          <FormControl fullWidth>
-            <InputLabel>Filial</InputLabel>
-            <Select value={selectedBranch} label="Filial" onChange={(e) => setSelectedBranch(e.target.value as string)}>
-              {branches.map(branch => <MenuItem key={branch.id} value={branch.id}>{branch.name}</MenuItem>)}
-            </Select>
-          </FormControl>
+      <Paper elevation={0} sx={{ p: 3, mb: 4, borderRadius: '24px', border: '1px solid', borderColor: 'divider', bgcolor: alpha(theme.palette.primary.main, 0.02) }}>
+        <Grid container spacing={3} alignItems="center">
+            <Grid size={{ xs: 12, md: 4 }}>
+            <FormControl fullWidth size="small">
+                <InputLabel>Filial de Operação</InputLabel>
+                <Select value={selectedBranch} label="Filial de Operação" onChange={(e) => setSelectedBranch(e.target.value as string)} sx={{ borderRadius: '12px' }}>
+                {branches.map(branch => <MenuItem key={branch.id} value={branch.id}>{branch.name}</MenuItem>)}
+                </Select>
+            </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+                label="Período: De"
+                type="date"
+                fullWidth
+                size="small"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+            />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+                label="Período: Até"
+                type="date"
+                fullWidth
+                size="small"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+            />
+            </Grid>
         </Grid>
-        <Grid item xs={12} sm={4}>
-          <TextField
-            label="Data Início"
-            type="date"
-            fullWidth
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
+      </Paper>
+
+      <Grid container spacing={4}>
+        {/* Contas a Pagar */}
+        <Grid size={{ xs: 12, lg: 6 }}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: '28px', border: '1px solid', borderColor: 'divider', height: '100%' }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+                    <Box display="flex" alignItems="center" gap={1.5}>
+                        <Avatar sx={{ bgcolor: alpha(theme.palette.error.main, 0.1), color: 'error.main' }}><FaMoneyBillWave size={20} /></Avatar>
+                        <Box>
+                            <Typography variant="h6" fontWeight={800}>Contas a Pagar</Typography>
+                            <Typography variant="caption" color="text.secondary">Fluxo de saída e fornecedores</Typography>
+                        </Box>
+                    </Box>
+                    <Button variant="contained" color="error" startIcon={<FaPlus />} onClick={() => setIsPayableModalOpen(true)} sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700 }}>Nova Conta</Button>
+                </Stack>
+
+                <FormControl sx={{ mb: 3, minWidth: 160 }} size="small">
+                    <InputLabel>Filtrar Status</InputLabel>
+                    <Select value={payableStatusFilter} label="Filtrar Status" onChange={(e) => setPayableStatusFilter(e.target.value as string)} sx={{ borderRadius: '10px' }}>
+                        <MenuItem value="">Todos os Lançamentos</MenuItem>
+                        <MenuItem value="pending">Pendentes</MenuItem>
+                        <MenuItem value="paid">Liquidados</MenuItem>
+                        <MenuItem value="overdue">Atrasados</MenuItem>
+                    </Select>
+                </FormControl>
+
+                <TableContainer sx={{ maxHeight: 500 }}>
+                    <Table stickyHeader size="small">
+                        <TableHead>
+                            <TableRow>
+                                <TableCell sx={{ fontWeight: 800, bgcolor: 'background.paper' }}>DESCRIÇÃO</TableCell>
+                                <TableCell sx={{ fontWeight: 800, bgcolor: 'background.paper' }}>VALOR</TableCell>
+                                <TableCell sx={{ fontWeight: 800, bgcolor: 'background.paper' }}>VENCIMENTO</TableCell>
+                                <TableCell align="center" sx={{ fontWeight: 800, bgcolor: 'background.paper' }}>AÇÕES</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {payables.length === 0 && <TableRow><TableCell colSpan={4} align="center" sx={{ py: 4, color: 'text.disabled' }}>Nenhum lançamento encontrado</TableCell></TableRow>}
+                            {payables.map((payable) => (
+                                <TableRow key={payable.id} hover>
+                                    <TableCell>
+                                        <Typography variant="body2" fontWeight={600}>{payable.description}</Typography>
+                                        <Typography variant="caption" color="text.secondary">{payable.supplier_name || 'Sem fornecedor'}</Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2" fontWeight={800} color="error.main">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(payable.amount)}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Stack direction="row" spacing={1} alignItems="center">
+                                            <FaCalendarAlt size={12} color={theme.palette.text.disabled} />
+                                            <Typography variant="caption" fontWeight={600}>{moment(payable.due_date).format('DD/MM/YY')}</Typography>
+                                        </Stack>
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        {payable.status === 'pending' ? (
+                                            <Button size="small" variant="outlined" color="error" onClick={() => handleUpdatePayableStatus(payable.id, 'paid')} sx={{ borderRadius: '8px', fontSize: '0.7rem' }}>Liquidar</Button>
+                                        ) : <Chip label="PAGO" size="small" color="success" sx={{ fontSize: '0.6rem', fontWeight: 900, height: 20 }} />}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Paper>
         </Grid>
-        <Grid item xs={12} sm={4}>
-          <TextField
-            label="Data Fim"
-            type="date"
-            fullWidth
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
+
+        {/* Contas a Receber */}
+        <Grid size={{ xs: 12, lg: 6 }}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: '28px', border: '1px solid', borderColor: 'divider', height: '100%' }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+                    <Box display="flex" alignItems="center" gap={1.5}>
+                        <Avatar sx={{ bgcolor: alpha(theme.palette.success.main, 0.1), color: 'success.main' }}><FaFileInvoiceDollar size={20} /></Avatar>
+                        <Box>
+                            <Typography variant="h6" fontWeight={800}>Contas a Receber</Typography>
+                            <Typography variant="caption" color="text.secondary">Fluxo de entrada e clientes</Typography>
+                        </Box>
+                    </Box>
+                    <Button variant="contained" color="success" startIcon={<FaPlus />} onClick={() => setIsReceivableModalOpen(true)} sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700 }}>Novo Recebível</Button>
+                </Stack>
+
+                <FormControl sx={{ mb: 3, minWidth: 160 }} size="small">
+                    <InputLabel>Filtrar Status</InputLabel>
+                    <Select value={receivableStatusFilter} label="Filtrar Status" onChange={(e) => setReceivableStatusFilter(e.target.value as string)} sx={{ borderRadius: '10px' }}>
+                        <MenuItem value="">Todos os Lançamentos</MenuItem>
+                        <MenuItem value="pending">Pendentes</MenuItem>
+                        <MenuItem value="received">Recebidos</MenuItem>
+                        <MenuItem value="overdue">Atrasados</MenuItem>
+                    </Select>
+                </FormControl>
+
+                <TableContainer sx={{ maxHeight: 500 }}>
+                    <Table stickyHeader size="small">
+                        <TableHead>
+                            <TableRow>
+                                <TableCell sx={{ fontWeight: 800, bgcolor: 'background.paper' }}>DESCRIÇÃO</TableCell>
+                                <TableCell sx={{ fontWeight: 800, bgcolor: 'background.paper' }}>VALOR</TableCell>
+                                <TableCell sx={{ fontWeight: 800, bgcolor: 'background.paper' }}>VENCIMENTO</TableCell>
+                                <TableCell align="center" sx={{ fontWeight: 800, bgcolor: 'background.paper' }}>AÇÕES</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {receivables.length === 0 && <TableRow><TableCell colSpan={4} align="center" sx={{ py: 4, color: 'text.disabled' }}>Nenhum lançamento encontrado</TableCell></TableRow>}
+                            {receivables.map((receivable) => (
+                                <TableRow key={receivable.id} hover>
+                                    <TableCell>
+                                        <Typography variant="body2" fontWeight={600}>{receivable.description}</Typography>
+                                        <Typography variant="caption" color="text.secondary">{receivable.customer_name || 'Sem cliente'}</Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2" fontWeight={800} color="success.main">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(receivable.amount)}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Stack direction="row" spacing={1} alignItems="center">
+                                            <FaCalendarAlt size={12} color={theme.palette.text.disabled} />
+                                            <Typography variant="caption" fontWeight={600}>{moment(receivable.due_date).format('DD/MM/YY')}</Typography>
+                                        </Stack>
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        {receivable.status === 'pending' ? (
+                                            <Button size="small" variant="outlined" color="success" onClick={() => handleUpdateReceivableStatus(receivable.id, 'received')} sx={{ borderRadius: '8px', fontSize: '0.7rem' }}>Receber</Button>
+                                        ) : <Chip label="RECEBIDO" size="small" color="success" sx={{ fontSize: '0.6rem', fontWeight: 900, height: 20 }} />}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Paper>
         </Grid>
       </Grid>
 
-      {/* Contas a Pagar */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h5">Contas a Pagar</Typography>
-          <Button variant="contained" onClick={() => setIsPayableModalOpen(true)}>Adicionar Conta</Button>
-        </Box>
-        <FormControl sx={{ mb: 2, minWidth: 120 }}>
-          <InputLabel>Status</InputLabel>
-          <Select value={payableStatusFilter} label="Status" onChange={(e) => setPayableStatusFilter(e.target.value as string)}>
-            <MenuItem value="">Todos</MenuItem>
-            <MenuItem value="pending">Pendente</MenuItem>
-            <MenuItem value="paid">Pago</MenuItem>
-            <MenuItem value="overdue">Atrasado</MenuItem>
-          </Select>
-        </FormControl>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Descrição</TableCell>
-                <TableCell>Fornecedor</TableCell>
-                <TableCell>Valor</TableCell>
-                <TableCell>Vencimento</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Ações</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {payables.map((payable) => (
-                <TableRow key={payable.id}>
-                  <TableCell>{payable.description}</TableCell>
-                  <TableCell>{payable.supplier_name || 'N/A'}</TableCell>
-                  <TableCell>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(payable.amount)}</TableCell>
-                  <TableCell>{moment(payable.due_date).format('DD/MM/YYYY')}</TableCell>
-                  <TableCell>{payable.status}</TableCell>
-                  <TableCell>
-                    {payable.status === 'pending' && (
-                      <Button size="small" onClick={() => handleUpdatePayableStatus(payable.id, 'paid')}>Marcar como Pago</Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
-
-      {/* Contas a Receber */}
-      <Paper sx={{ p: 2 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h5">Contas a Receber</Typography>
-          <Button variant="contained" onClick={() => setIsReceivableModalOpen(true)}>Adicionar Conta</Button>
-        </Box>
-        <FormControl sx={{ mb: 2, minWidth: 120 }}>
-          <InputLabel>Status</InputLabel>
-          <Select value={receivableStatusFilter} label="Status" onChange={(e) => setReceivableStatusFilter(e.target.value as string)}>
-            <MenuItem value="">Todos</MenuItem>
-            <MenuItem value="pending">Pendente</MenuItem>
-            <MenuItem value="received">Recebido</MenuItem>
-            <MenuItem value="overdue">Atrasado</MenuItem>
-          </Select>
-        </FormControl>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Descrição</TableCell>
-                <TableCell>Cliente</TableCell>
-                <TableCell>Valor</TableCell>
-                <TableCell>Vencimento</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Ações</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {receivables.map((receivable) => (
-                <TableRow key={receivable.id}>
-                  <TableCell>{receivable.description}</TableCell>
-                  <TableCell>{receivable.customer_name || 'N/A'}</TableCell>
-                  <TableCell>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(receivable.amount)}</TableCell>
-                  <TableCell>{moment(receivable.due_date).format('DD/MM/YYYY')}</TableCell>
-                  <TableCell>{receivable.status}</TableCell>
-                  <TableCell>
-                    {receivable.status === 'pending' && (
-                      <Button size="small" onClick={() => handleUpdateReceivableStatus(receivable.id, 'received')}>Marcar como Recebido</Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
-
-      {isPayableModalOpen && <AddAccountModal type="payable" onSave={handleAddPayable} onClose={() => setIsPayableModalOpen(false)} branches={branches} selectedBranch={selectedBranch} />}
-      {isReceivableModalOpen && <AddAccountModal type="receivable" onSave={handleAddReceivable} onClose={() => setIsReceivableModalOpen(false)} branches={branches} selectedBranch={selectedBranch} />}
+      {isPayableModalOpen && <AddAccountModal type="payable" onSave={handleAddPayable} onClose={() => setIsPayableModalOpen(false)} branches={branches} />}
+      {isReceivableModalOpen && <AddAccountModal type="receivable" onSave={handleAddReceivable} onClose={() => setIsReceivableModalOpen(false)} branches={branches} />}
     </Box>
   );
 };
 
-const AddAccountModal = ({ type, onSave, onClose, branches, selectedBranch }: any) => {
-    const [formData, setFormData] = useState({ description: '', amount: '', dueDate: moment().format('YYYY-MM-DD'), supplier_id: '', customer_id: '' });
+const AddAccountModal = ({ type, onSave, onClose, branches }: any) => {
+    const theme = useTheme();
+    const [formData, setFormData] = useState({ description: '', amount: '', due_date: moment().format('YYYY-MM-DD'), supplier_id: '', customer_id: '' });
     const [suppliers, setSuppliers] = useState<any[]>([]);
     const [customers, setCustomers] = useState<any[]>([]);
     const { token } = useAuth();
@@ -270,50 +357,54 @@ const AddAccountModal = ({ type, onSave, onClose, branches, selectedBranch }: an
     useEffect(() => {
         const fetchRelatedData = async () => {
             if (!token) return;
-            if (type === 'payable') {
-                const res = await fetch('/api/suppliers', { headers: { Authorization: `Bearer ${token}` } });
-                const data = await res.json();
-                setSuppliers(data);
-            } else {
-                const res = await fetch('/api/customers', { headers: { Authorization: `Bearer ${token}` } });
-                const data = await res.json();
-                setCustomers(data);
-            }
+            try {
+                if (type === 'payable') {
+                    const res = await fetch('/api/suppliers', { headers: { Authorization: `Bearer ${token}` } });
+                    const data = await res.json();
+                    setSuppliers(Array.isArray(data) ? data : []);
+                } else {
+                    const res = await fetch('/api/customers', { headers: { Authorization: `Bearer ${token}` } });
+                    const data = await res.json();
+                    setCustomers(Array.isArray(data) ? data : []);
+                }
+            } catch (e) { console.error(e); }
         }
         fetchRelatedData();
     }, [token, type]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | { name?: string; value: unknown }>) => {
+    const handleChange = (e: any) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name as string]: value });
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     return (
-        <Modal open onClose={onClose}>
-            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 400, bgcolor: 'background.paper', boxShadow: 24, p: 4 }}>
-                <Typography variant="h6">Adicionar {type === 'payable' ? 'Conta a Pagar' : 'Conta a Receber'}</Typography>
-                <TextField fullWidth name="description" label="Descrição" value={formData.description} onChange={handleChange} sx={{ my: 2 }} />
-                <TextField fullWidth name="amount" label="Valor" type="number" value={formData.amount} onChange={handleChange} sx={{ my: 2 }} />
-                <TextField fullWidth name="dueDate" label="Data de Vencimento" type="date" value={formData.dueDate} onChange={handleChange} InputLabelProps={{ shrink: true }} sx={{ my: 2 }} />
-                {type === 'payable' && (
-                    <FormControl fullWidth sx={{ my: 2 }}>
-                        <InputLabel>Fornecedor</InputLabel>
-                        <Select name="supplier_id" value={formData.supplier_id} label="Fornecedor" onChange={handleChange}>
-                            {suppliers.map(supplier => <MenuItem key={supplier.id} value={supplier.id}>{supplier.name}</MenuItem>)}
-                        </Select>
-                    </FormControl>
-                )}
-                {type === 'receivable' && (
-                    <FormControl fullWidth sx={{ my: 2 }}>
-                        <InputLabel>Cliente</InputLabel>
-                        <Select name="customer_id" value={formData.customer_id} label="Cliente" onChange={handleChange}>
-                            {customers.map(customer => <MenuItem key={customer.id} value={customer.id}>{customer.name}</MenuItem>)}
-                        </Select>
-                    </FormControl>
-                )}
-                <Box mt={2} display="flex" justifyContent="flex-end">
-                    <Button onClick={onClose} sx={{ mr: 1 }}>Cancelar</Button>
-                    <Button variant="contained" onClick={() => onSave(formData)}>Salvar</Button>
+        <Modal open onClose={onClose} disableRestoreFocus>
+            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 450, bgcolor: 'background.paper', boxShadow: 24, p: 4, borderRadius: '24px' }}>
+                <Typography variant="h5" fontWeight={800} mb={3}>Lançar {type === 'payable' ? 'Conta a Pagar' : 'Conta a Receber'}</Typography>
+                <Stack spacing={2.5}>
+                    <TextField fullWidth name="description" label="Descrição do Lançamento" value={formData.description} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
+                    <TextField fullWidth name="amount" label="Valor (R$)" type="number" value={formData.amount} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
+                    <TextField fullWidth name="due_date" label="Data de Vencimento" type="date" value={formData.due_date} onChange={handleChange} slotProps={{ inputLabel: { shrink: true } }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
+                    
+                    {type === 'payable' ? (
+                        <FormControl fullWidth>
+                            <InputLabel>Fornecedor Responsável</InputLabel>
+                            <Select name="supplier_id" value={formData.supplier_id} label="Fornecedor Responsável" onChange={handleChange} sx={{ borderRadius: '12px' }}>
+                                {suppliers.map(s => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
+                            </Select>
+                        </FormControl>
+                    ) : (
+                        <FormControl fullWidth>
+                            <InputLabel>Cliente da Operação</InputLabel>
+                            <Select name="customer_id" value={formData.customer_id} label="Cliente da Operação" onChange={handleChange} sx={{ borderRadius: '12px' }}>
+                                {customers.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
+                            </Select>
+                        </FormControl>
+                    )}
+                </Stack>
+                <Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
+                    <Button onClick={onClose} sx={{ borderRadius: '10px' }}>Cancelar</Button>
+                    <Button variant="contained" color={type === 'payable' ? 'error' : 'success'} onClick={() => onSave(formData)} sx={{ borderRadius: '10px', px: 4, fontWeight: 700 }}>Salvar Lançamento</Button>
                 </Box>
             </Box>
         </Modal>

@@ -56,7 +56,7 @@ interface RevenueByHourWidgetProps {
  */
 const RevenueByHourWidget: React.FC<RevenueByHourWidgetProps> = React.memo(({ selectedPeriod }) => {
   const { token, isAuthenticated } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   const { data, isLoading, isError, error } = useQuery<RevenueByHourData[], Error>({
     queryKey: ['revenueByHour', token, selectedPeriod],
@@ -66,9 +66,9 @@ const RevenueByHourWidget: React.FC<RevenueByHourWidgetProps> = React.memo(({ se
 
   useEffect(() => {
     if (isError && error) {
-      addToast(`Falha ao buscar receita por hora: ${error.message}`, 'error');
+      showNotification(`Falha ao buscar receita por hora: ${error.message}`, 'error');
     }
-  }, [isError, error, addToast]);
+  }, [isError, error, showNotification]);
 
   if (isLoading) {
     return <DashboardWidgetSkeleton />;

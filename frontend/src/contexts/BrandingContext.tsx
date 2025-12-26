@@ -16,6 +16,7 @@ interface BrandingContextType {
   branding: BrandingConfig;
   loading: boolean;
   error: string | null;
+  updateBranding: (newBranding: Partial<BrandingConfig>) => void; // Added update function
 }
 
 export const BrandingContext = createContext<BrandingContextType | undefined>(undefined);
@@ -26,66 +27,72 @@ export const BrandingProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [error, setError] = useState<string | null>(null);
   const { user, token } = useAuth(); // Get user and token from auth context
 
+  const fetchBranding = async () => {
+    if (!token) { // Only fetch branding if a token exists
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const franchiseId = user?.franchiseId || new URLSearchParams(window.location.search).get('franchiseId');
+
+      const response = await fetch(`/api/branding?franchiseId=${franchiseId || ''}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch branding configuration');
+      }
+
+      const data: BrandingConfig = await response.json();
+      setBranding(data);
+      applyBranding(data);
+
+    } catch (err: any) {
+      console.error('Error fetching branding:', err);
+      setError(err.message || 'Failed to load branding');
+      // setBranding(getBranding()); // Optional: fallback
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const applyBranding = (data: BrandingConfig) => {
+      // Dynamically update favicon
+      const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      if (link) {
+        link.href = data.faviconUrl;
+      } else {
+        const newLink = document.createElement('link');
+        newLink.rel = 'icon';
+        newLink.href = data.faviconUrl;
+        document.head.appendChild(newLink);
+      }
+
+      // Apply global CSS variables for colors and font
+      document.documentElement.style.setProperty('--primary-color', data.primaryColor);
+      document.documentElement.style.setProperty('--secondary-color', data.secondaryColor);
+      document.documentElement.style.setProperty('--font-family', data.fontFamily);
+
+      // Update document title
+      document.title = data.appName;
+  };
+
+  const updateBranding = (newBranding: Partial<BrandingConfig>) => {
+      const updated = { ...branding, ...newBranding };
+      setBranding(updated);
+      applyBranding(updated);
+  };
+
   useEffect(() => {
-    const fetchBranding = async () => {
-      if (!token) { // Only fetch branding if a token exists
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      setError(null);
-      try {
-        // In a real app, franchiseId would come from the authenticated user
-        // For now, we'll use a mock or a query parameter for demonstration
-        const franchiseId = user?.franchiseId || new URLSearchParams(window.location.search).get('franchiseId');
-
-        // Fetch branding from backend API
-        const response = await fetch(`/api/branding?franchiseId=${franchiseId || ''}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch branding configuration');
-        }
-
-        const data: BrandingConfig = await response.json();
-        setBranding(data);
-
-        // Dynamically update favicon
-        const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-        if (link) {
-          link.href = data.faviconUrl;
-        } else {
-          const newLink = document.createElement('link');
-          newLink.rel = 'icon';
-          newLink.href = data.faviconUrl;
-          document.head.appendChild(newLink);
-        }
-
-        // Apply global CSS variables for colors and font
-        document.documentElement.style.setProperty('--primary-color', data.primaryColor);
-        document.documentElement.style.setProperty('--secondary-color', data.secondaryColor);
-        document.documentElement.style.setProperty('--font-family', data.fontFamily);
-
-        // Update document title
-        document.title = data.appName;
-
-      } catch (err: any) {
-        console.error('Error fetching branding:', err);
-        setError(err.message || 'Failed to load branding');
-        setBranding(getBranding()); // Fallback to default branding on error
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchBranding();
-  }, [user, token]); // Re-fetch if user or token changes
+  }, [user, token]); 
 
   return (
-    <BrandingContext.Provider value={{ branding, loading, error }}>
+    <BrandingContext.Provider value={{ branding, loading, error, updateBranding }}>
       {children}
     </BrandingContext.Provider>
   );

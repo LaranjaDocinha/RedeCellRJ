@@ -2,15 +2,9 @@ import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 
 const gradientAnimation = keyframes`
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 `;
 
 export const LoginScreenContainer = styled(motion.div)`
@@ -19,69 +13,73 @@ export const LoginScreenContainer = styled(motion.div)`
   align-items: center;
   min-height: 100vh;
   background: linear-gradient(
-    135deg,
-    ${({ theme }) => theme.colors.primaryLight} 0%,
-    ${({ theme }) => theme.colors.primaryDark} 100%
+    -45deg, 
+    #ee7752, #e73c7e, #23a6d5, #23d5ab
   );
-  background-size: 200% 200%;
+  background-size: 400% 400%;
   animation: ${gradientAnimation} 15s ease infinite;
   padding: ${({ theme }) => theme.spacing.md};
-  box-sizing: border-box;
   position: relative;
   overflow: hidden;
 
-  &::before {
+  &::after {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
     height: 100%;
-    background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
-    opacity: 0.3;
-    z-index: 0;
+    background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.1) 100%);
+    pointer-events: none;
   }
 `;
 
 export const LoginCard = styled(motion.div)`
-  background-color: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  padding: ${({ theme }) => theme.spacing.xl};
-  border-radius: 20px;
-  box-shadow: 0px 8px 32px 0 rgba(31, 38, 135, 0.37);
+  background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(30, 30, 30, 0.85)' : 'rgba(255, 255, 255, 0.9)'};
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 3.5rem 2.2rem;
+  border-radius: 28px;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.4),
+    0 10px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid ${({ theme }) => theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.4)'};
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
+  align-items: center;
   width: 100%;
-  max-width: 400px;
-  text-align: center;
-  box-sizing: border-box;
-  position: relative;
-  overflow: hidden;
+  max-width: 380px;
+  z-index: 1;
 
-  @media (max-width: ${({ theme }) => theme.breakpoints.mobileL}) {
-    padding: ${({ theme }) => theme.spacing.lg};
+  @media (max-width: 480px) {
+    padding: 2.5rem 1.8rem;
+    max-width: 90%;
   }
 `;
 
-export const StyledLoginTitle = styled(motion.h1)`
-  font-size: ${({ theme }) => theme.typography.headlineLarge.fontSize};
-  font-weight: ${({ theme }) => theme.typography.headlineLarge.fontWeight};
-  color: ${({ theme }) => theme.colors.onSurface};
-  text-align: center;
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
+export const LogoContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
 `;
 
-export const StyledLoginSubtitle = styled(motion.p)`
-  font-size: ${({ theme }) => theme.typography.bodyLarge.fontSize};
-  color: ${({ theme }) => theme.colors.onSurface}80;
-  text-align: center;
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
+export const StyledLoginTitle = styled.h1`
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(
+    -45deg, 
+    #ee7752, #e73c7e, #23a6d5, #23d5ab
+  );
+  background-size: 400% 400%;
+  background-attachment: fixed;
+  animation: ${gradientAnimation} 15s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.5rem;
+  letter-spacing: -1px;
 `;
 
-export const LoginFormPlaceholder = styled.div`
-  border: 1px dashed ${({ theme }) => theme.colors.onSurface}4D; // 30% opacity
-  padding: 20px;
-  margin-top: 20px;
-  color: ${({ theme }) => theme.colors.onSurface}99; // 60% opacity
+export const StyledLoginSubtitle = styled.p`
+  font-size: 1rem;
+  color: ${({ theme }) => theme.mode === 'dark' ? '#aaa' : '#666'};
+  margin-bottom: 2rem;
+  font-weight: 400;
 `;

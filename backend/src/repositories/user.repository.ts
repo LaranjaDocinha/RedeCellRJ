@@ -12,6 +12,7 @@ export interface User {
   reset_password_expires?: Date;
   two_factor_secret?: string; // Added
   two_factor_enabled?: boolean; // Added
+  theme_preference?: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -60,6 +61,7 @@ export class UserRepository implements IRepository<User> {
     if (data.name) { fields.push(`name = $${idx++}`); values.push(data.name); }
     if (data.email) { fields.push(`email = $${idx++}`); values.push(data.email); }
     if (data.password_hash) { fields.push(`password_hash = $${idx++}`); values.push(data.password_hash); }
+    if (data.theme_preference) { fields.push(`theme_preference = $${idx++}`); values.push(data.theme_preference); }
     if (data.reset_password_token !== undefined) { // Pode ser null
        fields.push(`reset_password_token = $${idx++}`); values.push(data.reset_password_token); 
     }

@@ -19,10 +19,18 @@ const createCustomerSchema = z.object({
   address: z.string().trim().optional(),
   cpf: z
     .string()
-    .regex(/^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/, 'Invalid CPF format')
     .optional()
-    .nullable(),
-  birth_date: z.string().datetime().optional().nullable(),
+    .nullable()
+    .transform((e) => (e === '' ? null : e))
+    .refine((val) => !val || /^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/.test(val), {
+      message: 'Invalid CPF format',
+    }),
+  birth_date: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((e) => (e === '' ? null : e)),
+  referral_code: z.string().optional(),
 });
 
 const updateCustomerSchema = z
@@ -33,10 +41,17 @@ const updateCustomerSchema = z
     address: z.string().trim().optional(),
     cpf: z
       .string()
-      .regex(/^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/, 'Invalid CPF format')
       .optional()
-      .nullable(),
-    birth_date: z.string().datetime().optional().nullable(),
+      .nullable()
+      .transform((e) => (e === '' ? null : e))
+      .refine((val) => !val || /^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/.test(val), {
+        message: 'Invalid CPF format',
+      }),
+    birth_date: z
+      .string()
+      .optional()
+      .nullable()
+      .transform((e) => (e === '' ? null : e)),
   })
   .partial();
 

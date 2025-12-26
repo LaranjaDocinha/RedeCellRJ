@@ -49,7 +49,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({ images, selectedImag
               borderRadius: '8px',
               overflow: 'hidden',
               cursor: 'pointer',
-              border: currentImage === image ? '2px solid #1976d2' : '2px solid transparent',
+              border: currentImage === image ? `2px solid ${theme.palette.primary.main}` : '2px solid transparent',
               transition: 'border 0.2s ease-in-out',
             }}
           >

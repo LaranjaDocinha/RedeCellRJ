@@ -37,3 +37,5 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     </Box>
   );
 };
+
+export default LoadingSpinner;

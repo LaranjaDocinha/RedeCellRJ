@@ -55,7 +55,7 @@ interface CategoryProfitabilityWidgetProps {
  */
 const CategoryProfitabilityWidget: React.FC<CategoryProfitabilityWidgetProps> = React.memo(({ selectedPeriod }) => {
   const { token, isAuthenticated } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   const { data, isLoading, isError, error } = useQuery<CategoryProfitabilityData[], Error>({
     queryKey: ['categoryProfitability', token, selectedPeriod],
@@ -65,9 +65,9 @@ const CategoryProfitabilityWidget: React.FC<CategoryProfitabilityWidgetProps> = 
 
   useEffect(() => {
     if (isError && error) {
-      addToast(`Falha ao buscar rentabilidade por categoria: ${error.message}`, 'error');
+      showNotification(`Falha ao buscar rentabilidade por categoria: ${error.message}`, 'error');
     }
-  }, [isError, error, addToast]);
+  }, [isError, error, showNotification]);
 
   if (isLoading) {
     return <DashboardWidgetSkeleton />;

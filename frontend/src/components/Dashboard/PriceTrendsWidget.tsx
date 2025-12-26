@@ -56,7 +56,7 @@ interface PriceTrendsWidgetProps {
  */
 const PriceTrendsWidget: React.FC<PriceTrendsWidgetProps> = React.memo(({ selectedPeriod }) => {
   const { token, isAuthenticated } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   const { data, isLoading, isError, error } = useQuery<PriceTrendData[], Error>({
     queryKey: ['priceTrends', token, selectedPeriod],
@@ -66,9 +66,9 @@ const PriceTrendsWidget: React.FC<PriceTrendsWidgetProps> = React.memo(({ select
 
   useEffect(() => {
     if (isError && error) {
-      addToast(`Falha ao buscar tendências de preços: ${error.message}`, 'error');
+      showNotification(`Falha ao buscar tendências de preços: ${error.message}`, 'error');
     }
-  }, [isError, error, addToast]);
+  }, [isError, error, showNotification]);
 
   if (isLoading) {
     return <DashboardWidgetSkeleton />;

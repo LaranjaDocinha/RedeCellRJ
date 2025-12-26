@@ -10,7 +10,7 @@ import Loading from '../components/Loading'; // Importar o componente Loading
 import { StyledEmptyState } from '../components/AuditLogList.styled'; // Reutilizando StyledEmptyState
 import { FaTag } from 'react-icons/fa'; // Ícone para estado vazio
 
-interface Coupon {
+export interface Coupon {
   id: number;
   code: string;
   type: 'percentage' | 'fixed_amount';
@@ -29,7 +29,7 @@ const CouponsPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const { token } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     fetchCoupons();
@@ -46,7 +46,7 @@ const CouponsPage: React.FC = () => {
       setCoupons(data);
     } catch (error: any) {
       console.error("Error fetching coupons:", error);
-      addToast(`Failed to fetch coupons: ${error.message}`, 'error');
+      showNotification(`Failed to fetch coupons: ${error.message}`, 'error');
     } finally {
       setLoading(false);
     }
@@ -63,16 +63,16 @@ const CouponsPage: React.FC = () => {
       await response.json();
       setShowForm(false);
       fetchCoupons();
-      addToast('Coupon created successfully!', 'success');
+      showNotification('Coupon created successfully!', 'success');
     } catch (error: any) {
       console.error("Error creating coupon:", error);
-      addToast(`Failed to create coupon: ${error.message}`, 'error');
+      showNotification(`Failed to create coupon: ${error.message}`, 'error');
     }
   };
 
-  const handleUpdateCoupon = async (id: number, couponData: Omit<Coupon, 'id' | 'uses_count'>) => {
+  const handleUpdateCoupon = async (originalCode: string, couponData: Omit<Coupon, 'id' | 'uses_count'>) => {
     try {
-      const response = await fetch(`/api/coupons/${id}`, {
+      const response = await fetch(`/api/coupons/${originalCode}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(couponData),
@@ -82,26 +82,28 @@ const CouponsPage: React.FC = () => {
       setEditingCoupon(undefined);
       setShowForm(false);
       fetchCoupons();
-      addToast('Coupon updated successfully!', 'success');
+      showNotification('Coupon updated successfully!', 'success');
     } catch (error: any) {
       console.error("Error updating coupon:", error);
-      addToast(`Failed to update coupon: ${error.message}`, 'error');
+      showNotification(`Failed to update coupon: ${error.message}`, 'error');
     }
   };
 
   const handleDeleteCoupon = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this coupon?')) return;
+    const coupon = coupons.find(c => c.id === id);
+    if (!coupon) return;
+    if (!window.confirm(`Are you sure you want to delete coupon "${coupon.code}"?`)) return;
     try {
-      const response = await fetch(`/api/coupons/${id}`, {
+      const response = await fetch(`/api/coupons/${coupon.code}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       fetchCoupons();
-      addToast('Coupon deleted successfully!', 'success');
+      showNotification('Coupon deleted successfully!', 'success');
     } catch (error: any) {
       console.error("Error deleting coupon:", error);
-      addToast(`Failed to delete coupon: ${error.message}`, 'error');
+      showNotification(`Failed to delete coupon: ${error.message}`, 'error');
     }
   };
 
@@ -154,7 +156,7 @@ const CouponsPage: React.FC = () => {
                 initialData={editingCoupon}
                 onSubmit={(data) => {
                   if (editingCoupon) {
-                    handleUpdateCoupon(editingCoupon.id, data);
+                    handleUpdateCoupon(editingCoupon.code, data);
                   } else {
                     handleCreateCoupon(data);
                   }

@@ -1,45 +1,52 @@
 // backend/src/controllers/brandingController.ts
 import { Request, Response, NextFunction } from 'express';
-
-// Mock branding configurations for different franchises
-const mockBrandingConfigs = {
-  default: {
-    logoUrl: '/logo.svg',
-    primaryColor: '#1976d2',
-    secondaryColor: '#dc004e',
-    fontFamily: 'Roboto, sans-serif',
-    faviconUrl: '/favicon.ico',
-    appName: 'Redecell PDV',
-  },
-  franchiseA: {
-    logoUrl: '/logo-franchiseA.svg',
-    primaryColor: '#4CAF50', // Green
-    secondaryColor: '#FFC107', // Amber
-    fontFamily: 'Arial, sans-serif',
-    faviconUrl: '/favicon-franchiseA.ico',
-    appName: 'Franchise A POS',
-  },
-  franchiseB: {
-    logoUrl: '/logo-franchiseB.svg',
-    primaryColor: '#9C27B0', // Purple
-    secondaryColor: '#FFEB3B', // Yellow
-    fontFamily: 'Georgia, serif',
-    faviconUrl: '/favicon-franchiseB.ico',
-    appName: 'Franchise B POS',
-  },
-};
+import { query } from '../db/index.js';
 
 export const getBrandingConfig = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // In a real application, the franchise ID would come from the authenticated user
-    // For now, we'll use a mock or a query parameter for demonstration
-    const franchiseId = (req as any).user?.franchiseId || req.query.franchiseId || 'default';
+    let franchiseId = (req as any).user?.franchiseId || req.query.franchiseId || 'default';
+    
+    if (!franchiseId || franchiseId === '') {
+      franchiseId = 'default';
+    }
+      'SELECT * FROM system_branding WHERE franchise_id = $1',
+      [franchiseId]
+    );
 
-    const brandingConfig =
-      mockBrandingConfigs[franchiseId as keyof typeof mockBrandingConfigs] ||
-      mockBrandingConfigs.default;
+    if (result.rows.length === 0) {
+      // Se não existir, retorna o padrão e já cria no banco para futuras edições
+      const defaultConfig = {
+        franchiseId: 'default',
+        logoUrl: '/logo.svg',
+        primaryColor: '#1976d2',
+        secondaryColor: '#dc004e',
+        fontFamily: 'Roboto, sans-serif',
+        faviconUrl: '/favicon.ico',
+        appName: 'Redecell PDV',
+      };
+      
+      // Tenta inserir se for o default
+      if (franchiseId === 'default') {
+         await query(
+            `INSERT INTO system_branding (franchise_id, logo_url, primary_color, secondary_color, font_family, favicon_url, app_name)
+             VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING`,
+            [defaultConfig.franchiseId, defaultConfig.logoUrl, defaultConfig.primaryColor, defaultConfig.secondaryColor, defaultConfig.fontFamily, defaultConfig.faviconUrl, defaultConfig.appName]
+         );
+         return res.status(200).json(defaultConfig);
+      }
+      return res.status(200).json(defaultConfig);
+    }
 
-    res.status(200).json(brandingConfig);
+    const config = result.rows[0];
+    // Converter snake_case do banco para camelCase do frontend
+    res.status(200).json({
+      logoUrl: config.logo_url,
+      primaryColor: config.primary_color,
+      secondaryColor: config.secondary_color,
+      fontFamily: config.font_family,
+      faviconUrl: config.favicon_url,
+      appName: config.app_name,
+    });
   } catch (error) {
     next(error);
   }
@@ -47,16 +54,39 @@ export const getBrandingConfig = async (req: Request, res: Response, next: NextF
 
 export const updateBrandingConfig = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const franchiseId = (req as any).user?.franchiseId || req.query.franchiseId || 'default';
-    const updatedConfig = req.body;
+    let franchiseId = (req as any).user?.franchiseId || req.query.franchiseId || 'default';
+    
+    if (!franchiseId || franchiseId === '') {
+      franchiseId = 'default';
+    }
+    
+    const { logoUrl, primaryColor, secondaryColor, fontFamily, faviconUrl, appName } = req.body;
 
-    // In a real application, this would update a database. For now, update mock data.
-    mockBrandingConfigs[franchiseId as keyof typeof mockBrandingConfigs] = {
-      ...mockBrandingConfigs[franchiseId as keyof typeof mockBrandingConfigs],
-      ...updatedConfig,
-    };
+    const result = await query(
+      `INSERT INTO system_branding (franchise_id, logo_url, primary_color, secondary_color, font_family, favicon_url, app_name)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (franchise_id) 
+       DO UPDATE SET 
+         logo_url = EXCLUDED.logo_url,
+         primary_color = EXCLUDED.primary_color,
+         secondary_color = EXCLUDED.secondary_color,
+         font_family = EXCLUDED.font_family,
+         favicon_url = EXCLUDED.favicon_url,
+         app_name = EXCLUDED.app_name,
+         updated_at = current_timestamp
+       RETURNING *`,
+      [franchiseId, logoUrl, primaryColor, secondaryColor, fontFamily, faviconUrl, appName]
+    );
 
-    res.status(200).json(mockBrandingConfigs[franchiseId as keyof typeof mockBrandingConfigs]);
+    const config = result.rows[0];
+    res.status(200).json({
+      logoUrl: config.logo_url,
+      primaryColor: config.primary_color,
+      secondaryColor: config.secondary_color,
+      fontFamily: config.font_family,
+      faviconUrl: config.favicon_url,
+      appName: config.app_name,
+    });
   } catch (error) {
     next(error);
   }

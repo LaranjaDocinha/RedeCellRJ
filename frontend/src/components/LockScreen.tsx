@@ -1,6 +1,6 @@
 // frontend/src/components/LockScreen.tsx
 import React, { useState } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useInactivityTracker } from '../contexts/InactivityTrackerContext';
@@ -9,26 +9,54 @@ import { Button } from './Button';
 import { useNotification } from '../contexts/NotificationContext';
 import { useTranslation } from 'react-i18next';
 
+const gradientAnimation = keyframes`
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+`;
+
 const LockScreenOverlay = styled(motion.div)`
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: ${({ theme }) => theme.colors.background};
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   z-index: 10000;
   color: ${({ theme }) => theme.colors.text};
+  
+  /* Login Screen Background Style */
+  background: linear-gradient(
+    -45deg, 
+    #ee7752, #e73c7e, #23a6d5, #23d5ab
+  );
+  background-size: 400% 400%;
+  animation: ${gradientAnimation} 15s ease infinite;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.1) 100%);
+    pointer-events: none;
+  }
 `;
 
 const LockContent = styled(motion.div)`
-  background: ${({ theme }) => theme.colors.surface};
-  padding: 2rem;
-  border-radius: ${({ theme }) => theme.borderRadius.large};
-  box-shadow: ${({ theme }) => theme.shadows.elevation2};
+  /* Login Card Style */
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 3.5rem 2.2rem;
+  border-radius: 28px;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.4),
+    0 10px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -38,14 +66,27 @@ const LockContent = styled(motion.div)`
 `;
 
 const LockTitle = styled.h2`
-  font-size: 1.8rem;
+  font-size: 2rem;
   margin-bottom: 0.5rem;
-  color: ${({ theme }) => theme.colors.primary};
+  font-weight: 800;
+  letter-spacing: -1px;
+  
+  /* Gradient Text Style */
+  background: linear-gradient(
+    -45deg, 
+    #ee7752, #e73c7e, #23a6d5, #23d5ab
+  );
+  background-size: 400% 400%;
+  background-attachment: fixed;
+  animation: ${gradientAnimation} 15s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 `;
 
 const LockMessage = styled.p`
   font-size: 1rem;
-  color: ${({ theme }) => theme.colors.textSecondary};
+  color: #666;
+  font-weight: 400;
 `;
 
 const LockForm = styled.form`
@@ -55,11 +96,11 @@ const LockForm = styled.form`
 `;
 
 const LockScreen: React.FC = () => {
+  const { user, login } = useAuth();
   const [password, setPassword] = useState('');
-  const [email, setEmail] = useState(''); // Assuming email is also needed for unlock
-  const { login } = useAuth();
+  const [email, setEmail] = useState(user?.email || '');
   const { unlockApp } = useInactivityTracker();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
   const { t } = useTranslation();
 
   const handleUnlock = async (e: React.FormEvent) => {
@@ -68,9 +109,9 @@ const LockScreen: React.FC = () => {
       // Attempt to re-authenticate
       await login(email, password);
       unlockApp();
-      addToast(t('unlocked_successfully'), 'success');
+      showNotification(t('unlocked_successfully'), 'success');
     } catch (error: any) {
-      addToast(t('unlock_failed', { message: error.message }), 'error');
+      showNotification(t('unlock_failed', { message: error.message }), 'error');
     }
   };
 

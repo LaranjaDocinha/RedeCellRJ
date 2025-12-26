@@ -56,7 +56,7 @@ interface SalesByChannelWidgetProps {
  */
 const SalesByChannelWidget: React.FC<SalesByChannelWidgetProps> = React.memo(({ selectedPeriod }) => {
   const { token, isAuthenticated } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   const { data, isLoading, isError, error } = useQuery<SalesByChannelData[], Error>({
     queryKey: ['salesByChannel', token, selectedPeriod],
@@ -66,9 +66,9 @@ const SalesByChannelWidget: React.FC<SalesByChannelWidgetProps> = React.memo(({ 
 
   useEffect(() => {
     if (isError && error) {
-      addToast(`Falha ao buscar vendas por canal: ${error.message}`, 'error');
+      showNotification(`Falha ao buscar vendas por canal: ${error.message}`, 'error');
     }
-  }, [isError, error, addToast]);
+  }, [isError, error, showNotification]);
 
   if (isLoading) {
     return <DashboardWidgetSkeleton />;

@@ -58,7 +58,7 @@ interface ProductPerformanceWidgetProps {
  */
 const ProductPerformanceWidget: React.FC<ProductPerformanceWidgetProps> = React.memo(({ selectedPeriod }) => {
   const { token, isAuthenticated } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   const { data, isLoading, isError, error } = useQuery<ProductPerformanceData[], Error>({
     queryKey: ['productPerformance', token, selectedPeriod],
@@ -68,9 +68,9 @@ const ProductPerformanceWidget: React.FC<ProductPerformanceWidgetProps> = React.
 
   useEffect(() => {
     if (isError && error) {
-      addToast(`Falha ao buscar desempenho de produtos: ${error.message}`, 'error');
+      showNotification(`Falha ao buscar desempenho de produtos: ${error.message}`, 'error');
     }
-  }, [isError, error, addToast]);
+  }, [isError, error, showNotification]);
 
   if (isLoading) {
     return <DashboardWidgetSkeleton />;

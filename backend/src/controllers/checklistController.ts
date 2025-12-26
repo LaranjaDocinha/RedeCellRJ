@@ -2,31 +2,34 @@ import { Request, Response } from 'express';
 import * as checklistService from '../services/checklistService.js';
 import { z } from 'zod';
 
-// Esquemas de validação com Zod
-const createChecklistTemplateSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().optional().nullable(),
-  type: z.enum(['pre-repair', 'post-repair', 'general']).default('general'),
+// Zod validation schemas
+export const createChecklistTemplateSchema = z.object({
+  name: z.string().min(1, 'Template name is required'),
+  description: z.string().optional(),
+  entity_type: z.enum(['service_order', 'product', 'customer']).default('service_order'),
 });
 
-const updateChecklistTemplateSchema = z.object({
-  name: z.string().min(1).optional(),
-  description: z.string().optional().nullable(),
-  type: z.enum(['pre-repair', 'post-repair', 'general']).optional(),
+export const updateChecklistTemplateSchema = z.object({
+  name: z.string().min(1, 'Template name is required'),
+  description: z.string().optional(),
+}).partial();
+
+export const createChecklistTemplateItemSchema = z.object({
+  label: z.string().min(1, 'Item label is required'),
+  description: z.string().optional(),
+  item_type: z.enum(['checkbox', 'text', 'photo', 'signature']).default('checkbox'),
+  is_required: z.boolean().default(true),
+  order_index: z.number().int().min(0).default(0),
 });
 
-const createChecklistTemplateItemSchema = z.object({
-  template_id: z.number().int(),
-  item_text: z.string().min(1),
-  response_type: z.enum(['text', 'boolean', 'number']).default('text'),
-  order_index: z.number().int().min(0).optional(),
-});
+export const updateChecklistTemplateItemSchema = z.object({
+  label: z.string().min(1, 'Item label is required'),
+  description: z.string().optional(),
+  item_type: z.enum(['checkbox', 'text', 'photo', 'signature']),
+  is_required: z.boolean(),
+  order_index: z.number().int().min(0),
+}).partial();
 
-const updateChecklistTemplateItemSchema = z.object({
-  item_text: z.string().min(1).optional(),
-  response_type: z.enum(['text', 'boolean', 'number']).optional(),
-  order_index: z.number().int().min(0).optional(),
-});
 
 export const getTemplate = async (req: Request, res: Response) => {
   try {

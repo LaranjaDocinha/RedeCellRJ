@@ -3,23 +3,26 @@ import { Button as MuiButton, CircularProgress } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 export interface ButtonProps {
-  label: string;
+  label?: string;
+  children?: React.ReactNode;
   onClick?: () => void;
-  color?: 'primary' | 'secondary' | 'error' | 'success' | 'info' | 'warning'; // Changed 'danger' to 'error' for MUI palette
+  color?: 'primary' | 'secondary' | 'error' | 'success' | 'info' | 'warning';
   variant?: 'contained' | 'outlined' | 'text';
   size?: 'small' | 'medium' | 'large';
-  fullWidth?: boolean; // Changed $fullWidth to fullWidth for MUI prop
+  fullWidth?: boolean;
   disabled?: boolean;
   loading?: boolean;
   startIcon?: React.ReactNode;
   endIcon?: React.ReactNode;
   type?: 'button' | 'submit' | 'reset';
-  primary?: boolean; // Custom prop for primary color, if needed
+  primary?: boolean;
+  style?: React.CSSProperties; // Adicionado suporte a style
 }
 
-const StyledMuiButton = styled(MuiButton)<{ primary?: boolean }>(({ theme, primary }) => ({
-  // Custom styling if needed, otherwise MUI's default is good
-  // For example, if 'primary' prop should always map to a specific color
+// Usando shouldForwardProp para evitar que a prop 'primary' chegue ao DOM
+const StyledMuiButton = styled(MuiButton, {
+  shouldForwardProp: (prop) => prop !== 'primary',
+})<{ primary?: boolean }>(({ theme, primary }) => ({
   ...(primary && {
     backgroundColor: theme.palette.primary.main,
     color: theme.palette.primary.contrastText,
@@ -31,28 +34,35 @@ const StyledMuiButton = styled(MuiButton)<{ primary?: boolean }>(({ theme, prima
 
 export const Button: React.FC<ButtonProps> = ({
   label,
+  children,
   loading = false,
   disabled = false,
   startIcon,
   endIcon,
   variant = 'contained',
-  color = 'primary', // Default color
-  primary, // Destructure primary prop
+  color = 'primary',
+  primary,
   ...props
 }) => {
+  // Removemos props que não devem ir para o MuiButton se necessário, 
+  // mas o StyledMuiButton com shouldForwardProp já resolve a maioria.
+  
   return (
     <StyledMuiButton
       variant={variant}
       color={color}
       disabled={disabled || loading}
-      startIcon={loading ? <CircularProgress size={20} color="inherit" aria-label={label ? `${label} carregando` : 'Carregando'} /> : startIcon} // Adicionado aria-label
-      endIcon={!loading && endIcon} // Only show endIcon if not loading
-      primary={primary} // Pass primary prop to styled component
-      aria-label={label} // Adicionado aria-label para o botão
+      startIcon={loading ? <CircularProgress size={20} color="inherit" aria-label={label ? `${label} carregando` : 'Carregando'} /> : startIcon}
+      endIcon={!loading && endIcon}
+      primary={primary}
+      aria-label={label || (typeof children === 'string' ? children : '')}
       {...props}
     >
-      {!loading && label}
-      {loading && <span className="sr-only">{label ? `${label} carregando` : 'Carregando'}</span>} {/* Adicionado texto visível para leitores de tela quando carregando */}
+      {!loading && (children || label)}
+      {loading && <span className="sr-only">{label ? `${label} carregando` : 'Carregando'}</span>}
     </StyledMuiButton>
   );
 };
+
+
+export default Button;

@@ -44,6 +44,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       if (storedUser && storedToken) {
+        // Basic JWT format validation (header.payload.signature)
+        if (storedToken.split('.').length !== 3) {
+          console.warn('AuthContext: Stored token is malformed (invalid format). Logging out.');
+          logout();
+          setLoading(false);
+          return;
+        }
+
         try {
           const decodedToken: { exp: number } = jwtDecode(storedToken);
           if (decodedToken.exp * 1000 < Date.now()) {
@@ -64,7 +72,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             // Sentry.setTag('user_role', userData.role); // Assumindo que o role está no User object
           }
         } catch (e) {
-          console.error('Failed to parse or decode stored user or token', e);
+          console.warn('AuthContext: Failed to parse or decode stored user or token. Logging out.', e);
           logout();
         }
       }

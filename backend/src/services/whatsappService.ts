@@ -1,7 +1,9 @@
 import { getPool } from '../db/index.js';
 import { logger } from '../utils/logger.js';
 import { AppError } from '../utils/errors.js';
-import { Client, LocalAuth, Message } from 'whatsapp-web.js'; // Importações para whatsapp-web.js
+import pkg from 'whatsapp-web.js';
+const { Client, LocalAuth } = pkg;
+import type { Message } from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal'; // Para exibir o QR Code no terminal
 
 interface SendMessageOptions {

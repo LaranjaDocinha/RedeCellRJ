@@ -1,8 +1,52 @@
-import Loading from '../components/Loading';
-import { StyledPageContainer, StyledPageTitle } from './AuditLogsPage.styled'; // Reutilizando componentes estilizados
-import { Button } from '../components/Button';
-import { StyledEmptyState } from '../components/AuditLogList.styled'; // Reutilizando StyledEmptyState
-import { FaStore } from 'react-icons/fa'; // Ícone para estado vazio
+import React, { useState, useEffect, useCallback } from 'react';
+import styled from 'styled-components';
+import { motion } from 'framer-motion';
+import { 
+  Box, 
+  Typography, 
+  Paper, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  IconButton,
+  Tooltip,
+  CircularProgress,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  TextField,
+  DialogActions,
+  Stack
+} from '@mui/material';
+import { 
+  FaStore, 
+  FaEdit, 
+  FaTrash, 
+  FaPlus,
+  FaMapMarkerAlt,
+  FaPhone,
+  FaEnvelope
+} from 'react-icons/fa';
+import { useNotification } from '../contexts/NotificationContext';
+import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
+
+const StyledPageContainer = styled(motion.div)`
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+`;
+
+const StyledPageTitle = styled(motion.h1)`
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 24px;
+  letter-spacing: -1px;
+`;
 
 interface Branch {
   id: number;
@@ -14,97 +58,69 @@ interface Branch {
 
 const BranchesPage: React.FC = () => {
   const [branches, setBranches] = useState<Branch[]>([]);
-  const [editingBranch, setEditingBranch] = useState<Branch | undefined>(undefined);
-  const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
+  const [formData, setFormData] = useState<Omit<Branch, 'id'>>({ name: '', address: '', phone: '', email: '' });
+  
   const { token } = useAuth();
   const { addNotification } = useNotification();
 
-  useEffect(() => {
-    fetchBranches();
-  }, []);
-
-  const fetchBranches = async () => {
+  const fetchBranches = useCallback(async () => {
+    if (!token) return;
     setLoading(true);
     try {
-      const response = await fetch('/api/branches', {
-        headers: { 'Authorization': `Bearer ${token}` },
+      const response = await axios.get('/api/branches', {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const data = await response.json();
-      setBranches(data);
-    } catch (error: any) {
-      console.error("Error fetching branches:", error);
-      addNotification(`Failed to fetch branches: ${error.message}`, 'error');
+      setBranches(Array.isArray(response.data) ? response.data : []);
+    } catch (err: any) {
+      addNotification('Erro ao carregar filiais', 'error');
     } finally {
       setLoading(false);
     }
+  }, [token, addNotification]);
+
+  useEffect(() => {
+    fetchBranches();
+  }, [fetchBranches]);
+
+  const handleOpenModal = (branch: Branch | null = null) => {
+    if (branch) {
+      setEditingBranch(branch);
+      setFormData({ name: branch.name, address: branch.address || '', phone: branch.phone || '', email: branch.email || '' });
+    } else {
+      setEditingBranch(null);
+      setFormData({ name: '', address: '', phone: '', email: '' });
+    }
+    setIsModalOpen(true);
   };
 
-  const handleCreateBranch = async (branchData: Omit<Branch, 'id'>) => {
+  const handleSave = async () => {
     try {
-      const response = await fetch('/api/branches', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(branchData),
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      await response.json();
-      setShowForm(false);
+      if (editingBranch) {
+        await axios.put(`/api/branches/${editingBranch.id}`, formData, { headers: { Authorization: `Bearer ${token}` } });
+        addNotification('Filial atualizada com sucesso!', 'success');
+      } else {
+        await axios.post('/api/branches', formData, { headers: { Authorization: `Bearer ${token}` } });
+        addNotification('Filial criada com sucesso!', 'success');
+      }
+      setIsModalOpen(false);
       fetchBranches();
-      addNotification('Branch created successfully!', 'success');
-    } catch (error: any) {
-      console.error("Error creating branch:", error);
-      addNotification(`Failed to create branch: ${error.message}`, 'error');
+    } catch (err: any) {
+      addNotification('Erro ao salvar filial', 'error');
     }
   };
 
-  const handleUpdateBranch = async (id: number, branchData: Omit<Branch, 'id'>) => {
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Deseja realmente excluir esta filial?')) return;
     try {
-      const response = await fetch(`/api/branches/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(branchData),
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      await response.json();
-      setEditingBranch(undefined);
-      setShowForm(false);
+      await axios.delete(`/api/branches/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      addNotification('Filial excluída com sucesso!', 'success');
       fetchBranches();
-      addNotification('Branch updated successfully!', 'success');
-    } catch (error: any) {
-      console.error("Error updating branch:", error);
-      addNotification(`Failed to update branch: ${error.message}`, 'error');
+    } catch (err: any) {
+      addNotification('Erro ao excluir filial', 'error');
     }
-  };
-
-  const handleDeleteBranch = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this branch?')) return;
-    try {
-      const response = await fetch(`/api/branches/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      fetchBranches();
-      addNotification('Branch deleted successfully!', 'success');
-    } catch (error: any) {
-      console.error("Error deleting branch:", error);
-      addNotification(`Failed to delete branch: ${error.message}`, 'error');
-    }
-  };
-
-  const handleEditClick = (id: number) => {
-    const branchToEdit = branches.find((b) => b.id === id);
-    if (branchToEdit) {
-      setEditingBranch(branchToEdit);
-      setShowForm(true);
-    }
-  };
-
-  const handleCancelForm = () => {
-    setEditingBranch(undefined);
-    setShowForm(false);
   };
 
   return (
@@ -113,64 +129,85 @@ const BranchesPage: React.FC = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <StyledPageTitle
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        Branch Management
-      </StyledPageTitle>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+        <StyledPageTitle>Gestão de Filiais</StyledPageTitle>
+        <Button 
+            variant="contained" 
+            startIcon={<FaPlus />} 
+            onClick={() => handleOpenModal()}
+            sx={{ borderRadius: '12px', px: 3 }}
+        >
+            Nova Filial
+        </Button>
+      </Box>
 
       {loading ? (
-        <Loading />
+        <Box display="flex" justifyContent="center" py={10}><CircularProgress /></Box>
+      ) : branches.length === 0 ? (
+        <Box sx={{ textAlign: 'center', py: 10, bgcolor: 'action.hover', borderRadius: '24px' }}>
+          <FaStore size={48} style={{ opacity: 0.3 }} />
+          <Typography variant="body1" color="text.secondary" mt={2}>Nenhuma filial cadastrada.</Typography>
+        </Box>
       ) : (
-        <>
-          <div className="flex justify-end mb-4">
-            <Button
-              onClick={() => setShowForm(true)}
-              variant="contained"
-              color="primary"
-              label="Add New Branch"
-            />
-          </div>
-
-          {showForm && (
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-3">
-                {editingBranch ? 'Edit Branch' : 'Add New Branch'}
-              </h2>
-              <BranchForm
-                initialData={editingBranch}
-                onSubmit={(data) => {
-                  if (editingBranch) {
-                    handleUpdateBranch(editingBranch.id, data);
-                  } else {
-                    handleCreateBranch(data);
-                  }
-                }}
-                onCancel={handleCancelForm}
-              />
-            </div>
-          )}
-
-          {branches.length === 0 && !showForm ? (
-            <StyledEmptyState
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              <FaStore />
-              <p>No branches found. Click "Add New Branch" to get started!</p>
-            </StyledEmptyState>
-          ) : (
-            <BranchList
-              branches={branches}
-              onEdit={handleEditClick}
-              onDelete={handleDeleteBranch}
-            />
-          )}
-        </>
+        <TableContainer component={Paper} sx={{ borderRadius: '24px', boxShadow: 'none', border: '1px solid', borderColor: 'divider' }}>
+          <Table>
+            <TableHead sx={{ bgcolor: 'action.hover' }}>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 800 }}>NOME DA UNIDADE</TableCell>
+                <TableCell sx={{ fontWeight: 800 }}>CONTATO</TableCell>
+                <TableCell sx={{ fontWeight: 800 }}>ENDEREÇO</TableCell>
+                <TableCell sx={{ fontWeight: 800 }} align="right">AÇÕES</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {branches.map((branch) => (
+                <TableRow key={branch.id} hover>
+                  <TableCell sx={{ fontWeight: 600 }}>{branch.name}</TableCell>
+                  <TableCell>
+                    <Stack spacing={0.5}>
+                        {branch.phone && <Box display="flex" alignItems="center" gap={1}><FaPhone size={10} /> <Typography variant="caption">{branch.phone}</Typography></Box>}
+                        {branch.email && <Box display="flex" alignItems="center" gap={1}><FaEnvelope size={10} /> <Typography variant="caption">{branch.email}</Typography></Box>}
+                    </Stack>
+                  </TableCell>
+                  <TableCell>
+                    <Box display="flex" alignItems="center" gap={1}>
+                        <FaMapMarkerAlt size={12} color="gray" />
+                        <Typography variant="body2" noWrap sx={{ maxWidth: 300 }}>{branch.address || 'Não informado'}</Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Box display="flex" justifyContent="flex-end" gap={1}>
+                        <IconButton size="small" color="primary" onClick={() => handleOpenModal(branch)}>
+                            <FaEdit size={16} />
+                        </IconButton>
+                        <IconButton size="small" color="error" onClick={() => handleDelete(branch.id)}>
+                            <FaTrash size={16} />
+                        </IconButton>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
+
+      {/* Modal de Cadastro/Edição */}
+      <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} PaperProps={{ sx: { borderRadius: '24px', p: 1 } }}>
+        <DialogTitle sx={{ fontWeight: 800 }}>{editingBranch ? 'EDITAR FILIAL' : 'NOVA FILIAL'}</DialogTitle>
+        <DialogContent>
+            <Stack spacing={2} mt={1} minWidth={400}>
+                <TextField fullWidth label="Nome da Unidade" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} size="small" required />
+                <TextField fullWidth label="E-mail" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} size="small" />
+                <TextField fullWidth label="Telefone" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} size="small" />
+                <TextField fullWidth label="Endereço Completo" value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} size="small" multiline rows={2} />
+            </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 3 }}>
+            <Button onClick={() => setIsModalOpen(false)} variant="text" color="inherit">Cancelar</Button>
+            <Button onClick={handleSave} variant="contained" sx={{ borderRadius: '12px', px: 4 }} disabled={!formData.name}>Salvar Filial</Button>
+        </DialogActions>
+      </Dialog>
     </StyledPageContainer>
   );
 };

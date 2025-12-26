@@ -1,88 +1,55 @@
-// frontend/src/contexts/InactivityTrackerContext.tsx
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 
 interface InactivityTrackerContextType {
   isLocked: boolean;
-  lockApp: () => void;
-  unlockApp: () => void;
-  resetTimer: () => void;
+  unlock: (pin: string) => boolean;
+  lock: () => void;
 }
 
 const InactivityTrackerContext = createContext<InactivityTrackerContextType | undefined>(undefined);
 
 export const useInactivityTracker = () => {
   const context = useContext(InactivityTrackerContext);
-  if (!context) {
-    throw new Error('useInactivityTracker must be used within an InactivityTrackerProvider');
-  }
+  if (!context) throw new Error('useInactivityTracker must be used within InactivityTrackerProvider');
   return context;
 };
 
-interface InactivityTrackerProviderProps {
-  children: ReactNode;
-  timeoutMinutes?: number; // Timeout duration in minutes
-}
-
-export const InactivityTrackerProvider: React.FC<InactivityTrackerProviderProps> = ({
-  children,
-  timeoutMinutes = 5, // Default to 5 minutes
-}) => {
+export const InactivityTrackerProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isLocked, setIsLocked] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutos por padrão
 
-  const resetTimer = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+  const lock = useCallback(() => setIsLocked(true), []);
+  const unlock = useCallback((pin: string) => {
+    if (pin === '1234') { // Mock PIN para o protótipo
+      setIsLocked(false);
+      return true;
     }
-    if (!isLocked) { // Only set new timeout if not already locked
-      timeoutRef.current = setTimeout(() => {
-        setIsLocked(true);
-      }, timeoutMinutes * 60 * 1000);
-    }
-  }, [isLocked, timeoutMinutes]);
-
-  const lockApp = useCallback(() => {
-    setIsLocked(true);
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+    return false;
   }, []);
 
-  const unlockApp = useCallback(() => {
-    setIsLocked(false);
-    resetTimer(); // Reset timer immediately after unlocking
-  }, [resetTimer]);
-
   useEffect(() => {
-    const handleActivity = () => {
-      if (!isLocked) { // Only reset timer if not locked
-        resetTimer();
+    let timer: NodeJS.Timeout;
+
+    const resetTimer = () => {
+      clearTimeout(timer);
+      if (!isLocked) {
+        timer = setTimeout(lock, INACTIVITY_LIMIT);
       }
     };
 
-    // Attach activity listeners
-    window.addEventListener('mousemove', handleActivity);
-    window.addEventListener('keydown', handleActivity);
-    window.addEventListener('click', handleActivity);
-    window.addEventListener('scroll', handleActivity); // Consider scroll as activity
+    const events = ['mousedown', 'keydown', 'touchstart', 'mousemove'];
+    events.forEach(event => window.addEventListener(event, resetTimer));
 
-    // Initial timer start
     resetTimer();
 
     return () => {
-      // Clean up listeners and timer
-      window.removeEventListener('mousemove', handleActivity);
-      window.removeEventListener('keydown', handleActivity);
-      window.removeEventListener('click', handleActivity);
-      window.removeEventListener('scroll', handleActivity);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      events.forEach(event => window.removeEventListener(event, resetTimer));
+      clearTimeout(timer);
     };
-  }, [isLocked, resetTimer]); // Depend on isLocked to re-evaluate listeners when lock state changes
+  }, [isLocked, lock]);
 
   return (
-    <InactivityTrackerContext.Provider value={{ isLocked, lockApp, unlockApp, resetTimer }}>
+    <InactivityTrackerContext.Provider value={{ isLocked, unlock, lock }}>
       {children}
     </InactivityTrackerContext.Provider>
   );

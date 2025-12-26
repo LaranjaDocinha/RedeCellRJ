@@ -1,84 +1,144 @@
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
+import { styled as muiStyled } from '@mui/material/styles';
+import { Box } from '@mui/material';
 
-export const POSContainer = styled(motion.div)`
+export const POSContainer = muiStyled(Box)(({ theme }) => ({
+  display: 'flex',
+  height: 'calc(100vh - 64px)',
+  backgroundColor: theme.palette.background.default,
+  overflow: 'hidden',
+  padding: '0.75rem',
+  boxSizing: 'border-box',
+}));
+
+export const POSLayout = styled.div`
   display: flex;
-  flex-direction: column;
-  height: calc(100vh - 120px); // Adjust based on your layout's header/footer height
-  padding: 1.5rem;
-  gap: 1.5rem;
-  background-color: ${({ theme }) => theme.colors.background};
+  width: 100%;
+  height: 100%;
+  gap: 0.75rem;
+  overflow: hidden;
 `;
 
-export const POSHeader = styled.div`
+// Lado Esquerdo: Busca (25%)
+export const MainSection = styled.div`
+  width: 25%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem;
+  background-color: ${({ theme }) => theme.palette.background.paper};
+  border-radius: 20px;
+  border: 1px solid ${({ theme }) => theme.palette.divider};
+  gap: 1rem;
+  box-sizing: border-box;
+  overflow: hidden;
+`;
+
+// Lado Direito: Carrinho (75%)
+export const CartSidebar = styled.aside`
+  width: 75%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: ${({ theme }) => theme.palette.background.paper};
+  border-radius: 24px;
+  border: 1px solid ${({ theme }) => theme.palette.divider};
+  box-shadow: 0 10px 40px rgba(0,0,0,0.04);
+  overflow: hidden;
+  box-sizing: border-box;
+`;
+
+// Toolbar Operacional
+export const OperationToolbar = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    color: ${({ theme }) => theme.colors.text};
-  }
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid ${({ theme }) => theme.palette.divider};
 `;
 
-export const HeaderActions = styled.div`
+export const ButtonGroup = styled.div`
+  display: flex;
+  gap: 0.5rem;
+`;
+
+// Search Results
+export const CompactSearchResult = styled(motion.div)`
   display: flex;
   align-items: center;
-  gap: 1rem;
-`;
-
-export const ThemeToggleButton = styled.button`
-  background: none;
-  border: none;
-  color: ${({ theme }) => theme.colors.text};
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background-color: ${({ theme }) => theme.palette.background.paper};
+  border: 1px solid ${({ theme }) => theme.palette.divider};
   cursor: pointer;
-  font-size: 1.5rem;
-  padding: 0.5rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s ease;
+  margin-bottom: 0.5rem;
+  transition: 0.2s;
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.surface};
+    border-color: ${({ theme }) => theme.palette.primary.main};
+    background-color: ${({ theme }) => theme.palette.action.hover};
   }
 `;
 
-export const StatusIndicator = styled.div`
+// Cart UI
+export const CartHeader = styled.div`
+  padding: 0.75rem 1.5rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  color: ${({ theme }) => theme.colors.textSecondary};
-`;
-
-export const POSLayout = styled.div<{isZenMode: boolean}>`
-  display: grid;
-  grid-template-columns: ${({isZenMode}) => isZenMode ? '1fr 0.5fr' : '55fr 45fr'}; // Adjust as needed for Zen Mode
-  gap: 1.5rem;
-  height: 100%;
-  overflow: hidden;
-
-  @media (max-width: 1024px) {
-    grid-template-columns: 1fr;
-    height: auto;
-    overflow: visible;
+  justify-content: space-between;
+  border-bottom: 1px solid ${({ theme }) => theme.palette.divider};
+  flex-shrink: 0;
+  
+  h2 {
+    font-size: 1.15rem;
+    font-weight: 900;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
   }
 `;
 
-// Product Section
-export const ProductSection = styled(motion.div)`
+export const CartItemList = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  background-color: ${({ theme }) => theme.colors.surface};
-  border-radius: ${({ theme }) => theme.borderRadius.large};
-  box-shadow: ${({ theme }) => theme.shadows.medium};
-  overflow: hidden;
+  gap: 0.5rem;
+  background-color: ${({ theme }) => theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.1)' : '#fafafa'};
 
-  @media (max-width: 1024px) {
-    height: auto;
-    max-height: 70vh;
+  scrollbar-width: thin;
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-thumb { background: ${({ theme }) => theme.palette.divider}; border-radius: 10px; }
+`;
+
+export const CartFooter = styled.div`
+  padding: 1rem 1.5rem;
+  background-color: ${({ theme }) => theme.palette.background.paper};
+  border-top: 2px solid ${({ theme }) => theme.palette.divider};
+  flex-shrink: 0;
+`;
+
+export const SummaryLine = styled.div<{ $total?: boolean }>`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: ${({ $total }) => $total ? '0.75rem' : '0.25rem'};
+  
+  span:first-child {
+    font-size: ${({ $total }) => $total ? '0.9rem' : '0.8rem'};
+    font-weight: 700;
+    color: ${({ theme, $total }) => $total ? theme.palette.text.primary : theme.palette.text.secondary};
+    text-transform: uppercase;
+  }
+
+  span:last-child {
+    font-size: ${({ $total }) => $total ? '2.25rem' : '1rem'};
+    font-weight: 900;
+    color: ${({ theme, $total }) => $total ? theme.palette.primary.main : theme.palette.text.primary};
+    letter-spacing: -1px;
   }
 `;
 
@@ -86,8 +146,8 @@ export const DragHandle = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-right: 0.5rem;
-  color: ${({ theme }) => theme.colors.textSecondary};
+  padding: 0 0.5rem;
+  color: ${({ theme }) => theme.palette.text.disabled};
   cursor: grab;
 
   &:active {
@@ -95,148 +155,61 @@ export const DragHandle = styled.div`
   }
 `;
 
-export const SearchWrapper = styled.div`
-  display: flex;
-  align-items: center;
+export const HardwareStatus = styled.div<{ $online: boolean }>`
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: ${({ $online, theme }) => $online ? theme.palette.success.main : theme.palette.error.main};
+  box-shadow: 0 0 8px ${({ $online, theme }) => $online ? theme.palette.success.main : theme.palette.error.main}80;
+`;
+
+export const BirthdayAlert = styled(motion.div)`
+  background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+  color: #fff;
   padding: 0.5rem 1rem;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-
-  & > div { // Target Input wrapper
-    flex-grow: 1;
-  }
-`;
-
-export const ProductGrid = styled(motion.div)`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 1rem;
-  padding: 1rem;
-  overflow-y: auto;
-  flex-grow: 1;
-`;
-
-// Cart Section
-export const CartSection = styled(motion.div)`
-  display: flex;
-  flex-direction: column;
-  background-color: ${({ theme }) => theme.colors.surface};
-  border-radius: ${({ theme }) => theme.borderRadius.large};
-  box-shadow: ${({ theme }) => theme.shadows.medium};
-  overflow: hidden;
-
-  @media (max-width: 1024px) {
-    height: auto;
-  }
-`;
-
-export const CartHeader = styled.h2`
+  border-radius: 10px;
+  font-weight: 800;
   display: flex;
   align-items: center;
-  padding: 1rem;
-  font-size: 1.5rem;
-  font-weight: 600;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  margin: 0;
-`;
-
-export const CartItemsList = styled(motion.div)`
-  overflow-y: auto;
-  flex-grow: 1;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-export const CartSummary = styled.div`
-  padding: 1.5rem;
-  border-top: 1px solid ${({ theme }) => theme.colors.border};
-  background-color: ${({ theme }) => theme.colors.background};
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-export const CouponWrapper = styled.div`
-  display: flex;
   gap: 0.5rem;
-  align-items: stretch; // Make items stretch to the same height
-
-  & > div { // Target the Input's wrapper
-    flex-grow: 1;
-  }
+  box-shadow: 0 4px 15px rgba(255, 154, 158, 0.4);
 `;
 
-export const TotalLine = styled.div`
-  display: flex;
-  justify-content: space-between;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.primary};
-`;
-
-export const CheckoutButton = styled(motion.button)`
-  width: 100%;
-  padding: 1rem;
-  background: ${({ theme }) => `linear-gradient(45deg, ${theme.colors.primary}, ${theme.colors.secondary})`};
-  color: white;
-  border: none;
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
-  font-size: 1.2rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-
-  &:hover {
-    transform: scale(1.02);
-  }
-
-  &:disabled {
-    background: ${({ theme }) => theme.colors.disabled};
-    cursor: not-allowed;
-    transform: none;
-  }
-`;
-
-export const EmptyCart = styled(motion.div)`
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    color: ${({ theme }) => theme.colors.textSecondary};
-    text-align: center;
-    
-    svg {
-        font-size: 4rem;
-        margin-bottom: 1rem;
+export const ActionButton = muiStyled(motion.button)<{ $variant?: 'primary' | 'secondary' | 'danger' | 'outline' }>(
+  ({ theme, $variant }) => ({
+    width: '100%',
+    padding: '1rem',
+    borderRadius: '14px',
+    border: 'none',
+    fontSize: '1.1rem',
+    fontWeight: 900,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.75rem',
+    transition: '0.2s',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+    backgroundColor: $variant === 'primary' ? theme.palette.primary.main :
+                     $variant === 'secondary' ? theme.palette.secondary.main :
+                     $variant === 'danger' ? theme.palette.error.main : 'transparent',
+    color: $variant === 'outline' ? 'inherit' : 'white',
+    borderStyle: $variant === 'outline' ? 'solid' : 'none',
+    borderWidth: $variant === 'outline' ? '1px' : '0',
+    borderColor: $variant === 'outline' ? theme.palette.divider : 'transparent',
+    '&:hover': {
+      filter: 'brightness(1.1)',
+      transform: 'translateY(-2px)',
+    },
+    '&:active': { transform: 'translateY(0)' },
+    '&:disabled': {
+      opacity: 0.5,
+      cursor: 'not-allowed',
     }
-`;
+  })
+);
 
-export const StyledPaymentSelector = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  
-  label {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: ${({ theme }) => theme.colors.textSecondary};
-  }
-
-  select {
-    padding: 0.75rem;
-    border-radius: ${({ theme }) => theme.borderRadius.medium};
-    border: 1px solid ${({ theme }) => theme.colors.border};
-    background-color: ${({ theme }) => theme.colors.surface};
-    color: ${({ theme }) => theme.colors.text};
-    font-size: 1rem;
-    width: 100%;
-
-    &:focus {
-      outline: none;
-      border-color: ${({ theme }) => theme.colors.primary};
-      box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary}40;
-    }
-  }
+export const QuickPickSection = styled.div`
+  margin-top: 1rem;
 `;

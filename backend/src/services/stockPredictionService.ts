@@ -61,7 +61,14 @@ export const stockPredictionService = {
 
     // Para cada variação de produto, prever a demanda e verificar o estoque
     const allProductVariationsRes = await pool.query(
-      'SELECT id, product_id, stock_quantity, low_stock_threshold FROM product_variations',
+      `SELECT 
+        pv.id, 
+        pv.product_id, 
+        COALESCE(SUM(bpvs.stock_quantity), 0) as stock_quantity, 
+        pv.low_stock_threshold 
+      FROM product_variations pv
+      LEFT JOIN branch_product_variations_stock bpvs ON pv.id = bpvs.product_variation_id
+      GROUP BY pv.id, pv.product_id, pv.low_stock_threshold`,
     );
     for (const variation of allProductVariationsRes.rows) {
       const { id: item_id, product_id, stock_quantity, low_stock_threshold } = variation;
@@ -70,14 +77,14 @@ export const stockPredictionService = {
 
       const dailyDemandRate = historicalDemandForVariation / lookbackDays;
       const predictedDemand = dailyDemandRate * predictionDays;
-      const remainingStockAfterPrediction = stock_quantity - predictedDemand;
+      const remainingStockAfterPrediction = Number(stock_quantity) - predictedDemand;
 
       if (remainingStockAfterPrediction < (low_stock_threshold || 0)) {
         predictions.push({
           item_id,
           item_type: 'product_variation',
           product_id,
-          current_stock: stock_quantity,
+          current_stock: Number(stock_quantity),
           low_stock_threshold,
           historical_demand_lookback_days: lookbackDays,
           predicted_demand_next_days: predictionDays,

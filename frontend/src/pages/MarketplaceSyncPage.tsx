@@ -25,7 +25,7 @@ const MarketplaceSyncPage: React.FC = () => {
   });
   
   const { token } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   const platforms = [
     { value: 'shopee', label: 'Shopee' },
@@ -56,11 +56,11 @@ const MarketplaceSyncPage: React.FC = () => {
       await axios.post('/api/marketplace/integrations', formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      addToast('Integração salva com sucesso!', 'success');
+      showNotification('Integração salva com sucesso!', 'success');
       setFormData({ platform: 'shopee', access_token: '', shop_id: '', is_active: true }); // Reset
       fetchIntegrations();
     } catch (error: any) {
-      addToast(error.response?.data?.message || 'Erro ao salvar integração', 'error');
+      showNotification(error.response?.data?.message || 'Erro ao salvar integração', 'error');
     }
   };
 
@@ -71,7 +71,7 @@ const MarketplaceSyncPage: React.FC = () => {
       });
       fetchIntegrations();
     } catch (error) {
-      addToast('Erro ao alterar status', 'error');
+      showNotification('Erro ao alterar status', 'error');
     }
   };
 

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Card, CardContent, CircularProgress, Grid } from '@mui/material';
+import { Box, Typography, CircularProgress, Grid } from '@mui/material';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { Part } from '../../types/part';
 import { Add } from '@mui/icons-material';
 import { Button } from '../Button';
+import { CompactSearchResult } from '../../styles/POSStyles';
 
 interface RecommendationWidgetProps {
   cartItemIds: number[];
@@ -26,7 +27,7 @@ const RecommendationWidget: React.FC<RecommendationWidgetProps> = ({ cartItemIds
       setLoading(true);
       try {
         const response = await axios.post('/api/recommendations/cart-upsell', { productIds: cartItemIds });
-        setRecommendations(response.data);
+        setRecommendations(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error('Failed to fetch recommendations', error);
       } finally {
@@ -34,7 +35,7 @@ const RecommendationWidget: React.FC<RecommendationWidgetProps> = ({ cartItemIds
       }
     };
 
-    const debounce = setTimeout(fetchRecommendations, 1000); // Wait 1s after cart change
+    const debounce = setTimeout(fetchRecommendations, 1000);
     return () => clearTimeout(debounce);
   }, [cartItemIds]);
 
@@ -42,28 +43,32 @@ const RecommendationWidget: React.FC<RecommendationWidgetProps> = ({ cartItemIds
 
   return (
     <Box mt={2}>
-      <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold', color: '#ed6c02' }}>
-        {t('recommended_for_you')} (IA)
+      <Typography variant="caption" gutterBottom sx={{ fontWeight: 900, color: 'primary.main', letterSpacing: 1 }}>
+        SUGESTÕES DE UPSELL (IA)
       </Typography>
       {loading ? (
-        <CircularProgress size={20} />
+        <Box display="flex" justifyContent="center" py={2}><CircularProgress size={20} /></Box>
       ) : (
-        <Grid container spacing={1}>
-          {recommendations.map(product => (
+        <Grid container spacing={1} sx={{ mt: 0.5 }}>
+          {recommendations.map((product) => (
             <Grid item xs={12} key={product.id}>
-              <Card variant="outlined" sx={{ display: 'flex', alignItems: 'center', p: 1, bgcolor: '#fff3e0' }}>
-                <Box flexGrow={1}>
-                  <Typography variant="body2" noWrap>{product.name}</Typography>
-                  <Typography variant="caption" color="textSecondary">R$ {Number(product.price).toFixed(2)}</Typography>
+              <CompactSearchResult onClick={() => onAddProduct(product)} whileHover={{ x: 5 }}>
+                <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                  <Typography variant="body2" fontWeight={700} noWrap>{product.name}</Typography>
+                  <Typography variant="caption" color="text.secondary">R$ {Number(product.price || 0).toFixed(2)}</Typography>
                 </Box>
-                <Button 
-                    label="" 
-                    icon={<Add fontSize="small" />} 
-                    onClick={() => onAddProduct(product)} 
-                    size="small"
-                    style={{ minWidth: '30px', padding: '4px' }}
-                />
-              </Card>
+                <IconButton 
+                    size="small" 
+                    color="primary"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onAddProduct(product);
+                    }}
+                    sx={{ bgcolor: 'primary.50' }}
+                >
+                  <Add fontSize="small" />
+                </IconButton>
+              </CompactSearchResult>
             </Grid>
           ))}
         </Grid>
@@ -71,5 +76,7 @@ const RecommendationWidget: React.FC<RecommendationWidgetProps> = ({ cartItemIds
     </Box>
   );
 };
+
+import { IconButton } from '@mui/material';
 
 export default RecommendationWidget;

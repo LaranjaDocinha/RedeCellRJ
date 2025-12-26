@@ -1,4 +1,4 @@
-import api from './api';
+import { API_BASE_URL } from '../config/constants';
 
 export interface WhatsappTemplate {
   id?: number;
@@ -9,17 +9,40 @@ export interface WhatsappTemplate {
   updated_at?: string;
 }
 
+const getHeaders = (token: string) => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${token}`,
+});
+
 export const whatsappService = {
-  getTemplates: async (): Promise<WhatsappTemplate[]> => {
-    const response = await api.get('/whatsapp/templates');
-    return response.data;
+  getTemplates: async (token: string): Promise<WhatsappTemplate[]> => {
+    const response = await fetch(`${API_BASE_URL}/api/whatsapp/templates`, {
+      headers: getHeaders(token),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
   },
 
-  upsertTemplate: async (data: { name: string; content: string }): Promise<void> => {
-    await api.post('/whatsapp/templates', data);
+  upsertTemplate: async (data: { name: string; content: string }, token: string): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/api/whatsapp/templates`, {
+      method: 'POST',
+      headers: getHeaders(token),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
   },
 
-  deleteTemplate: async (name: string): Promise<void> => {
-    await api.delete(`/whatsapp/templates/${name}`);
+  deleteTemplate: async (name: string, token: string): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/api/whatsapp/templates/${name}`, {
+      method: 'DELETE',
+      headers: getHeaders(token),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
   },
 };

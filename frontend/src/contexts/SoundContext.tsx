@@ -1,7 +1,7 @@
 // frontend/src/contexts/SoundContext.tsx
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 
-type SoundName = 'addToCart' | 'removeFromCart' | 'checkoutSuccess' | 'error' | 'notification' | 'buttonClick'; // Define specific sound names
+type SoundName = 'addToCart' | 'removeFromCart' | 'checkoutSuccess' | 'error' | 'notification' | 'buttonClick' | 'levelUp' | 'achievement'; // Define specific sound names
 
 interface SoundContextType {
   playSound: (name: SoundName) => void;
@@ -31,6 +31,8 @@ const soundFiles: Record<SoundName, string> = {
   error: '/sounds/error.mp3',
   notification: '/sounds/notification.mp3',
   buttonClick: '/sounds/button-click.mp3',
+  levelUp: '/sounds/level-up.mp3',
+  achievement: '/sounds/achievement.mp3',
 };
 
 // Store Audio objects to prevent re-creation for each play

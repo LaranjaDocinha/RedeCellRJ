@@ -1,26 +1,42 @@
 import React, { lazy, Suspense } from 'react';
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// Contexts
 import { AnimationPreferenceProvider } from './contexts/AnimationPreferenceContext';
 import { AnimationProvider as CartAnimationProvider } from './contexts/CartAnimationContext';
 import { CartProvider } from './contexts/CartContext';
 import { NotificationProvider } from './contexts/NotificationContext';
-import { BrandingProvider } from './contexts/BrandingContext'; // Import BrandingProvider
-import { ProductComparisonBar } from './components/ProductComparisonBar'; // Import ProductComparisonBar
+import { BrandingProvider } from './contexts/BrandingContext';
+import { ProjectThemeProvider } from './styles/theme';
+import { SocketProvider } from './contexts/SocketContext';
+import { InactivityTrackerProvider, useInactivityTracker } from './contexts/InactivityTrackerContext';
+import { SoundProvider } from './contexts/SoundContext';
+import { useAuth } from './contexts/AuthContext';
 
-// Lazy load pages
+// Components
+import AppLayout from './components/AppLayout';
+import Loading from './components/Loading';
+import PageTransition from './components/PageTransition';
+import SkeletonLoader from './components/SkeletonLoader';
+import LockScreen from './components/LockScreen';
+import { customerDetailLoader } from './routerLoaders';
+
+// Lazy Pages
+const HomePage = lazy(() => import('./pages/HomePage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ProductListPage = lazy(() => import('./pages/ProductListPage'));
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
-const ProductFormPage = lazy(() => import('./pages/ProductFormPage')); // Import new form page
+const ProductEditPage = lazy(() => import('./pages/ProductEditPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const LoginScreen = lazy(() => import('./pages/LoginScreen'));
-const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const POSPage = lazy(() => import('./pages/POSPage'));
-const SalesHistoryPage = lazy(() => import('./pages/POS/SalesHistoryPage')); // Added SalesHistoryPage
+const SalesHistoryPage = lazy(() => import('./pages/POS/SalesHistoryPage'));
 const KanbanPage = lazy(() => import('./pages/KanbanPage'));
 const InventoryPage = lazy(() => import('./pages/InventoryPage'));
-const ReportsPage = lazy(() => import('./pages/ReportsPage'));
+const ReportsPage = lazy(() => import('./pages/reports/ReportsPage'));
 const PnlReportPage = lazy(() => import('./pages/Reports/PnlReportPage'));
-const CustomerDetailPage = lazy(() => import('./pages/CustomerDetailPage')); // Keep lazy for page component itself
+const CustomerDetailPage = lazy(() => import('./pages/CustomerDetailPage'));
 const CustomersPage = lazy(() => import('./pages/CustomersPage'));
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
 const TagsPage = lazy(() => import('./pages/TagsPage'));
@@ -30,38 +46,33 @@ const PermissionsPage = lazy(() => import('./pages/PermissionsPage'));
 const UsersPage = lazy(() => import('./pages/UsersPage'));
 const AuditLogsPage = lazy(() => import('./pages/AuditLogsPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
-const ProductCatalogPage = lazy(() => import('./pages/ProductCatalogPage')); // Adicionado ProductCatalogPage
-const ProductComparisonPage = lazy(() => import('./pages/ProductComparisonPage')); // Adicionado ProductComparisonPage
-// const SettingsPage = require('./pages/SettingsPage').default; // Temporarily disable lazy loading for debugging
-const DiscountsPage = lazy(() => import('./pages/DiscountsPage'));
-const CouponsPage = lazy(() => import('./pages/CouponsPage'));
-const ReturnsPage = lazy(() => import('./pages/ReturnsPage'));
-const LoyaltyTiersPage = lazy(() => import('./pages/LoyaltyTiersPage'));
-const LoyaltyPage = lazy(() => import('./pages/LoyaltyPage')); // Added LoyaltyPage
+const PromotionsPage = lazy(() => import('./pages/PromotionsPage'));
+const ReviewsPage = lazy(() => import('./pages/ReviewsPage'));
+const ReturnsAndRefundsPage = lazy(() => import('./pages/ReturnsAndRefundsPage'));
+const LoyaltyPage = lazy(() => import('./pages/LoyaltyPage'));
 const ProductKitsPage = lazy(() => import('./pages/ProductKitsPage'));
+const CompatibilityPage = lazy(() => import('./pages/CompatibilityPage'));
 const PurchaseOrdersPage = lazy(() => import('./pages/PurchaseOrdersPage'));
 const BranchesPage = lazy(() => import('./pages/BranchesPage'));
-const PlaceholderPage = lazy(() => import('./pages/PlaceholderPage'));
-const TemplatesPage = lazy(() => import('./pages/TemplatesPage')); // New: Templates Page
-const WhatsAppTemplatesPage = lazy(() => import('./pages/WhatsAppTemplatesPage')); // Adicionado WhatsAppTemplatesPage
-const SystemHealthPage = lazy(() => import('./pages/SystemHealthPage')); // Adicionado SystemHealthPage
-const CustomizableDashboard = lazy(() => import('./pages/CustomizableDashboard')); // Adicionado CustomizableDashboard
-const LeadsPage = lazy(() => import('./pages/LeadsPage')); // Adicionado LeadsPage
-const RuleEnginePage = lazy(() => import('./pages/RuleEnginePage')); // Adicionado RuleEnginePage
-const ReferralPage = lazy(() => import('./pages/ReferralPage')); // Moved from below
-
+const WhatsAppTemplatesPage = lazy(() => import('./pages/WhatsAppTemplatesPage'));
+const SystemHealthPage = lazy(() => import('./pages/SystemHealthPage'));
+const CustomizableDashboard = lazy(() => import('./pages/CustomizableDashboard'));
+const LeadsPage = lazy(() => import('./pages/LeadsPage'));
+const RuleEnginePage = lazy(() => import('./pages/RuleEnginePage'));
+const ReferralPage = lazy(() => import('./pages/ReferralPage'));
+const QuarantinePage = lazy(() => import('./pages/QuarantinePage'));
 const RfmSegmentsPage = lazy(() => import('./pages/RfmSegmentsPage'));
+const CashFlowPage = lazy(() => import('./pages/CashFlowPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const CustomerWalletPage = lazy(() => import('./pages/CustomerWalletPage'));
 const GamificationPage = lazy(() => import('./pages/GamificationPage'));
 const ShiftsPage = lazy(() => import('./pages/ShiftsPage'));
 const PerformanceReviewsPage = lazy(() => import('./pages/PerformanceReviewsPage'));
 const TimeClockPage = lazy(() => import('./pages/TimeClockPage'));
-const ExpenseReimbursementsPage = lazy(() => import('./pages/ExpenseReimbursementsPage'));
 const OnboardingPage = lazy(() => import('./pages/OnboardingPage'));
+const ServiceOrdersPage = lazy(() => import('./pages/ServiceOrdersPage'));
 const ServiceOrderDetailPage = lazy(() => import('./pages/ServiceOrderDetailPage'));
 const MyPerformancePage = lazy(() => import('./pages/MyPerformancePage'));
-const CashFlowPage = lazy(() => import('./pages/CashFlowPage'));
 const WhatIfPromotionPage = lazy(() => import('./pages/WhatIfPromotionPage'));
 const AccountingIntegrationPage = lazy(() => import('./pages/AccountingIntegrationPage'));
 const AccountsReportPage = lazy(() => import('./pages/AccountsReportPage'));
@@ -70,8 +81,8 @@ const BreakEvenPage = lazy(() => import('./pages/BreakEvenPage'));
 const PartnerApiPage = lazy(() => import('./pages/PartnerApiPage'));
 const EcommerceSyncPage = lazy(() => import('./pages/EcommerceSyncPage'));
 const MarketplaceSyncPage = lazy(() => import('./pages/MarketplaceSyncPage'));
-const MarketplacePage = lazy(() => import('./pages/MarketplacePage')); // Adicionado MarketplacePage
-const SmartPricingPage = lazy(() => import('./pages/SmartPricingPage')); // Adicionado SmartPricingPage
+const MarketplacePage = lazy(() => import('./pages/MarketplacePage'));
+const SmartPricingPage = lazy(() => import('./pages/SmartPricingPage'));
 const CarrierApiPage = lazy(() => import('./pages/CarrierApiPage'));
 const WebhooksPage = lazy(() => import('./pages/WebhooksPage'));
 const WordPressIntegrationPage = lazy(() => import('./pages/WordPressIntegrationPage'));
@@ -86,162 +97,120 @@ const ChatSupportPage = lazy(() => import('./pages/ChatSupportPage'));
 const ARPreviewPage = lazy(() => import('./pages/ARPreviewPage'));
 const BuybackProgramPage = lazy(() => import('./pages/BuybackProgramPage'));
 const RolePermissionsPage = lazy(() => import('./pages/RolePermissionsPage'));
+const SurveyDashboardPage = lazy(() => import('./pages/SurveyDashboardPage'));
 const GdprToolsPage = lazy(() => import('./pages/GdprToolsPage'));
 const BranchSettingsPage = lazy(() => import('./pages/BranchSettingsPage'));
 const SandboxPage = lazy(() => import('./pages/SandboxPage'));
 const BrandingPage = lazy(() => import('./pages/BrandingPage'));
 const MicroservicesPage = lazy(() => import('./pages/MicroservicesPage'));
-const OrdersPage = lazy(() => import('./pages/OrdersPage'));
-const ServiceOrdersPage = lazy(() => import('./pages/ServiceOrdersPage'));
-const CustomerDisplayPage = lazy(() => import('./pages/CustomerDisplayPage'));
-const AdminAuditPage = lazy(() => import('./pages/AdminAuditPage'));
 const SerialHistoryPage = lazy(() => import('./pages/SerialHistoryPage'));
-const StockKeeperPage = lazy(() => import('./pages/StockKeeperPage')); // Added StockKeeperPage
-
-import AppLayout from './components/AppLayout';
-import { useAuth } from './contexts/AuthContext';
-import Loading from './components/Loading';
-import PageTransition from './components/PageTransition';
-import SkeletonLoader from './components/SkeletonLoader';
-
-import { customerDetailLoader } from './routerLoaders'; // Import the loader
-
-// Componente para proteger rotas
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return <Loading />;
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
-};
-
-const SurveyPage = lazy(() => import('./pages/SurveyPage'));
-const SurveyDashboardPage = lazy(() => import('./pages/SurveyDashboardPage'));
-
+const StockKeeperPage = lazy(() => import('./pages/StockKeeperPage'));
 const CustomerPortalAuthPage = lazy(() => import('./pages/CustomerPortalAuthPage'));
 const CustomerPortalTrackingPage = lazy(() => import('./pages/CustomerPortalTrackingPage'));
 const TechOrderListPage = lazy(() => import('./pages/TechOrderListPage'));
 const TechOrderDetailPage = lazy(() => import('./pages/TechOrderDetailPage'));
+const CustomerDisplayPage = lazy(() => import('./pages/CustomerDisplayPage'));
+const SurveyPage = lazy(() => import('./pages/SurveyPage'));
+const AdminAuditPage = lazy(() => import('./pages/AdminAuditPage'));
+const ProductCatalogPage = lazy(() => import('./pages/ProductCatalogPage'));
+const ProductComparisonPage = lazy(() => import('./pages/ProductComparisonPage'));
+const OrdersPage = lazy(() => import('./pages/OrdersPage'));
+const LeadProfilePage = lazy(() => import('./pages/LeadProfilePage'));
+
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) return <Loading />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+};
 
 const router = createBrowserRouter([
-  {
-    path: "/login",
-    element: <LoginScreen />,
+  { path: "/login", element: <LoginScreen /> },
+  { path: "/forgot-password", element: <ForgotPasswordPage /> },
+  { path: "/survey", element: <SurveyPage /> },
+  { path: "/customer-display", element: <CustomerDisplayPage /> },
+  { 
+    path: "/portal/auth", 
+    element: <Suspense fallback={<SkeletonLoader width="100%" height="100vh" />}><CustomerPortalAuthPage /></Suspense> 
   },
-  {
-    path: "/forgot-password",
-    element: <ForgotPasswordPage />,
-  },
-  {
-    path: "/survey",
-    element: <SurveyPage />,
-  },
-  {
-    path: "/customer-display",
-    element: <CustomerDisplayPage />,
-  },
-  // ROTAS DO PORTAL DO CLIENTE (PÚBLICAS)
-  {
-    path: "/portal/auth",
-    element: <Suspense fallback={<SkeletonLoader width="100%" height="100vh" />}><CustomerPortalAuthPage /></Suspense>,
-  },
-  {
-    path: "/portal/:token",
-    element: <Suspense fallback={<SkeletonLoader width="100%" height="100vh" />}><CustomerPortalTrackingPage /></Suspense>,
+  { 
+    path: "/portal/:token", 
+    element: <Suspense fallback={<SkeletonLoader width="100%" height="100vh" />}><CustomerPortalTrackingPage /></Suspense> 
   },
   {
     path: "/",
-    element: (
-      <ProtectedRoute>
-        <AppLayout />
-      </ProtectedRoute>
-    ),
+    element: <ProtectedRoute><AppLayout /></ProtectedRoute>,
     errorElement: <NotFoundPage />,
-
-// ... (other imports)
-
     children: [
-      { path: "/dashboard", element: <PageTransition><DashboardPage /></PageTransition> },
-      { path: "/pos", element: <PageTransition><POSPage /></PageTransition> },
-      { path: "/pos/sales-history", element: <PageTransition><SalesHistoryPage /></PageTransition> }, // Added SalesHistoryPage route
-      { path: "/tech", element: <PageTransition><TechOrderListPage /></PageTransition> }, // Tech App list page
-      { path: "/tech/:id", element: <PageTransition><TechOrderDetailPage /></PageTransition> }, // Tech App detail page
-      { path: "/kanban", element: <PageTransition><KanbanPage /></PageTransition> },
-      { path: "/orders", element: <PageTransition><OrdersPage /></PageTransition> },
-      { path: "/products", element: <PageTransition><ProductListPage /></PageTransition> },
-      { path: "/product-catalog", element: <PageTransition><ProductCatalogPage /></PageTransition> },
-      { path: "/products/new", element: <PageTransition><ProductFormPage /></PageTransition> },
-      { path: "/products/:id", element: <PageTransition><ProductDetailPage /></PageTransition> },
-      { path: "/products/compare", element: <PageTransition><ProductComparisonPage /></PageTransition> },
-      { path: "/inventory", element: <PageTransition><InventoryPage /></PageTransition> },
-      { path: "/reports", element: <PageTransition><ReportsPage /></PageTransition> },
-      { path: "/customers", element: <PageTransition><CustomersPage /></PageTransition> },
-      { path: "/customers/:id", element: <PageTransition><CustomerDetailPage /></PageTransition>, loader: customerDetailLoader },
-      { path: "/categories", element: <PageTransition><CategoriesPage /></PageTransition> },
-      { path: "/tags", element: <PageTransition><TagsPage /></PageTransition> },
-      { path: "/suppliers", element: <PageTransition><SuppliersPage /></PageTransition> },
-      { path: "/roles", element: <PageTransition><RolesPage /></PageTransition> },
-      { path: "/permissions", element: <PageTransition><PermissionsPage /></PageTransition> },
-      { path: "/users", element: <PageTransition><UsersPage /></PageTransition> },
-      { path: "/audit-logs", element: <PageTransition><AdminAuditPage /></PageTransition> },
-      { path: "/settings", element: <PageTransition><SettingsPage /></PageTransition> },
-      { path: "/discounts", element: <PageTransition><DiscountsPage /></PageTransition> },
-      { path: "/coupons", element: <PageTransition><CouponsPage /></PageTransition> },
-      { path: "/returns", element: <PageTransition><ReturnsPage /></PageTransition> },
-      { path: "/loyalty", element: <PageTransition><LoyaltyPage /></PageTransition> }, // Added LoyaltyPage route
-      { path: "/loyalty-tiers", element: <PageTransition><LoyaltyTiersPage /></PageTransition> },
-      { path: "/leads", element: <PageTransition><LeadsPage /></PageTransition> }, // Nova rota Leads Page
-      { path: "/product-kits", element: <PageTransition><ProductKitsPage /></PageTransition> },
-      { path: "/purchase-orders", element: <PageTransition><PurchaseOrdersPage /></PageTransition> },
-      { path: "/branches", element: <PageTransition><BranchesPage /></PageTransition> },
-      { path: "/placeholder", element: <PageTransition><PlaceholderPage /></PageTransition> },
-      { path: "/templates", element: <PageTransition><TemplatesPage /></PageTransition> },
-      { path: "/whatsapp-templates", element: <PageTransition><WhatsAppTemplatesPage /></PageTransition> }, // Nova rota WhatsAppTemplates
-      { path: "/system-health", element: <PageTransition><SystemHealthPage /></PageTransition> }, // Nova rota SystemHealth
-      { path: "/custom-dashboard", element: <PageTransition><CustomizableDashboard /></PageTransition> }, // Nova rota Customizable Dashboard
-      { path: "/referrals", element: <PageTransition><ReferralPage /></PageTransition> },
-      { path: "customers/:customerId/wallet", element: <PageTransition><CustomerWalletPage /></PageTransition> },
-      { path: "gamification", element: <PageTransition><GamificationPage /></PageTransition> },
-      { path: "shifts", element: <PageTransition><ShiftsPage /></PageTransition> },
-      { path: "performance-reviews", element: <PageTransition><PerformanceReviewsPage /></PageTransition> },
-      { path: "/reviews", element: <PageTransition><PerformanceReviewsPage /></PageTransition> }, // Added route for /reviews
-      { path: "time-clock", element: <PageTransition><TimeClockPage /></PageTransition> },
-      { path: "/rfm-segments", element: <PageTransition><RfmSegmentsPage /></PageTransition> }, // Added route for /rfm-segments
-      { path: "expense-reimbursements", element: <PageTransition><ExpenseReimbursementsPage /></PageTransition> },
-      { path: "onboarding", element: <PageTransition><OnboardingPage /></PageTransition> },
-      { path: "/service-orders", element: <PageTransition><ServiceOrdersPage /></PageTransition> },
+      { index: true, element: <PageTransition><HomePage /></PageTransition> },
+      { path: "dashboard", element: <PageTransition><DashboardPage /></PageTransition> },
+      { path: "pos", element: <PageTransition><POSPage /></PageTransition> },
+      { path: "pos/sales-history", element: <PageTransition><SalesHistoryPage /></PageTransition> },
+      { path: "tech", element: <PageTransition><TechOrderListPage /></PageTransition> },
+      { path: "tech/:id", element: <PageTransition><TechOrderDetailPage /></PageTransition> },
+      { path: "kanban", element: <PageTransition><KanbanPage /></PageTransition> },
+      { path: "service-orders", element: <PageTransition><ServiceOrdersPage /></PageTransition> },
       { path: "service-orders/:id", element: <PageTransition><ServiceOrderDetailPage /></PageTransition> },
-      { path: "my-performance", element: <PageTransition><MyPerformancePage /></PageTransition> },
+      { path: "orders", element: <PageTransition><OrdersPage /></PageTransition> },
+      { path: "products", element: <PageTransition><ProductListPage /></PageTransition> },
+      { path: "products/:id", element: <PageTransition><ProductDetailPage /></PageTransition> },
+      { path: "products/:id/edit", element: <PageTransition><ProductEditPage /></PageTransition> },
+      { path: "product-catalog", element: <PageTransition><ProductCatalogPage /></PageTransition> },
+      { path: "products/compare", element: <PageTransition><ProductComparisonPage /></PageTransition> },
+      { path: "inventory", element: <PageTransition><InventoryPage /></PageTransition> },
+      { path: "reports", element: <PageTransition><ReportsPage /></PageTransition> },
+      { path: "pnl-report", element: <PageTransition><PnlReportPage /></PageTransition> },
+      { path: "customers", element: <PageTransition><CustomersPage /></PageTransition> },
+      { path: "customers/:id", element: <PageTransition><CustomerDetailPage /></PageTransition>, loader: customerDetailLoader },
+      { path: "categories", element: <PageTransition><CategoriesPage /></PageTransition> },
+      { path: "tags", element: <PageTransition><TagsPage /></PageTransition> },
+      { path: "suppliers", element: <PageTransition><SuppliersPage /></PageTransition> },
+      { path: "roles", element: <PageTransition><RolesPage /></PageTransition> },
+      { path: "permissions", element: <PageTransition><PermissionsPage /></PageTransition> },
+      { path: "users", element: <PageTransition><UsersPage /></PageTransition> },
+      { path: "audit-logs", element: <PageTransition><AdminAuditPage /></PageTransition> },
+      { path: "settings", element: <PageTransition><SettingsPage /></PageTransition> },
+      { path: "promotions", element: <PageTransition><PromotionsPage /></PageTransition> },
+      { path: "returns", element: <PageTransition><ReturnsAndRefundsPage /></PageTransition> },
+      { path: "loyalty", element: <PageTransition><LoyaltyPage /></PageTransition> },
+      { path: "leads", element: <PageTransition><LeadsPage /></PageTransition> },
+      { path: "leads/:id", element: <PageTransition><LeadProfilePage /></PageTransition> },
+      { path: "rule-engine", element: <PageTransition><RuleEnginePage /></PageTransition> },
+      { path: "product-kits", element: <PageTransition><ProductKitsPage /></PageTransition> },
+      { path: "compatibility", element: <PageTransition><CompatibilityPage /></PageTransition> },
+      { path: "purchase-orders", element: <PageTransition><PurchaseOrdersPage /></PageTransition> },
+      { path: "branches", element: <PageTransition><BranchesPage /></PageTransition> },
+      { path: "whatsapp-templates", element: <PageTransition><WhatsAppTemplatesPage /></PageTransition> },
+      { path: "system-health", element: <PageTransition><SystemHealthPage /></PageTransition> },
+      { path: "custom-dashboard", element: <PageTransition><CustomizableDashboard /></PageTransition> },
+      { path: "referrals", element: <PageTransition><ReferralPage /></PageTransition> },
+      { path: "gamification", element: <PageTransition><GamificationPage /></PageTransition> },
+      { path: "time-clock", element: <PageTransition><TimeClockPage /></PageTransition> },
+      { path: "quarantine", element: <PageTransition><QuarantinePage /></PageTransition> },
+      { path: "reviews", element: <PageTransition><ReviewsPage /></PageTransition> },
+      { path: "rfm-segments", element: <PageTransition><RfmSegmentsPage /></PageTransition> },
       { path: "cash-flow", element: <PageTransition><CashFlowPage /></PageTransition> },
       { path: "what-if-promotion", element: <PageTransition><WhatIfPromotionPage /></PageTransition> },
       { path: "accounting-integration", element: <PageTransition><AccountingIntegrationPage /></PageTransition> },
       { path: "accounts-report", element: <PageTransition><AccountsReportPage /></PageTransition> },
-      { path: "reports/pnl", element: <PageTransition><PnlReportPage /></PageTransition> },
       { path: "category-profitability", element: <PageTransition><CategoryProfitabilityPage /></PageTransition> },
       { path: "break-even", element: <PageTransition><BreakEvenPage /></PageTransition> },
       { path: "partner-api", element: <PageTransition><PartnerApiPage /></PageTransition> },
       { path: "ecommerce-sync", element: <PageTransition><EcommerceSyncPage /></PageTransition> },
       { path: "marketplace-sync", element: <PageTransition><MarketplaceSyncPage /></PageTransition> },
-      { path: "marketplace", element: <PageTransition><MarketplacePage /></PageTransition> }, // Nova rota Marketplace
-      { path: "smart-pricing", element: <PageTransition><SmartPricingPage /></PageTransition> }, // Nova rota Smart Pricing
+      { path: "marketplace", element: <PageTransition><MarketplacePage /></PageTransition> },
+      { path: "smart-pricing", element: <PageTransition><SmartPricingPage /></PageTransition> },
       { path: "carrier-api", element: <PageTransition><CarrierApiPage /></PageTransition> },
       { path: "webhooks", element: <PageTransition><WebhooksPage /></PageTransition> },
       { path: "wordpress-integration", element: <PageTransition><WordPressIntegrationPage /></PageTransition> },
       { path: "mobile-app-simulation", element: <PageTransition><MobileAppSimulationPage /></PageTransition> },
       { path: "bi-integration", element: <PageTransition><BiIntegrationPage /></PageTransition> },
       { path: "franchises", element: <PageTransition><FranchisesPage /></PageTransition> },
-      { path: "google-shopping-integration", element: <PageTransition><GoogleShoppingIntegrationPage /></PageTransition> },
+      { path: "google-shopping", element: <PageTransition><GoogleShoppingIntegrationPage /></PageTransition> },
       { path: "online-scheduling", element: <PageTransition><OnlineSchedulingPage /></PageTransition> },
-      { path: "/customer-portal", element: <PageTransition><CustomerPortalPage /></PageTransition> },
-      { path: "/faqs", element: <PageTransition><FaqPage /></PageTransition> },
-      { path: "/rules-engine", element: <PageTransition><RuleEnginePage /></PageTransition> }, // Nova rota Rule Engine
-      { path: "/chat-support", element: <PageTransition><ChatSupportPage /></PageTransition> },
+      { path: "customer-portal", element: <PageTransition><CustomerPortalPage /></PageTransition> },
+      { path: "faq", element: <PageTransition><FaqPage /></PageTransition> },
+      { path: "chat-support", element: <PageTransition><ChatSupportPage /></PageTransition> },
       { path: "ar-preview", element: <PageTransition><ARPreviewPage /></PageTransition> },
       { path: "buyback-program", element: <PageTransition><BuybackProgramPage /></PageTransition> },
       { path: "role-permissions", element: <PageTransition><RolePermissionsPage /></PageTransition> },
@@ -251,25 +220,24 @@ const router = createBrowserRouter([
       { path: "sandbox", element: <PageTransition><SandboxPage /></PageTransition> },
       { path: "branding", element: <PageTransition><BrandingPage /></PageTransition> },
       { path: "microservices", element: <PageTransition><MicroservicesPage /></PageTransition> },
-      { path: "/serial-history", element: <PageTransition><SerialHistoryPage /></PageTransition> },
-      { path: "/stock-keeper", element: <PageTransition><StockKeeperPage /></PageTransition> }, // Added route
+      { path: "stock-keeper", element: <PageTransition><StockKeeperPage /></PageTransition> },
+      { path: "serial-history", element: <PageTransition><SerialHistoryPage /></PageTransition> },
+      { path: "my-performance", element: <PageTransition><MyPerformancePage /></PageTransition> },
     ],
   },
 ]);
 
-import { ThemeProvider } from './contexts/ThemeContext';
-import { SocketProvider } from './contexts/SocketContext';
-import { InactivityTrackerProvider, useInactivityTracker } from './contexts/InactivityTrackerContext';
-import LockScreen from './components/LockScreen';
-import { SoundProvider } from './contexts/SoundContext';
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <SoundProvider>
-      <InactivityTrackerProvider>
-        <AppContent />
-      </InactivityTrackerProvider>
-    </SoundProvider>
+    <QueryClientProvider client={queryClient}>
+      <SoundProvider>
+        <InactivityTrackerProvider>
+          <AppContent />
+        </InactivityTrackerProvider>
+      </SoundProvider>
+    </QueryClientProvider>
   );
 }
 
@@ -277,25 +245,24 @@ const AppContent: React.FC = () => {
   const { isLocked } = useInactivityTracker();
 
   return (
-    <ThemeProvider>
-      <AnimationPreferenceProvider>
-        <CartAnimationProvider>
-          <CartProvider>
-            <Suspense fallback={<SkeletonLoader width="100%" height="100vh" />}>
-              <NotificationProvider>
-                <BrandingProvider> {/* Wrap with BrandingProvider */} 
+    <BrandingProvider>
+      <ProjectThemeProvider>
+        <AnimationPreferenceProvider>
+          <CartAnimationProvider>
+            <CartProvider>
+              <Suspense fallback={<SkeletonLoader width="100%" height="100vh" />}>
+                <NotificationProvider>
                   <SocketProvider>
                     <RouterProvider router={router} />
                   </SocketProvider>
-                </BrandingProvider>
-              </NotificationProvider>
-            </Suspense>
-          </CartProvider>
-        </CartAnimationProvider>
-      </AnimationPreferenceProvider>
-      {isLocked && <LockScreen />}
-      <ProductComparisonBar /> {/* Add ProductComparisonBar here */}
-    </ThemeProvider>
+                </NotificationProvider>
+              </Suspense>
+            </CartProvider>
+          </CartAnimationProvider>
+        </AnimationPreferenceProvider>
+        {isLocked && <LockScreen />}
+      </ProjectThemeProvider>
+    </BrandingProvider>
   );
 };
 

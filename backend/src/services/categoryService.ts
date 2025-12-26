@@ -5,6 +5,10 @@ interface Category {
   id: number;
   name: string;
   description?: string;
+  parent_id?: number | null;
+  icon?: string;
+  color?: string;
+  slug?: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -12,16 +16,24 @@ interface Category {
 interface CreateCategoryPayload {
   name: string;
   description?: string;
+  parent_id?: number | null;
+  icon?: string;
+  color?: string;
+  slug?: string;
 }
 
 interface UpdateCategoryPayload {
   name?: string;
   description?: string;
+  parent_id?: number | null;
+  icon?: string;
+  color?: string;
+  slug?: string;
 }
 
 class CategoryService {
   async getAllCategories(): Promise<Category[]> {
-    const result = await pool.query('SELECT * FROM categories');
+    const result = await pool.query('SELECT * FROM categories ORDER BY name ASC');
     return result.rows;
   }
 
@@ -31,24 +43,23 @@ class CategoryService {
   }
 
   async createCategory(payload: CreateCategoryPayload): Promise<Category> {
-    const { name, description } = payload;
+    const { name, description, parent_id, icon, color, slug } = payload;
     try {
       const result = await pool.query(
-        'INSERT INTO categories (name, description) VALUES ($1, $2) RETURNING *',
-        [name, description],
+        'INSERT INTO categories (name, description, parent_id, icon, color, slug) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+        [name, description, parent_id || null, icon, color, slug],
       );
       return result.rows[0];
     } catch (error: any) {
       if (error.code === '23505') {
-        // Unique violation error code
-        throw new AppError('Category with this name already exists', 409);
+        throw new AppError('Category with this name or slug already exists', 409);
       }
       throw error;
     }
   }
 
   async updateCategory(id: number, payload: UpdateCategoryPayload): Promise<Category | undefined> {
-    const { name, description } = payload;
+    const { name, description, parent_id, icon, color, slug } = payload;
     const fields: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
@@ -61,16 +72,30 @@ class CategoryService {
       fields.push(`description = $${paramIndex++}`);
       values.push(description);
     }
+    if (parent_id !== undefined) {
+      fields.push(`parent_id = $${paramIndex++}`);
+      values.push(parent_id || null);
+    }
+    if (icon !== undefined) {
+      fields.push(`icon = $${paramIndex++}`);
+      values.push(icon);
+    }
+    if (color !== undefined) {
+      fields.push(`color = $${paramIndex++}`);
+      values.push(color);
+    }
+    if (slug !== undefined) {
+      fields.push(`slug = $${paramIndex++}`);
+      values.push(slug);
+    }
 
     if (fields.length === 0) {
       const existingCategory = await this.getCategoryById(id);
-      if (!existingCategory) {
-        return undefined; // No category found to update
-      }
-      return existingCategory; // No fields to update, return existing category
+      if (!existingCategory) return undefined;
+      return existingCategory;
     }
 
-    values.push(id); // Add id for WHERE clause
+    values.push(id);
     const query = `UPDATE categories SET ${fields.join(', ')}, updated_at = current_timestamp WHERE id = $${paramIndex} RETURNING *`;
 
     try {
@@ -78,8 +103,7 @@ class CategoryService {
       return result.rows[0];
     } catch (error: any) {
       if (error.code === '23505') {
-        // Unique violation error code
-        throw new AppError('Category with this name already exists', 409);
+        throw new AppError('Category with this name or slug already exists', 409);
       }
       throw error;
     }

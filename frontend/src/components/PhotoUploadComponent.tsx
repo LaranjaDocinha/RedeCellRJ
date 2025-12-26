@@ -127,7 +127,7 @@ const PhotoUploadComponent: React.FC<PhotoUploadComponentProps> = ({
 
       // Mock de sucesso
       await new Promise(resolve => setTimeout(resolve, 1500));
-      const mockUrl = `https://via.placeholder.com/150?text=OS-${serviceOrderId}-${photoType}`;
+      const mockUrl = `https://placehold.co/150?text=OS-${serviceOrderId}-${photoType}`;
       onUploadSuccess(mockUrl, photoType);
       setSelectedFile(null);
       setPreviewUrl(null);

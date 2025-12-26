@@ -1,13 +1,18 @@
-
 import { defineConfig } from 'vitest/config';
 import swc from 'unplugin-swc';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   test: {
     include: ['**/*.integration.test.ts'],
-    setupFiles: ['./tests/setupVitestEnv.ts', './tests/setupPaymentTest.ts'],
-    globalSetup: ['./vitest.global-setup.ts'],
+    setupFiles: [
+      resolve(__dirname, './tests/setupVitestEnv.ts'),
+      resolve(__dirname, './tests/setupPaymentTest.ts')
+    ],
+    globalSetup: [resolve(__dirname, './vitest.global-setup.ts')],
     testTimeout: 30000, // 30 seconds
     hookTimeout: 180000, // 180 seconds for beforeAll/afterAll hooks
     fileParallelism: false, // Run tests sequentially to avoid db deadlocks

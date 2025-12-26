@@ -19,7 +19,7 @@ export const useWishlist = () => {
       return [];
     }
   });
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     try {
@@ -32,23 +32,23 @@ export const useWishlist = () => {
   const addToWishlist = useCallback((item: WishlistItem) => {
     setWishlist((prevWishlist) => {
       if (!prevWishlist.some((wishlistItem) => wishlistItem.id === item.id)) {
-        addToast(`${item.name} adicionado à lista de desejos!`, 'success');
+        showNotification(`${item.name} adicionado à lista de desejos!`, 'success');
         return [...prevWishlist, item];
       }
-      addToast(`${item.name} já está na lista de desejos.`, 'info');
+      showNotification(`${item.name} já está na lista de desejos.`, 'info');
       return prevWishlist;
     });
-  }, [addToast]);
+  }, [showNotification]);
 
   const removeFromWishlist = useCallback((id: number) => {
     setWishlist((prevWishlist) => {
       const updatedWishlist = prevWishlist.filter((item) => item.id !== id);
       if (updatedWishlist.length < prevWishlist.length) {
-        addToast('Produto removido da lista de desejos.', 'info');
+        showNotification('Produto removido da lista de desejos.', 'info');
       }
       return updatedWishlist;
     });
-  }, [addToast]);
+  }, [showNotification]);
 
   const isInWishlist = useCallback((id: number) => {
     return wishlist.some((item) => item.id === id);

@@ -29,7 +29,7 @@ const DiscountsPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const { token } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     fetchDiscounts();
@@ -46,7 +46,7 @@ const DiscountsPage: React.FC = () => {
       setDiscounts(data);
     } catch (error: any) {
       console.error("Error fetching discounts:", error);
-      addToast(`Failed to fetch discounts: ${error.message}`, 'error');
+      showNotification(`Failed to fetch discounts: ${error.message}`, 'error');
     } finally {
       setLoading(false);
     }
@@ -63,10 +63,10 @@ const DiscountsPage: React.FC = () => {
       await response.json();
       setShowForm(false);
       fetchDiscounts();
-      addToast('Discount created successfully!', 'success');
+      showNotification('Discount created successfully!', 'success');
     } catch (error: any) {
       console.error("Error creating discount:", error);
-      addToast(`Failed to create discount: ${error.message}`, 'error');
+      showNotification(`Failed to create discount: ${error.message}`, 'error');
     }
   };
 
@@ -82,10 +82,10 @@ const DiscountsPage: React.FC = () => {
       setEditingDiscount(undefined);
       setShowForm(false);
       fetchDiscounts();
-      addToast('Discount updated successfully!', 'success');
+      showNotification('Discount updated successfully!', 'success');
     } catch (error: any) {
       console.error("Error updating discount:", error);
-      addToast(`Failed to update discount: ${error.message}`, 'error');
+      showNotification(`Failed to update discount: ${error.message}`, 'error');
     }
   };
 
@@ -98,10 +98,10 @@ const DiscountsPage: React.FC = () => {
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       fetchDiscounts();
-      addToast('Discount deleted successfully!', 'success');
+      showNotification('Discount deleted successfully!', 'success');
     } catch (error: any) {
       console.error("Error deleting discount:", error);
-      addToast(`Failed to delete discount: ${error.message}`, 'error');
+      showNotification(`Failed to delete discount: ${error.message}`, 'error');
     }
   };
 

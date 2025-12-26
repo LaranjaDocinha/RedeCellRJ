@@ -3,20 +3,15 @@ import { apiKeyService } from '../services/apiKeyService.js';
 import { AppError } from '../utils/errors.js';
 import { z } from 'zod';
 
-// Zod schema for API Key permissions (simplified)
-const permissionsSchema = z.record(z.array(z.string())); // e.g., { "products": ["read", "write"] }
-
-const createApiKeySchema = z.object({
-  name: z.string().min(3, 'Name is required and must be at least 3 characters.'),
-  permissions: permissionsSchema.optional().default({}),
-  expires_at: z.string().datetime().optional().nullable(),
+// Zod validation schemas
+export const createApiKeySchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  expires_at: z.string().datetime().optional(),
 });
 
-const updateApiKeySchema = z.object({
-  name: z.string().min(3, 'Name must be at least 3 characters.').optional(),
-  permissions: permissionsSchema.optional(),
-  expires_at: z.string().datetime().optional().nullable(),
-  is_active: z.boolean().optional(),
+export const updateApiKeySchema = z.object({
+  name: z.string().min(1, 'Name is required').optional(),
+  status: z.enum(['active', 'revoked']).optional(),
 }).partial();
 
 export const apiKeyController = {

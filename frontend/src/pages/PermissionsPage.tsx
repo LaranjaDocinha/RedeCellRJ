@@ -1,5 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
+import { motion } from 'framer-motion';
 import { PermissionList } from '../components/PermissionList';
 import { PermissionForm } from '../components/PermissionForm';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,7 +9,6 @@ import { useNotification } from '../contexts/NotificationContext';
 import { StyledPageContainer, StyledPageTitle } from './AuditLogsPage.styled'; // Reutilizando componentes estilizados
 import { Button } from '../components/Button'; // Importar o componente Button
 import Loading from '../components/Loading'; // Importar o componente Loading
-import { StyledEmptyState } from '../components/AuditLogList.styled'; // Reutilizando StyledEmptyState
 import { FaKey } from 'react-icons/fa'; // Ícone para estado vazio
 
 interface Permission {
@@ -15,13 +16,29 @@ interface Permission {
   name: string;
 }
 
+const StyledEmptyState = styled(motion.div)`
+  text-align: center;
+  padding: 3rem;
+  background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#f5f5f5'};
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  color: ${({ theme }) => theme.mode === 'dark' ? '#aaa' : '#666'};
+  svg {
+    font-size: 2rem;
+    opacity: 0.5;
+  }
+`;
+
 const PermissionsPage: React.FC = () => {
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [editingPermission, setEditingPermission] = useState<Permission | undefined>(undefined);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const { token } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     fetchPermissions();
@@ -38,7 +55,7 @@ const PermissionsPage: React.FC = () => {
       setPermissions(data);
     } catch (error: any) {
       console.error("Error fetching permissions:", error);
-      addToast(`Failed to fetch permissions: ${error.message}`, 'error');
+      showNotification(`Failed to fetch permissions: ${error.message}`, 'error');
     } finally {
       setLoading(false);
     }
@@ -55,10 +72,10 @@ const PermissionsPage: React.FC = () => {
       await response.json();
       setShowForm(false);
       fetchPermissions();
-      addToast('Permission created successfully!', 'success');
+      showNotification('Permission created successfully!', 'success');
     } catch (error: any) {
       console.error("Error creating permission:", error);
-      addToast(`Failed to create permission: ${error.message}`, 'error');
+      showNotification(`Failed to create permission: ${error.message}`, 'error');
     }
   };
 
@@ -74,10 +91,10 @@ const PermissionsPage: React.FC = () => {
       setEditingPermission(undefined);
       setShowForm(false);
       fetchPermissions();
-      addToast('Permission updated successfully!', 'success');
+      showNotification('Permission updated successfully!', 'success');
     } catch (error: any) {
       console.error("Error updating permission:", error);
-      addToast(`Failed to update permission: ${error.message}`, 'error');
+      showNotification(`Failed to update permission: ${error.message}`, 'error');
     }
   };
 
@@ -90,10 +107,10 @@ const PermissionsPage: React.FC = () => {
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       fetchPermissions();
-      addToast('Permission deleted successfully!', 'success');
+      showNotification('Permission deleted successfully!', 'success');
     } catch (error: any) {
       console.error("Error deleting permission:", error);
-      addToast(`Failed to delete permission: ${error.message}`, 'error');
+      showNotification(`Failed to delete permission: ${error.message}`, 'error');
     }
   };
 

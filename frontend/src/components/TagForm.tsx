@@ -1,7 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { 
+  Box, 
+  TextField, 
+  Stack, 
+  Typography,
+  Paper,
+  alpha,
+  useTheme,
+  InputAdornment,
+  Chip
+} from '@mui/material';
+import { FaTag, FaPalette } from 'react-icons/fa';
+import { Button } from './Button';
 
 interface TagFormData {
   name: string;
+  color: string;
 }
 
 interface TagFormProps {
@@ -10,58 +24,144 @@ interface TagFormProps {
   onCancel: () => void;
 }
 
+const PRESET_COLORS = [
+  '#1976d2', '#dc004e', '#2e7d32', '#ed6c02', '#9c27b0', 
+  '#0288d1', '#d32f2f', '#7b1fa2', '#f57c00', '#388e3c'
+];
+
 export const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit, onCancel }) => {
+  const theme = useTheme();
   const [formData, setFormData] = useState<TagFormData>({
     name: '',
+    color: '#1976d2',
   });
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData({
+        name: initialData.name,
+        color: initialData.color || '#1976d2',
+      });
     }
   }, [initialData]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.name.trim()) return;
     onSubmit(formData);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6 space-y-4">
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-          Name
-        </label>
-        <input
-          type="text"
-          name="name"
-          id="name"
+    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+      <Stack spacing={3}>
+        <TextField
+          fullWidth
+          label="Nome da Etiqueta"
+          placeholder="Ex: Urgente, VIP, Novo..."
           value={formData.name}
-          onChange={handleChange}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          autoFocus
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <FaTag color={formData.color} />
+              </InputAdornment>
+            ),
+            sx: { borderRadius: '12px' }
+          }}
         />
-      </div>
-      <div className="flex justify-end space-x-3">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+
+        <Box>
+          <Typography variant="caption" fontWeight={700} color="text.secondary" gutterBottom display="block" sx={{ mb: 1, ml: 1 }}>
+            COR DA ETIQUETA
+          </Typography>
+          <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+            {PRESET_COLORS.map((c) => (
+              <Box
+                key={c}
+                onClick={() => setFormData({ ...formData, color: c })}
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  bgcolor: c,
+                  cursor: 'pointer',
+                  border: formData.color === c ? `3px solid ${theme.palette.text.primary}` : 'none',
+                  transition: 'all 0.2s',
+                  '&:hover': { transform: 'scale(1.1)' }
+                }}
+              />
+            ))}
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                bgcolor: 'background.paper',
+                border: '1px dashed',
+                borderColor: 'divider',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative',
+                overflow: 'hidden',
+                cursor: 'pointer'
+              }}
+            >
+              <FaPalette size={12} color={theme.palette.text.secondary} />
+              <input
+                type="color"
+                value={formData.color}
+                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                style={{
+                  position: 'absolute',
+                  top: -5,
+                  left: -5,
+                  width: 40,
+                  height: 40,
+                  opacity: 0,
+                  cursor: 'pointer'
+                }}
+              />
+            </Box>
+          </Stack>
+        </Box>
+
+        <Paper 
+          variant="outlined" 
+          sx={{ 
+            p: 2, 
+            borderRadius: '12px', 
+            bgcolor: alpha(formData.color, 0.05), 
+            border: `1px solid ${alpha(formData.color, 0.2)}`,
+            textAlign: 'center'
+          }}
         >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          {initialData ? 'Update Tag' : 'Add Tag'}
-        </button>
-      </div>
-    </form>
+          <Typography variant="caption" color="text.secondary" display="block">PRÉ-VISUALIZAÇÃO</Typography>
+          <Box sx={{ mt: 1 }}>
+            <Chip 
+              label={formData.name || 'Nome da Tag'} 
+              sx={{ 
+                bgcolor: formData.color, 
+                color: '#fff', 
+                fontWeight: 800,
+                borderRadius: '8px'
+              }} 
+            />
+          </Box>
+        </Paper>
+
+        <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ pt: 2 }}>
+          <Button onClick={onCancel} variant="outlined" label="Cancelar" />
+          <Button 
+            type="submit" 
+            variant="contained" 
+            label={initialData ? 'Atualizar Tag' : 'Criar Tag'} 
+            sx={{ bgcolor: formData.color, '&:hover': { bgcolor: formData.color, opacity: 0.9 } }}
+          />
+        </Stack>
+      </Stack>
+    </Box>
   );
 };

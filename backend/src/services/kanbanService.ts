@@ -1,13 +1,17 @@
 import { getPool } from '../db/index.js';
 import { Column, Card, MoveCardArgs, CreateCardArgs } from '../types/kanban.js';
+import * as serviceOrderService from './serviceOrderService.js'; // Import serviceOrderService
+import * as whatsappService from './whatsappService.js'; // Import whatsappService
+import { AppError } from '../utils/errors.js';
+import { logger } from '../utils/logger.js';
 
 export const getBoard = async (): Promise<Column[]> => {
   const { rows: columns } = await getPool().query<Omit<Column, 'cards'>>(
-    'SELECT * FROM kanban_columns ORDER BY position ASC',
+    'SELECT id, title, position, is_system, wip_limit FROM kanban_columns ORDER BY position ASC',
   );
 
   const { rows: cards } = await getPool().query<Card>(
-    'SELECT * FROM kanban_cards ORDER BY position ASC',
+    'SELECT id, title, description, column_id, position, due_date, assignee_id, priority, service_order_id, tags, created_at, updated_at FROM kanban_cards ORDER BY position ASC',
   );
 
   const board: Column[] = columns.map((column) => ({
@@ -23,7 +27,7 @@ export const moveCard = async ({
   newColumnId,
   newPosition,
 }: MoveCardArgs): Promise<void> => {
-  console.log('--- moveCard called with:', { cardId, newColumnId, newPosition });
+  logger.info('--- moveCard called with:', { cardId, newColumnId, newPosition });
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -34,16 +38,62 @@ export const moveCard = async ({
 
     const {
       rows: [cardToMove],
-    } = await client.query<{ column_id: number; position: number }>(
-      'SELECT column_id, position FROM kanban_cards WHERE id = $1 FOR UPDATE',
+    } = await client.query<{ column_id: number; position: number; service_order_id?: number | null }>(
+      'SELECT column_id, position, service_order_id FROM kanban_cards WHERE id = $1 FOR UPDATE',
       [numCardId],
     );
 
     if (!cardToMove) {
-      throw new Error(`Card with ID ${numCardId} not found`);
+      throw new AppError(`Card with ID ${numCardId} not found`, 404);
     }
 
-    const { column_id: oldColumnId, position: oldPosition } = cardToMove;
+    const { column_id: oldColumnId, position: oldPosition, service_order_id } = cardToMove;
+
+    if (oldColumnId !== numNewColumnId) {
+      // Check WIP limit for the new column
+      const {
+        rows: [newColumn],
+      } = await client.query<{ wip_limit: number; is_system: boolean; title: string }>(
+        'SELECT wip_limit, is_system, title FROM kanban_columns WHERE id = $1',
+        [numNewColumnId],
+      );
+
+      if (!newColumn) {
+        throw new AppError(`New column with ID ${numNewColumnId} not found`, 404);
+      }
+
+      if (newColumn.wip_limit !== -1) {
+        const {
+          rows: [{ current_cards_count }],
+        } = await client.query<{ current_cards_count: number }>(
+          'SELECT COUNT(id) as current_cards_count FROM kanban_cards WHERE column_id = $1',
+          [numNewColumnId],
+        );
+
+        if (current_cards_count >= newColumn.wip_limit) {
+          logger.info(`WIP limit of ${newColumn.wip_limit} reached for column "${newColumn.title}". Current: ${current_cards_count}`);
+          throw new AppError(`WIP limit of ${newColumn.wip_limit} reached for column "${newColumn.title}"`, 400);
+        }
+      }
+
+      // Automação para coluna "Finalizado" (is_system = true e título "Finalizado" ou "Entregue")
+      if (newColumn.is_system && (newColumn.title === 'Finalizado' || newColumn.title === 'Entregue') && service_order_id) {
+        logger.info(`[KANBAN AUTOMATION] Card ${numCardId} moved to "Finalizado". Service Order ${service_order_id} will be updated.`);
+        await serviceOrderService.updateServiceOrderStatus(service_order_id, 'Finalizado', 'Sistema Kanban', client);
+        // Opcional: Notificação WhatsApp para o cliente
+        const so = await serviceOrderService.getServiceOrderById(service_order_id);
+        if (so && so.customer_id) {
+          const customer = await getPool().query('SELECT phone FROM customers WHERE id = $1', [so.customer_id]);
+          if (customer.rows[0]?.phone) {
+            whatsappService.sendTemplateMessage(
+              customer.rows[0].phone,
+              'service_order_ready', // Template customizado para OS pronta
+              { orderId: service_order_id, customerName: so.customer_name } // Dados para o template
+            ).catch(e => logger.error('Failed to send WhatsApp notification:', e));
+          }
+        }
+      }
+    }
 
     if (oldColumnId === numNewColumnId) {
       if (oldPosition === numNewPosition) {
@@ -93,6 +143,10 @@ export const createCard = async ({
   columnId,
   title,
   description,
+  priority = 'normal', // Default to normal
+  serviceOrderId = null, // Default to null
+  tags = [], // Default to empty array
+  assigneeId = null, // Add assigneeId here
 }: CreateCardArgs): Promise<Card> => {
   const {
     rows: [maxPos],
@@ -105,8 +159,8 @@ export const createCard = async ({
   const {
     rows: [newCard],
   } = await getPool().query<Card>(
-    'INSERT INTO kanban_cards (title, description, column_id, position) VALUES ($1, $2, $3, $4) RETURNING *',
-    [title, description, columnId, newPosition],
+    'INSERT INTO kanban_cards (title, description, column_id, position, priority, service_order_id, tags, assignee_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+    [title, description, columnId, newPosition, priority, serviceOrderId, JSON.stringify(tags), assigneeId],
   );
   return newCard;
 };
@@ -116,7 +170,10 @@ interface UpdateCardArgs {
   title?: string;
   description?: string;
   due_date?: string; // ISO string
-  assignee_id?: number | null;
+  assignee_id?: string | null;
+  priority?: 'low' | 'normal' | 'high' | 'critical';
+  service_order_id?: number | null; // Adicionado
+  tags?: string[]; // Adicionado
 }
 
 export const updateCard = async ({
@@ -125,6 +182,9 @@ export const updateCard = async ({
   description,
   due_date,
   assignee_id,
+  priority,
+  service_order_id,
+  tags,
 }: UpdateCardArgs): Promise<Card | undefined> => {
   const fields: string[] = [];
   const values: any[] = [];
@@ -145,6 +205,18 @@ export const updateCard = async ({
   if (assignee_id !== undefined) {
     fields.push(`assignee_id = $${paramIndex++}`);
     values.push(assignee_id);
+  }
+  if (priority !== undefined) {
+    fields.push(`priority = $${paramIndex++}`);
+    values.push(priority);
+  }
+  if (service_order_id !== undefined) {
+    fields.push(`service_order_id = $${paramIndex++}`);
+    values.push(service_order_id);
+  }
+  if (tags !== undefined) {
+    fields.push(`tags = $${paramIndex++}`);
+    values.push(JSON.stringify(tags)); // Store tags as JSONB
   }
 
   if (fields.length === 0) {

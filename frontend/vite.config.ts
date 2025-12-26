@@ -46,6 +46,9 @@ export default defineConfig({
       }
     })
   ],
+  define: {
+    'process.env': {},
+  },
   build: {
     rollupOptions: {
       output: {
@@ -63,13 +66,15 @@ export default defineConfig({
       '@utils': path.resolve(__dirname, './src/utils'),
       stream: 'stream-browserify',
       events: 'events', // Add events alias
+      assert: 'assert',
+      zlib: 'browserify-zlib',
     },
     mainFields: ['module', 'jsnext:main', 'jsnext', 'main'],
   },
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
       },
@@ -79,7 +84,7 @@ export default defineConfig({
     jsx: 'automatic',
   },
   optimizeDeps: {
-    include: ['axios'],
+    include: ['axios', 'react-window', 'react-virtualized-auto-sizer'],
     exclude: [],
   },
   test: {

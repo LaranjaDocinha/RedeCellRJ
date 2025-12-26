@@ -8,7 +8,7 @@ import {
   Paper,
   Divider,
   Grid,
-  TextField, // Import TextField
+  TextField,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -16,7 +16,8 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from '../../contexts/NotificationContext';
-import moment from 'moment';
+import { useAuth } from '../../contexts/AuthContext';
+import { format, startOfDay, endOfDay } from 'date-fns';
 
 interface ZReportData {
   startDate: string;
@@ -48,33 +49,37 @@ const style = {
   p: 4,
   maxHeight: '90vh',
   overflowY: 'auto',
+  borderRadius: '24px'
 };
 
 const ZReportModal: React.FC<ZReportModalProps> = ({ open, onClose }) => {
   const { t } = useTranslation();
   const { addNotification } = useNotification();
+  const { token } = useAuth();
   const [reportData, setReportData] = useState<ZReportData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
   const fetchZReport = async (date: Date) => {
+    if (!token) return;
     setLoading(true);
     setError(null);
     try {
-      const startOfDay = moment(date).startOf('day').toISOString();
-      const endOfDay = moment(date).endOf('day').toISOString();
+      const sDate = startOfDay(date).toISOString();
+      const eDate = endOfDay(date).toISOString();
 
       const response = await axios.get<ZReportData>('/api/reports/z-report', {
         params: {
-          startDate: startOfDay,
-          endDate: endOfDay,
+          startDate: sDate,
+          endDate: eDate,
         },
+        headers: { Authorization: `Bearer ${token}` }
       });
       setReportData(response.data);
     } catch (err: any) {
       setError(err.response?.data?.message || err.message);
-      addNotification(t('failed_to_fetch_z_report', { message: err.response?.data?.message || err.message }), 'error');
+      addNotification(t('failed_to_fetch_z_report'), 'error');
     } finally {
       setLoading(false);
     }
@@ -86,12 +91,7 @@ const ZReportModal: React.FC<ZReportModalProps> = ({ open, onClose }) => {
     }
   }, [open, selectedDate]);
 
-  const handleDateChange = (date: Date | null) => {
-    setSelectedDate(date);
-  };
-
   const handlePrint = () => {
-    // Implement print functionality here
     window.print();
   };
 
@@ -100,100 +100,77 @@ const ZReportModal: React.FC<ZReportModalProps> = ({ open, onClose }) => {
       open={open}
       onClose={onClose}
       aria-labelledby="z-report-modal-title"
-      aria-describedby="z-report-modal-description"
     >
       <Box sx={style}>
-        <Typography id="z-report-modal-title" variant="h5" component="h2" gutterBottom>
-          {t('z_report_title')}
+        <Typography id="z-report-modal-title" variant="h5" fontWeight={800} gutterBottom>
+          RELATÓRIO Z (FECHAMENTO)
         </Typography>
-        <Divider sx={{ mb: 2 }} />
+        <Divider sx={{ mb: 3 }} />
 
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <DatePicker
-            label={t('select_date')}
+            label="Selecionar Data"
             value={selectedDate}
-            onChange={handleDateChange}
-            renderInput={(params) => <TextField {...params} fullWidth sx={{ mb: 2 }} />}
+            onChange={(val) => setSelectedDate(val)}
+            slotProps={{
+                textField: {
+                    fullWidth: true,
+                    size: 'small',
+                    sx: { mb: 3 }
+                }
+            }}
           />
         </LocalizationProvider>
 
         {loading && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
             <CircularProgress />
           </Box>
         )}
 
         {error && (
-          <Typography color="error" sx={{ my: 2 }}>
-            {t('error_loading_report')}: {error}
+          <Typography color="error" align="center" sx={{ my: 3 }}>
+            Erro ao carregar: {error}
           </Typography>
         )}
 
         {reportData && !loading && (
-          <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
-            <Typography variant="h6" gutterBottom>{t('summary')}</Typography>
-            <Grid container spacing={1}>
-              <Grid item xs={6}><Typography>{t('report_period')}:</Typography></Grid>
-              <Grid item xs={6}><Typography>{moment(reportData.startDate).format('DD/MM/YYYY HH:mm')} - {moment(reportData.endDate).format('DD/MM/YYYY HH:mm')}</Typography></Grid>
+          <Paper elevation={0} sx={{ p: 3, mb: 2, bgcolor: 'action.hover', borderRadius: '16px' }}>
+            <Typography variant="overline" fontWeight={900} color="text.secondary">RESUMO DO PERÍODO</Typography>
+            <Grid container spacing={2} mt={1}>
+              <Grid size={{ xs: 6 }}><Typography variant="body2">Total de Vendas:</Typography></Grid>
+              <Grid size={{ xs: 6 }} textAlign="right"><Typography fontWeight={700}>R$ {reportData.totalSalesAmount.toFixed(2)}</Typography></Grid>
 
-              <Grid item xs={6}><Typography>{t('total_sales_amount')}:</Typography></Grid>
-              <Grid item xs={6}><Typography>R$ {reportData.totalSalesAmount.toFixed(2)}</Typography></Grid>
+              <Grid size={{ xs: 6 }}><Typography variant="body2">Transações:</Typography></Grid>
+              <Grid size={{ xs: 6 }} textAlign="right"><Typography fontWeight={700}>{reportData.totalTransactions}</Typography></Grid>
 
-              <Grid item xs={6}><Typography>{t('total_transactions')}:</Typography></Grid>
-              <Grid item xs={6}><Typography>{reportData.totalTransactions}</Typography></Grid>
+              <Grid size={{ xs: 6 }}><Typography variant="body2">Descontos:</Typography></Grid>
+              <Grid size={{ xs: 6 }} textAlign="right"><Typography color="error">R$ {reportData.totalDiscounts.toFixed(2)}</Typography></Grid>
 
-              <Grid item xs={6}><Typography>{t('total_discounts')}:</Typography></Grid>
-              <Grid item xs={6}><Typography>R$ {reportData.totalDiscounts.toFixed(2)}</Typography></Grid>
+              <Divider sx={{ width: '100%', my: 1 }} />
 
-              <Grid item xs={6}><Typography>{t('total_returns')}:</Typography></Grid>
-              <Grid item xs={6}><Typography>R$ {reportData.totalReturns.toFixed(2)}</Typography></Grid>
-
-              <Grid item xs={6}><Typography>{t('cash_in')}:</Typography></Grid>
-              <Grid item xs={6}><Typography>R$ {reportData.cashIn.toFixed(2)}</Typography></Grid>
-
-              <Grid item xs={6}><Typography>{t('cash_out')}:</Typography></Grid>
-              <Grid item xs={6}><Typography>R$ {reportData.cashOut.toFixed(2)}</Typography></Grid>
-
-              <Grid item xs={6}><Typography variant="h6">{t('net_cash')}:</Typography></Grid>
-              <Grid item xs={6}><Typography variant="h6">R$ {reportData.netCash.toFixed(2)}</Typography></Grid>
+              <Grid size={{ xs: 6 }}><Typography variant="subtitle1" fontWeight={800}>SALDO LÍQUIDO:</Typography></Grid>
+              <Grid size={{ xs: 6 }} textAlign="right"><Typography variant="subtitle1" fontWeight={900} color="primary">R$ {reportData.netCash.toFixed(2)}</Typography></Grid>
             </Grid>
 
-            <Divider sx={{ my: 2 }} />
-
-            <Typography variant="h6" gutterBottom>{t('sales_by_payment_method')}</Typography>
-            {reportData.salesByPaymentMethod.length > 0 ? (
-              reportData.salesByPaymentMethod.map((item, index) => (
-                <Grid container spacing={1} key={index}>
-                  <Grid item xs={6}><Typography>{t(item.method)}:</Typography></Grid>
-                  <Grid item xs={6}><Typography>R$ {item.amount.toFixed(2)}</Typography></Grid>
-                </Grid>
-              ))
-            ) : (
-              <Typography variant="body2">{t('no_sales_data_for_payment_method')}</Typography>
-            )}
-
-            <Divider sx={{ my: 2 }} />
-
-            <Typography variant="h6" gutterBottom>{t('sales_by_category')}</Typography>
-            {reportData.salesByCategory.length > 0 ? (
-              reportData.salesByCategory.map((item, index) => (
-                <Grid container spacing={1} key={index}>
-                  <Grid item xs={6}><Typography>{item.category}:</Typography></Grid>
-                  <Grid item xs={6}><Typography>R$ {item.amount.toFixed(2)}</Typography></Grid>
-                </Grid>
-              ))
-            ) : (
-              <Typography variant="body2">{t('no_sales_data_for_category')}</Typography>
-            )}
+            <Box mt={4}>
+                <Typography variant="overline" fontWeight={900} color="text.secondary">POR MÉTODO DE PAGAMENTO</Typography>
+                {reportData.salesByPaymentMethod.map((item, index) => (
+                    <Box key={index} display="flex" justifyContent="space-between" mt={1}>
+                        <Typography variant="body2">{t(item.method)}:</Typography>
+                        <Typography variant="body2" fontWeight={600}>R$ {item.amount.toFixed(2)}</Typography>
+                    </Box>
+                ))}
+            </Box>
           </Paper>
         )}
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-          <Button variant="contained" onClick={handlePrint} disabled={!reportData}>
-            {t('print_report')}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
+          <Button variant="outlined" onClick={onClose} sx={{ borderRadius: '12px' }}>
+            Fechar
           </Button>
-          <Button variant="outlined" onClick={onClose}>
-            {t('close')}
+          <Button variant="contained" onClick={handlePrint} disabled={!reportData} sx={{ borderRadius: '12px', px: 4 }}>
+            Imprimir
           </Button>
         </Box>
       </Box>

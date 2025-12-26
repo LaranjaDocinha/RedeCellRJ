@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useNotification } from './NotificationContext'; // Correct path
+import { useNotification } from './NotificationContext';
+import { useAuth } from './AuthContext'; // Import useAuth
+import { useSound } from './SoundContext'; // Import useSound
 
 interface SocketContextType {
   socket: Socket | null;
@@ -14,10 +16,12 @@ interface SocketProviderProps {
 
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
-  const { addToast } = useNotification(); // Use addToast
+  const { showNotification } = useNotification();
+  const { user } = useAuth(); // Get user
+  const { playSound } = useSound(); // Get playSound
 
   useEffect(() => {
-    const newSocket = io('http://localhost:5000'); // Correct URL
+    const newSocket = io(); 
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
@@ -28,29 +32,47 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       console.log('Disconnected from Socket.IO server');
     });
 
-    // Listeners from App.tsx are now here
+    // Gamification Listeners
+    newSocket.on('xp_earned', (data) => {
+      if (data.userId === user?.id) {
+        playSound('achievement');
+        const achievementMsg = data.achievements.length > 0 
+          ? `\n🏆 ${data.achievements.join('\n🏆 ')}`
+          : '';
+        showNotification(`Você ganhou +${data.totalXP} XP!${achievementMsg}`, 'success');
+      }
+    });
+
+    newSocket.on('level_up', (data) => {
+      if (data.userId === user?.id) {
+        playSound('levelUp');
+        showNotification(`PARABÉNS! Você subiu para o Nível ${data.newLevel}! 🚀`, 'info');
+      }
+    });
+
+    // Existing listeners
     newSocket.on('newOrderNotification', (data) => {
       const message = `New Order: ${data.orderId} - ${data.message}`;
       console.log('Socket newOrderNotification:', message);
-      addToast(message, 'success');
+      showNotification(message, 'success');
     });
 
     newSocket.on('lowStockNotification', (data) => {
       const message = `Low Stock: Product ${data.productId}, Variation ${data.variationId} - ${data.currentStock} units (Threshold: ${data.threshold})`
       console.log('Socket lowStockNotification:', message);
-      addToast(message, 'warning');
+      showNotification(message, 'warning');
     });
 
     newSocket.on('customer_birthday', (data) => {
       const message = `Aniversário: Hoje é o aniversário de ${data.name}! Deseje a ele(a) felicidades!`
       console.log('Socket customer_birthday:', message);
-      addToast(message, 'info');
+      showNotification(message, 'info');
     });
 
     return () => {
       newSocket.disconnect();
     };
-  }, [addToast]);
+  }, [showNotification]);
 
   return (
     <SocketContext.Provider value={{ socket }}>

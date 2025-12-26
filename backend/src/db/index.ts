@@ -1,10 +1,6 @@
 import { Pool } from 'pg';
 import 'dotenv/config';
-import { logger } from '../utils/logger';
-
-import { Pool } from 'pg';
-import 'dotenv/config';
-import { logger } from '../utils/logger';
+import { logger } from '../utils/logger.js';
 
 let pool: Pool;
 

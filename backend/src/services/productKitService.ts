@@ -37,7 +37,17 @@ interface UpdateProductKitPayload {
 
 class ProductKitService {
   async getAllProductKits(): Promise<ProductKit[]> {
-    const result = await pool.query('SELECT * FROM product_kits');
+    const query = `
+      SELECT pk.*, 
+             COALESCE(SUM(pki.quantity * pv.cost_price), 0) as total_cost,
+             COUNT(pki.id) as items_count
+      FROM product_kits pk
+      LEFT JOIN product_kit_items pki ON pk.id = pki.kit_id
+      LEFT JOIN product_variations pv ON pki.variation_id = pv.id
+      GROUP BY pk.id
+      ORDER BY pk.created_at DESC
+    `;
+    const result = await pool.query(query);
     return result.rows;
   }
 

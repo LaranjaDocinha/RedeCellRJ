@@ -40,11 +40,11 @@ const ProductDetailPage = () => {
     <ErrorBoundary> {/* Wrap the main content with ErrorBoundary */}
       <Box sx={{ p: 4 }}>
         <Grid container spacing={4}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <ImageGallery images={product.variations.map(v => v.image_url || '/placeholder.png')} selectedImage={mainImageUrl} />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <ProductInfo product={product} onChangeSelectedVariation={handleSelectedVariationChange} />
           </Grid>
         </Grid>
@@ -52,10 +52,10 @@ const ProductDetailPage = () => {
         <Divider sx={{ my: 5 }} />
 
         <Grid container spacing={4}>
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
               <ProductReviews />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
               <ReviewForm />
           </Grid>
         </Grid>
@@ -63,7 +63,7 @@ const ProductDetailPage = () => {
         <Divider sx={{ my: 5 }} />
 
         <Grid container>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
               <RelatedProducts />
           </Grid>
         </Grid>

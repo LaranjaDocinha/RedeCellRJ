@@ -59,7 +59,7 @@ interface MostActiveCustomersWidgetProps {
  */
 const MostActiveCustomersWidget: React.FC<MostActiveCustomersWidgetProps> = React.memo(({ selectedPeriod }) => {
   const { token, isAuthenticated } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   const { data, isLoading, isError, error } = useQuery<CustomerData[], Error>({
     queryKey: ['mostActiveCustomers', token, selectedPeriod],
@@ -69,9 +69,9 @@ const MostActiveCustomersWidget: React.FC<MostActiveCustomersWidgetProps> = Reac
 
   useEffect(() => {
     if (isError && error) {
-      addToast(`Falha ao buscar clientes mais ativos: ${error.message}`, 'error');
+      showNotification(`Falha ao buscar clientes mais ativos: ${error.message}`, 'error');
     }
-  }, [isError, error, addToast]);
+  }, [isError, error, showNotification]);
 
   if (isLoading) {
     return <DashboardWidgetSkeleton />;

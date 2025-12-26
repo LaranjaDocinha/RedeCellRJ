@@ -26,41 +26,41 @@ interface UpdateLoyaltyTierPayload {
 }
 
 export const loyaltyService = {
-  async getLoyaltyPoints(userId: number) {
-    const { rows } = await getPool().query('SELECT loyalty_points FROM users WHERE id = $1', [
-      userId,
+  async getLoyaltyPoints(customerId: number) {
+    const { rows } = await getPool().query('SELECT loyalty_points FROM customers WHERE id = $1', [
+      customerId,
     ]);
     if (rows.length === 0) {
-      throw new AppError('User not found', 404);
+      throw new AppError('Customer not found', 404);
     }
     return rows[0].loyalty_points;
   },
 
-  async addLoyaltyPoints(userId: number, points: number, reason: string) {
+  async addLoyaltyPoints(customerId: number, points: number, reason: string) {
     const client = await getPool().connect();
     try {
       await client.query('BEGIN');
 
-      // Update user's points
+      // Update customer's points
       const {
-        rows: [user],
+        rows: [customer],
       } = await client.query(
-        'UPDATE users SET loyalty_points = loyalty_points + $1 WHERE id = $2 RETURNING loyalty_points',
-        [points, userId],
+        'UPDATE customers SET loyalty_points = loyalty_points + $1 WHERE id = $2 RETURNING loyalty_points',
+        [points, customerId],
       );
 
-      if (!user) {
-        throw new AppError('User not found.', 404);
+      if (!customer) {
+        throw new AppError('Customer not found.', 404);
       }
 
       // Log transaction
       await client.query(
-        'INSERT INTO loyalty_transactions (user_id, points_change, reason) VALUES ($1, $2, $3)',
-        [userId, points, reason],
+        'INSERT INTO loyalty_transactions (customer_id, points, type, reason) VALUES ($1, $2, $3, $4)',
+        [customerId, points, points > 0 ? 'earned' : 'redeemed', reason],
       );
 
       await client.query('COMMIT');
-      return user.loyalty_points;
+      return customer.loyalty_points;
     } catch (error: unknown) {
       await client.query('ROLLBACK');
       if (error instanceof AppError) {
@@ -72,38 +72,38 @@ export const loyaltyService = {
     }
   },
 
-  async redeemLoyaltyPoints(userId: number, points: number, reason: string) {
+  async redeemLoyaltyPoints(customerId: number, points: number, reason: string) {
     const client = await getPool().connect();
     try {
       await client.query('BEGIN');
 
-      // Check if user has enough points
+      // Check if customer has enough points
       const {
-        rows: [user],
-      } = await client.query('SELECT loyalty_points FROM users WHERE id = $1 FOR UPDATE', [userId]);
-      if (!user) {
-        throw new AppError('User not found', 404);
+        rows: [customer],
+      } = await client.query('SELECT loyalty_points FROM customers WHERE id = $1 FOR UPDATE', [customerId]);
+      if (!customer) {
+        throw new AppError('Customer not found', 404);
       }
-      if (user.loyalty_points < points) {
+      if (customer.loyalty_points < points) {
         throw new AppError('Insufficient loyalty points.', 400);
       }
 
       // Deduct points
       const {
-        rows: [updatedUser],
+        rows: [updatedCustomer],
       } = await client.query(
-        'UPDATE users SET loyalty_points = loyalty_points - $1 WHERE id = $2 RETURNING loyalty_points',
-        [points, userId],
+        'UPDATE customers SET loyalty_points = loyalty_points - $1 WHERE id = $2 RETURNING loyalty_points',
+        [points, customerId],
       );
 
       // Log transaction
       await client.query(
-        'INSERT INTO loyalty_transactions (user_id, points_change, reason) VALUES ($1, $2, $3)',
-        [userId, -points, reason],
+        'INSERT INTO loyalty_transactions (customer_id, points, type, reason) VALUES ($1, $2, $3, $4)',
+        [customerId, -points, 'redeemed', reason],
       );
 
       await client.query('COMMIT');
-      return updatedUser.loyalty_points;
+      return updatedCustomer.loyalty_points;
     } catch (error: unknown) {
       await client.query('ROLLBACK');
       if (error instanceof AppError) {
@@ -115,16 +115,16 @@ export const loyaltyService = {
     }
   },
 
-  async getLoyaltyTransactions(userId: number) {
-    const { rows: userCheck } = await getPool().query('SELECT id FROM users WHERE id = $1', [
-      userId,
+  async getLoyaltyTransactions(customerId: number) {
+    const { rows: customerCheck } = await getPool().query('SELECT id FROM customers WHERE id = $1', [
+      customerId,
     ]);
-    if (userCheck.length === 0) {
-      throw new AppError('User not found', 404);
+    if (customerCheck.length === 0) {
+      throw new AppError('Customer not found', 404);
     }
     const { rows } = await getPool().query(
-      'SELECT points_change, reason, created_at FROM loyalty_transactions WHERE user_id = $1 ORDER BY created_at DESC',
-      [userId],
+      'SELECT points as points_change, reason, created_at FROM loyalty_transactions WHERE customer_id = $1 ORDER BY created_at DESC',
+      [customerId],
     );
     return rows;
   },

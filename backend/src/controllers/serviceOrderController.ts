@@ -5,13 +5,16 @@ import { ServiceOrderStatus } from '../types/serviceOrder.js';
 export const createServiceOrder = async (req: Request, res: Response) => {
   try {
     // Assuming user ID is available in req.user from an auth middleware
-    const userId = (req as any).user?.id || 1; // Fallback to 1 for now
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
     const orderData = { ...req.body, user_id: userId };
     const order = await serviceOrderService.createServiceOrder(orderData);
     res.status(201).json(order);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error creating service order' });
+  } catch (error: any) {
+    console.error('Controller createServiceOrder error:', error.message);
+    res.status(500).json({ message: error.message || 'Error creating service order' });
   }
 };
 
@@ -72,7 +75,10 @@ export const changeOrderStatus = async (req: Request, res: Response) => {
     const id = parseInt(req.params.id, 10);
     const { newStatus } = req.body;
     // Assuming user ID is available in req.user from an auth middleware
-    const userId = (req as any).user?.id || 1; // Fallback to 1 for now
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
 
     if (!newStatus) {
       return res.status(400).json({ message: 'newStatus is required' });
@@ -108,7 +114,10 @@ export const suggestTechnician = async (req: Request, res: Response) => {
 export const addComment = async (req: Request, res: Response) => {
   try {
     const serviceOrderId = parseInt(req.params.id, 10);
-    const userId = (req as any).user?.id || 1; // Mock user ID
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
     const { comment_text } = req.body;
     const comment = await serviceOrderService.addComment(serviceOrderId, userId, comment_text);
     res.status(201).json(comment);
@@ -136,7 +145,11 @@ export const addServiceOrderVideoAttachment = async (req: Request, res: Response
       return res.status(400).json({ message: 'ID de Ordem de Serviço inválido.' });
     }
     const { filePath, fileType, description } = req.body; // filePath virá do upload, fileType e description do body
-    const userId = (req as any).user?.id || 1; // Mock user ID
+    const userId = (req as any).user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
 
     if (!filePath || !fileType) {
       return res.status(400).json({ message: 'filePath e fileType são obrigatórios.' });

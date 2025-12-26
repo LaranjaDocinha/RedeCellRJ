@@ -1,128 +1,162 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { FaUserCircle, FaCog, FaSignOutAlt, FaChevronDown } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import { motion, AnimatePresence } from 'framer-motion';
-
-const MenuContainer = styled.div`
-  position: relative;
-`;
-
-const MenuButton = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px;
-  border-radius: 50px;
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.surfaceVariant};
-  }
-`;
-
-const Avatar = styled(FaUserCircle)`
-  font-size: 28px;
-  color: ${({ theme }) => theme.colors.primary};
-`;
-
-const DropdownMenu = styled(motion.div)`
-  position: absolute;
-  top: 120%;
-  right: 0;
-  background-color: ${({ theme }) => theme.colors.surface};
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
-  box-shadow: ${({ theme }) => theme.shadows.elevation2};
-  width: 200px;
-  z-index: 1200;
-  overflow: hidden;
-`;
-
-const DropdownItem = styled(Link)`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  text-decoration: none;
-  color: ${({ theme }) => theme.colors.onSurface};
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.surfaceVariant};
-  }
-`;
-
-const LogoutButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
-  color: ${({ theme }) => theme.colors.error};
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.errorContainer};
-  }
-`;
+import { 
+  Box, 
+  Typography, 
+  IconButton, 
+  Menu, 
+  MenuItem, 
+  ListItemIcon, 
+  Avatar, 
+  Divider, 
+  useTheme, 
+  alpha 
+} from '@mui/material';
+import { FaUserCircle, FaCog, FaSignOutAlt, FaChevronDown, FaUser } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
 
 const UserMenu: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useAuth();
-  const menuRef = useRef<HTMLDivElement>(null);
+  const theme = useTheme();
+  const navigate = useNavigate();
+  const isDarkMode = theme.palette.mode === 'dark';
+  
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
 
-  const toggleMenu = () => setIsOpen(!isOpen);
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    handleClose();
+    logout();
+  };
 
   return (
-    <MenuContainer ref={menuRef}>
-      <MenuButton onClick={toggleMenu}>
-        <Avatar />
-        <span style={{ fontWeight: 500 }}>{user?.name || 'Usuário'}</span>
-        <FaChevronDown size={14} />
-      </MenuButton>
-
-      <AnimatePresence>
-        {isOpen && (
-          <DropdownMenu
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
+    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <Box
+        onClick={handleClick}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          padding: '4px 12px',
+          borderRadius: '12px',
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+          '&:hover': {
+            bgcolor: alpha(theme.palette.primary.main, 0.08),
+          }
+        }}
+      >
+        <Avatar 
+            sx={{ 
+                width: 32, 
+                height: 32, 
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                color: theme.palette.primary.main,
+                fontSize: '1rem'
+            }}
+        >
+          {user?.name ? user.name[0].toUpperCase() : <FaUser size={14} />}
+        </Avatar>
+        
+        <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+                fontWeight: 400, 
+                color: theme.palette.text.primary,
+                lineHeight: 1
+            }}
           >
-            <DropdownItem to="/profile" onClick={() => setIsOpen(false)}>
-              <FaUserCircle />
-              Meu Perfil
-            </DropdownItem>
-            <DropdownItem to="/settings" onClick={() => setIsOpen(false)}>
-              <FaCog />
-              Configurações
-            </DropdownItem>
-            <LogoutButton onClick={logout}>
-              <FaSignOutAlt />
-              Sair
-            </LogoutButton>
-          </DropdownMenu>
-        )}
-      </AnimatePresence>
-    </MenuContainer>
+            {user?.name || 'Usuário'}
+          </Typography>
+          <Typography 
+            variant="caption" 
+            sx={{ 
+                color: theme.palette.text.secondary,
+                fontSize: '0.65rem',
+                textTransform: 'uppercase',
+                letterSpacing: 0.5
+            }}
+          >
+            {user?.role || 'Membro'}
+          </Typography>
+        </Box>
+        
+        <FaChevronDown 
+            size={10} 
+            style={{ 
+                opacity: 0.5, 
+                transition: 'transform 0.2s',
+                transform: open ? 'rotate(180deg)' : 'none',
+                color: theme.palette.text.primary
+            }} 
+        />
+      </Box>
+
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        onClick={handleClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        PaperProps={{
+          elevation: 0,
+          sx: {
+            overflow: 'visible',
+            filter: isDarkMode ? 'none' : 'drop-shadow(0px 2px 8px rgba(0,0,0,0.1))',
+            mt: 1.5,
+            borderRadius: '12px',
+            minWidth: 200,
+            border: `1px solid ${theme.palette.divider}`,
+            bgcolor: theme.palette.background.paper,
+            backgroundImage: 'none',
+            '& .MuiMenuItem-root': {
+                fontSize: '0.85rem',
+                py: 1.5,
+                fontWeight: 400,
+                transition: 'all 0.2s',
+                '&:hover': {
+                    bgcolor: alpha(theme.palette.primary.main, 0.05),
+                }
+            },
+          },
+        }}
+      >
+        <Box sx={{ px: 2, py: 1.5 }}>
+            <Typography variant="body2" sx={{ fontWeight: 400 }}>{user?.name}</Typography>
+            <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
+        </Box>
+        <Divider />
+        <MenuItem onClick={() => navigate('/profile')}>
+          <ListItemIcon>
+            <FaUserCircle size={18} />
+          </ListItemIcon>
+          Meu Perfil
+        </MenuItem>
+        <MenuItem onClick={() => navigate('/settings')}>
+          <ListItemIcon>
+            <FaCog size={18} />
+          </ListItemIcon>
+          Configurações
+        </MenuItem>
+        <Divider />
+        <MenuItem onClick={handleLogout} sx={{ color: theme.palette.error.main }}>
+          <ListItemIcon>
+            <FaSignOutAlt size={18} color={theme.palette.error.main} />
+          </ListItemIcon>
+          Sair do Sistema
+        </MenuItem>
+      </Menu>
+    </Box>
   );
 };
 

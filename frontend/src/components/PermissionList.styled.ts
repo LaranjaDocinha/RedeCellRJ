@@ -18,10 +18,10 @@ export const StyledTableHead = styled(motion.thead)`
   background-color: ${({ theme }) => theme.colors.background};
   color: ${({ theme }) => theme.colors.onBackground};
   text-align: left;
-  font-family: ${({ theme }) => theme.typography.labelLarge.fontFamilyPrimary};
-  font-size: ${({ theme }) => theme.typography.labelLarge.fontSize};
-  line-height: ${({ theme }) => theme.typography.labelLarge.lineHeight};
-  font-weight: ${({ theme }) => theme.typography.labelLarge.fontWeight};
+  font-family: ${({ theme }) => theme.typography.fontFamily};
+  font-size: ${({ theme }) => theme.typography.labelLarge?.fontSize || '14px'};
+  line-height: ${({ theme }) => theme.typography.labelLarge?.lineHeight || '20px'};
+  font-weight: ${({ theme }) => theme.typography.labelLarge?.fontWeight || 500};
 
   th {
     padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
@@ -31,10 +31,10 @@ export const StyledTableHead = styled(motion.thead)`
 
 export const StyledTableBody = styled(motion.tbody)`
   color: ${({ theme }) => theme.colors.onSurface};
-  font-family: ${({ theme }) => theme.typography.bodyMedium.fontFamilyPrimary};
-  font-size: ${({ theme }) => theme.typography.bodyMedium.fontSize};
-  line-height: ${({ theme }) => theme.typography.bodyMedium.lineHeight};
-  font-weight: ${({ theme }) => theme.typography.bodyMedium.fontWeight};
+  font-family: ${({ theme }) => theme.typography.fontFamily};
+  font-size: ${({ theme }) => theme.typography.body2?.fontSize || '14px'};
+  line-height: ${({ theme }) => theme.typography.body2?.lineHeight || '20px'};
+  font-weight: ${({ theme }) => theme.typography.body2?.fontWeight || 400};
 
   tr {
     border-bottom: 1px solid ${({ theme }) => theme.colors.onSurface}10;

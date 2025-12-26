@@ -1,9 +1,39 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Grid,
+  Stack,
+  Divider,
+  Paper,
+  InputAdornment,
+  Checkbox,
+  Chip,
+  Avatar,
+  CircularProgress,
+  IconButton,
+  useTheme,
+  Alert
+} from '@mui/material';
+import { 
+  Search as SearchIcon, 
+  ArrowBack as BackIcon, 
+  Save as SaveIcon, 
+  ShoppingBag as ProductIcon
+} from '@mui/icons-material';
 
+// Tipos
 interface ReturnItemFormData {
   product_id: number;
   variation_id: number;
   quantity: number;
+  name?: string;
+  sku?: string;
+  price?: number;
+  max_quantity?: number;
+  selected?: boolean;
 }
 
 interface ReturnFormData {
@@ -18,172 +48,285 @@ interface ReturnFormProps {
   onCancel: () => void;
 }
 
-export const ReturnForm: React.FC<ReturnFormProps> = ({ initialData, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState<ReturnFormData>({
-    sale_id: 0,
-    reason: '',
-    items: [{ product_id: 0, variation_id: 0, quantity: 0 }],
+// Mock de dados para simular a busca de uma venda
+const mockFetchSaleItems = async (saleId: number) => {
+  return new Promise<any[]>((resolve, reject) => {
+    setTimeout(() => {
+      if (saleId === 1024) {
+        resolve([
+          { product_id: 101, variation_id: 501, quantity: 1, name: 'iPhone 15 Pro - Titanium', sku: 'IP15P-TIT', price: 7500.00, image: null },
+          { product_id: 102, variation_id: 502, quantity: 2, name: 'Capa MagSafe Transparente', sku: 'ACC-MAG-CLR', price: 149.90, image: null }
+        ]);
+      } else if (saleId === 1012) {
+        resolve([
+          { product_id: 201, variation_id: 601, quantity: 1, name: 'Samsung S23 Ultra', sku: 'S23U-BLK', price: 6200.00, image: null }
+        ]);
+      } else {
+        reject(new Error('Venda não encontrada'));
+      }
+    }, 600);
   });
+};
 
-  useEffect(() => {
-    if (initialData) {
-      setFormData(initialData);
+const COMMON_REASONS = [
+  'Defeito de Fábrica',
+  'Arrependimento (7 dias)',
+  'Produto Errado',
+  'Avaria no Transporte',
+  'Incompatibilidade'
+];
+
+export const ReturnForm: React.FC<ReturnFormProps> = ({ initialData, onSubmit, onCancel }) => {
+  const theme = useTheme();
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  const [saleId, setSaleId] = useState<string>(initialData?.sale_id?.toString() || '');
+  const [saleItems, setSaleItems] = useState<ReturnItemFormData[]>([]);
+  const [reason, setReason] = useState(initialData?.reason || '');
+
+  const handleSearchSale = async () => {
+    if (!saleId) {
+      setError('Digite o número da venda');
+      return;
     }
-  }, [initialData]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: name === 'sale_id' ? parseInt(value) : value,
-    }));
+    setLoading(true);
+    setError('');
+    
+    try {
+      const items = await mockFetchSaleItems(parseInt(saleId));
+      const mappedItems = items.map(item => ({
+        ...item,
+        max_quantity: item.quantity,
+        selected: false,
+        quantity: 1
+      }));
+      setSaleItems(mappedItems);
+      setStep(2);
+    } catch (err) {
+      setError('Venda não encontrada. Tente o ID 1024 ou 1012 para teste.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleItemChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    const newItems = [...formData.items];
-    newItems[index] = {
-      ...newItems[index],
-      [name]: parseInt(value),
+  const toggleItemSelection = (index: number) => {
+    const newItems = [...saleItems];
+    newItems[index].selected = !newItems[index].selected;
+    setSaleItems(newItems);
+  };
+
+  const updateQuantity = (index: number, val: number) => {
+    const newItems = [...saleItems];
+    const max = newItems[index].max_quantity || 1;
+    newItems[index].quantity = Math.max(1, Math.min(val, max));
+    setSaleItems(newItems);
+  };
+
+  const handleSubmit = () => {
+    const selectedItems = saleItems.filter(i => i.selected);
+    if (selectedItems.length === 0) {
+      setError('Selecione pelo menos um item para devolver.');
+      return;
+    }
+    if (!reason) {
+      setError('Selecione ou digite um motivo.');
+      return;
+    }
+
+    const payload: ReturnFormData = {
+      sale_id: parseInt(saleId),
+      reason,
+      items: selectedItems.map(({ product_id, variation_id, quantity }) => ({
+        product_id,
+        variation_id,
+        quantity
+      }))
     };
-    setFormData((prevData) => ({ ...prevData, items: newItems }));
+    onSubmit(payload);
   };
 
-  const handleAddItem = () => {
-    setFormData((prevData) => ({
-      ...prevData,
-      items: [...prevData.items, { product_id: 0, variation_id: 0, quantity: 0 }],
-    }));
-  };
+  if (step === 1) {
+    return (
+      <Box p={2}>
+        <Typography variant="body1" color="text.secondary" mb={3}>
+          Informe o código da venda para carregar os produtos disponíveis para devolução.
+        </Typography>
 
-  const handleRemoveItem = (index: number) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      items: prevData.items.filter((_, i) => i !== index),
-    }));
-  };
+        <TextField
+          autoFocus
+          fullWidth
+          label="ID da Venda / Cupom Fiscal"
+          value={saleId}
+          onChange={(e) => setSaleId(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSearchSale()}
+          placeholder="Ex: 1024"
+          InputProps={{
+            sx: { borderRadius: '12px' },
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton onClick={handleSearchSale} disabled={loading} color="primary">
+                  {loading ? <CircularProgress size={24} /> : <SearchIcon />}
+                </IconButton>
+              </InputAdornment>
+            )
+          }}
+          sx={{ mb: 2 }}
+        />
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
+        {error && (
+          <Alert severity="error" sx={{ borderRadius: '12px', mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        <Box display="flex" justifyContent="flex-end" mt={4}>
+          <Button onClick={onCancel} sx={{ mr: 1, borderRadius: '8px' }} color="inherit">
+            Cancelar
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleSearchSale} 
+            disabled={loading || !saleId}
+            sx={{ borderRadius: '8px', px: 4 }}
+          >
+            Buscar Venda
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
+
+  const selectedCount = saleItems.filter(i => i.selected).length;
+  const totalRefundEst = saleItems.filter(i => i.selected).reduce((acc, curr) => acc + ((curr.price || 0) * curr.quantity), 0);
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6 space-y-4">
-      <div>
-        <label htmlFor="sale_id" className="block text-sm font-medium text-gray-700">
-          Sale ID
-        </label>
-        <input
-          type="number"
-          name="sale_id"
-          id="sale_id"
-          value={formData.sale_id}
-          onChange={handleChange}
-          required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
-      </div>
-      <div>
-        <label htmlFor="reason" className="block text-sm font-medium text-gray-700">
-          Reason
-        </label>
-        <textarea
-          name="reason"
-          id="reason"
-          value={formData.reason || ''}
-          onChange={handleChange}
-          rows={3}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        ></textarea>
-      </div>
+    <Box p={1}>
+      <Stack direction="row" alignItems="center" spacing={1} mb={3}>
+        <IconButton onClick={() => setStep(1)} size="small" sx={{ bgcolor: 'action.hover' }}>
+          <BackIcon fontSize="small" />
+        </IconButton>
+        <Box>
+          <Typography variant="body2" color="text.secondary">Venda #{saleId}</Typography>
+          <Typography variant="h6" color="primary">Selecione os itens</Typography>
+        </Box>
+      </Stack>
 
-      <h3 className="text-lg font-semibold mb-2">Items to Return</h3>
-      {formData.items.map((item, index) => (
-        <div key={index} className="flex space-x-2 mb-2 items-end">
-          <div className="flex-1">
-            <label
-              htmlFor={`product_id-${index}`}
-              className="block text-sm font-medium text-gray-700"
-            >
-              Product ID
-            </label>
-            <input
-              type="number"
-              name="product_id"
-              id={`product_id-${index}`}
-              value={item.product_id}
-              onChange={(e) => handleItemChange(index, e)}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-          </div>
-          <div className="flex-1">
-            <label
-              htmlFor={`variation_id-${index}`}
-              className="block text-sm font-medium text-gray-700"
-            >
-              Variation ID
-            </label>
-            <input
-              type="number"
-              name="variation_id"
-              id={`variation_id-${index}`}
-              value={item.variation_id}
-              onChange={(e) => handleItemChange(index, e)}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-          </div>
-          <div className="flex-1">
-            <label
-              htmlFor={`quantity-${index}`}
-              className="block text-sm font-medium text-gray-700"
-            >
-              Quantity
-            </label>
-            <input
-              type="number"
-              name="quantity"
-              id={`quantity-${index}`}
-              value={item.quantity}
-              onChange={(e) => handleItemChange(index, e)}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={() => handleRemoveItem(index)}
-            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-3 rounded text-sm"
+      <Stack spacing={2} mb={4} sx={{ maxHeight: 300, overflowY: 'auto', pr: 1 }}>
+        {saleItems.map((item, index) => (
+          <Paper 
+            key={`${item.product_id}-${item.variation_id}`}
+            variant="outlined"
+            sx={{ 
+              p: 2, 
+              borderRadius: '16px', 
+              borderColor: item.selected ? 'primary.main' : 'divider',
+              bgcolor: item.selected ? (theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.08)' : 'primary.50') : 'background.paper',
+              transition: 'all 0.2s',
+              cursor: 'pointer',
+              '&:hover': {
+                bgcolor: item.selected ? (theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.12)' : 'primary.100') : 'action.hover'
+              }
+            }}
+            onClick={() => toggleItemSelection(index)}
           >
-            Remove
-          </button>
-        </div>
-      ))}
-      <button
-        type="button"
-        onClick={handleAddItem}
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
-      >
-        Add Item
-      </button>
+            <Grid container alignItems="center" spacing={2}>
+              <Grid item>
+                <Checkbox 
+                  checked={item.selected} 
+                  color="primary"
+                  sx={{ p: 0 }}
+                />
+              </Grid>
+              <Grid item>
+                <Avatar variant="rounded" sx={{ bgcolor: 'action.selected', color: 'text.secondary' }}>
+                  <ProductIcon />
+                </Avatar>
+              </Grid>
+              <Grid item xs>
+                <Typography variant="body1">{item.name}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  SKU: {item.sku} • Valor Unit: R$ {item.price?.toFixed(2)}
+                </Typography>
+              </Grid>
+              
+              {item.selected && (
+                <Grid item onClick={(e) => e.stopPropagation()}>
+                  <TextField
+                    type="number"
+                    label="Qtd"
+                    size="small"
+                    value={item.quantity}
+                    onChange={(e) => updateQuantity(index, parseInt(e.target.value))}
+                    InputProps={{ 
+                      inputProps: { min: 1, max: item.max_quantity },
+                      sx: { borderRadius: '8px' }
+                    }}
+                    sx={{ width: 80 }}
+                  />
+                </Grid>
+              )}
+            </Grid>
+          </Paper>
+        ))}
+      </Stack>
 
-      <div className="flex justify-end space-x-3 mt-6">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+      <Divider sx={{ mb: 3 }} />
+
+      <Typography variant="body2" color="text.secondary" mb={1}>
+        Motivo da Devolução
+      </Typography>
+      <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
+        {COMMON_REASONS.map((r) => (
+          <Chip
+            key={r}
+            label={r}
+            onClick={() => setReason(r)}
+            color={reason === r ? 'primary' : 'default'}
+            variant={reason === r ? 'filled' : 'outlined'}
+            sx={{ borderRadius: '8px' }}
+          />
+        ))}
+      </Box>
+      <TextField
+        fullWidth
+        placeholder="Outro motivo ou detalhes adicionais..."
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        size="small"
+        multiline
+        rows={2}
+        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' }, mb: 1 }}
+      />
+      {error && <Typography color="error" variant="caption">{error}</Typography>}
+
+      <Box 
+        mt={3} 
+        p={2} 
+        sx={{ 
+          bgcolor: theme.palette.mode === 'dark' ? 'action.hover' : 'grey.50',
+          borderRadius: '16px',
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center'
+        }}
+      >
+        <Box>
+          <Typography variant="caption" color="text.secondary">Estorno Estimado</Typography>
+          <Typography variant="h6" color="primary">R$ {totalRefundEst.toFixed(2)}</Typography>
+        </Box>
+        <Button 
+          variant="contained" 
+          size="large"
+          startIcon={<SaveIcon />}
+          onClick={handleSubmit}
+          disabled={selectedCount === 0 || !reason}
+          sx={{ borderRadius: '12px', px: 4 }}
         >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          {initialData ? 'Update Return' : 'Create Return'}
-        </button>
-      </div>
-    </form>
+          Confirmar Devolução
+        </Button>
+      </Box>
+    </Box>
   );
 };

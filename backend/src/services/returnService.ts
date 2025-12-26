@@ -97,7 +97,7 @@ class ReturnService {
   }
 
   async getAllReturns(): Promise<ReturnRecord[]> {
-    const result = await pool.query('SELECT * FROM returns ORDER BY return_date DESC');
+    const result = await pool.query('SELECT * FROM returns ORDER BY created_at DESC');
     return result.rows;
   }
 
@@ -159,7 +159,7 @@ class ReturnService {
                     ri.quantity,
                     ri.inspection_status,
                     r.id as return_id,
-                    r.return_date,
+                    r.created_at as return_date,
                     p.name as product_name,
                     pv.color,
                     c.name as customer_name
@@ -170,7 +170,7 @@ class ReturnService {
                   JOIN sales s ON r.sale_id = s.id
                   LEFT JOIN customers c ON s.customer_id = c.id
                   WHERE ri.inspection_status = 'pending'
-                  ORDER BY r.return_date DESC;
+                  ORDER BY r.created_at DESC;
                 `;
     const result = await pool.query(query);
     return result.rows;

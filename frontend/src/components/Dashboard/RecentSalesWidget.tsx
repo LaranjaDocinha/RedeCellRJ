@@ -1,157 +1,61 @@
-import React, { useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useNotification } from '../../contexts/NotificationContext';
-import { useQuery } from '@tanstack/react-query';
-import DashboardWidgetSkeleton from './DashboardWidgetSkeleton';
-import { List, ListItem, ListItemText, Typography, Divider, Box } from '@mui/material';
+import React from 'react';
+import { List, ListItem, ListItemText, Typography, Divider, Box, Paper, Avatar, useTheme, alpha } from '@mui/material';
+import { ShoppingCart, Person } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import { FaShoppingCart } from 'react-icons/fa'; // Icon for empty state
 
-/**
- * @interface RecentSalesWidgetProps
- * @description Propriedades para o componente RecentSalesWidget.
- * @property {string} selectedPeriod - O período selecionado para filtrar os dados.
- */
 interface RecentSalesWidgetProps {
-  selectedPeriod: string;
+  data: any;
+  loading?: boolean;
 }
 
-/**
- * @interface Sale
- * @description Define a estrutura de um objeto de venda.
- * @property {number} id - O ID da venda.
- * @property {number} total_amount - O valor total da venda.
- * @property {string} sale_date - A data da venda.
- * @property {string} [customer_name] - Nome do cliente (opcional).
- * @property {string} [status] - Status da venda (opcional).
- */
-interface Sale {
-  id: number;
-  total_amount: number;
-  sale_date: string;
-  customer_name?: string;
-  status?: string;
-}
-
-/**
- * @function fetchRecentSales
- * @description Função assíncrona para buscar os dados de vendas recentes.
- * @param {string} token - Token de autenticação do usuário.
- * @param {string} selectedPeriod - O período selecionado para a busca.
- * @returns {Promise<Sale[]>} Uma promessa que resolve com uma lista de vendas recentes.
- * @throws {Error} Se a requisição HTTP falhar.
- */
-const fetchRecentSales = async (token: string, selectedPeriod: string): Promise<Sale[]> => {
-  const response = await fetch(`/api/sales?period=${selectedPeriod}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-  const data: Sale[] = await response.json();
-  // For demonstration, adding dummy customer_name and status
-  return data.map(sale => ({
-    ...sale,
-    customer_name: `Cliente ${sale.id}`,
-    status: sale.id % 2 === 0 ? 'Concluída' : 'Pendente',
-  }));
-};
-
-/**
- * @function RecentSalesWidget
- * @description Componente de widget que exibe uma lista das vendas mais recentes.
- * @param {RecentSalesWidgetProps} props - As propriedades do componente.
- * @returns {React.FC} O componente RecentSalesWidget.
- */
-const RecentSalesWidget: React.FC<RecentSalesWidgetProps> = React.memo(({ selectedPeriod }) => {
-  const { token, isAuthenticated } = useAuth();
-  const { addToast } = useNotification();
-
-  const { data: recentSales, isLoading, isError, error } = useQuery<Sale[], Error>({
-    queryKey: ['recentSales', token, selectedPeriod],
-    queryFn: () => fetchRecentSales(token!, selectedPeriod),
-    enabled: isAuthenticated,
-  });
-
-  useEffect(() => {
-    if (isError && error) {
-      addToast(`Falha ao buscar vendas recentes: ${error.message}`, 'error');
-    }
-  }, [isError, error, addToast]);
-
-  if (isLoading) {
-    return <DashboardWidgetSkeleton />;
-  }
-
-  const handleSaleClick = (saleId: number) => {
-    addToast(`Detalhes da Venda #${saleId} (funcionalidade a ser implementada)`, 'info');
-    // Implement navigation to sale detail page or open a modal
-  };
-
-  if (recentSales && recentSales.length === 0) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          p: 3,
-          color: (theme) => theme.palette.text.secondary,
-        }}
-      >
-        <FaShoppingCart style={{ fontSize: '4rem', marginBottom: '1rem' }} />
-        <Typography variant="body1" fontWeight="bold">Nenhuma venda recente encontrada.</Typography>
-        <Typography variant="body2" sx={{ mt: 1 }}>
-          Comece a registrar vendas para ver a atividade aqui.
-        </Typography>
-      </Box>
-    );
-  }
+const RecentSalesWidget: React.FC<RecentSalesWidgetProps> = ({ data, loading = false }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+  const recentSales = data?.recentSales?.mainPeriodRecentSales || [];
 
   return (
-    <List sx={{ maxHeight: 300, overflow: 'auto' }}>
-      {recentSales?.map((sale, index) => (
-        <motion.div
-          key={sale.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: index * 0.05 }}
-        >
-          <ListItem button onClick={() => handleSaleClick(sale.id)}>
-            <ListItemText
-              primary={
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body1" component="span" sx={{ fontWeight: 'medium' }}>
-                    Venda #{sale.id}
-                  </Typography>
-                  <Typography variant="body1" component="span" color="primary" sx={{ fontWeight: 'bold' }}>
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(sale.total_amount)}
-                  </Typography>
-                </Box>
-              }
-              secondary={
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Cliente: {sale.customer_name || 'N/A'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Status: {sale.status || 'N/A'}
-                  </Typography>
-                  <Typography variant="caption" color="text.disabled">
-                    {new Date(sale.sale_date).toLocaleDateString('pt-BR')}
-                  </Typography>
-                </Box>
-              }
-            />
-          </ListItem>
-          {index < recentSales.length - 1 && <Divider component="li" />}
-        </motion.div>
-      ))}
-    </List>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ height: '100%', width: '100%' }}>
+      <Paper sx={{ 
+        p: 3, borderRadius: '24px', height: '100%', minHeight: '400px',
+        boxShadow: isDarkMode ? 'none' : '0 10px 40px rgba(0,0,0,0.04)', 
+        display: 'flex', flexDirection: 'column',
+        border: `1px solid ${theme.palette.divider}`,
+        bgcolor: 'background.paper',
+        backgroundImage: 'none',
+        boxSizing: 'border-box'
+      }}>
+        <Typography variant="overline" sx={{ fontWeight: 400, color: 'text.secondary', mb: 2, letterSpacing: 1 }}>
+          Atividade Recente
+        </Typography>
+
+        <Box sx={{ flexGrow: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+          {recentSales.length > 0 ? (
+            <List disablePadding>
+              {recentSales.slice(0, 5).map((sale: any, index: number) => (
+                <React.Fragment key={sale.id}>
+                  <ListItem sx={{ px: 0, py: 1.5 }}>
+                    <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main', mr: 2, width: 40, height: 40, fontWeight: 400 }}>
+                      {sale.customer_name?.[0] || <Person />}
+                    </Avatar>
+                    <ListItemText
+                      primary={<Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography variant="body2" sx={{ fontWeight: 400, color: 'text.primary' }}>Venda #{sale.id}</Typography><Typography variant="body2" sx={{ fontWeight: 400, color: 'success.main' }}>R$ {Number(sale.total_amount).toFixed(2)}</Typography></Box>}
+                      secondary={<Typography variant="caption" color="text.disabled" sx={{ fontWeight: 400 }}>{new Date(sale.sale_date).toLocaleTimeString('pt-BR')} • {new Date(sale.sale_date).toLocaleDateString('pt-BR')}</Typography>}
+                    />
+                  </ListItem>
+                  {index < 4 && <Divider sx={{ opacity: 0.5 }} />}
+                </React.Fragment>
+              ))}
+            </List>
+          ) : (
+            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+              <ShoppingCart sx={{ fontSize: 48, mb: 1 }} />
+              <Typography variant="body2" sx={{ fontWeight: 400 }}>Nenhuma venda</Typography>
+            </Box>
+          )}
+        </Box>
+      </Paper>
+    </motion.div>
   );
-});
+};
 
 export default RecentSalesWidget;

@@ -3,18 +3,19 @@ import { ipWhitelistService } from '../services/ipWhitelistService.js';
 import { z } from 'zod';
 import { AppError } from '../utils/errors.js';
 
-// Zod schemas for validation
-const createIpEntrySchema = z.object({
-  ip_address: z.string().ip({ version: 'v4' }).or(z.string().ip({ version: 'v6' })),
+// Zod schemas
+export const createIpEntrySchema = z.object({
+  ip_address: z.string().ip({ message: 'Invalid IP address' }),
+  description: z.string().optional(),
+  is_active: z.boolean().default(true),
+});
+
+export const updateIpEntrySchema = z.object({
+  ip_address: z.string().ip({ message: 'Invalid IP address' }).optional(),
   description: z.string().optional(),
   is_active: z.boolean().optional(),
 });
 
-const updateIpEntrySchema = z.object({
-  ip_address: z.string().ip({ version: 'v4' }).or(z.string().ip({ version: 'v6' })).optional(),
-  description: z.string().optional(),
-  is_active: z.boolean().optional(),
-}).partial();
 
 export const ipWhitelistController = {
   async getAllEntries(req: Request, res: Response) {

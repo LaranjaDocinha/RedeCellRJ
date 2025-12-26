@@ -1,59 +1,80 @@
 import React from 'react';
-import { Card, CardContent, Typography } from '@mui/material';
-import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import { useTranslation } from 'react-i18next';
+import Chart from 'react-apexcharts';
+import { Paper, Typography, Box, useTheme, Skeleton, alpha } from '@mui/material';
 
-// Coordenadas aproximadas para cidades principais do RJ (Mock para visualização)
-// Numa implementação real, usaríamos um serviço de Geocoding no backend ou frontend.
-const cityCoords: { [key: string]: [number, number] } = {
-  'Rio de Janeiro': [-22.9068, -43.1729],
-  'Niterói': [-22.8859, -43.1153],
-  'São Gonçalo': [-22.8275, -43.0632],
-  'Duque de Caxias': [-22.7797, -43.3074],
-  'Nova Iguaçu': [-22.7561, -43.4607],
-  // Fallback
-  'Unknown': [-22.9068, -43.1729] 
-};
+interface SalesHeatmapWidgetProps {
+  data: any;
+  loading?: boolean;
+}
 
-const SalesHeatmapWidget: React.FC<{ data: any[] }> = ({ data }) => {
-  const { t } = useTranslation();
+const SalesHeatmapWidget: React.FC<SalesHeatmapWidgetProps> = ({ data, loading = false }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+  const heatmapData = Array.isArray(data?.salesHeatmap) ? data.salesHeatmap : [];
+  
+  const FIXED_HEIGHT = '400px';
 
-  if (!data || data.length === 0) return null;
+  if (loading) {
+    return (
+      <Paper sx={{ p: 3, borderRadius: '24px', height: FIXED_HEIGHT, boxShadow: '0 10px 40px rgba(0,0,0,0.04)', boxSizing: 'border-box', bgcolor: 'background.paper', backgroundImage: 'none' }}>
+        <Skeleton variant="text" width="40%" />
+        <Skeleton variant="rectangular" height={280} sx={{ mt: 4, borderRadius: '16px' }} />
+      </Paper>
+    );
+  }
+
+  const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  
+  const series = days.map((day, idx) => ({
+    name: day,
+    data: Array.from({ length: 24 }, (_, hour) => {
+      const found = heatmapData.find((d: any) => d.day_of_week === idx && d.hour === hour);
+      return { x: `${hour}h`, y: found ? Number(found.count) : 0 };
+    })
+  }));
+
+  const chartOptions: ApexCharts.ApexOptions = {
+    chart: { 
+      toolbar: { show: false }, 
+      background: 'transparent'
+    },
+    dataLabels: { enabled: false },
+    stroke: { width: 1, colors: [theme.palette.background.paper] },
+    theme: { mode: isDarkMode ? 'dark' : 'light' },
+    xaxis: {
+      labels: { style: { colors: theme.palette.text.secondary } }
+    },
+    yaxis: {
+      labels: { style: { colors: theme.palette.text.secondary } }
+    },
+    plotOptions: {
+      heatmap: {
+        colorScale: {
+          ranges: [
+            { from: 0, to: 0, color: isDarkMode ? alpha(theme.palette.common.white, 0.05) : '#f0f0f0', name: 'Nenhuma' },
+            { from: 1, to: 5, color: alpha(theme.palette.primary.main, 0.3), name: 'Baixa' },
+            { from: 6, to: 15, color: alpha(theme.palette.primary.main, 0.6), name: 'Média' },
+            { from: 16, to: 100, color: theme.palette.primary.main, name: 'Alta' }
+          ]
+        }
+      }
+    }
+  };
 
   return (
-    <Card sx={{ height: '400px' }}>
-      <CardContent sx={{ height: '100%', p: 0, '&:last-child': { pb: 0 } }}>
-        <Typography variant="h6" sx={{ p: 2, position: 'absolute', zIndex: 1000, background: 'rgba(255,255,255,0.7)', borderRadius: 1 }}>
-          {t('sales_heatmap')}
-        </Typography>
-        <MapContainer center={[-22.9068, -43.1729]} zoom={10} style={{ height: '100%', width: '100%' }}>
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          {data.map((cityData, index) => {
-            const coords = cityCoords[cityData.city] || cityCoords['Unknown'];
-            const radius = Math.log(cityData.total_revenue) * 2; // Scale radius based on revenue
-            
-            return (
-              <CircleMarker 
-                key={index} 
-                center={coords} 
-                radius={radius}
-                pathOptions={{ color: 'red', fillColor: '#f03', fillOpacity: 0.5 }}
-              >
-                <Popup>
-                  <strong>{cityData.city}</strong><br />
-                  Vendas: {cityData.sales_count}<br />
-                  Receita: R$ {cityData.total_revenue.toFixed(2)}
-                </Popup>
-              </CircleMarker>
-            );
-          })}
-        </MapContainer>
-      </CardContent>
-    </Card>
+    <Paper sx={{ 
+      p: 3, borderRadius: '24px', height: '100%',
+      boxShadow: isDarkMode ? 'none' : '0 10px 40px rgba(0,0,0,0.04)', 
+      border: `1px solid ${theme.palette.divider}`, 
+      display: 'flex', flexDirection: 'column', boxSizing: 'border-box',
+      bgcolor: 'background.paper',
+      backgroundImage: 'none'
+    }}>
+      <Typography variant="overline" sx={{ fontWeight: 400, color: 'text.secondary', letterSpacing: 1 }}>Horários de Pico</Typography>
+      <Box sx={{ mt: 'auto', flexGrow: 1, minHeight: 0 }}>
+        <Chart options={chartOptions} series={series} type="heatmap" height="100%" width="100%" />
+      </Box>
+    </Paper>
   );
 };
 

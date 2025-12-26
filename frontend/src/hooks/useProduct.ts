@@ -5,14 +5,14 @@ import { useNotification } from '../contexts/NotificationContext';
 
 export const useProduct = (productId: string) => {
   const { token } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   const productQuery = useQuery({
     queryKey: ['product', productId],
     queryFn: () => fetchProductById(productId, token!),
     enabled: !!token && !!productId, // Only run query if token and productId exist
     onError: (error: any) => {
-      addToast(`Falha ao buscar detalhes do produto: ${error.message}`, 'error');
+      showNotification(`Falha ao buscar detalhes do produto: ${error.message}`, 'error');
     },
   });
 

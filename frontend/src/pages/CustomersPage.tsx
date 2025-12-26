@@ -1,441 +1,260 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Box, 
-  Container, 
-  Typography, 
-  Button, 
-  Card, 
-  CardContent, 
-  Grid, 
-  IconButton, 
-  TextField, 
-  InputAdornment, 
-  Dialog, 
-  DialogContent, 
-  DialogTitle,
-  useTheme,
-  Tooltip,
-  Chip,
-  Avatar,
-  CircularProgress
+import React, { useState, useMemo, useCallback } from 'react';
+import {
+  Box, Container, Typography, Button, Card, CardContent, Grid, IconButton,
+  Tooltip, Chip, Avatar, Drawer, Stack, Divider,
+  Dialog, DialogContent, DialogTitle, useTheme, Menu, MenuItem,
+  TextField, InputAdornment, List, ListItem, ListItemIcon, ListItemText
 } from '@mui/material';
-import { 
-  DataGrid, 
-  GridColDef, 
-  GridRenderCellParams, 
-  GridToolbar,
-  ptBR
-} from '@mui/x-data-grid';
-import { 
-  Add as AddIcon, 
-  Edit as EditIcon, 
-  Delete as DeleteIcon, 
-  Search as SearchIcon, 
-  People as PeopleIcon,
-  TrendingUp as TrendingUpIcon,
-  Star as StarIcon,
-  PersonAdd as PersonAddIcon
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { ptBR } from '@mui/x-data-grid/locales';
+import {
+  Add as AddIcon, Refresh, Visibility as ViewIcon, Edit as EditIcon,
+  Download as ExportIcon, WhatsApp as WhatsAppIcon, Search as SearchIcon,
+  People as PeopleIcon, TrendingUp as TrendingUpIcon, Star as StarIcon,
+  Map as MapIcon, PersonPinCircle, FilterList as FilterIcon,
+  Facebook as FacebookIcon, Google as GoogleIcon,
+  Cake as BirthdayIcon
 } from '@mui/icons-material';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { CustomerForm } from '../components/CustomerForm';
-import Loading from '../components/Loading'; // Keeping original loading for initial state if needed
+import { differenceInDays } from 'date-fns';
 
-// Motion components
-const MotionContainer = motion(Container);
-const MotionCard = motion(Card);
+const MotionContainer = motion.create(Container);
+const MotionCard = motion.create(Card);
 
-interface Customer {
-  id: number;
-  name: string;
-  email: string;
-  phone?: string;
-  address?: string;
-  cpf?: string;
-  birth_date?: string;
-  rfm_recency?: number;
-  rfm_frequency?: number;
-  rfm_monetary?: number;
-  rfm_segment?: string;
-  loyalty_points?: number;
-  loyalty_tier_id?: number;
-  created_at?: string; // Assuming this field exists or we can infer
-}
+const stringToColor = (string: string) => {
+  let hash = 0;
+  for (let i = 0; i < string.length; i++) hash = string.charCodeAt(i) + ((hash << 5) - hash);
+  let color = '#';
+  for (let i = 0; i < 3; i++) color += `00${((hash >> (i * 8)) & 0xff).toString(16)}`.slice(-2);
+  return color;
+};
 
 const CustomersPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const theme = useTheme();
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [editingCustomer, setEditingCustomer] = useState<Customer | undefined>(undefined);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [searchText, setSearchText] = useState('');
   const { token } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
+  
+  const [editingCustomer, setEditingCustomer] = useState<any>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [exportAnchor, setExportAnchor] = useState<null | HTMLElement>(null);
+  const [searchText, setSearchText] = useState('');
 
-  // Stats calculation
-  const stats = useMemo(() => {
-    const total = customers.length;
-    const active = customers.filter(c => c.rfm_segment !== 'Lost').length; // Example logic
-    const vip = customers.filter(c => (c.loyalty_points || 0) > 100).length; // Example logic
-    return { total, active, vip };
-  }, [customers]);
-
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
-
-  const fetchCustomers = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/customers', {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const data = await response.json();
-      setCustomers(data);
-    } catch (error: any) {
-      console.error("Falha ao buscar clientes:", error);
-      addToast(`Falha ao buscar clientes: ${error.message}`, 'error');
-    } finally {
-      setLoading(false);
+  const { data: customers = [], isLoading } = useQuery({
+    queryKey: ['customers'],
+    queryFn: async () => {
+      const res = await fetch('/api/customers', { headers: { 'Authorization': `Bearer ${token}` } });
+      return res.json();
     }
-  };
+  });
 
-  const handleCreateCustomer = async (customerData: any) => {
-    try {
-      const response = await fetch('/api/customers', {
-        method: 'POST',
+  const mutation = useMutation({
+    mutationFn: async (newData: any) => {
+      const method = newData.id ? 'PUT' : 'POST';
+      const url = newData.id ? `/api/customers/${newData.id}` : '/api/customers';
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(customerData),
+        body: JSON.stringify(newData)
       });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      await response.json();
-      setIsModalOpen(false);
-      fetchCustomers();
-      addToast('Cliente criado com sucesso!', 'success');
-    } catch (error: any) {
-      console.error("Falha ao criar cliente:", error);
-      addToast(`Falha ao criar cliente: ${error.message}`, 'error');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      showNotification('Operação realizada com sucesso!', 'success');
+      handleCloseModal();
     }
-  };
+  });
 
-  const handleUpdateCustomer = async (id: number, customerData: any) => {
-    try {
-      const response = await fetch(`/api/customers/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(customerData),
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      await response.json();
-      setEditingCustomer(undefined);
-      setIsModalOpen(false);
-      fetchCustomers();
-      addToast('Cliente atualizado com sucesso!', 'success');
-    } catch (error: any) {
-      console.error("Falha ao atualizar cliente:", error);
-      addToast(`Falha ao atualizar cliente: ${error.message}`, 'error');
-    }
-  };
-
-  const handleDeleteCustomer = async (id: number) => {
-    if (!window.confirm('Você tem certeza que deseja excluir este cliente?')) return;
-    try {
-      const response = await fetch(`/api/customers/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      fetchCustomers();
-      addToast('Cliente excluído com sucesso!', 'success');
-    } catch (error: any) {
-      console.error("Falha ao excluir cliente:", error);
-      addToast(`Falha ao excluir cliente: ${error.message}`, 'error');
-    }
-  };
-
-  const handleOpenModal = (customer?: Customer) => {
-    setEditingCustomer(customer);
+  const handleOpenModal = (customer?: any) => {
+    setEditingCustomer(customer || null);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
-    setEditingCustomer(undefined);
+    setEditingCustomer(null);
     setIsModalOpen(false);
   };
 
+  const monthlyBirthdays = useMemo(() => {
+    const currentMonth = new Date().getMonth() + 1;
+    return customers.filter((c: any) => {
+      if (!c.birth_date) return false;
+      return new Date(c.birth_date).getUTCMonth() + 1 === currentMonth;
+    });
+  }, [customers]);
+
+  const stats = useMemo(() => ({
+    total: customers.length,
+    ativos: customers.filter((c: any) => (c.loyalty_points || 0) > 0).length,
+    vips: customers.filter((c: any) => (c.loyalty_points || 0) > 500).length
+  }), [customers]);
+
   const filteredCustomers = useMemo(() => {
-    return customers.filter(c => 
+    return customers.filter((c: any) => 
       c.name.toLowerCase().includes(searchText.toLowerCase()) ||
       c.email.toLowerCase().includes(searchText.toLowerCase()) ||
       (c.phone && c.phone.includes(searchText))
     );
   }, [customers, searchText]);
 
+  const handleExport = (type: 'fb' | 'google') => {
+    setExportAnchor(null);
+    const headers = type === 'fb' ? 'email,phone,fn,ln' : 'Email,Phone,First Name,Last Name';
+    const csvContent = customers.map((c: any) => `${c.email},${c.phone},${c.name},`).join('\n');
+    const blob = new Blob([`${headers}\n${csvContent}`], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `redecell_leads_${type}.csv`; a.click();
+    showNotification('Exportação concluída!', 'success');
+  };
+
   const columns: GridColDef[] = [
-    { 
-      field: 'id', 
-      headerName: 'ID', 
-      width: 70,
-      renderCell: (params) => <Typography variant="body2" color="textSecondary">#{params.value}</Typography>
-    },
-    { 
-      field: 'name', 
-      headerName: 'Cliente', 
-      flex: 1, 
-      minWidth: 200,
+    {
+      field: 'name', headerName: 'Cliente', flex: 1, minWidth: 220,
       renderCell: (params) => (
-        <Box display="flex" alignItems="center" gap={2}>
-          <Avatar sx={{ bgcolor: theme.palette.primary.main }}>{params.value.charAt(0).toUpperCase()}</Avatar>
+        <Box display="flex" alignItems="center" gap={2} height="100%">
+          <Avatar sx={{ bgcolor: stringToColor(params.value), fontWeight: 700 }}>{params.value[0]}</Avatar>
           <Box>
-            <Typography variant="subtitle2" fontWeight="bold">{params.value}</Typography>
-            <Typography variant="caption" color="textSecondary">{params.row.email}</Typography>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{params.value}</Typography>
+            {params.row.last_purchase_date && differenceInDays(new Date(), new Date(params.row.last_purchase_date)) > 60 && (
+              <Chip label="Inativo" size="small" color="error" variant="outlined" sx={{ height: 16, fontSize: '10px' }} />
+            )}
           </Box>
         </Box>
       )
     },
-    { 
-      field: 'phone', 
-      headerName: 'Telefone', 
-      width: 150,
-      renderCell: (params) => params.value || '-'
-    },
-    { 
-      field: 'loyalty_points', 
-      headerName: 'Pontos Fidelidade', 
-      width: 150,
+    {
+      field: 'phone', headerName: 'WhatsApp', width: 160,
       renderCell: (params) => (
-        <Chip 
-          icon={<StarIcon fontSize="small" />} 
-          label={params.value || 0} 
-          size="small" 
-          color="secondary" 
-          variant="outlined"
-        />
-      )
-    },
-    { 
-      field: 'rfm_segment', 
-      headerName: 'Segmento', 
-      width: 150,
-      renderCell: (params) => (
-        <Chip 
-          label={params.value || 'Novo'} 
-          size="small" 
-          color={params.value === 'Champion' ? 'success' : 'default'} 
-        />
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Typography variant="body2">{params.value || '-'}</Typography>
+          {params.value && <IconButton size="small" color="success" onClick={() => window.open(`https://wa.me/55${params.value.replace(/\D/g, '')}`)}><WhatsAppIcon fontSize="inherit" /></IconButton>}
+        </Stack>
       )
     },
     {
-      field: 'actions',
-      headerName: 'Ações',
-      width: 120,
-      sortable: false,
-      align: 'right',
-      headerAlign: 'right',
-      renderCell: (params: GridRenderCellParams) => (
+      field: 'loyalty_points', headerName: 'Pontos', width: 100,
+      renderCell: (params) => <Chip label={params.value || 0} size="small" color="secondary" variant="outlined" sx={{ fontWeight: 700 }} />
+    },
+    {
+      field: 'actions', headerName: 'Ações', width: 120, sortable: false,
+      renderCell: (params) => (
         <Box>
-          <Tooltip title="Editar">
-            <IconButton size="small" color="primary" onClick={() => handleOpenModal(params.row)}>
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Excluir">
-            <IconButton size="small" color="error" onClick={() => handleDeleteCustomer(params.row.id)}>
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          <IconButton size="small" onClick={() => { setSelectedCustomer(params.row); setIsDrawerOpen(true); }}><ViewIcon fontSize="inherit" /></IconButton>
+          <IconButton size="small" color="primary" onClick={() => handleOpenModal(params.row)}><EditIcon fontSize="inherit" /></IconButton>
         </Box>
       )
     }
   ];
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-  };
-
   return (
-    <MotionContainer 
-      maxWidth="xl" 
-      sx={{ py: 4 }}
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      {/* Header Section */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4} component={motion.div} variants={itemVariants}>
+    <MotionContainer maxWidth={false} sx={{ py: 4, px: { xs: 2, md: 4 } }} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={4} flexWrap="wrap" gap={2}>
         <Box>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
-            Clientes
-          </Typography>
-          <Typography variant="body1" color="textSecondary">
-            Gerencie sua base de clientes e programas de fidelidade.
-          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>Clientes</Typography>
+          <Typography variant="body2" color="text.secondary">Gestão inteligente e fidelização</Typography>
         </Box>
-        <Button 
-          variant="contained" 
-          color="primary" 
-          startIcon={<AddIcon />} 
-          size="large"
-          onClick={() => handleOpenModal()}
-          sx={{ borderRadius: 2, px: 4, boxShadow: 4 }}
-        >
-          Novo Cliente
-        </Button>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Card sx={{ display: { xs: 'none', lg: 'flex' }, borderRadius: '12px', bgcolor: 'primary.lighter', border: '1px solid', borderColor: 'primary.main', px: 2, py: 1 }}>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <BirthdayIcon color="primary" />
+              <Box>
+                <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 700, lineHeight: 1 }}>ANIVERSARIANTES</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 800 }}>{monthlyBirthdays.length} este mês</Typography>
+              </Box>
+            </Stack>
+          </Card>
+          <Button variant="outlined" startIcon={<FilterIcon />} onClick={() => setIsFilterOpen(true)} sx={{ borderRadius: '10px' }}>Filtros</Button>
+          <Button variant="outlined" startIcon={<ExportIcon />} onClick={(e) => setExportAnchor(e.currentTarget)} sx={{ borderRadius: '10px' }}>Exportar</Button>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenModal()} sx={{ borderRadius: '10px', px: 3 }}>Novo Cliente</Button>
+        </Stack>
       </Box>
 
-      {/* Stats Cards */}
-      <Grid container spacing={3} mb={4} component={motion.div} variants={itemVariants}>
-        <Grid item xs={12} md={4}>
-          <MotionCard elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }} whileHover={{ y: -5 }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="subtitle2" color="textSecondary">Total de Clientes</Typography>
-                  <Typography variant="h4" fontWeight="bold">{stats.total}</Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.main', width: 56, height: 56 }}>
-                  <PeopleIcon fontSize="large" />
-                </Avatar>
-              </Box>
+      {/* Stats Grid - MUI v7 size prop */}
+      <Grid container spacing={3} mb={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <MotionCard elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '24px' }} whileHover={{ y: -5 }}>
+            <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box><Typography variant="overline" color="textSecondary">Base Total</Typography><Typography variant="h4" sx={{ fontWeight: 800 }}>{stats.total}</Typography></Box>
+              <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main', width: 56, height: 56 }}><PeopleIcon /></Avatar>
             </CardContent>
           </MotionCard>
         </Grid>
-        <Grid item xs={12} md={4}>
-          <MotionCard elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }} whileHover={{ y: -5 }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="subtitle2" color="textSecondary">Clientes Ativos</Typography>
-                  <Typography variant="h4" fontWeight="bold">{stats.active}</Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: 'success.light', color: 'success.main', width: 56, height: 56 }}>
-                  <TrendingUpIcon fontSize="large" />
-                </Avatar>
-              </Box>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <MotionCard elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '24px' }} whileHover={{ y: -5 }}>
+            <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box><Typography variant="overline" color="textSecondary">Ativos</Typography><Typography variant="h4" sx={{ fontWeight: 800 }}>{stats.ativos}</Typography></Box>
+              <Avatar sx={{ bgcolor: 'success.lighter', color: 'success.main', width: 56, height: 56 }}><TrendingUpIcon /></Avatar>
             </CardContent>
           </MotionCard>
         </Grid>
-        <Grid item xs={12} md={4}>
-          <MotionCard elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }} whileHover={{ y: -5 }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="subtitle2" color="textSecondary">Clientes VIP</Typography>
-                  <Typography variant="h4" fontWeight="bold">{stats.vip}</Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: 'secondary.light', color: 'secondary.main', width: 56, height: 56 }}>
-                  <StarIcon fontSize="large" />
-                </Avatar>
-              </Box>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <MotionCard elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '24px' }} whileHover={{ y: -5 }}>
+            <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box><Typography variant="overline" color="textSecondary">Clientes VIP</Typography><Typography variant="h4" sx={{ fontWeight: 800 }}>{stats.vips}</Typography></Box>
+              <Avatar sx={{ bgcolor: 'secondary.lighter', color: 'secondary.main', width: 56, height: 56 }}><StarIcon /></Avatar>
             </CardContent>
           </MotionCard>
         </Grid>
       </Grid>
 
-      {/* Search & Filter */}
-      <Box mb={3} component={motion.div} variants={itemVariants}>
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Buscar por nome, email ou telefone..."
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon color="action" />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ bgcolor: 'background.paper', borderRadius: 2 }}
-        />
+      <Box mb={3}>
+        <TextField fullWidth variant="outlined" placeholder="Buscar por nome, e-mail ou telefone..." value={searchText} onChange={(e) => setSearchText(e.target.value)} InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon color="action" /></InputAdornment>) }} sx={{ bgcolor: 'background.paper', borderRadius: '12px' }} />
       </Box>
 
-      {/* Data Grid */}
-      <Box component={motion.div} variants={itemVariants} sx={{ height: 600, width: '100%' }}>
-        <Card elevation={0} sx={{ height: '100%', border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-          <DataGrid
-            rows={filteredCustomers}
-            columns={columns}
-            loading={loading}
-            initialState={{
-              pagination: {
-                paginationModel: { pageSize: 10 },
-              },
-            }}
-            pageSizeOptions={[10, 25, 50]}
-            disableRowSelectionOnClick
-            slots={{ toolbar: GridToolbar }}
-            slotProps={{
-              toolbar: {
-                showQuickFilter: true,
-                quickFilterProps: { debounceMs: 500 },
-              },
-            }}
-            localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
-            sx={{
-              border: 'none',
-              '& .MuiDataGrid-cell': {
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-              },
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: theme.palette.grey[50],
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-              },
-            }}
-          />
+      <Box sx={{ height: 650, width: '100%' }}>
+        <Card sx={{ height: '100%', borderRadius: '24px', border: '1px solid', borderColor: 'divider', overflow: 'hidden' }} elevation={0}>
+          <DataGrid rows={filteredCustomers} columns={columns} loading={isLoading} localeText={ptBR.components.MuiDataGrid.defaultProps.localeText} sx={{ border: 'none' }} />
         </Card>
       </Box>
 
-      {/* Modal Form */}
-      <Dialog 
-        open={isModalOpen} 
-        onClose={handleCloseModal}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          component: motion.div,
-          initial: { opacity: 0, y: 20 },
-          animate: { opacity: 1, y: 0 },
-          exit: { opacity: 0, y: 20 },
-          style: { borderRadius: 16 }
-        }}
-      >
-        <DialogTitle sx={{ borderBottom: '1px solid', borderColor: 'divider', pb: 2 }}>
-          <Box display="flex" alignItems="center" gap={1}>
-            {editingCustomer ? <EditIcon color="primary" /> : <PersonAddIcon color="primary" />}
-            <Typography variant="h6" fontWeight="bold">
-              {editingCustomer ? 'Editar Cliente' : 'Novo Cliente'}
-            </Typography>
+      <Menu anchorEl={exportAnchor} open={Boolean(exportAnchor)} onClose={() => setExportAnchor(null)}>
+        <MenuItem onClick={() => handleExport('fb')}><FacebookIcon sx={{ mr: 1, color: '#1877f2' }} /> Facebook Ads</MenuItem>
+        <MenuItem onClick={() => handleExport('google')}><GoogleIcon sx={{ mr: 1, color: '#ea4335' }} /> Google Ads</MenuItem>
+      </Menu>
+
+      <Drawer anchor="right" open={isFilterOpen} onClose={() => setIsFilterOpen(false)} PaperProps={{ sx: { width: 320, p: 3, borderRadius: '24px 0 0 24px' } }}>
+        <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>Filtros Avançados</Typography>
+        <Stack spacing={3}>
+          <TextField label="Cadastrados após" type="date" fullWidth InputLabelProps={{ shrink: true }} />
+          <Button variant="contained" fullWidth sx={{ mt: 'auto', borderRadius: '10px' }} onClick={() => setIsFilterOpen(false)}>Aplicar</Button>
+        </Stack>
+      </Drawer>
+
+      <Drawer anchor="right" open={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} PaperProps={{ sx: { width: 450, p: 3, borderRadius: '24px 0 0 24px' } }}>
+        {selectedCustomer && (
+          <Box>
+            <Stack direction="row" spacing={2} alignItems="center" mb={4}>
+              <Avatar sx={{ width: 60, height: 60, bgcolor: stringToColor(selectedCustomer.name), fontWeight: 800 }}>{selectedCustomer.name[0]}</Avatar>
+              <Box><Typography variant="h5" sx={{ fontWeight: 800 }}>{selectedCustomer.name}</Typography><Typography variant="body2" color="text.secondary">{selectedCustomer.email}</Typography></Box>
+            </Stack>
+            <Divider sx={{ mb: 3 }} />
+            <Box sx={{ height: 180, bgcolor: 'primary.lighter', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid', borderColor: 'primary.main', mb: 2 }}>
+              <PersonPinCircle sx={{ fontSize: 50, color: 'primary.main' }} />
+              <Typography variant="caption" sx={{ textAlign: 'center', px: 2, mt: 1 }}>{selectedCustomer.address || 'Sem endereço'}</Typography>
+            </Box>
+            <Button fullWidth variant="outlined" sx={{ mt: 4, borderRadius: '12px' }} onClick={() => setIsDrawerOpen(false)}> Fechar</Button>
           </Box>
-        </DialogTitle>
+        )}
+      </Drawer>
+
+      <Dialog open={isModalOpen} onClose={handleCloseModal} maxWidth="sm" fullWidth disableRestoreFocus>
+        <DialogTitle sx={{ fontWeight: 800 }}>{editingCustomer ? 'Editar Cliente' : 'Novo Cliente'}</DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
-          <Box pt={1}>
-            <CustomerForm
-              initialData={editingCustomer}
-              onSubmit={(data) => {
-                if (editingCustomer) {
-                  handleUpdateCustomer(editingCustomer.id, data);
-                } else {
-                  handleCreateCustomer(data);
-                }
-              }}
-              onCancel={handleCloseModal}
-            />
-          </Box>
+          <CustomerForm 
+            loading={mutation.isPending} 
+            initialData={editingCustomer} 
+            onSubmit={(data) => mutation.mutate({ ...editingCustomer, ...data })}
+            onCancel={handleCloseModal} 
+          />
         </DialogContent>
       </Dialog>
     </MotionContainer>

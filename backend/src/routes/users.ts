@@ -1,11 +1,12 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 
-import { userService } from '../services/userService.js'; // Changed from customerService
+import { userService } from '../services/userService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { ValidationError, AppError } from '../utils/errors.js';
+import { userRepository } from '../repositories/user.repository.js'; // Direct import for quick fix
 
-const usersRouter = Router(); // Changed from customersRouter
+const usersRouter = Router();
 
 // Zod Schemas
 const createUserSchema = z.object({
@@ -23,6 +24,10 @@ const updateUserSchema = z.object({
   email: z.string().email('Invalid email format').optional(),
   password: z.string().min(6, 'Password must be at least 6 characters long').optional(),
   role: z.string().optional(),
+});
+
+const updateThemeSchema = z.object({
+  theme: z.enum(['light', 'dark']),
 });
 
 // Validation Middleware
@@ -44,14 +49,31 @@ const validate =
     }
   };
 
+// Endpoint para atualizar o tema do próprio usuário
+usersRouter.patch(
+  '/me/theme',
+  authMiddleware.authenticate,
+  validate(updateThemeSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as any).user.id;
+      const { theme } = req.body;
+      
+      const updatedUser = await userRepository.update(userId, { theme_preference: theme });
+      res.status(200).json({ theme: updatedUser.theme_preference });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 usersRouter.get(
-  // Changed from customersRouter
   '/',
   authMiddleware.authenticate,
   authMiddleware.authorize('read', 'User'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const users = await userService.getAllUsers(); // Changed from customerService
+      const users = await userService.getAllUsers();
       res.status(200).json(users);
     } catch (error) {
       next(error);
@@ -60,15 +82,14 @@ usersRouter.get(
 );
 
 usersRouter.get(
-  // Changed from customersRouter
   '/:id',
   authMiddleware.authenticate,
   authMiddleware.authorize('read', 'User'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const user = await userService.getUserById(parseInt(req.params.id)); // Changed from customerService
+      const user = await userService.getUserById(req.params.id); // Fixed: removed parseInt as ID is UUID
       if (!user) {
-        throw new AppError('User not found', 404); // Changed from Customer
+        throw new AppError('User not found', 404);
       }
       res.status(200).json(user);
     } catch (error) {
@@ -78,14 +99,13 @@ usersRouter.get(
 );
 
 usersRouter.post(
-  // Changed from customersRouter
   '/',
   authMiddleware.authenticate,
   authMiddleware.authorize('create', 'User'),
-  validate(createUserSchema), // Changed from createCustomerSchema
+  validate(createUserSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const newUser = await userService.createUser(req.body); // Changed from customerService
+      const newUser = await userService.createUser(req.body);
       res.status(201).json(newUser);
     } catch (error) {
       next(error);
@@ -94,16 +114,15 @@ usersRouter.post(
 );
 
 usersRouter.put(
-  // Changed from customersRouter
   '/:id',
   authMiddleware.authenticate,
   authMiddleware.authorize('update', 'User'),
-  validate(updateUserSchema), // Changed from updateCustomerSchema
+  validate(updateUserSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const updatedUser = await userService.updateUser(parseInt(req.params.id), req.body); // Changed from customerService
+      const updatedUser = await userService.updateUser(req.params.id, req.body); // Fixed: removed parseInt
       if (!updatedUser) {
-        throw new AppError('User not found', 404); // Changed from Customer
+        throw new AppError('User not found', 404);
       }
       res.status(200).json(updatedUser);
     } catch (error) {
@@ -113,15 +132,14 @@ usersRouter.put(
 );
 
 usersRouter.delete(
-  // Changed from customersRouter
   '/:id',
   authMiddleware.authenticate,
   authMiddleware.authorize('delete', 'User'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const deleted = await userService.deleteUser(parseInt(req.params.id)); // Changed from customerService
+      const deleted = await userService.deleteUser(req.params.id); // Fixed: removed parseInt
       if (!deleted) {
-        throw new AppError('User not found', 404); // Changed from Customer
+        throw new AppError('User not found', 404);
       }
       res.status(204).send();
     } catch (error) {
@@ -130,4 +148,4 @@ usersRouter.delete(
   },
 );
 
-export { usersRouter }; // Changed from customersRouter
+export { usersRouter };

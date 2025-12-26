@@ -55,7 +55,7 @@ interface SalespersonPerformanceWidgetProps {
  */
 const SalespersonPerformanceWidget: React.FC<SalespersonPerformanceWidgetProps> = React.memo(({ selectedPeriod }) => {
   const { token, isAuthenticated } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   const { data, isLoading, isError, error } = useQuery<SalespersonPerformanceData[], Error>({
     queryKey: ['salespersonPerformance', token, selectedPeriod],
@@ -65,9 +65,9 @@ const SalespersonPerformanceWidget: React.FC<SalespersonPerformanceWidgetProps> 
 
   useEffect(() => {
     if (isError && error) {
-      addToast(`Falha ao buscar desempenho de vendedores: ${error.message}`, 'error');
+      showNotification(`Falha ao buscar desempenho de vendedores: ${error.message}`, 'error');
     }
-  }, [isError, error, addToast]);
+  }, [isError, error, showNotification]);
 
   if (isLoading) {
     return <DashboardWidgetSkeleton />;

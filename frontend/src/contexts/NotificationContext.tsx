@@ -3,6 +3,7 @@ import { Snackbar, Alert, AlertColor } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion'; // Importar Framer Motion
 
 interface NotificationContextType {
+  addNotification: (message: string, severity?: AlertColor) => void;
   showNotification: (message: string, severity?: AlertColor) => void;
 }
 
@@ -36,7 +37,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [message, setMessage] = useState('');
   const [severity, setSeverity] = useState<AlertColor>('info');
 
-  const showNotification = useCallback((msg: string, sev: AlertColor = 'info') => {
+  const addNotification = useCallback((msg: string, sev: AlertColor = 'info') => {
     setMessage(msg);
     setSeverity(sev);
     setOpen(true);
@@ -50,7 +51,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   return (
-    <NotificationContext.Provider value={{ showNotification }}>
+    <NotificationContext.Provider value={{ addNotification, showNotification: addNotification }}>
       {children}
       <Snackbar 
         open={open} 

@@ -1,336 +1,269 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  Box,
-  Typography,
+import styled from 'styled-components';
+import { motion } from 'framer-motion';
+import { 
+  Box, 
+  Typography, 
+  Paper, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  Chip, 
   CircularProgress,
-  Alert,
-  Paper,
+  Button,
+  TextField,
+  InputAdornment,
   Grid,
   Card,
   CardContent,
-  LinearProgress,
-  List,
-  ListItem,
-  ListItemText,
+  Avatar,
+  Stack,
   Divider,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
+  IconButton
 } from '@mui/material';
-import { styled } from '@mui/system';
-import * as loyaltyService from '../services/loyaltyService';
-import type { LoyaltyTier, LoyaltyTransaction, UserLoyaltyInfo } from '../services/loyaltyService';
+import { 
+  FaSearch, 
+  FaStar, 
+  FaHistory, 
+  FaGift, 
+  FaUserCircle,
+  FaArrowUp,
+  FaArrowDown
+} from 'react-icons/fa';
+import { useNotification } from '../contexts/NotificationContext';
+import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
 
-// --- Mock Auth Token (Replace with actual auth context/logic) ---
-const DUMMY_AUTH_TOKEN = 'your_jwt_token_here'; // TODO: Replace with actual token from auth context
+const StyledPageContainer = styled(motion.div)`
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+`;
 
-const StyledCard = styled(Card)(({ theme }) => ({
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'space-between',
-  transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
-  '&:hover': {
-    transform: 'translateY(-5px)',
-    boxShadow: theme.shadows[6],
-  },
-}));
+const StyledPageTitle = styled(motion.h1)`
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 24px;
+  letter-spacing: -1px;
+`;
+
+interface LoyaltyTransaction {
+  id: number;
+  customer_id: number;
+  points_change: number;
+  action_type: 'earn' | 'redeem';
+  reason?: string;
+  created_at: string;
+}
+
+interface CustomerLoyaltyInfo {
+    customer_id: number;
+    name: string;
+    email?: string;
+    phone?: string;
+    loyalty_points: number;
+    tier_name?: string;
+    total_earned?: number;
+    total_redeemed?: number;
+}
 
 const LoyaltyPage: React.FC = () => {
-  const [userLoyaltyInfo, setUserLoyaltyInfo] = useState<UserLoyaltyInfo | null>(null);
-  const [loyaltyTransactions, setLoyaltyTransactions] = useState<LoyaltyTransaction[]>([]);
-  const [loyaltyTiers, setLoyaltyTiers] = useState<LoyaltyTier[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const [isAddPointsModalOpen, setIsAddPointsModalOpen] = useState(false);
-  const [addPointsAmount, setAddPointsAmount] = useState<number | ''>('');
-  const [addPointsReason, setAddPointsReason] = useState('');
-  const [addPointsUserId, setAddPointsUserId] = useState(''); // For admin to add points to specific user
-
-  const [isRedeemPointsModalOpen, setIsRedeemPointsModalOpen] = useState(false);
-  const [redeemPointsAmount, setRedeemPointsAmount] = useState<number | ''>('');
-  const [redeemPointsReason, setRedeemPointsReason] = useState('');
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [customers, setCustomers] = useState<CustomerLoyaltyInfo[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerLoyaltyInfo | null>(null);
+  const [transactions, setTransactions] = useState<LoyaltyTransaction[]>([]);
+  
+  const { token } = useAuth();
+  const { addNotification } = useNotification();
 
   const fetchLoyaltyData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+    if (!token) return;
+    setLoading(true);
     try {
-      const [info, transactions, tiers] = await Promise.all([
-        loyaltyService.fetchUserLoyaltyInfo(DUMMY_AUTH_TOKEN),
-        loyaltyService.fetchLoyaltyTransactions(DUMMY_AUTH_TOKEN),
-        loyaltyService.fetchAllLoyaltyTiers(DUMMY_AUTH_TOKEN),
-      ]);
-
-      // Sort tiers by min_points ascending
-      const sortedTiers = tiers.sort((a, b) => a.min_points - b.min_points);
-
-      // Determine current and next tier
-      let currentTier: LoyaltyTier | undefined;
-      let nextTier: LoyaltyTier | undefined;
-      let pointsToNextTier: number | undefined;
-
-      if (info && info.loyalty_points !== undefined) {
-        currentTier = sortedTiers
-          .slice()
-          .reverse()
-          .find(tier => info.loyalty_points >= tier.min_points);
-
-        nextTier = sortedTiers.find(tier => info.loyalty_points < tier.min_points);
-
-        if (nextTier) {
-          pointsToNextTier = nextTier.min_points - info.loyalty_points;
-        }
-      }
-
-      setUserLoyaltyInfo({
-        ...info,
-        current_tier: currentTier,
-        next_tier: nextTier,
-        points_to_next_tier: pointsToNextTier,
+      const response = await axios.get('/api/loyalty/summary', {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      setLoyaltyTransactions(transactions);
-      setLoyaltyTiers(sortedTiers);
+      setCustomers(Array.isArray(response.data) ? response.data : []);
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch loyalty data.');
+      addNotification('Erro ao carregar dados de fidelidade', 'error');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, []);
+  }, [token, addNotification]);
+
+  const fetchTransactions = useCallback(async (customerId: number) => {
+    try {
+        const response = await axios.get(`/api/loyalty/transactions/${customerId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        setTransactions(response.data);
+    } catch (e) {
+        addNotification('Erro ao buscar histórico', 'error');
+    }
+  }, [token, addNotification]);
 
   useEffect(() => {
     fetchLoyaltyData();
   }, [fetchLoyaltyData]);
 
-  const handleAddPoints = async () => {
-    if (addPointsAmount === '' || !addPointsUserId.trim() || !addPointsReason.trim()) return;
-    try {
-      await loyaltyService.addLoyaltyPoints(DUMMY_AUTH_TOKEN, addPointsUserId, addPointsAmount as number, addPointsReason);
-      setIsAddPointsModalOpen(false);
-      setAddPointsAmount('');
-      setAddPointsReason('');
-      setAddPointsUserId('');
-      fetchLoyaltyData(); // Re-fetch data to update UI
-    } catch (err: any) {
-      setError(err.message || 'Failed to add points.');
-    }
-  };
-
-  const handleRedeemPoints = async () => {
-    if (redeemPointsAmount === '' || !redeemPointsReason.trim()) return;
-    try {
-      await loyaltyService.redeemLoyaltyPoints(DUMMY_AUTH_TOKEN, redeemPointsAmount as number, redeemPointsReason);
-      setIsRedeemPointsModalOpen(false);
-      setRedeemPointsAmount('');
-      setRedeemPointsReason('');
-      fetchLoyaltyData(); // Re-fetch data to update UI
-    } catch (err: any) {
-      setError(err.message || 'Failed to redeem points.');
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress />
-      </Box>
+  const filteredCustomers = useMemo(() => {
+    return customers.filter(c => 
+        c.name.toLowerCase().includes(search.toLowerCase()) || 
+        c.phone?.includes(search)
     );
-  }
+  }, [customers, search]);
 
-  if (error) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">{error}</Alert>
-      </Box>
-    );
-  }
+  const handleSelectCustomer = (customer: CustomerLoyaltyInfo) => {
+    setSelectedCustomer(customer);
+    fetchTransactions(customer.customer_id);
+  };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Loyalty Program
-      </Typography>
+    <StyledPageContainer
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+        <StyledPageTitle>Programa de Fidelidade</StyledPageTitle>
+        <TextField 
+            size="small"
+            placeholder="Buscar cliente..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            InputProps={{
+                startAdornment: <InputAdornment position="start"><FaSearch size={14} /></InputAdornment>,
+                sx: { borderRadius: '12px', width: 300 }
+            }}
+        />
+      </Box>
 
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {/* Loyalty Summary Card */}
-        <Grid item xs={12} md={6}>
-          <StyledCard>
-            <CardContent>
-              <Typography variant="h5" component="div" gutterBottom>
-                Your Loyalty Status
-              </Typography>
-              <Typography variant="h6" color="primary">
-                Current Points: {userLoyaltyInfo?.loyalty_points ?? 0}
-              </Typography>
-              {userLoyaltyInfo?.current_tier && (
-                <Typography variant="body1">
-                  Current Tier: <strong>{userLoyaltyInfo.current_tier.name}</strong>
-                </Typography>
-              )}
-              {userLoyaltyInfo?.next_tier && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2">
-                    Points to next tier ({userLoyaltyInfo.next_tier.name}):{' '}
-                    {userLoyaltyInfo.points_to_next_tier}
-                  </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={
-                      userLoyaltyInfo.next_tier.min_points > 0
-                        ? ((userLoyaltyInfo.loyalty_points ?? 0) / userLoyaltyInfo.next_tier.min_points) * 100
-                        : 0
-                    }
-                    sx={{ height: 10, borderRadius: 5, mt: 1 }}
-                  />
-                </Box>
-              )}
-              {!userLoyaltyInfo?.current_tier && (
-                <Typography variant="body1" sx={{ mt: 2 }}>
-                  You are not yet in a loyalty tier. Earn points to unlock rewards!
-                </Typography>
-              )}
-            </CardContent>
-            <Box sx={{ p: 2, display: 'flex', gap: 1 }}>
-              <Button variant="contained" onClick={() => setIsRedeemPointsModalOpen(true)}>
-                Redeem Points
-              </Button>
-              {/* Assuming an admin/manager role can add points */}
-              <Button variant="outlined" onClick={() => setIsAddPointsModalOpen(true)}>
-                Add Points (Admin)
-              </Button>
-            </Box>
-          </StyledCard>
+      <Grid container spacing={3}>
+        {/* Lista de Clientes */}
+        <Grid item xs={12} lg={selectedCustomer ? 4 : 12}>
+            <TableContainer component={Paper} sx={{ borderRadius: '24px', boxShadow: 'none', border: '1px solid', borderColor: 'divider' }}>
+                <Table size="small">
+                    <TableHead sx={{ bgcolor: 'action.hover' }}>
+                        <TableRow>
+                            <TableCell sx={{ fontWeight: 800 }}>CLIENTE</TableCell>
+                            <TableCell sx={{ fontWeight: 800 }}>PONTOS</TableCell>
+                            <TableCell sx={{ fontWeight: 800 }}>NÍVEL</TableCell>
+                            <TableCell align="right"></TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {loading ? (
+                            <TableRow><TableCell colSpan={4} align="center"><CircularProgress size={20} /></TableCell></TableRow>
+                        ) : filteredCustomers.map(c => (
+                            <TableRow key={c.customer_id} hover selected={selectedCustomer?.customer_id === c.customer_id} onClick={() => handleSelectCustomer(c)} sx={{ cursor: 'pointer' }}>
+                                <TableCell>
+                                    <Typography variant="body2" fontWeight={600}>{c.name}</Typography>
+                                    <Typography variant="caption" color="text.secondary">{c.phone || 'Sem telefone'}</Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Chip label={`${c.loyalty_points} pts`} color="primary" size="small" sx={{ fontWeight: 800 }} />
+                                </TableCell>
+                                <TableCell>
+                                    <Chip label={c.tier_name || 'Standard'} size="small" variant="outlined" sx={{ fontWeight: 700 }} />
+                                </TableCell>
+                                <TableCell align="right">
+                                    <IconButton size="small"><FaHistory size={12} /></IconButton>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
         </Grid>
 
-        {/* Loyalty Tiers List */}
-        <Grid item xs={12} md={6}>
-          <StyledCard>
-            <CardContent>
-              <Typography variant="h5" component="div" gutterBottom>
-                Loyalty Tiers & Benefits
-              </Typography>
-              <List>
-                {loyaltyTiers.map((tier, index) => (
-                  <React.Fragment key={tier.id}>
-                    <ListItem>
-                      <ListItemText
-                        primary={
-                          <Typography variant="h6">
-                            {tier.name} ({tier.min_points} points)
-                          </Typography>
-                        }
-                        secondary={tier.benefits_description || 'No specific benefits listed.'}
-                      />
-                    </ListItem>
-                    {index < loyaltyTiers.length - 1 && <Divider component="li" />}
-                  </React.Fragment>
-                ))}
-              </List>
-            </CardContent>
-          </StyledCard>
-        </Grid>
-      </Grid>
+        {/* Painel de Detalhes e Histórico */}
+        {selectedCustomer && (
+            <Grid item xs={12} lg={8}>
+                <Stack spacing={3}>
+                    {/* Cards de Resumo */}
+                    <Grid container spacing={2}>
+                        <Grid item xs={6} md={3}>
+                            <Card sx={{ borderRadius: '20px', textAlign: 'center', bgcolor: 'primary.50' }}>
+                                <CardContent>
+                                    <FaStar color="#ed6c02" />
+                                    <Typography variant="h5" fontWeight={900}>{selectedCustomer.loyalty_points}</Typography>
+                                    <Typography variant="caption">Saldo Atual</Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item xs={6} md={3}>
+                            <Card sx={{ borderRadius: '20px', textAlign: 'center' }}>
+                                <CardContent>
+                                    <FaArrowUp color="green" />
+                                    <Typography variant="h5" fontWeight={900}>{selectedCustomer.total_earned || 0}</Typography>
+                                    <Typography variant="caption">Total Ganho</Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item xs={6} md={3}>
+                            <Card sx={{ borderRadius: '20px', textAlign: 'center' }}>
+                                <CardContent>
+                                    <FaArrowDown color="red" />
+                                    <Typography variant="h5" fontWeight={900}>{selectedCustomer.total_redeemed || 0}</Typography>
+                                    <Typography variant="caption">Total Resgatado</Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item xs={6} md={3}>
+                            <Card sx={{ borderRadius: '20px', textAlign: 'center', bgcolor: 'secondary.50' }}>
+                                <CardContent>
+                                    <FaGift color="#9c27b0" />
+                                    <Typography variant="h5" fontWeight={900}>R$ {(selectedCustomer.loyalty_points * 0.1).toFixed(2)}</Typography>
+                                    <Typography variant="caption">Valor em R$</Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    </Grid>
 
-      {/* Loyalty Transactions History */}
-      <Paper elevation={3} sx={{ p: 3, mt: 4 }}>
-        <Typography variant="h5" gutterBottom>
-          Transaction History
-        </Typography>
-        {loyaltyTransactions.length > 0 ? (
-          <List>
-            {loyaltyTransactions.map(transaction => (
-              <ListItem key={transaction.id}>
-                <ListItemText
-                  primary={`${transaction.transaction_type}: ${transaction.points_change > 0 ? '+' : ''}${transaction.points_change} points`}
-                  secondary={`Date: ${new Date(transaction.created_at).toLocaleDateString()} - Related ID: ${transaction.related_entity_id || 'N/A'}`}
-                />
-              </ListItem>
-            ))}
-          </List>
-        ) : (
-          <Typography variant="body1">No loyalty transactions yet.</Typography>
+                    {/* Tabela de Transações */}
+                    <Paper sx={{ borderRadius: '24px', p: 3, border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+                        <Typography variant="h6" fontWeight={800} mb={2}>Histórico de Movimentações</Typography>
+                        <TableContainer>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell sx={{ fontWeight: 700 }}>DATA</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>TIPO</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>PONTOS</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>MOTIVO</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {transactions.map(t => (
+                                        <TableRow key={t.id} hover>
+                                            <TableCell sx={{ fontSize: '0.75rem' }}>{new Date(t.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                                            <TableCell>
+                                                <Chip 
+                                                    label={t.action_type === 'earn' ? 'GANHO' : 'RESGATE'} 
+                                                    size="small" 
+                                                    color={t.action_type === 'earn' ? 'success' : 'secondary'}
+                                                    sx={{ fontSize: '0.6rem', height: 20, fontWeight: 800 }}
+                                                />
+                                            </TableCell>
+                                            <TableCell sx={{ fontWeight: 700, color: t.points_change > 0 ? 'success.main' : 'error.main' }}>
+                                                {t.points_change > 0 ? `+${t.points_change}` : t.points_change}
+                                            </TableCell>
+                                            <TableCell variant="body2" sx={{ fontSize: '0.75rem' }}>{t.reason || 'Venda PDV'}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    </Paper>
+                </Stack>
+            </Grid>
         )}
-      </Paper>
-
-      {/* Add Points Modal */}
-      <Dialog open={isAddPointsModalOpen} onClose={() => setIsAddPointsModalOpen(false)}>
-        <DialogTitle>Add Loyalty Points</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="User ID"
-            type="text"
-            fullWidth
-            variant="standard"
-            value={addPointsUserId}
-            onChange={(e) => setAddPointsUserId(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            margin="dense"
-            label="Points Amount"
-            type="number"
-            fullWidth
-            variant="standard"
-            value={addPointsAmount}
-            onChange={(e) => setAddPointsAmount(parseInt(e.target.value) || '')}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            margin="dense"
-            label="Reason"
-            type="text"
-            fullWidth
-            variant="standard"
-            value={addPointsReason}
-            onChange={(e) => setAddPointsReason(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsAddPointsModalOpen(false)}>Cancel</Button>
-          <Button onClick={handleAddPoints} disabled={addPointsAmount === '' || !addPointsUserId.trim() || !addPointsReason.trim()}>
-            Add Points
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Redeem Points Modal */}
-      <Dialog open={isRedeemPointsModalOpen} onClose={() => setIsRedeemPointsModalOpen(false)}>
-        <DialogTitle>Redeem Loyalty Points</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Points to Redeem"
-            type="number"
-            fullWidth
-            variant="standard"
-            value={redeemPointsAmount}
-            onChange={(e) => setRedeemPointsAmount(parseInt(e.target.value) || '')}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            margin="dense"
-            label="Reason for Redemption"
-            type="text"
-            fullWidth
-            variant="standard"
-            value={redeemPointsReason}
-            onChange={(e) => setRedeemPointsReason(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsRedeemPointsModalOpen(false)}>Cancel</Button>
-          <Button onClick={handleRedeemPoints} disabled={redeemPointsAmount === '' || !redeemPointsReason.trim()}>
-            Redeem Points
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+      </Grid>
+    </StyledPageContainer>
   );
 };
 

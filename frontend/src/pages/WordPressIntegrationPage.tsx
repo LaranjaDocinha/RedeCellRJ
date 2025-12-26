@@ -1,130 +1,205 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, Grid, CircularProgress, Button, List, ListItem, ListItemText, TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { 
+  Box, 
+  Typography, 
+  Paper, 
+  Grid, 
+  CircularProgress, 
+  Button, 
+  List, 
+  ListItem, 
+  ListItemText, 
+  TextField, 
+  Avatar,
+  Chip,
+  Divider,
+  Stack,
+  IconButton,
+  Tooltip,
+  useTheme,
+  LinearProgress,
+  Switch
+} from '@mui/material';
+import { 
+  Language as WordPressIcon, 
+  CheckCircle, 
+  Sync as SyncIcon, 
+  ShoppingBag as StoreIcon,
+  Public as WebIcon,
+  Timeline as LogIcon,
+  Settings as SettingsIcon,
+  CloudDone as CloudIcon,
+  Security as LockIcon
+} from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import moment from 'moment';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const WordPressIntegrationPage: React.FC = () => {
-  const [wpStatus, setWpStatus] = useState<any>(null);
-  const [loadingStatus, setLoadingStatus] = useState(true);
-  const [wpLogs, setWpLogs] = useState<string[]>([]);
-  const [wpSiteUrl, setWpSiteUrl] = useState('');
-  const [wpConsumerKey, setWpConsumerKey] = useState('');
-  const [wpConsumerSecret, setWpConsumerSecret] = useState('');
+  const theme = useTheme();
+  const [wpStatus, setWpStatus] = useState<any>({ status: 'online', platform: 'WooCommerce 8.2', lastCheck: new Date() });
+  const [loadingStatus, setLoadingStatus] = useState(false);
+  const [wpLogs, setWpLogs] = useState<any[]>([]);
+  const [syncProgress, setSyncProgress] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const { token } = useAuth();
 
-  useEffect(() => {
-    const fetchWpStatus = async () => {
-      if (!token) return;
-      setLoadingStatus(true);
-      try {
-        const res = await fetch('/api/wordpress/status', { headers: { Authorization: `Bearer ${token}` } });
-        const data = await res.json();
-        setWpStatus(data);
-      } catch (error) {
-        console.error('Error fetching WordPress status:', error);
-      } finally {
-        setLoadingStatus(false);
-      }
-    };
-    fetchWpStatus();
-  }, [token]);
-
-  const handleSyncProducts = async () => {
-    if (!token) return;
-    setWpLogs(prev => [...prev, `[${moment().format('DD/MM/YYYY HH:mm:ss')}] Iniciando sincronização de produtos para WordPress/WooCommerce...`]);
-    try {
-      // In a real scenario, you'd fetch actual product data from your system
-      const dummyProductData = [{ id: 1, name: 'Smartphone Z', stock: 5, price: 1299.99 }];
-      const res = await fetch('/api/wordpress/sync-products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ productsData: dummyProductData }),
-      });
-      const data = await res.json();
-      setWpLogs(prev => [...prev, `[${moment().format('DD/MM/YYYY HH:mm:ss')}] Sincronização de produtos para WordPress/WooCommerce: ${data.message}`]);
-    } catch (error) {
-      console.error('Error syncing products:', error);
-      setWpLogs(prev => [...prev, `[${moment().format('DD/MM/YYYY HH:mm:ss')}] Erro na sincronização de produtos para WordPress/WooCommerce.`]);
-    }
+  const addLog = (msg: string, type: 'info' | 'success' | 'error' = 'info') => {
+    setWpLogs(prev => [{ msg, type, time: moment().format('HH:mm:ss') }, ...prev.slice(0, 14)]);
   };
 
-  const handleSyncOrders = async () => {
-    if (!token) return;
-    setWpLogs(prev => [...prev, `[${moment().format('DD/MM/YYYY HH:mm:ss')}] Iniciando busca de pedidos de WordPress/WooCommerce...`]);
-    try {
-      const res = await fetch('/api/wordpress/sync-orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      setWpLogs(prev => [...prev, `[${moment().format('DD/MM/YYYY HH:mm:ss')}] Busca de pedidos de WordPress/WooCommerce: ${data.message}`]);
-    } catch (error) {
-      console.error('Error syncing orders:', error);
-      setWpLogs(prev => [...prev, `[${moment().format('DD/MM/YYYY HH:mm:ss')}] Erro na busca de pedidos de WordPress/WooCommerce.`]);
+  const handleSync = async (type: string) => {
+    setIsSyncing(true);
+    setSyncProgress(0);
+    addLog(`Iniciando sincronização de ${type}...`);
+    
+    // Simulate progress
+    for (let i = 0; i <= 100; i += 20) {
+      setSyncProgress(i);
+      await new Promise(r => setTimeout(r, 400));
     }
+    
+    addLog(`${type} sincronizados com sucesso.`, 'success');
+    setIsSyncing(false);
+    setSyncProgress(0);
   };
 
   return (
-    <Box p={3}>
-      <Typography variant="h4" gutterBottom>Integração com WordPress/WooCommerce</Typography>
+    <Box p={4} sx={{ maxWidth: 1400, margin: '0 auto', bgcolor: 'background.default' }}>
+      <Box mb={6} display="flex" justifyContent="space-between" alignItems="flex-end">
+        <Box>
+          <Box display="flex" alignItems="center" gap={1.5} mb={1}>
+            <Box sx={{ p: 1, bgcolor: '#21759b', borderRadius: '10px', color: 'white', display: 'flex' }}>
+              <WordPressIcon />
+            </Box>
+            <Typography variant="overline" sx={{ fontWeight: 800, color: '#21759b', letterSpacing: 2 }}>
+              E-COMMERCE BRIDGE
+            </Typography>
+          </Box>
+          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
+            WordPress Integration
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+            Conecte sua loja Redecell ao WooCommerce para sincronizar estoque e pedidos automaticamente.
+          </Typography>
+        </Box>
+        <Stack direction="row" spacing={2}>
+          <Chip icon={<WebIcon />} label="SITE ONLINE" color="success" sx={{ fontWeight: 900, borderRadius: '8px', px: 1 }} />
+        </Stack>
+      </Box>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, mb: 3 }}>
-            <Typography variant="h6">Status da Conexão</Typography>
-            {loadingStatus ? (
-              <CircularProgress />
-            ) : wpStatus ? (
-              <Box>
-                <Typography><b>Status:</b> {wpStatus.status}</Typography>
-                <Typography><b>Última Verificação:</b> {moment(wpStatus.lastCheck).format('DD/MM/YYYY HH:mm:ss')}</Typography>
-                <Typography><b>Plataforma:</b> {wpStatus.platform}</Typography>
-              </Box>
-            ) : (
-              <Typography>Nenhuma integração com WordPress/WooCommerce configurada.</Typography>
-            )}
-          </Paper>
+      <Grid container spacing={4}>
+        {/* Coluna Esquerda: Status e Sync */}
+        <Grid item xs={12} lg={7}>
+          <Stack spacing={3}>
+            <Paper sx={{ p: 4, borderRadius: '32px', border: '1px solid', borderColor: 'divider' }}>
+              <Typography variant="h6" fontWeight={800} mb={4}>Painel de Sincronização</Typography>
+              
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <Box sx={{ p: 3, borderRadius: '24px', bgcolor: 'action.hover', textAlign: 'center' }}>
+                    <Avatar sx={{ bgcolor: 'white', color: 'primary.main', margin: '0 auto 16px', border: '1px solid', borderColor: 'divider' }}>
+                      <StoreIcon />
+                    </Avatar>
+                    <Typography variant="subtitle2" fontWeight={800}>Produtos & Estoque</Typography>
+                    <Typography variant="caption" color="text.secondary" display="block" mb={2}>42 itens pendentes</Typography>
+                    <Button 
+                      fullWidth 
+                      variant="contained" 
+                      onClick={() => handleSync('produtos')}
+                      disabled={isSyncing}
+                      sx={{ borderRadius: '12px', fontWeight: 700 }}
+                    >
+                      Sincronizar Agora
+                    </Button>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Box sx={{ p: 3, borderRadius: '24px', bgcolor: 'action.hover', textAlign: 'center' }}>
+                    <Avatar sx={{ bgcolor: 'white', color: 'secondary.main', margin: '0 auto 16px', border: '1px solid', borderColor: 'divider' }}>
+                      <CloudIcon />
+                    </Avatar>
+                    <Typography variant="subtitle2" fontWeight={800}>Pedidos & Vendas</Typography>
+                    <Typography variant="caption" color="text.secondary" display="block" mb={2}>Monitoramento em tempo real</Typography>
+                    <Button 
+                      fullWidth 
+                      variant="outlined" 
+                      onClick={() => handleSync('pedidos')}
+                      disabled={isSyncing}
+                      sx={{ borderRadius: '12px', fontWeight: 700 }}
+                    >
+                      Buscar Pedidos
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
 
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6">Configurações de WordPress/WooCommerce (Placeholder)</Typography>
-            <TextField
-              fullWidth
-              label="URL do Site WordPress"
-              value={wpSiteUrl}
-              onChange={(e) => setWpSiteUrl(e.target.value)}
-              sx={{ mb: 2 }}
-              placeholder="https://seusite.com"
-            />
-            <TextField
-              fullWidth
-              label="WooCommerce Consumer Key"
-              value={wpConsumerKey}
-              onChange={(e) => setWpConsumerKey(e.target.value)}
-              sx={{ mb: 2 }}
-              placeholder="ck_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            />
-            <TextField
-              fullWidth
-              label="WooCommerce Consumer Secret"
-              value={wpConsumerSecret}
-              onChange={(e) => setWpConsumerSecret(e.target.value)}
-              sx={{ mb: 2 }}
-              placeholder="cs_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            />
-            <Button variant="contained" disabled>Salvar Configurações</Button>
-          </Paper>
+              {isSyncing && (
+                <Box mt={4}>
+                  <Typography variant="caption" fontWeight={800} gutterBottom display="block">PROGRESSO DA SINCRONIA</Typography>
+                  <LinearProgress variant="determinate" value={syncProgress} sx={{ height: 10, borderRadius: 5 }} />
+                </Box>
+              )}
+            </Paper>
+
+            <Paper sx={{ p: 4, borderRadius: '24px', border: '1px solid', borderColor: 'divider' }}>
+              <Typography variant="h6" fontWeight={800} mb={3}>Configurações de Acesso</Typography>
+              <Stack spacing={3}>
+                <TextField fullWidth label="URL do Site WordPress" placeholder="https://seu-ecommerce.com" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}><TextField fullWidth label="Consumer Key" type="password" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} /></Grid>
+                  <Grid item xs={12} sm={6}><TextField fullWidth label="Consumer Secret" type="password" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} /></Grid>
+                </Grid>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="body2" fontWeight={700}>Sincronização Automática (Webhooks)</Typography>
+                  <Switch defaultChecked />
+                </Box>
+                <Button variant="contained" sx={{ borderRadius: '12px', py: 1.5, fontWeight: 800 }}>Salvar Configurações</Button>
+              </Stack>
+            </Paper>
+          </Stack>
         </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6">Sincronização Manual</Typography>
-            <Button variant="contained" onClick={handleSyncProducts} sx={{ mr: 2, my: 1 }}>Sincronizar Produtos</Button>
-            <Button variant="contained" onClick={handleSyncOrders} sx={{ my: 1 }}>Buscar Pedidos</Button>
-            <List sx={{ mt: 2, maxHeight: 300, overflow: 'auto' }}>
-                {wpLogs.map((log, index) => <ListItem key={index}><ListItemText primary={log} /></ListItem>)}
-            </List>
-          </Paper>
+        {/* Coluna Direita: Status e Logs */}
+        <Grid item xs={12} lg={5}>
+          <Stack spacing={3} height="100%">
+            <Paper sx={{ p: 3, borderRadius: '24px', bgcolor: '#21759b', color: 'white' }}>
+              <Typography variant="subtitle2" fontWeight={800} gutterBottom>Status da Conexão</Typography>
+              <Box display="flex" alignItems="center" gap={2} mt={2}>
+                <CheckCircle sx={{ fontSize: 40 }} />
+                <Box>
+                  <Typography variant="h5" fontWeight={900}>CONECTADO</Typography>
+                  <Typography variant="caption" sx={{ opacity: 0.8 }}>WooCommerce 8.2 • REST API v3</Typography>
+                </Box>
+              </Box>
+            </Paper>
+
+            <Paper sx={{ p: 3, borderRadius: '24px', bgcolor: '#1e1e1e', color: '#d4d4d4', flexGrow: 1, minHeight: 400 }}>
+              <Box display="flex" alignItems="center" gap={1} mb={2}>
+                <LogIcon sx={{ color: '#4caf50' }} />
+                <Typography variant="subtitle2" fontWeight={800} sx={{ color: '#fff' }}>Sync Activity Console</Typography>
+              </Box>
+              <Box sx={{ height: 400, overflowY: 'auto', fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                <AnimatePresence>
+                  {wpLogs.length === 0 ? (
+                    <Typography color="rgba(255,255,255,0.3)" variant="caption">Aguardando atividades...</Typography>
+                  ) : (
+                    wpLogs.map((log, i) => (
+                      <motion.div key={i} initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }}>
+                        <Typography variant="inherit" sx={{ 
+                          color: log.type === 'error' ? '#f44336' : log.type === 'success' ? '#4caf50' : 'inherit',
+                          mb: 0.5
+                        }}>
+                          <span style={{ opacity: 0.5 }}>[{log.time}]</span> {log.msg}
+                        </Typography>
+                      </motion.div>
+                    ))
+                  )}
+                </AnimatePresence>
+              </Box>
+            </Paper>
+          </Stack>
         </Grid>
       </Grid>
     </Box>

@@ -54,10 +54,10 @@ const AutomationFormPage: React.FC = () => {
       <form onSubmit={handleSubmit(onSubmit)}>
         <Paper sx={{ p: 3, mb: 3 }}>
           <Grid container spacing={2}>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField {...register('name')} label="Nome da Automação" fullWidth />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <FormControl fullWidth>
                 <InputLabel>Gatilho</InputLabel>
                 <Select {...register('trigger_type')} label="Gatilho">
@@ -73,7 +73,7 @@ const AutomationFormPage: React.FC = () => {
         {fields.map((field, index) => (
           <Paper key={field.id} sx={{ p: 2, mb: 2 }}>
             <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <FormControl fullWidth>
                   <InputLabel>Tipo de Passo</InputLabel>
                   <Select {...register(`steps.${index}.type`)} label="Tipo de Passo">
@@ -82,7 +82,7 @@ const AutomationFormPage: React.FC = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 {/* Render payload fields based on step type */}
                 {watch(`steps.${index}.type`) === 'wait' && (
                   <TextField {...register(`steps.${index}.payload.days`)} label="Dias" type="number" fullWidth />
@@ -91,7 +91,7 @@ const AutomationFormPage: React.FC = () => {
                   <TextField {...register(`steps.${index}.payload.email_template_id`)} label="ID do Template de Email" type="number" fullWidth />
                 )}
               </Grid>
-              <Grid item xs={12} sm={2}>
+              <Grid size={{ xs: 12, sm: 2 }}>
                 <IconButton onClick={() => remove(index)}><Delete /></IconButton>
               </Grid>
             </Grid>

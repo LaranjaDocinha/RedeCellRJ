@@ -28,4 +28,15 @@ export const initSocketListeners = () => {
     });
     console.log(`Emitted kanban_card_moved for OS #${serviceOrder.id} (${oldStatus} -> ${newStatus})`);
   });
+
+  // Gamification Listeners
+  appEvents.on('gamification.xp.earned', ({ userId, totalXP, achievements }) => {
+    io.emit('xp_earned', { userId, totalXP, achievements });
+    console.log(`[SOCKET] Emitted xp_earned for user ${userId}`);
+  });
+
+  appEvents.on('gamification.level.up', ({ userId, oldLevel, newLevel }) => {
+    io.emit('level_up', { userId, oldLevel, newLevel });
+    console.log(`[SOCKET] Emitted level_up for user ${userId}`);
+  });
 };

@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AuthenticationError, AuthorizationError } from '../utils/errors.js';
-import * as Sentry from '@sentry/node'; // Importar Sentry
-
+import * as Sentry from '@sentry/node';
 import { UserPayload } from '../types/express.js';
+import { userRepository } from '../repositories/user.repository.js';
+
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey';
 
-const authenticate = (req: Request, res: Response, next: NextFunction) => {
+const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return next(new AuthenticationError('No token provided'));
@@ -16,61 +17,63 @@ const authenticate = (req: Request, res: Response, next: NextFunction) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as UserPayload;
-    console.log('Decoded JWT:', decoded); // Add log
+    console.log('[AUTH DEBUG] Decoded token:', JSON.stringify(decoded));
+    
+    // Validar se o usuário ainda existe (essencial após resets de banco)
+    const userExists = await userRepository.findById(decoded.id);
+    if (!userExists) {
+        return next(new AuthenticationError('Usuário inexistente ou banco resetado. Por favor, faça login novamente.'));
+    }
+
     req.user = decoded;
 
-    // Adicionar contexto do usuário ao Sentry
+    // Sentry Context
     Sentry.setUser({
       id: decoded.id,
       email: decoded.email,
-      username: decoded.name || decoded.email, // Usar nome se disponível, senão email
+      username: decoded.name || decoded.email,
     });
-    // Adicionar tags relevantes
     Sentry.setTag('user_id', decoded.id);
     Sentry.setTag('user_email', decoded.email);
-    Sentry.setTag('user_role', decoded.role); // Assumindo que o role está no JWT
+    Sentry.setTag('user_role', decoded.role);
 
     next();
   } catch (error) {
-    console.error('JWT verification failed:', error); // Add log
-    return next(new AuthenticationError('Invalid or expired token'));
+    return next(new AuthenticationError('Sessão inválida ou expirada.'));
   }
 };
 
 const authorize =
   (action: string, subject: string, options?: { resourceBranchId?: number }) => (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user as UserPayload; // Explicitly cast req.user to UserPayload
-    // console.log(`[Auth] Authorizing action: ${action}, subject: ${subject} for user: ${user?.email}`); // Temporarily commented out
+    const user = req.user as UserPayload;
+    
     if (!user || !user.permissions) {
-      // Add check for permissions
-      console.log('[Auth] User not authenticated or permissions not found.');
-      return next(new AuthenticationError('User not authenticated or permissions not found'));
+      return next(new AuthenticationError('Usuário não autenticado ou sem permissões definidas.'));
     }
 
-    // console.log(`[Auth] User permissions:`, user.permissions); // Temporarily commented out
     const hasPermission = user.permissions.some(
       (p: { action: string; subject: string }) => {
-        // Check for exact match
         if (p.action === action && p.subject === subject) return true;
-        // Check for wildcard action 'manage'
         if (p.action === 'manage' && p.subject === subject) return true;
-        // Check for wildcard subject 'all' (with 'manage' action usually, or exact action)
         if (p.subject === 'all') {
-            if (p.action === 'manage') return true; // manage:all covers everything
-            if (p.action === action) return true; // e.g. read:all covers read:Users
+            if (p.action === 'manage') return true;
+            if (p.action === action) return true;
         }
         return false;
       }
     );
 
-    // Lógica para autorização baseada em atributos (ex: branchId)
-    if (hasPermission && options?.resourceBranchId && user.branchId) { // Assumindo que user.branchId existe
-        if (user.branchId !== options.resourceBranchId) {
-            // Se o usuário tem permissão para o recurso, mas não para o branch específico
-            return next(new AuthorizationError(`You do not have permission to ${action} ${subject} in this branch`));
+    if (!hasPermission) {
+        console.log(`[AUTH] Access Denied for user ${user.email}. Action: ${action}, Subject: ${subject}`);
+        console.log(`[AUTH] User permissions:`, JSON.stringify(user.permissions));
+    }
+
+    if (hasPermission && options?.resourceBranchId && (user as any).branchId) {
+        if ((user as any).branchId !== options.resourceBranchId) {
+            return next(new AuthorizationError(`Você não tem permissão para esta filial.`));
         }
     } else if (!hasPermission) {
-        return next(new AuthorizationError(`You do not have permission to ${action} ${subject}`));
+        return next(new AuthorizationError(`Acesso negado: você não tem permissão para ${action} em ${subject}.`));
     }
     next();
   };

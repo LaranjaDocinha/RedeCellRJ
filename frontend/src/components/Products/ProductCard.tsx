@@ -9,8 +9,8 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const imageUrl = product.variations && product.variations.length > 0
-    ? product.variations[0].image_url || 'https://via.placeholder.com/150' // Usar a primeira variação ou placeholder
-    : 'https://via.placeholder.com/150';
+    ? product.variations[0].image_url || 'https://placehold.co/150' // Usar a primeira variação ou placeholder
+    : 'https://placehold.co/150';
 
   const price = product.variations && product.variations.length > 0
     ? `R$ ${product.variations[0].price.toFixed(2)}`

@@ -9,12 +9,14 @@ const tagsRouter = Router();
 
 // Zod Schemas
 const createTagSchema = z.object({
-  name: z.string().trim().nonempty('Tag name is required'),
+  name: z.string().trim().min(1, 'Tag name is required'),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').optional(),
 });
 
 const updateTagSchema = z
   .object({
-    name: z.string().trim().nonempty('Tag name cannot be empty').optional(),
+    name: z.string().trim().min(1, 'Tag name cannot be empty').optional(),
+    color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').optional(),
   })
   .partial();
 

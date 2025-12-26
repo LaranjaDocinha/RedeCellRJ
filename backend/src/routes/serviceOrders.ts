@@ -4,15 +4,25 @@ import * as soController from '../controllers/serviceOrderController.js';
 import { uploadVideo } from './uploads.js'; // Importar o uploadsRouter para usar o middleware de upload
 import { ValidationError } from '../utils/errors.js';
 import taskTimeLogRouter from './taskTimeLog.js';
+import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = Router();
 
 const serviceOrderSchema = z.object({
-  customer_id: z.string(),
-  product_description: z.string(),
+  customer_id: z.number().optional(),
+  customer_name: z.string().min(2),
+  brand: z.string().min(1),
+  product_description: z.string().min(3),
   imei: z.string().optional(),
-  entry_checklist: z.object({}).passthrough(), // a more specific schema can be defined
-  issue_description: z.string(),
+  device_password: z.string().optional(),
+  issue_description: z.string().min(5),
+  services: z.array(z.any()).min(1),
+  estimated_cost: z.number().min(0),
+  down_payment: z.number().min(0).optional(),
+  part_quality: z.string().optional(),
+  expected_delivery_date: z.string().optional(),
+  observations: z.string().optional(),
+  priority: z.string().optional(),
 });
 
 const validate =
@@ -34,7 +44,7 @@ const validate =
   };
 
 // Create a new service order
-router.post('/', validate(serviceOrderSchema), soController.createServiceOrder);
+router.post('/', authMiddleware.authenticate, validate(serviceOrderSchema), soController.createServiceOrder);
 
 // Get all service orders (with optional filters)
 router.get('/', soController.getAllServiceOrders);
@@ -43,10 +53,10 @@ router.get('/', soController.getAllServiceOrders);
 router.get('/:id', soController.getServiceOrderById);
 
 // Update a service order (budget, technical report)
-router.put('/:id', soController.updateServiceOrder);
+router.put('/:id', authMiddleware.authenticate, soController.updateServiceOrder);
 
 // Change the status of a service order
-router.patch('/:id/status', soController.changeOrderStatus);
+router.patch('/:id/status', authMiddleware.authenticate, soController.changeOrderStatus);
 
 // Suggest a technician for a service order
 router.get('/:id/suggest-technician', soController.suggestTechnician);
@@ -66,7 +76,7 @@ router.get('/:id/qrcode', async (req, res) => {
 });
 
 // Comments
-router.post('/:id/comments', soController.addComment);
+router.post('/:id/comments', authMiddleware.authenticate, soController.addComment);
 router.get('/:id/comments', soController.getComments);
 
 // Add an item to a service order
@@ -75,6 +85,7 @@ router.post('/:id/items', soController.addOrderItem);
 // Add video attachment to a service order
 router.post(
   '/:id/attachments/video',
+  authMiddleware.authenticate,
   uploadVideo.single('video'), // Usar o middleware de upload de vídeo
   soController.addServiceOrderVideoAttachment,
 );

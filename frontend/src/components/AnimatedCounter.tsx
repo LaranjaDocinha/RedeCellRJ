@@ -1,32 +1,27 @@
-import React, { useEffect, useRef } from 'react';
-import { motion, animate } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
+import { animate } from 'framer-motion';
 
 interface AnimatedCounterProps {
   value: number;
-  prefix?: string;
-  decimals?: number;
+  duration?: number;
+  format?: (val: number) => string;
 }
 
-const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, prefix = 'R$ ', decimals = 2 }) => {
-  const nodeRef = useRef<HTMLSpanElement>(null);
+export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ 
+  value, 
+  duration = 1.5,
+  format = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}) => {
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
-    const node = nodeRef.current;
-    if (!node) return;
-
-    const from = parseFloat(node.textContent?.replace(prefix, '').replace(',', '.') || '0');
-    
-    const controls = animate(from, value, {
-      duration: 0.5,
-      onUpdate(latest) {
-        node.textContent = `${prefix}${latest.toFixed(decimals)}`;
-      }
+    const controls = animate(0, value, {
+      duration,
+      onUpdate: (latest) => setCount(latest),
+      ease: 'easeOut',
     });
-
     return () => controls.stop();
-  }, [value, prefix, decimals]);
+  }, [value, duration]);
 
-  return <motion.span ref={nodeRef} />;
+  return <>{format(count)}</>;
 };
-
-export default AnimatedCounter;

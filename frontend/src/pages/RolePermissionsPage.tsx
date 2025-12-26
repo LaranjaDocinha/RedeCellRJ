@@ -157,10 +157,9 @@ const RolePermissionsPage: React.FC = () => {
         />
         <Typography variant="subtitle1" sx={{ mb: 1 }}>Permissões:</Typography>
         <Grid container spacing={1}>
-          {allPermissions.map(permission => (
-            <Grid item xs={12} sm={6} md={4} key={permission.id}>
-              <FormControlLabel
-                control={
+                  {allPermissions.map(permission => (
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={permission.id}>
+                      <FormControlLabel                control={
                   <Checkbox
                     checked={selectedPermissions.includes(permission.id)}
                     onChange={() => handlePermissionChange(permission.id)}
@@ -203,10 +202,9 @@ const RolePermissionsPage: React.FC = () => {
                     />
                     <Typography variant="subtitle1" sx={{ mb: 1 }}>Permissões:</Typography>
                     <Grid container spacing={1}>
-                      {allPermissions.map(permission => (
-                        <Grid item xs={12} sm={6} md={4} key={permission.id}>
-                          <FormControlLabel
-                            control={
+                              {allPermissions.map(permission => (
+                                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={permission.id}>
+                                  <FormControlLabel                            control={
                               <Checkbox
                                 checked={editingRole.permissions.some(p => p.id === permission.id)}
                                 onChange={() => handleEditPermissionChange(permission.id)}

@@ -41,6 +41,16 @@ const createChallengeSchema = z.object({
 
 router.use(authMiddleware.authenticate); // Require auth for all gamification routes
 
+router.get('/stats', async (req, res) => {
+  try {
+    const userId = (req as any).user.id;
+    const stats = await gamificationService.getUserStats(userId);
+    res.json(stats);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message || 'Error fetching stats' });
+  }
+});
+
 router.get('/leaderboard', async (req, res) => {
   try {
     const metric = (req.query.metric as 'sales_volume' | 'repairs_completed') || 'sales_volume';

@@ -46,3 +46,5 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, children }) => {
     </Box>
   );
 };
+
+export default Dropdown;

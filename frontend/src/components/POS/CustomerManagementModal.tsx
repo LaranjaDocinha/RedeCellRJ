@@ -24,6 +24,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Customer {
   id: string;
@@ -51,35 +52,28 @@ const createCustomerSchema = z.object({
 
 type CreateCustomerFormInputs = z.infer<typeof createCustomerSchema>;
 
-const fetchCustomers = async (searchTerm: string, page: number, limit: number) => {
-  const response = await axios.get('/api/customers/search', {
-    params: { searchTerm, limit, offset: (page - 1) * limit },
-  });
-  return response.data;
-};
-
-const createCustomer = async (data: CreateCustomerFormInputs) => {
-  const response = await axios.post('/api/customers', data);
-  return response.data;
-};
-
 const CustomerManagementModal: React.FC<CustomerManagementModalProps> = ({ open, onClose, onCustomerSelect }) => {
   const { t } = useTranslation();
   const { addNotification } = useNotification();
+  const { token } = useAuth();
   const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [isCreatingNewCustomer, setIsCreatingNewCustomer] = useState(false);
 
-  const { data, isLoading, error, refetch } = useQuery<{ customers: Customer[]; totalCustomers: number }>(
-    ['customersSearch', searchTerm, page],
-    () => fetchCustomers(searchTerm, page, 10),
-    {
-      enabled: open,
-      keepPreviousData: true,
-    }
-  );
+  const { data, isLoading, error } = useQuery<{ customers: Customer[]; totalCustomers: number }>({
+    queryKey: ['customersSearch', searchTerm, page],
+    queryFn: async () => {
+      const response = await axios.get('/api/customers/search', {
+        params: { searchTerm, limit: 10, offset: (page - 1) * 10 },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    },
+    enabled: open && !!token,
+    placeholderData: (previousData) => previousData,
+  });
 
   const {
     register,
@@ -90,10 +84,16 @@ const CustomerManagementModal: React.FC<CustomerManagementModalProps> = ({ open,
     resolver: zodResolver(createCustomerSchema),
   });
 
-  const createCustomerMutation = useMutation(createCustomer, {
+  const createCustomerMutation = useMutation({
+    mutationFn: async (customerData: CreateCustomerFormInputs) => {
+      const response = await axios.post('/api/customers', customerData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    },
     onSuccess: (newCustomer) => {
       addNotification(t('customer_created_success', { name: newCustomer.name }), 'success');
-      queryClient.invalidateQueries(['customersSearch']);
+      queryClient.invalidateQueries({ queryKey: ['customersSearch'] });
       onCustomerSelect(newCustomer);
       reset();
       setIsCreatingNewCustomer(false);
@@ -242,8 +242,8 @@ const CustomerManagementModal: React.FC<CustomerManagementModalProps> = ({ open,
               helperText={errors.birth_date?.message}
               sx={{ mb: 2 }}
             />
-            <Button type="submit" variant="contained" color="primary" fullWidth disabled={createCustomerMutation.isLoading}>
-              {createCustomerMutation.isLoading ? <CircularProgress size={24} /> : t('create_customer')}
+            <Button type="submit" variant="contained" color="primary" fullWidth disabled={createCustomerMutation.isPending}>
+              {createCustomerMutation.isPending ? <CircularProgress size={24} /> : t('create_customer')}
             </Button>
             <Button
               variant="outlined"

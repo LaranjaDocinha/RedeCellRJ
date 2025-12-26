@@ -57,7 +57,7 @@ interface ReturnMetricsWidgetProps {
  */
 const ReturnMetricsWidget: React.FC<ReturnMetricsWidgetProps> = React.memo(({ selectedPeriod }) => {
   const { token, isAuthenticated } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   const { data, isLoading, isError, error } = useQuery<ReturnMetricsData, Error>({
     queryKey: ['returnMetrics', token, selectedPeriod],
@@ -67,9 +67,9 @@ const ReturnMetricsWidget: React.FC<ReturnMetricsWidgetProps> = React.memo(({ se
 
   useEffect(() => {
     if (isError && error) {
-      addToast(`Falha ao buscar métricas de devolução: ${error.message}`, 'error');
+      showNotification(`Falha ao buscar métricas de devolução: ${error.message}`, 'error');
     }
-  }, [isError, error, addToast]);
+  }, [isError, error, showNotification]);
 
   if (isLoading) {
     return <DashboardWidgetSkeleton />;

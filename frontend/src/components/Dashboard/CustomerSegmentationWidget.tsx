@@ -56,7 +56,7 @@ interface CustomerSegmentationWidgetProps {
  */
 const CustomerSegmentationWidget: React.FC<CustomerSegmentationWidgetProps> = React.memo(({ selectedPeriod }) => {
   const { token, isAuthenticated } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   const { data, isLoading, isError, error } = useQuery<CustomerSegmentData[], Error>({
     queryKey: ['customerSegmentation', token, selectedPeriod],
@@ -66,9 +66,9 @@ const CustomerSegmentationWidget: React.FC<CustomerSegmentationWidgetProps> = Re
 
   useEffect(() => {
     if (isError && error) {
-      addToast(`Falha ao buscar segmentação de clientes: ${error.message}`, 'error');
+      showNotification(`Falha ao buscar segmentação de clientes: ${error.message}`, 'error');
     }
-  }, [isError, error, addToast]);
+  }, [isError, error, showNotification]);
 
   if (isLoading) {
     return <DashboardWidgetSkeleton />;

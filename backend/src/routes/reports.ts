@@ -1,11 +1,27 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { getPool } from '../db/index.js';
-import { financeService } from '../services/financeService.js';
+import * as financeService from '../services/financeService.js';
+import * as reportDataService from '../services/reportDataService.js';
 import { cacheMiddleware } from '../middlewares/cacheMiddleware.js';
 import { salesGoalService } from '../services/salesGoalService.js';
 
 const reportsRouter = Router();
+
+reportsRouter.get(
+  '/contribution-margin-by-category',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('read', 'Report'),
+  cacheMiddleware(),
+  async (req, res, next) => {
+    try {
+      const report = await reportService.getContributionMarginByCategory();
+      res.json(report);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 reportsRouter.get(
   '/sales-daily',
@@ -71,6 +87,51 @@ reportsRouter.get(
         branchId: branchId ? parseInt(String(branchId), 10) : undefined,
       });
       res.json(progress);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+reportsRouter.get(
+  '/break-even',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('read', 'Report'),
+  cacheMiddleware(),
+  async (req, res, next) => {
+    try {
+      const report = await reportDataService.getBreakEvenPoint();
+      res.json(report);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+reportsRouter.get(
+  '/customer-ltv',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('read', 'Report'),
+  cacheMiddleware(),
+  async (req, res, next) => {
+    try {
+      const report = await reportDataService.getCustomerLTV();
+      res.json(report);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+reportsRouter.get(
+  '/customer-acquisition-cost',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('read', 'Report'),
+  cacheMiddleware(),
+  async (req, res, next) => {
+    try {
+      const report = await reportDataService.getCustomerAcquisitionCost();
+      res.json(report);
     } catch (error) {
       next(error);
     }

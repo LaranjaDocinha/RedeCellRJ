@@ -57,7 +57,7 @@ interface AbandonedCartsWidgetProps {
  */
 const AbandonedCartsWidget: React.FC<AbandonedCartsWidgetProps> = React.memo(({ selectedPeriod }) => {
   const { token, isAuthenticated } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   const { data, isLoading, isError, error } = useQuery<AbandonedCartsData, Error>({
     queryKey: ['abandonedCarts', token, selectedPeriod],
@@ -67,9 +67,9 @@ const AbandonedCartsWidget: React.FC<AbandonedCartsWidgetProps> = React.memo(({ 
 
   useEffect(() => {
     if (isError && error) {
-      addToast(`Falha ao buscar métricas de carrinhos abandonados: ${error.message}`, 'error');
+      showNotification(`Falha ao buscar métricas de carrinhos abandonados: ${error.message}`, 'error');
     }
-  }, [isError, error, addToast]);
+  }, [isError, error, showNotification]);
 
   if (isLoading) {
     return <DashboardWidgetSkeleton />;

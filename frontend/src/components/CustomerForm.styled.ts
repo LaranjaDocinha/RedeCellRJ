@@ -1,66 +1,67 @@
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 
-export const StyledForm = styled(motion.form)`
-  background-color: ${({ theme }) => theme.colors.surface};
-  box-shadow: ${({ theme }) => theme.shadows.elevation1};
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
-  padding: ${({ theme }) => theme.spacing.lg};
+export const StyledForm = styled(motion.create('form'))`
+  background-color: ${({ theme }) => theme.palette.background.paper};
+  box-shadow: ${({ theme }) => theme.shadows[1]};
+  border-radius: 16px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: 20px;
 `;
 
-export const StyledFormField = styled(motion.div)`
+export const StyledFormField = styled('div')`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
+  gap: 8px;
 `;
 
-export const StyledLabel = styled(motion.label)`
-  font-size: ${({ theme }) => theme.typography.bodyMedium.fontSize};
-  font-weight: ${({ theme }) => theme.typography.bodyMedium.fontWeight};
-  color: ${({ theme }) => theme.colors.onSurface};
+export const StyledLabel = styled('label')`
+  font-size: ${({ theme }) => theme.typography.body2.fontSize};
+  font-weight: 600;
+  color: ${({ theme }) => theme.palette.text.secondary};
+  margin-bottom: 4px;
 `;
 
-export const StyledInput = styled(motion.input)`
-  padding: ${({ theme }) => theme.spacing.sm};
-  border: 1px solid ${({ theme }) => theme.colors.onSurface}30;
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-  font-family: ${({ theme }) => theme.typography.bodyMedium.fontFamilyPrimary};
-  font-size: ${({ theme }) => theme.typography.bodyMedium.fontSize};
-  color: ${({ theme }) => theme.colors.onSurface};
-  background-color: ${({ theme }) => theme.colors.background};
+export const StyledInput = styled('input')`
+  padding: 12px 16px;
+  border: 1px solid ${({ theme }) => theme.palette.divider};
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: ${({ theme }) => theme.typography.body1.fontSize};
+  color: ${({ theme }) => theme.palette.text.primary};
+  background-color: ${({ theme }) => theme.palette.background.default};
   transition: all 0.2s ease-in-out;
 
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
-    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary}40;
+    border-color: ${({ theme }) => theme.palette.primary.main};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.palette.primary.main}20;
   }
 `;
 
-export const StyledTextArea = styled(motion.textarea)`
-  padding: ${({ theme }) => theme.spacing.sm};
-  border: 1px solid ${({ theme }) => theme.colors.onSurface}30;
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-  font-family: ${({ theme }) => theme.typography.bodyMedium.fontFamilyPrimary};
-  font-size: ${({ theme }) => theme.typography.bodyMedium.fontSize};
-  color: ${({ theme }) => theme.colors.onSurface};
-  background-color: ${({ theme }) => theme.colors.background};
+export const StyledTextArea = styled('textarea')`
+  padding: 12px 16px;
+  border: 1px solid ${({ theme }) => theme.palette.divider};
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: ${({ theme }) => theme.typography.body1.fontSize};
+  color: ${({ theme }) => theme.palette.text.primary};
+  background-color: ${({ theme }) => theme.palette.background.default};
   transition: all 0.2s ease-in-out;
   resize: vertical;
 
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
-    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary}40;
+    border-color: ${({ theme }) => theme.palette.primary.main};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.palette.primary.main}20;
   }
 `;
 
-export const StyledButtonContainer = styled(motion.div)`
+export const StyledButtonContainer = styled('div')`
   display: flex;
   justify-content: flex-end;
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin-top: ${({ theme }) => theme.spacing.md};
+  gap: 16px;
+  margin-top: 24px;
 `;

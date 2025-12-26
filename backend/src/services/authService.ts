@@ -76,24 +76,29 @@ export const authService = {
     logger.info(`Login attempt for: ${email}`);
     
     const user = await userRepository.findByEmail(email);
+    logger.info(`User lookup result for ${email}: ${user ? 'Found' : 'Not Found'}`);
 
     if (!user || !user.password_hash) {
-      logger.info('User not found or has no password set');
+      logger.warn(`Login failed for ${email}: User not found or no password hash.`);
       throw new AppError('Invalid credentials', 401);
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
+    logger.info(`Password comparison result for ${email}: ${passwordMatch ? 'Match' : 'No Match'}`);
 
     if (!passwordMatch) {
-      logger.info('Password does not match');
+      logger.warn(`Login failed for ${email}: Incorrect password.`);
       throw new AppError('Invalid credentials', 401);
     }
 
     const permissions = await userRepository.getUserPermissions(user.id);
+    logger.info(`Permissions retrieved for ${email}.`);
     const userRoleName = await userRepository.getUserRole(user.id);
+    logger.info(`Role retrieved for ${email}.`);
 
     const payload: JwtPayload = { id: user.id, email: user.email, role: userRoleName, permissions };
     const token = sign(payload, process.env.JWT_SECRET || 'supersecretjwtkey', { expiresIn: '1h' });
+    logger.info(`JWT token generated for ${email}.`);
 
     // Log activity
     await logActivityService.logActivity({
@@ -102,6 +107,7 @@ export const authService = {
       resourceType: 'User',
       resourceId: user.id,
     });
+    logger.info(`Login activity logged for ${email}.`);
 
     return {
       user: { id: user.id, name: user.name, email: user.email, role: userRoleName, permissions },

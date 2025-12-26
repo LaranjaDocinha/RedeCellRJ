@@ -1,68 +1,42 @@
 import React from 'react';
 import Chart from 'react-apexcharts';
-const TopSellingProductsChartWidget: React.FC<TopSellingProductsChartWidgetProps> = React.memo(({
-  topSellingProducts,
-}) => {
+import { Paper, Typography, Box } from '@mui/material';
+
+interface TopSellingProductsChartWidgetProps {
+  data: {
+    topSellingProducts: {
+      mainPeriodTopSellingProducts: Array<{ product_name: string; variation_color: string; total_quantity_sold: number }>;
+    }
+  };
+}
+
+const TopSellingProductsChartWidget: React.FC<TopSellingProductsChartWidgetProps> = ({ data }) => {
+  const topSellingProducts = data?.topSellingProducts?.mainPeriodTopSellingProducts || [];
+
   const topProductsChartOptions = {
     chart: {
       id: 'top-selling-products',
-      type: 'bar',
       toolbar: { show: false },
-      animations: { // Enable and configure animations
-        enabled: true,
-        easing: 'easeinout',
-        speed: 800,
-        animateGradually: {
-          enabled: true,
-          delay: 150
-        },
-        dynamicAnimation: {
-          enabled: true,
-          speed: 350
-        }
-      }
+      animations: { enabled: true, easing: 'easeinout' as const, speed: 800 }
     },
     plotOptions: {
       bar: {
         horizontal: true,
-        dataLabels: {
-          position: 'top',
-        },
-      },
-    },
-    dataLabels: {
-      enabled: true,
-      offsetX: -6,
-      style: {
-        fontSize: '12px',
-        colors: ['#fff'],
-      },
+        borderRadius: 4,
+        dataLabels: { position: 'top' }
+      }
     },
     xaxis: {
       categories: topSellingProducts.map((p) => `${p.product_name} (${p.variation_color})`),
     },
     colors: ['#03DAC6'],
-    tooltip: { // Configure detailed tooltips
-      x: {
-        show: true,
-        formatter: function (val: string) {
-          return `Produto: ${val}`;
-        }
-      },
+    tooltip: {
       y: {
-        formatter: function (val: number) {
-          return `${val} unidades`;
-        }
+        formatter: (val: number) => `${val} unidades`
       }
-    },
-    grid: {
-      xaxis: {
-        lines: {
-          show: false,
-        },
-      },
-    },
+    }
   };
+
   const topProductsChartSeries = [
     {
       name: 'Quantidade Vendida',
@@ -71,15 +45,21 @@ const TopSellingProductsChartWidget: React.FC<TopSellingProductsChartWidgetProps
   ];
 
   return (
-    <Chart
-      options={topProductsChartOptions}
-      series={topProductsChartSeries}
-      type="bar"
-      height={350}
-    />
+    <Paper sx={{ p: 3, borderRadius: '16px', height: '100%', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+        Top 5 Produtos Vendidos
+      </Typography>
+      <Box sx={{ mt: 2 }}>
+        {topSellingProducts.length > 0 ? (
+          <Chart options={topProductsChartOptions} series={topProductsChartSeries} type="bar" height={300} />
+        ) : (
+          <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Typography variant="body2" color="text.disabled">Sem dados no período</Typography>
+          </Box>
+        )}
+      </Box>
+    </Paper>
   );
-});
+};
 
 export default TopSellingProductsChartWidget;
-
-

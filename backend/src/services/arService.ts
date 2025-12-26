@@ -9,12 +9,12 @@ export const getCompatibleProducts = async (deviceId: number) => {
       {
         id: 1,
         name: 'Capa Transparente',
-        imageUrl: 'https://via.placeholder.com/150/0000FF/FFFFFF?text=Capa1',
+        imageUrl: 'https://placehold.co/150/0000FF/FFFFFF?text=Capa1',
       },
       {
         id: 2,
         name: 'Capa Preta Fosca',
-        imageUrl: 'https://via.placeholder.com/150/000000/FFFFFF?text=Capa2',
+        imageUrl: 'https://placehold.co/150/000000/FFFFFF?text=Capa2',
       },
     ],
     message: `Compatible products for device ${deviceId} (simulated).`,

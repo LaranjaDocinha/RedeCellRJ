@@ -47,7 +47,7 @@ const MyBadges: React.FC = () => {
               badges.map((badge) => (
                 <Grid item key={badge.id}>
                   <Tooltip title={`${badge.name}: ${badge.description}`}>
-                    <img src={badge.icon_url || 'https://via.placeholder.com/64'} alt={badge.name} width={64} height={64} />
+                    <img src={badge.icon_url || 'https://placehold.co/64'} alt={badge.name} width={64} height={64} />
                   </Tooltip>
                 </Grid>
               ))

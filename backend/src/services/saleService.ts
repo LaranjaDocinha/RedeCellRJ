@@ -6,9 +6,10 @@ import { AppError } from '../utils/errors.js';
 import { salesGoalService } from './salesGoalService.js';
 import { customerService } from './customerService.js'; // Import customerService
 import * as activityFeedService from './activityFeedService.js';
-import { serializedItemService } from './serializedItemService.js'; // Import serializedItemService
-import * as gamificationService from './gamificationService.js'; // Import gamificationService
-import { marketplaceSyncService } from './marketplaceSyncService.js'; // Import marketplaceSyncService
+import { serializedItemService } from './serializedItemService.js';
+import * as gamificationService from './gamificationService.js';
+import { gamificationEngine } from './gamificationEngine.js'; // Import the new engine
+import { marketplaceSyncService } from './marketplaceSyncService.js';
 
 // ... (interfaces remain the same)
 
@@ -232,11 +233,15 @@ export const saleService = {
       await client.query('COMMIT');
       console.log('[createSale] Transaction committed');
 
-      // Update Gamification Challenges
+      // Update Gamification Challenges & Complex Missions (Suggestion C)
       if (userId) {
         try {
+          // Mantém o progresso dos desafios padrão
           gamificationService.updateChallengeProgress(userId, 'sales_amount', totalAmount);
           gamificationService.updateChallengeProgress(userId, 'sales_count', 1);
+          
+          // Processa as Missões Épicas (Early Bird, Upsell, Fidelizador, etc)
+          gamificationEngine.processSale(userId, totalAmount, saleItems, customerId);
         } catch (e) {
           console.error('Error updating gamification progress:', e);
         }

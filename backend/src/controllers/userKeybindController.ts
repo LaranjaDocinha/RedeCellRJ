@@ -4,13 +4,13 @@ import { z } from 'zod';
 import { AppError } from '../utils/errors.js';
 
 // Zod schemas for validation
-const createKeybindSchema = z.object({
+export const createKeybindSchema = z.object({
   action_name: z.string().min(1, 'Action name is required'),
   key_combination: z.string().min(1, 'Key combination is required'),
   context: z.string().optional(),
 });
 
-const updateKeybindSchema = z.object({
+export const updateKeybindSchema = z.object({
   key_combination: z.string().min(1, 'Key combination is required').optional(),
   context: z.string().optional(),
 }).partial();

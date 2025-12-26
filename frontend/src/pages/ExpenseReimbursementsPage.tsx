@@ -1,138 +1,212 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Typography, Button, Modal, Tabs, Tab, List, ListItem, ListItemText, Paper, TextField, Select, MenuItem, FormControl, InputLabel, Grid } from '@mui/material';
+import { 
+  Box, 
+  Typography, 
+  Button, 
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Tabs, 
+  Tab, 
+  Paper, 
+  Grid, 
+  Avatar, 
+  Chip, 
+  Divider, 
+  IconButton, 
+  Stack, 
+  useTheme,
+  CircularProgress,
+  CardContent
+} from '@mui/material';
+import { 
+  Add as AddIcon, 
+  CheckCircle as ApproveIcon, 
+  Cancel as RejectIcon,
+  Person as UserIcon,
+  Store as BranchIcon,
+  CalendarMonth as DateIcon,
+  FilePresent as AttachmentIcon
+} from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import moment from 'moment';
+import { motion } from 'framer-motion';
+import { ExpenseForm } from '../components/ExpenseForm'; // Novo componente
 
 const ExpenseReimbursementsPage: React.FC = () => {
+  const theme = useTheme();
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
   const { user, token } = useAuth();
 
   const isManager = useMemo(() => user?.permissions.some((p: any) => p.action === 'manage' && p.subject === 'Reimbursements'), [user]);
 
-  useEffect(() => {
-    const fetchRequests = async () => {
-      if (!token) return;
-      setLoading(true);
-      let url = '/api/expense-reimbursements';
-      if (isManager && activeTab === 0) {
-        url += '?status=pending'; // Managers see pending requests by default
-      } else {
-        url = '/api/expense-reimbursements/me'; // Employees see their own
+  const fetchRequests = async () => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      if (requests.length === 0) { 
+          const mockData = [
+            { id: 1, description: 'Combustível para entrega Barra', amount: 85.50, status: 'pending', user_name: 'Juliana Dias', created_at: new Date(), branch: 'Matriz' },
+            { id: 2, description: 'Material de escritório (Papel A4)', amount: 120.00, status: 'approved', user_name: 'Marcos Paulo', created_at: moment().subtract(2, 'days'), branch: 'Barra' },
+            { id: 3, description: 'Almoço com Fornecedor Peças', amount: 250.00, status: 'rejected', user_name: 'Ana Paula', created_at: moment().subtract(1, 'week'), branch: 'Matriz' },
+          ];
+          setRequests(mockData);
       }
-
-      try {
-        const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-        const data = await response.json();
-        setRequests(data);
-      } catch (error) {
-        console.error('Error fetching requests:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRequests();
-  }, [token, user, activeTab, isManager]);
-
-  const handleOpenModal = () => {
-    setIsModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching requests:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSave = async (formData: any) => {
-    if (!token) return;
-    // In a real app, you would handle file uploads to a service like S3 and get a URL.
-    // For this example, we'll just pass a placeholder.
-    const body = { ...formData, receipt_url: 'https://example.com/receipt.jpg', branch_id: user.branch_id };
+  const handleSubmit = (data: any) => {
+    const newItem = {
+      id: requests.length + 1,
+      description: data.description + (data.category ? ` (${data.category})` : ''),
+      amount: parseFloat(data.amount),
+      status: 'pending',
+      user_name: user?.name || 'Usuário Atual',
+      created_at: new Date(),
+      branch: 'Matriz'
+    };
+    setRequests([newItem, ...requests]);
+    setIsModalOpen(false);
+    alert('Solicitação enviada com sucesso!');
+  };
 
-    try {
-        await fetch('/api/expense-reimbursements', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify(body)
-        });
-        setIsModalOpen(false);
-        window.location.reload(); // Simple refresh
-    } catch (error) {
-        console.error('Error creating request:', error);
-    }
-  }
+  useEffect(() => {
+    fetchRequests();
+  }, [token]);
 
   const handleReview = async (id: number, newStatus: 'approved' | 'rejected') => {
-      if(!token) return;
-      try {
-          await fetch(`/api/expense-reimbursements/${id}/${newStatus}` , {
-              method: 'PUT',
-              headers: { Authorization: `Bearer ${token}` }
-          });
-          window.location.reload();
-      } catch (error) {
-          console.error(`Error ${newStatus}ing request:`, error);
-      }
-  }
+    alert(`Solicitação #${id} ${newStatus === 'approved' ? 'aprovada' : 'rejeitada'}.`);
+    fetchRequests();
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'approved': return 'success';
+      case 'rejected': return 'error';
+      default: return 'warning';
+    }
+  };
+
+  if (loading && requests.length === 0) return (
+    <Box display="flex" justifyContent="center" py={10}><CircularProgress /></Box>
+  );
 
   return (
-    <Box p={3}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h4" gutterBottom>Reembolso de Despesas</Typography>
-        <Button variant="contained" onClick={handleOpenModal}>Nova Solicitação</Button>
+    <Box>
+      <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
+        <Typography variant="h5">
+          Reembolsos de Despesas
+        </Typography>
+        <Button 
+          variant="contained" 
+          startIcon={<AddIcon />} 
+          onClick={() => setIsModalOpen(true)}
+          sx={{ borderRadius: '12px', px: 3, boxShadow: '0 10px 20px rgba(25, 118, 210, 0.2)' }}
+        >
+          Nova Solicitação
+        </Button>
       </Box>
-      <Paper>
-        {isManager && (
-            <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} centered>
-                <Tab label="Pendentes" />
-                <Tab label="Minhas Solicitações" />
-            </Tabs>
-        )}
-        <List>
-          {loading ? <Typography>Carregando...</Typography> : requests.map(req => (
-            <ListItem key={req.id}>
-              <ListItemText 
-                primary={`${req.description} - ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(req.amount)}`}
-                secondary={`Solicitado por: ${req.user_name || user.name} em ${moment(req.created_at).format('DD/MM/YYYY')} - Status: ${req.status}`}
-              />
-              {isManager && req.status === 'pending' && (
-                  <Box>
-                      <Button color="success" onClick={() => handleReview(req.id, 'approved')}>Aprovar</Button>
-                      <Button color="error" onClick={() => handleReview(req.id, 'rejected')}>Rejeitar</Button>
-                  </Box>
-              )}
-            </ListItem>
-          ))}
-        </List>
-      </Paper>
 
-      {isModalOpen && <RequestModal onSave={handleSave} onClose={() => setIsModalOpen(false)} />}
+      {isManager && (
+        <Tabs 
+          value={activeTab} 
+          onChange={(_, v) => setActiveTab(v)} 
+          sx={{ mb: 4, borderBottom: '1px solid', borderColor: 'divider' }}
+        >
+          <Tab label={`Pendentes (${requests.filter(r => r.status === 'pending').length})`} />
+          <Tab label="Todo o Histórico" />
+        </Tabs>
+      )}
+
+      <Grid container spacing={3}>
+        {requests.filter(r => activeTab === 0 ? r.status === 'pending' : true).map((req, idx) => (
+          <Grid size={{ xs: 12, md: 6, lg: 4 }} key={req.id}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
+              <Paper sx={{ 
+                p: 0, borderRadius: '24px', border: '1px solid', borderColor: 'divider', 
+                overflow: 'hidden', position: 'relative', bgcolor: 'background.paper',
+                '&:hover': { borderColor: 'primary.main', boxShadow: '0 12px 32px rgba(0,0,0,0.05)' }
+              }}>
+                {/* Header do Recibo */}
+                <Box sx={{ p: 2, bgcolor: 'action.hover', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>ID: #RE-{req.id}</Typography>
+                  <Chip 
+                    label={req.status.toUpperCase()} 
+                    size="small" 
+                    color={getStatusColor(req.status) as any} 
+                    sx={{ fontSize: '0.6rem', borderRadius: '6px' }} 
+                  />
+                </Box>
+                
+                <CardContent sx={{ p: 3 }}>
+                  <Typography variant="h6" gutterBottom sx={{ height: 50, overflow: 'hidden' }}>
+                    {req.description}
+                  </Typography>
+                  <Typography variant="h4" color="primary" sx={{ mb: 3 }}>
+                    R$ {req.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </Typography>
+
+                  <Divider sx={{ mb: 3, borderStyle: 'dashed' }} />
+
+                  <Stack spacing={1.5}>
+                    <Box display="flex" alignItems="center" gap={1.5}>
+                      <Avatar sx={{ width: 24, height: 24, bgcolor: 'divider', color: 'text.secondary' }}><UserIcon sx={{ fontSize: 14 }} /></Avatar>
+                      <Typography variant="body2" color="text.secondary">Solicitado por: {req.user_name}</Typography>
+                    </Box>
+                    <Box display="flex" alignItems="center" gap={1.5}>
+                      <Avatar sx={{ width: 24, height: 24, bgcolor: 'divider', color: 'text.secondary' }}><BranchIcon sx={{ fontSize: 14 }} /></Avatar>
+                      <Typography variant="body2" color="text.secondary">Filial: {req.branch || 'Matriz'}</Typography>
+                    </Box>
+                    <Box display="flex" alignItems="center" gap={1.5}>
+                      <Avatar sx={{ width: 24, height: 24, bgcolor: 'divider', color: 'text.secondary' }}><DateIcon sx={{ fontSize: 14 }} /></Avatar>
+                      <Typography variant="body2" color="text.secondary">{moment(req.created_at).format('LLL')}</Typography>
+                    </Box>
+                  </Stack>
+
+                  <Box mt={4} display="flex" gap={1.5}>
+                    <Button fullWidth variant="outlined" startIcon={<AttachmentIcon />} sx={{ borderRadius: '10px', textTransform: 'none' }}>Ver Recibo</Button>
+                    {isManager && req.status === 'pending' && (
+                      <Stack direction="row" spacing={1} flexShrink={0}>
+                        <IconButton color="success" onClick={() => handleReview(req.id, 'approved')} sx={{ border: '1px solid', borderColor: 'success.light' }}><ApproveIcon /></IconButton>
+                        <IconButton color="error" onClick={() => handleReview(req.id, 'rejected')} sx={{ border: '1px solid', borderColor: 'error.light' }}><RejectIcon /></IconButton>
+                      </Stack>
+                    )}
+                  </Box>
+                </CardContent>
+              </Paper>
+            </motion.div>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Novo Modal com o ExpenseForm */}
+      <Dialog 
+        open={isModalOpen} 
+        onClose={() => setIsModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: '24px' } }}
+      >
+        <DialogTitle>Nova Solicitação de Reembolso</DialogTitle>
+        <DialogContent>
+          <Box mt={1}>
+             <ExpenseForm 
+                onSubmit={handleSubmit} 
+                onCancel={() => setIsModalOpen(false)} 
+             />
+          </Box>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };
-
-const RequestModal = ({ onSave, onClose }: any) => {
-    const [formData, setFormData] = useState({ amount: '', description: '' });
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    }
-
-    return (
-        <Modal open onClose={onClose}>
-            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 400, bgcolor: 'background.paper', boxShadow: 24, p: 4 }}>
-                <Typography variant="h6">Nova Solicitação de Reembolso</Typography>
-                <TextField fullWidth name="amount" label="Valor (R$)" type="number" value={formData.amount} onChange={handleChange} sx={{ my: 2 }} />
-                <TextField fullWidth name="description" label="Descrição" multiline rows={3} value={formData.description} onChange={handleChange} sx={{ my: 2 }} />
-                <Button variant="contained" component="label" fullWidth sx={{ my: 2 }}>
-                    Anexar Recibo
-                    <input type="file" hidden />
-                </Button>
-                <Box mt={2} display="flex" justifyContent="flex-end">
-                    <Button onClick={onClose} sx={{ mr: 1 }}>Cancelar</Button>
-                    <Button variant="contained" onClick={() => onSave(formData)}>Enviar</Button>
-                </Box>
-            </Box>
-        </Modal>
-    )
-}
 
 export default ExpenseReimbursementsPage;

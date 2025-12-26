@@ -1,8 +1,8 @@
 export const colors = {
-  primary: '#6200EE',
+  primary: 'var(--primary-color, #6200EE)',
   primaryDark: '#3700B3',
   primaryLight: '#BB86FC',
-  secondary: '#03DAC6',
+  secondary: 'var(--secondary-color, #03DAC6)',
   secondaryDark: '#018786',
   secondaryLight: '#66FFF9',
   error: '#B00020',
@@ -20,7 +20,7 @@ export const colors = {
 };
 
 export const typography = {
-  fontFamilyPrimary: 'Roboto, sans-serif',
+  fontFamilyPrimary: 'var(--font-family, Roboto, sans-serif)',
   fontFamilySecondary: 'Open Sans, sans-serif',
   displayLarge: { fontSize: '57px', lineHeight: '64px', fontWeight: 400 },
   displayMedium: { fontSize: '45px', lineHeight: '52px', fontWeight: 400 },
@@ -29,14 +29,14 @@ export const typography = {
   headlineMedium: { fontSize: '28px', lineHeight: '36px', fontWeight: 400 },
   headlineSmall: { fontSize: '24px', lineHeight: '32px', fontWeight: 400 },
   titleLarge: { fontSize: '22px', lineHeight: '28px', fontWeight: 400 },
-  titleMedium: { fontSize: '16px', lineHeight: '24px', fontWeight: 500 },
-  titleSmall: { fontSize: '14px', lineHeight: '20px', fontWeight: 500 },
+  titleMedium: { fontSize: '16px', lineHeight: '24px', fontWeight: 400 },
+  titleSmall: { fontSize: '14px', lineHeight: '20px', fontWeight: 400 },
   bodyLarge: { fontSize: '16px', lineHeight: '24px', fontWeight: 400 },
   bodyMedium: { fontSize: '14px', lineHeight: '20px', fontWeight: 400 },
   bodySmall: { fontSize: '12px', lineHeight: '16px', fontWeight: 400 },
-  labelLarge: { fontSize: '14px', lineHeight: '20px', fontWeight: 500 },
-  labelMedium: { fontSize: '12px', lineHeight: '16px', fontWeight: 500 },
-  labelSmall: { fontSize: '11px', lineHeight: '16px', fontWeight: 500 },
+  labelLarge: { fontSize: '14px', lineHeight: '20px', fontWeight: 400 },
+  labelMedium: { fontSize: '12px', lineHeight: '16px', fontWeight: 400 },
+  labelSmall: { fontSize: '11px', lineHeight: '16px', fontWeight: 400 },
 };
 
 export const spacing = {

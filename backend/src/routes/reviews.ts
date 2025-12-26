@@ -1,132 +1,44 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { z } from 'zod';
-import { reviewService } from '../services/reviewService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
+import { query } from '../db/index.js';
 
-import { ValidationError, AppError } from '../utils/errors.js';
+const router = Router();
 
-const reviewsRouter = Router();
-
-// Zod Schemas
-const createReviewSchema = z.object({
-  product_id: z.number().int().positive('Product ID must be a positive integer'),
-  rating: z.number().int().min(1).max(5, 'Rating must be between 1 and 5'),
-  comment: z.string().trim().optional(),
-});
-
-const updateReviewSchema = z
-  .object({
-    rating: z.number().int().min(1).max(5, 'Rating must be between 1 and 5').optional(),
-    comment: z.string().trim().optional(),
-  })
-  .partial();
-
-// Validation Middleware
-const validate =
-  (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
-    try {
-      schema.parse(req.body);
-      next();
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return next(
-          new ValidationError(
-            'Validation failed',
-            error.errors.map((err) => ({ path: err.path.join('.'), message: err.message })),
-          ),
-        );
-      }
-      next(error);
-    }
-  };
-
-reviewsRouter.use(authMiddleware.authenticate);
-
-// Get all reviews for a product
-reviewsRouter.get(
-  '/product/:productId',
-  authMiddleware.authorize('read', 'Review'), // Add authorization
+// GET /api/reviews
+router.get(
+  '/',
+  authMiddleware.authenticate,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const productId = parseInt(req.params.productId);
-      const reviews = await reviewService.getReviewsByProductId(productId);
+      const result = await query(`
+        SELECT 
+          ss.*,
+          c.name as customer_name,
+          u.name as technician_name
+        FROM satisfaction_surveys ss
+        LEFT JOIN customers c ON ss.customer_id = c.id
+        LEFT JOIN users u ON ss.technician_id = u.id
+        ORDER BY ss.created_at DESC
+      `);
+      
+      // Mapear para o formato esperado pelo frontend se necessário
+      const reviews = result.rows.map(r => ({
+        id: r.id,
+        customer_name: r.customer_name || 'Anônimo',
+        rating_overall: r.rating_overall,
+        comment: r.comment,
+        store_response: r.store_response,
+        sentiment_score: r.sentiment_score || 'Neutral',
+        created_at: r.created_at,
+        technician: r.technician_name || 'Não informado',
+        service: 'Ordem de Serviço #' + r.service_order_id
+      }));
+
       res.status(200).json(reviews);
     } catch (error) {
       next(error);
     }
-  },
+  }
 );
 
-// Get a single review by ID
-reviewsRouter.get(
-  '/:id',
-  authMiddleware.authorize('read', 'Review'), // Add authorization
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const review = await reviewService.getReviewById(parseInt(req.params.id));
-      if (!review) {
-        throw new AppError('Review not found', 404);
-      }
-      res.status(200).json(review);
-    } catch (error) {
-      next(error);
-    }
-  },
-);
-
-// Create a new review
-reviewsRouter.post(
-  '/',
-  authMiddleware.authorize('create', 'Review'), // Add authorization
-  validate(createReviewSchema),
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const userId = (req as any).user.id; // Get user ID from authenticated request
-      const newReview = await reviewService.createReview({ ...req.body, user_id: userId });
-      res.status(201).json(newReview);
-    } catch (error) {
-      next(error);
-    }
-  },
-);
-
-// Update a review by ID (only by the user who created it or admin)
-reviewsRouter.put(
-  '/:id',
-  authMiddleware.authorize('update', 'Review'), // Add authorization
-  validate(updateReviewSchema),
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const userId = (req as any).user.id;
-      const reviewId = parseInt(req.params.id);
-      const updatedReview = await reviewService.updateReview(reviewId, userId, req.body);
-      if (!updatedReview) {
-        throw new AppError('Review not found or not authorized to update', 404);
-      }
-      res.status(200).json(updatedReview);
-    } catch (error) {
-      next(error);
-    }
-  },
-);
-
-// Delete a review by ID (only by the user who created it or admin)
-reviewsRouter.delete(
-  '/:id',
-  authMiddleware.authorize('delete', 'Review'), // Add authorization
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const userId = (req as any).user.id;
-      const reviewId = parseInt(req.params.id);
-      const deleted = await reviewService.deleteReview(reviewId, userId);
-      if (!deleted) {
-        throw new AppError('Review not found or not authorized to delete', 404);
-      }
-      res.status(204).send();
-    } catch (error) {
-      next(error);
-    }
-  },
-);
-
-export default reviewsRouter;
+export default router;

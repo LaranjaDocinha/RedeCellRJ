@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import {
-  StyledForm,
-  StyledFormField,
-  StyledLabel,
-  StyledInput,
-  StyledSelect,
-  StyledCheckboxContainer,
-  StyledCheckbox,
-  StyledButtonContainer,
-} from './CouponForm.styled';
+import { 
+  Box, 
+  TextField, 
+  Grid, 
+  MenuItem, 
+  FormControlLabel, 
+  Switch, 
+  Stack, 
+  InputAdornment,
+  Typography
+} from '@mui/material';
 import { Button } from '../components/Button';
 
 interface CouponFormData {
@@ -33,7 +34,7 @@ export const CouponForm: React.FC<CouponFormProps> = ({ initialData, onSubmit, o
     code: '',
     type: 'percentage',
     value: 0,
-    start_date: new Date().toISOString().slice(0, 16), // YYYY-MM-DDTHH:mm
+    start_date: new Date().toISOString().slice(0, 16),
     end_date: '',
     min_purchase_amount: 0,
     max_uses: 0,
@@ -44,133 +45,64 @@ export const CouponForm: React.FC<CouponFormProps> = ({ initialData, onSubmit, o
     if (initialData) {
       setFormData({
         ...initialData,
-        start_date: initialData.start_date
-          ? new Date(initialData.start_date).toISOString().slice(0, 16)
-          : '',
-        end_date: initialData.end_date
-          ? new Date(initialData.end_date).toISOString().slice(0, 16)
-          : '',
+        start_date: initialData.start_date ? new Date(initialData.start_date).toISOString().slice(0, 16) : '',
+        end_date: initialData.end_date ? new Date(initialData.end_date).toISOString().slice(0, 16) : '',
       });
     }
   }, [initialData]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: type === 'checkbox' ? checked : type === 'number' ? parseFloat(value) : value,
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
   return (
-    <StyledForm
-      onSubmit={handleSubmit}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
-    >
-      <StyledFormField>
-        <StyledLabel htmlFor="code">Code</StyledLabel>
-        <StyledInput
-          type="text"
-          name="code"
-          id="code"
-          value={formData.code}
-          onChange={handleChange}
-          required
-        />
-      </StyledFormField>
-      <StyledFormField>
-        <StyledLabel htmlFor="type">Type</StyledLabel>
-        <StyledSelect name="type" id="type" value={formData.type} onChange={handleChange} required>
-          <option value="percentage">Percentage</option>
-          <option value="fixed_amount">Fixed Amount</option>
-        </StyledSelect>
-      </StyledFormField>
-      <StyledFormField>
-        <StyledLabel htmlFor="value">Value</StyledLabel>
-        <StyledInput
-          type="number"
-          name="value"
-          id="value"
-          value={formData.value}
-          onChange={handleChange}
-          required
-          step="0.01"
-        />
-      </StyledFormField>
-      <StyledFormField>
-        <StyledLabel htmlFor="start_date">Start Date</StyledLabel>
-        <StyledInput
-          type="datetime-local"
-          name="start_date"
-          id="start_date"
-          value={formData.start_date}
-          onChange={handleChange}
-          required
-        />
-      </StyledFormField>
-      <StyledFormField>
-        <StyledLabel htmlFor="end_date">End Date</StyledLabel>
-        <StyledInput
-          type="datetime-local"
-          name="end_date"
-          id="end_date"
-          value={formData.end_date || ''}
-          onChange={handleChange}
-        />
-      </StyledFormField>
-      <StyledFormField>
-        <StyledLabel htmlFor="min_purchase_amount">Min Purchase Amount</StyledLabel>
-        <StyledInput
-          type="number"
-          name="min_purchase_amount"
-          id="min_purchase_amount"
-          value={formData.min_purchase_amount || 0}
-          onChange={handleChange}
-          step="0.01"
-        />
-      </StyledFormField>
-      <StyledFormField>
-        <StyledLabel htmlFor="max_uses">Max Uses</StyledLabel>
-        <StyledInput
-          type="number"
-          name="max_uses"
-          id="max_uses"
-          value={formData.max_uses || 0}
-          onChange={handleChange}
-          step="1"
-        />
-      </StyledFormField>
-      <StyledCheckboxContainer>
-        <StyledCheckbox
-          name="is_active"
-          id="is_active"
-          checked={formData.is_active}
-          onChange={handleChange}
-        />
-        <StyledLabel htmlFor="is_active">Is Active</StyledLabel>
-      </StyledCheckboxContainer>
-      <StyledButtonContainer>
-        <Button
-          type="button"
-          onClick={onCancel}
-          variant="outlined"
-          color="secondary"
-          label="Cancel"
-        />
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          label={initialData ? 'Update Coupon' : 'Add Coupon'}
-        />
-      </StyledButtonContainer>
-    </StyledForm>
+    <Box component="form" onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }} sx={{ mt: 1 }}>
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12 }}>
+          <TextField 
+            fullWidth label="Código do Cupom" name="code" size="small" 
+            value={formData.code} onChange={handleChange} required 
+            placeholder="EX: NATAL10"
+            inputProps={{ style: { textTransform: 'uppercase', fontFamily: 'monospace' } }}
+          />
+        </Grid>
+        <Grid size={{ xs: 6 }}>
+          <TextField fullWidth select label="Tipo" name="type" size="small" value={formData.type} onChange={handleChange}>
+            <MenuItem value="percentage">Porcentagem (%)</MenuItem>
+            <MenuItem value="fixed_amount">Valor Fixo (R$)</MenuItem>
+          </TextField>
+        </Grid>
+        <Grid size={{ xs: 6 }}>
+          <TextField 
+            fullWidth label="Valor" name="value" type="number" size="small" 
+            value={formData.value} onChange={handleChange} required
+            InputProps={{ startAdornment: <InputAdornment position="start">{formData.type === 'percentage' ? '%' : 'R$'}</InputAdornment> }}
+          />
+        </Grid>
+        <Grid size={{ xs: 6 }}>
+          <TextField fullWidth label="Data Início" name="start_date" type="datetime-local" size="small" value={formData.start_date} onChange={handleChange} slotProps={{ inputLabel: { shrink: true } }} />
+        </Grid>
+        <Grid size={{ xs: 6 }}>
+          <TextField fullWidth label="Data Fim" name="end_date" type="datetime-local" size="small" value={formData.end_date} onChange={handleChange} slotProps={{ inputLabel: { shrink: true } }} />
+        </Grid>
+        <Grid size={{ xs: 6 }}>
+          <TextField fullWidth label="Compra Mínima" name="min_purchase_amount" type="number" size="small" value={formData.min_purchase_amount} onChange={handleChange} />
+        </Grid>
+        <Grid size={{ xs: 6 }}>
+          <TextField fullWidth label="Limite de Usos" name="max_uses" type="number" size="small" value={formData.max_uses} onChange={handleChange} />
+        </Grid>
+        <Grid size={{ xs: 12 }}>
+          <FormControlLabel control={<Switch name="is_active" checked={formData.is_active} onChange={handleChange} />} label={<Typography variant="body2" sx={{ fontWeight: 400 }}>Cupom Ativo</Typography>} />
+        </Grid>
+      </Grid>
+      <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 3 }}>
+        <Button onClick={onCancel} variant="outlined" color="primary" label="Cancelar" />
+        <Button type="submit" variant="contained" label={initialData ? 'Atualizar' : 'Salvar'} />
+      </Stack>
+    </Box>
   );
 };

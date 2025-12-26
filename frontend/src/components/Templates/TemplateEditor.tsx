@@ -47,7 +47,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
   const [previewContent, setPreviewContent] = useState<string>('');
   const [loadingPreview, setLoadingPreview] = useState<boolean>(false);
   const { token } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     if (initialTemplate) {
@@ -66,33 +66,33 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
 
   const handleSave = useCallback(async () => {
     if (!token) {
-      addToast('Erro de autenticação. Por favor, faça login novamente.', 'error');
+      showNotification('Erro de autenticação. Por favor, faça login novamente.', 'error');
       return;
     }
     if (!template.name || !template.content) {
-      addToast('Nome e conteúdo do template são obrigatórios.', 'error');
+      showNotification('Nome e conteúdo do template são obrigatórios.', 'error');
       return;
     }
     await onSave(template);
-  }, [template, onSave, token, addToast]);
+  }, [template, onSave, token, showNotification]);
 
   const handleDelete = useCallback(async () => {
     if (!token) {
-      addToast('Erro de autenticação. Por favor, faça login novamente.', 'error');
+      showNotification('Erro de autenticação. Por favor, faça login novamente.', 'error');
       return;
     }
     if (template.id && onDelete && window.confirm('Tem certeza que deseja excluir este template?')) {
       await onDelete(template.id);
     }
-  }, [template.id, onDelete, token, addToast]);
+  }, [template.id, onDelete, token, showNotification]);
 
   const handlePreview = useCallback(async () => {
     if (!token) {
-      addToast('Erro de autenticação. Por favor, faça login novamente.', 'error');
+      showNotification('Erro de autenticação. Por favor, faça login novamente.', 'error');
       return;
     }
     if (!template.content) {
-      addToast('Conteúdo do template é necessário para pré-visualização.', 'error');
+      showNotification('Conteúdo do template é necessário para pré-visualização.', 'error');
       return;
     }
 
@@ -122,11 +122,11 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
       setPreviewContent(data.renderedContent);
     } catch (err: any) {
       console.error('Falha ao gerar pré-visualização:', err);
-      addToast(err.message || 'Falha ao gerar pré-visualização.', 'error');
+      showNotification(err.message || 'Falha ao gerar pré-visualização.', 'error');
     } finally {
       setLoadingPreview(false);
     }
-  }, [template.content, token, addToast]);
+  }, [template.content, token, showNotification]);
 
   const insertVariable = (variable: string) => {
     setTemplate((prev) => ({

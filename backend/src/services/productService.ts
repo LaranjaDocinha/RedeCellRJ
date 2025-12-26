@@ -110,6 +110,8 @@ export const productService = {
       LEFT JOIN product_variations pv ON p.id = pv.product_id
       ${whereClause};
     `;
+    console.log('getAllProducts countQuery:', countQuery);
+    console.log('getAllProducts queryParams:', queryParams);
     const countResult = await pool.query(countQuery, queryParams);
     const totalCount = parseInt(countResult.rows[0].count, 10);
 
@@ -135,9 +137,17 @@ export const productService = {
       LIMIT $${paramIndex++} OFFSET $${paramIndex++};
     `;
     queryParams.push(limit, offset);
+    console.log('getAllProducts productsQuery:', productsQuery);
+    console.log('getAllProducts queryParams with limit/offset:', queryParams);
 
-    const result = await pool.query(productsQuery, queryParams);
-    return { products: result.rows, totalCount };
+    try {
+      const result = await pool.query(productsQuery, queryParams);
+      console.log('getAllProducts result.rowCount:', result.rowCount);
+      return { products: result.rows, totalCount };
+    } catch (error) {
+      console.error('SQL Error in getAllProducts:', error);
+      throw error;
+    }
   },
 
   async getAllProductVariations(): Promise<any[]> {

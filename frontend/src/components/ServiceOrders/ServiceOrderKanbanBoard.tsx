@@ -8,7 +8,7 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { Box, CircularProgress, Alert, Typography } from '@mui/material';
+import { Box, CircularProgress, Alert, Typography, Button } from '@mui/material';
 import { FaExclamationTriangle, FaClipboardList } from 'react-icons/fa';
 import useHapticFeedback from '../../hooks/useHapticFeedback';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -16,7 +16,7 @@ import { ServiceOrder } from '../../services/serviceOrderService';
 import * as serviceOrderService from '../../services/serviceOrderService';
 import KanbanColumn from '../Kanban/KanbanColumn'; // Reutilizar o componente de coluna existente
 import ServiceOrderKanbanCard from './ServiceOrderKanbanCard'; // Componente de cartão específico para SO
-import { StyledEmptyState } from '../../pages/DashboardPage'; // Reutilizar StyledEmptyState do DashboardPage
+import { StyledEmptyState } from '../AuditLogList.styled'; // Reutilizar StyledEmptyState de AuditLogList.styled.ts
 import { useAuth } from '../../contexts/AuthContext'; // Para o token de autenticação
 
 // Possible service order statuses from the migration file
@@ -48,10 +48,11 @@ interface KanbanCardData {
 }
 
 interface ServiceOrderKanbanBoardProps {
-  filterStatus?: string; // Para filtrar ordens ao carregar
+  filterStatus?: string; // Para filtrar ordens al carregar
   searchTerm?: string;   // Para buscar ordens ao carregar
   onEditOrder: (order: ServiceOrder) => void;
   onDeleteOrder: (orderId: number) => void;
+  onStatusChange?: (orderId: number, newStatus: string) => Promise<void>;
   onNewOrder: () => void; // Para adicionar novas ordens diretamente do Kanban (opcional)
 }
 
@@ -60,13 +61,14 @@ const ServiceOrderKanbanBoard: React.FC<ServiceOrderKanbanBoardProps> = ({
   searchTerm,
   onEditOrder,
   onDeleteOrder,
+  onStatusChange,
   onNewOrder,
 }) => {
   const [board, setBoard] = useState<KanbanColumnData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const triggerHapticFeedback = useHapticFeedback();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
   const { token } = useAuth(); // Obter o token de autenticação
 
   const fetchServiceOrders = useCallback(async () => {
@@ -108,12 +110,12 @@ const ServiceOrderKanbanBoard: React.FC<ServiceOrderKanbanBoardProps> = ({
       setBoard(initialBoard);
     } catch (err: any) {
       setError('Falha ao carregar as Ordens de Serviço do Kanban.');
-      addToast('Could not load service orders for Kanban. Please try refreshing.', 'error');
+      showNotification('Could not load service orders for Kanban. Please try refreshing.', 'error');
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, searchTerm, token, addToast]);
+  }, [filterStatus, searchTerm, token, showNotification]);
 
   useEffect(() => {
     if (token) {
@@ -180,19 +182,22 @@ const ServiceOrderKanbanBoard: React.FC<ServiceOrderKanbanBoardProps> = ({
       }
     });
 
-    // Chamar a API para persistir a mudança de status
+    // Chamar a API ou o callback para persistir a mudança de status
     try {
-      await serviceOrderService.changeServiceOrderStatus(token!, Number(activeCardId), newColumnId);
+      if (onStatusChange) {
+        await onStatusChange(Number(activeCardId), newColumnId);
+      } else {
+        await serviceOrderService.changeServiceOrderStatus(token!, Number(activeCardId), newColumnId);
+      }
       triggerHapticFeedback();
-      addToast(`Ordem de Serviço #${activeCardId} movida para ${newColumnId}!`, 'success');
-      // Não precisamos refetch aqui se o update otimista foi bom, mas se houver reordenamento, um refetch pode ser útil
-      // Ou otimizar a atualização do estado para refletir a nova posição se a API retornar a ordem atualizada
+      showNotification(`Ordem de Serviço #${activeCardId} movida para ${newColumnId}!`, 'success');
+      // Não precisamos de refetch aqui se a atualização otimista foi bem-sucedida
     } catch (err) {
       console.error('Falha ao mover Ordem de Serviço:', err);
-      addToast('Falha ao mover Ordem de Serviço. Revertendo alterações.', 'error');
+      showNotification('Falha ao mover Ordem de Serviço. Revertendo alterações.', 'error');
       setBoard(originalBoard); // Reverter estado em caso de falha
     }
-  }, [board, token, onStatusChange, addToast, triggerHapticFeedback]);
+  }, [board, token, onStatusChange, showNotification, triggerHapticFeedback]);
 
 
   if (loading) {

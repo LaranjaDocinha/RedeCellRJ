@@ -54,7 +54,7 @@ interface AnnualSalesComparisonWidgetProps {
  */
 const AnnualSalesComparisonWidget: React.FC<AnnualSalesComparisonWidgetProps> = React.memo(() => {
   const { token, isAuthenticated } = useAuth();
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   const { data, isLoading, isError, error } = useQuery<AnnualSalesData[], Error>({
     queryKey: ['annualSalesComparison', token],
@@ -64,9 +64,9 @@ const AnnualSalesComparisonWidget: React.FC<AnnualSalesComparisonWidgetProps> = 
 
   useEffect(() => {
     if (isError && error) {
-      addToast(`Falha ao buscar comparativo de vendas anuais: ${error.message}`, 'error');
+      showNotification(`Falha ao buscar comparativo de vendas anuais: ${error.message}`, 'error');
     }
-  }, [isError, error, addToast]);
+  }, [isError, error, showNotification]);
 
   if (isLoading) {
     return <DashboardWidgetSkeleton />;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, Grid, CircularProgress, Button, FormControl, InputLabel, Select, MenuItem, Card, CardMedia, CardContent } from '@mui/material';
+import { Box, Typography, Paper, Grid, CircularProgress, Button, FormControl, InputLabel, Select, MenuItem, Card, CardMedia, CardContent, TextField } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { FaCameraRetro } from 'react-icons/fa';
 
@@ -55,7 +55,7 @@ const ARPreviewPage: React.FC = () => {
       <Typography variant="h4" gutterBottom>Realidade Aumentada: Testar Capinhas</Typography>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 2, mb: 3 }}>
             <Typography variant="h6" gutterBottom>Selecione seu Dispositivo e Capinha</Typography>
             <TextField
@@ -83,7 +83,7 @@ const ARPreviewPage: React.FC = () => {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>Pré-visualização AR (Simulada)</Typography>
             {selectedProduct ? (

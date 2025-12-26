@@ -22,10 +22,12 @@ import { whatsappService, WhatsappTemplate } from '../services/whatsappService';
 import { WhatsAppPreview } from '../components/WhatsAppPreview';
 import { useForm, Controller } from 'react-hook-form';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext';
 
-const MotionPaper = motion(Paper);
+const MotionPaper = motion.create(Paper);
 
 export const WhatsAppTemplatesPage: React.FC = () => {
+  const { token } = useAuth();
   const [templates, setTemplates] = useState<WhatsappTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<WhatsappTemplate | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,9 +37,10 @@ export const WhatsAppTemplatesPage: React.FC = () => {
   const watchedContent = watch('content', '');
 
   const fetchTemplates = async () => {
+    if (!token) return;
     try {
       setLoading(true);
-      const data = await whatsappService.getTemplates();
+      const data = await whatsappService.getTemplates(token);
       setTemplates(data);
     } catch (err) {
       setError('Erro ao carregar templates.');
@@ -49,7 +52,7 @@ export const WhatsAppTemplatesPage: React.FC = () => {
 
   useEffect(() => {
     fetchTemplates();
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     if (selectedTemplate) {
@@ -63,8 +66,9 @@ export const WhatsAppTemplatesPage: React.FC = () => {
   }, [selectedTemplate, reset]);
 
   const onSubmit = async (data: { name: string; content: string }) => {
+    if (!token) return;
     try {
-      await whatsappService.upsertTemplate(data);
+      await whatsappService.upsertTemplate(data, token);
       await fetchTemplates();
       // Encontrar o template atualizado e selecioná-lo novamente para manter o foco
       const updated = templates.find(t => t.name === data.name) || { ...data, is_active: true }; 
@@ -80,9 +84,10 @@ export const WhatsAppTemplatesPage: React.FC = () => {
   };
 
   const handleDelete = async (name: string) => {
+    if (!token) return;
     if (window.confirm(`Tem certeza que deseja excluir o template "${name}"?`)) {
       try {
-        await whatsappService.deleteTemplate(name);
+        await whatsappService.deleteTemplate(name, token);
         if (selectedTemplate?.name === name) {
           setSelectedTemplate(null);
         }
@@ -116,7 +121,7 @@ export const WhatsAppTemplatesPage: React.FC = () => {
 
       <Grid container spacing={3}>
         {/* Lista de Templates */}
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <MotionPaper 
             elevation={3} 
             sx={{ height: '75vh', overflow: 'auto' }}
@@ -138,14 +143,19 @@ export const WhatsAppTemplatesPage: React.FC = () => {
                   {templates.map((template) => (
                     <ListItem 
                       key={template.name} 
-                      button 
-                      selected={selectedTemplate?.name === template.name}
                       onClick={() => setSelectedTemplate(template)}
                       component={motion.div}
                       layout
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
+                      sx={{
+                         cursor: 'pointer',
+                         backgroundColor: selectedTemplate?.name === template.name ? 'action.selected' : 'transparent',
+                         '&:hover': {
+                            backgroundColor: 'action.hover'
+                         }
+                      }}
                     >
                       <ListItemText 
                         primary={template.name} 
@@ -165,10 +175,10 @@ export const WhatsAppTemplatesPage: React.FC = () => {
         </Grid>
 
         {/* Editor e Preview */}
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Grid container spacing={3}>
             {/* Editor */}
-            <Grid item xs={12} lg={7}>
+            <Grid size={{ xs: 12, lg: 7 }}>
               <MotionPaper 
                 elevation={3} 
                 sx={{ p: 3, height: '100%' }}
@@ -250,7 +260,7 @@ export const WhatsAppTemplatesPage: React.FC = () => {
             </Grid>
 
             {/* Preview */}
-            <Grid item xs={12} lg={5}>
+            <Grid size={{ xs: 12, lg: 5 }}>
               <Box display="flex" justifyContent="center" alignItems="flex-start" height="100%">
                 <WhatsAppPreview 
                   content={watchedContent || 'Selecione ou crie um template para visualizar...'} 
@@ -271,3 +281,5 @@ export const WhatsAppTemplatesPage: React.FC = () => {
     </Container>
   );
 };
+
+export default WhatsAppTemplatesPage;

@@ -11,7 +11,7 @@ interface CreateChallengeModalProps {
 }
 
 const CreateChallengeModal: React.FC<CreateChallengeModalProps> = ({ open, onClose, onSuccess }) => {
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
   const { token } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
@@ -28,11 +28,11 @@ const CreateChallengeModal: React.FC<CreateChallengeModalProps> = ({ open, onClo
       await axios.post('/api/gamification/challenges', formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      addToast('Desafio criado com sucesso!', 'success');
+      showNotification('Desafio criado com sucesso!', 'success');
       onSuccess();
       onClose();
     } catch (error: any) {
-      addToast('Erro ao criar desafio: ' + (error.response?.data?.message || 'Erro desconhecido'), 'error');
+      showNotification('Erro ao criar desafio: ' + (error.response?.data?.message || 'Erro desconhecido'), 'error');
     }
   };
 

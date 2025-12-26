@@ -1,132 +1,74 @@
-import React, { useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '../../contexts/AuthContext';
-import { useNotification } from '../../contexts/NotificationContext';
-import DashboardWidgetSkeleton from './DashboardWidgetSkeleton';
-import { Box, Typography, List, ListItem, ListItemText, Divider } from '@mui/material';
+import React from 'react';
+import { Box, Typography, List, ListItem, ListItemText, Divider, Paper, Avatar, useTheme, alpha } from '@mui/material';
+import { Inventory, Warning } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import { FaExclamationTriangle } from 'react-icons/fa'; // Icon for empty state
 
-/**
- * @interface CriticalStockData
- * @description Define a estrutura dos dados de produtos com estoque crítico.
- * @property {number} id - O ID do produto.
- * @property {string} name - O nome do produto.
- * @property {number} currentStock - A quantidade atual em estoque.
- * @property {number} criticalLimit - O limite crítico de estoque.
- */
-interface CriticalStockData {
-  id: number;
-  name: string;
-  currentStock: number;
-  criticalLimit: number;
-}
-
-/**
- * @function fetchCriticalStock
- * @description Função assíncrona para buscar os dados de produtos com estoque crítico.
- * @param {string} token - Token de autenticação do usuário.
- * @returns {Promise<CriticalStockData[]>} Uma promessa que resolve com os dados de produtos com estoque crítico.
- * @throws {Error} Se a requisição HTTP falhar.
- */
-const fetchCriticalStock = async (token: string): Promise<CriticalStockData[]> => {
-  const response = await fetch(`/api/critical-stock`, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-  return response.json();
-};
-
-/**
- * @interface CriticalStockWidgetProps
- * @description Propriedades para o componente CriticalStockWidget.
- */
 interface CriticalStockWidgetProps {
-  // No selectedPeriod prop as it's for critical stock
+  data: {
+    criticalStock?: Array<{
+      id: number;
+      name: string;
+      currentStock: number;
+      criticalLimit: number;
+    }>;
+  };
+  loading?: boolean;
 }
 
-/**
- * @function CriticalStockWidget
- * @description Componente de widget que exibe uma lista de produtos com estoque crítico.
- * @param {CriticalStockWidgetProps} props - As propriedades do componente.
- * @returns {React.FC} O componente CriticalStockWidget.
- */
-const CriticalStockWidget: React.FC<CriticalStockWidgetProps> = React.memo(() => {
-  const { token, isAuthenticated } = useAuth();
-  const { addToast } = useNotification();
-
-  const { data, isLoading, isError, error } = useQuery<CriticalStockData[], Error>({
-    queryKey: ['criticalStock', token],
-    queryFn: () => fetchCriticalStock(token!),
-    enabled: isAuthenticated,
-  });
-
-  useEffect(() => {
-    if (isError && error) {
-      addToast(`Falha ao buscar produtos com estoque crítico: ${error.message}`, 'error');
-    }
-  }, [isError, error, addToast]);
-
-  if (isLoading) {
-    return <DashboardWidgetSkeleton />;
-  }
-
-  if (!data || data.length === 0) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          p: 3,
-          color: (theme) => theme.palette.text.secondary,
-          minHeight: 200,
-        }}
-      >
-        <FaExclamationTriangle style={{ fontSize: '4rem', marginBottom: '1rem' }} />
-        <Typography variant="body1" fontWeight="bold">Nenhum produto com estoque crítico.</Typography>
-        <Typography variant="body2" sx={{ mt: 1 }}>
-          Seu estoque está em ordem!
-        </Typography>
-      </Box>
-    );
-  }
+const CriticalStockWidget: React.FC<CriticalStockWidgetProps> = ({ data, loading = false }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+  const stockItems = data?.criticalStock || [];
 
   return (
-    <List sx={{ maxHeight: 300, overflow: 'auto' }}>
-      {data.map((product, index) => (
-        <motion.div
-          key={product.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: index * 0.05 }}
-        >
-          <ListItem>
-            <ListItemText
-              primary={
-                <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                  {product.name}
-                </Typography>
-              }
-              secondary={
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Estoque: {product.currentStock} (Limite Crítico: {product.criticalLimit})
-                  </Typography>
-                </Box>
-              }
-            />
-          </ListItem>
-          {index < data.length - 1 && <Divider component="li" />}
-        </motion.div>
-      ))}
-    </List>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ height: '100%' }}>
+      <Paper sx={{ 
+        p: 3, 
+        borderRadius: '24px', 
+        height: '100%', 
+        boxShadow: isDarkMode ? 'none' : '0 10px 40px rgba(0,0,0,0.04)', 
+        display: 'flex', 
+        flexDirection: 'column',
+        border: `1px solid ${theme.palette.divider}`,
+        bgcolor: 'background.paper',
+        backgroundImage: 'none'
+      }}>
+        <Typography variant="overline" sx={{ fontWeight: 400, color: 'text.secondary', mb: 2, display: 'block', letterSpacing: 1 }}>
+          Estoque Crítico
+        </Typography>
+
+        <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+          {stockItems.length > 0 ? (
+            <List disablePadding>
+              {stockItems.map((item, index) => (
+                <React.Fragment key={`critical-${item.id}-${index}`}>
+                  <ListItem sx={{ px: 0, py: 1.5 }}>
+                    <Avatar sx={{ bgcolor: alpha(theme.palette.error.main, 0.1), color: 'error.main', mr: 2, width: 40, height: 40 }}>
+                      <Inventory fontSize="small" />
+                    </Avatar>
+                    <ListItemText
+                      primary={<Typography variant="body2" sx={{ fontWeight: 400, color: 'text.primary' }}>{item.name}</Typography>}
+                      secondary={
+                        <Typography variant="caption" sx={{ color: 'error.main', fontWeight: 400 }}>
+                          Restam apenas {item.currentStock} unidades
+                        </Typography>
+                      }
+                    />
+                  </ListItem>
+                  {index < stockItems.length - 1 && <Divider sx={{ opacity: 0.5 }} />}
+                </React.Fragment>
+              ))}
+            </List>
+          ) : (
+            <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+              <Warning sx={{ fontSize: 48, color: 'success.light', mb: 1 }} />
+              <Typography variant="body2" sx={{ fontWeight: 400 }}>Estoque sob controle</Typography>
+            </Box>
+          )}
+        </Box>
+      </Paper>
+    </motion.div>
   );
-});
+};
 
 export default CriticalStockWidget;

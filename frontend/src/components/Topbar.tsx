@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useTheme } from '../hooks/useTheme';
+import { useTheme } from '../styles/theme';
 import { FaSun, FaMoon, FaBars } from 'react-icons/fa';
 import { StyledTopbar, TopbarBtn, TopbarActions } from './Topbar.styled';
 import { useBranding } from '../contexts/BrandingContext'; // Import useBranding
@@ -11,6 +11,8 @@ import UserMenu from './UserMenu';
 import SearchButton from './SearchButton';
 import NotificationsDropdown from './NotificationsDropdown';
 import QuickCreateMenu from './QuickCreateMenu';
+import AccessibilityMenu from './AccessibilityMenu';
+import { AccessibilityNew } from '@mui/icons-material';
 
 interface TopbarProps {
   onToggleSidebar: () => void;
@@ -27,6 +29,7 @@ const Topbar = React.forwardRef<HTMLButtonElement, TopbarProps>(({ onToggleSideb
   const { theme, toggleTheme } = useTheme();
   const { branding } = useBranding(); // Use branding context
   const { t } = useTranslation(); // Use translation hook
+  const [accessibilityOpen, setAccessibilityOpen] = React.useState(false);
 
   return (
     <StyledTopbar>
@@ -56,12 +59,21 @@ const Topbar = React.forwardRef<HTMLButtonElement, TopbarProps>(({ onToggleSideb
         <SearchButton onClick={onSearchClick} />
         <QuickCreateMenu />
         <NotificationsDropdown />
+        
+        <TopbarBtn onClick={() => setAccessibilityOpen(true)} aria-label="Acessibilidade">
+          <motion.div {...iconAnimation}>
+            <AccessibilityNew sx={{ fontSize: 20 }} />
+          </motion.div>
+        </TopbarBtn>
+
         <TopbarBtn onClick={toggleTheme} aria-label={t('toggle_theme')}> {/* Use translation */}
           <motion.div {...iconAnimation}>
             {theme === 'light' ? <FaMoon /> : <FaSun />}
           </motion.div>
         </TopbarBtn>
         <UserMenu />
+
+        <AccessibilityMenu open={accessibilityOpen} onClose={() => setAccessibilityOpen(false)} />
       </TopbarActions>
     </StyledTopbar>
   );

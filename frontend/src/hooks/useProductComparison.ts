@@ -15,7 +15,7 @@ export const useProductComparison = () => {
       return [];
     }
   });
-  const { addToast } = useNotification();
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     try {
@@ -28,32 +28,32 @@ export const useProductComparison = () => {
   const addProductToComparison = useCallback((product: Product) => {
     setComparisonList((prevList) => {
       if (prevList.some((item) => item.id === product.id)) {
-        addToast(`${product.name} já está na lista de comparação.`, 'info');
+        showNotification(`${product.name} já está na lista de comparação.`, 'info');
         return prevList;
       }
       if (prevList.length >= MAX_COMPARISON_ITEMS) {
-        addToast(`Você pode comparar no máximo ${MAX_COMPARISON_ITEMS} produtos.`, 'warning');
+        showNotification(`Você pode comparar no máximo ${MAX_COMPARISON_ITEMS} produtos.`, 'warning');
         return prevList;
       }
-      addToast(`${product.name} adicionado para comparação!`, 'success');
+      showNotification(`${product.name} adicionado para comparação!`, 'success');
       return [...prevList, product];
     });
-  }, [addToast]);
+  }, [showNotification]);
 
   const removeProductFromComparison = useCallback((productId: number) => {
     setComparisonList((prevList) => {
       const updatedList = prevList.filter((item) => item.id !== productId);
       if (updatedList.length < prevList.length) {
-        addToast('Produto removido da lista de comparação.', 'info');
+        showNotification('Produto removido da lista de comparação.', 'info');
       }
       return updatedList;
     });
-  }, [addToast]);
+  }, [showNotification]);
 
   const clearComparisonList = useCallback(() => {
     setComparisonList([]);
-    addToast('Lista de comparação limpa.', 'info');
-  }, [addToast]);
+    showNotification('Lista de comparação limpa.', 'info');
+  }, [showNotification]);
 
   const isInComparisonList = useCallback((productId: number) => {
     return comparisonList.some((item) => item.id === productId);

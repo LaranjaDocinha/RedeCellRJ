@@ -1,15 +1,28 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { LoginScreenContainer, LoginCard, StyledLoginTitle, StyledLoginSubtitle } from '../components/LoginScreen.styled';
-import Input from '../components/Input';
+import { 
+  LoginScreenContainer, 
+  LoginCard, 
+  StyledLoginTitle, 
+  StyledLoginSubtitle 
+} from '../components/LoginScreen.styled';
 import { Button } from '../components/Button';
-import Loading from '../components/Loading'; // Import Loading component
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';
+import { 
+  TextField, 
+  FormControlLabel, 
+  Checkbox, 
+  InputAdornment, 
+  IconButton,
+  Box,
+  useTheme 
+} from '@mui/material';
+import { Visibility, VisibilityOff, Email, Lock } from '@mui/icons-material';
 
 interface LoginScreenProps {
   title?: string;
@@ -23,127 +36,164 @@ const schema = yup.object().shape({
 });
 
 const LoginScreen: React.FC<LoginScreenProps> = ({
-  title = 'Bem-vindo',
-  subtitle = 'Faça login para continuar',
+  title = 'RedeCellRJ',
+  subtitle = 'Gestão Inteligente de PDV',
 }) => {
   const { login } = useAuth();
-  const { addToast } = useNotification();
+  const theme = useTheme();
+  const { showNotification } = useNotification();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false); // Add loading state
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const { register, handleSubmit, control, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
+    defaultValues: {
+      email: '',
+      password: '',
+      rememberMe: false
+    }
   });
 
   const onSubmit = async (data: any) => {
-    setIsLoading(true); // Set loading to true on submit
+    setIsLoading(true);
     try {
-      // 2. Include CSRF token in login request headers
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
         credentials: 'include',
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        let errorMessage = 'Login failed. Please try again.';
-        if (errorData && errorData.message) {
-          errorMessage = errorData.message;
-        } else if (response.status === 401) {
-          errorMessage = 'Invalid email or password.';
-        } else if (response.status === 403) {
-          errorMessage = 'Access denied. Please contact support.';
-        }
-        throw new Error(errorMessage);
+        throw new Error(errorData.message || 'Falha na autenticação');
       }
 
       const result = await response.json();
       login(result.user, result.token, data.rememberMe);
       navigate('/');
-      addToast('Login successful!', 'success');
+      showNotification('Bem-vindo de volta!', 'success');
     } catch (error: any) {
-      console.error('Login failed', error);
-      addToast(error.message || 'Login failed. Please try again.', 'error');
+      showNotification(error.message || 'Erro ao entrar. Verifique suas credenciais.', 'error');
     } finally {
-      setIsLoading(false); // Set loading to false after request
+      setIsLoading(false);
     }
   };
 
   return (
-    <LoginScreenContainer
-      initial={{ opacity: 0, y: -50 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8 }}
-    >
+    <LoginScreenContainer>
       <LoginCard
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, duration: 0.8 }}
-        whileHover={{ scale: 1.02, boxShadow: "0px 15px 40px rgba(0, 0, 0, 0.3)" }}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        <motion.h1
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-        >
-          {title}
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-        >
-          {subtitle}
-        </motion.p>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Input
-            label="Email"
-            type="email"
-            {...register('email')}
-            error={errors.email?.message}
-            aria-label="Email do usuário"
-          />
-          <Input
-            label="Senha"
-            type="password"
-            {...register('password')}
-            error={errors.password?.message}
-            aria-label="Senha do usuário"
-          />
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
-            style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}
-          >
-            <input
-              type="checkbox"
-              id="rememberMe"
-              {...register('rememberMe')}
-              style={{ marginRight: '8px' }}
+        <StyledLoginTitle>{title}</StyledLoginTitle>
+        <StyledLoginSubtitle>{subtitle}</StyledLoginSubtitle>
+
+        <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
+            <TextField
+              fullWidth
+              label="E-mail"
+              variant="outlined"
+              {...register('email')}
+              error={!!errors.email}
+              helperText={errors.email?.message}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Email color="primary" />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '16px',
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+                }
+              }}
             />
-            <label htmlFor="rememberMe">Lembrar-me</label>
-          </motion.div>
-          <Button
-            label="Entrar"
-            type="submit"
-            disabled={isLoading}
-            isLoading={isLoading}
-            aria-label="Entrar na conta"
-          />
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.5 }}
-            style={{ marginTop: '16px' }}
-          >
-            <Link to="/forgot-password" style={{ color: 'blue', textDecoration: 'none' }}>
-              Esqueceu a senha?
-            </Link>
-          </motion.div>
+
+            <TextField
+              fullWidth
+              label="Senha"
+              type={showPassword ? 'text' : 'password'}
+              variant="outlined"
+              {...register('password')}
+              error={!!errors.password}
+              helperText={errors.password?.message}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Lock color="primary" />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '16px',
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+                }
+              }}
+            />
+
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              px: 0.5 
+            }}>
+              <Controller
+                name="rememberMe"
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel
+                    control={<Checkbox {...field} checked={field.value} color="primary" size="small" />}
+                    label={<Box component="span" sx={{ fontSize: '0.9rem', fontWeight: 500, color: theme.palette.text.secondary }}>Lembrar-me</Box>}
+                  />
+                )}
+              />
+              <Link to="/forgot-password" style={{ 
+                fontSize: '0.85rem', 
+                color: theme.palette.primary.main, 
+                textDecoration: 'none',
+                fontWeight: 600,
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+              onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+              >
+                Esqueceu a senha?
+              </Link>
+            </Box>
+
+            <Button
+              label="Entrar"
+              type="submit"
+              disabled={isLoading}
+              loading={isLoading}
+              fullWidth
+              size="large"
+              primary
+              style={{ 
+                padding: '14px', 
+                fontSize: '1.1rem', 
+                borderRadius: '16px',
+                fontWeight: 500,
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                boxShadow: '0 8px 20px rgba(25, 118, 210, 0.3)'
+              }}
+            />
+          </Box>
         </form>
       </LoginCard>
     </LoginScreenContainer>

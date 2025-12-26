@@ -1,213 +1,150 @@
-import styled, { css } from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
+import { alpha } from '@mui/material/styles';
+
+const pulse = keyframes`
+  0% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(211, 47, 47, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0); }
+`;
+
+const timerGlow = keyframes`
+  0% { text-shadow: 0 0 5px rgba(33, 150, 243, 0.5); }
+  50% { text-shadow: 0 0 15px rgba(33, 150, 243, 0.8); }
+  100% { text-shadow: 0 0 5px rgba(33, 150, 243, 0.5); }
+`;
 
 export const BoardContainer = styled(motion.div)`
   display: flex;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.md};
+  gap: 1.5rem;
+  padding: 1rem;
   overflow-x: auto;
-  height: calc(100vh - 200px); // Ajustar conforme a altura da topbar e outros elementos
-  align-items: flex-start; // Alinha as colunas ao topo
+  height: calc(100vh - 280px);
+  align-items: flex-start;
+  scrollbar-width: thin;
+  
+  &::-webkit-scrollbar { height: 8px; }
+  &::-webkit-scrollbar-thumb { 
+    background: ${({ theme }) => alpha(theme.palette.primary.main, 0.2)}; 
+    border-radius: 10px; 
+  }
 `;
 
-export const ColumnContainer = styled(motion.div)`
-  min-width: 300px;
-  max-height: 100%;
-  background-color: ${({ theme }) => theme.colors.background};
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
-  box-shadow: ${({ theme }) => theme.shadows.elevation1};
+export const ColumnContainer = styled(motion.div)<{ $isOverLimit?: boolean; $color?: string }>`
+  min-width: 340px;
+  max-width: 340px;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  padding: ${({ theme }) => theme.spacing.md};
-  gap: ${({ theme }) => theme.spacing.sm};
+  background: ${({ theme, $isOverLimit }) => $isOverLimit 
+    ? alpha(theme.palette.error.main, 0.05)
+    : theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.6)' : 'rgba(241, 245, 249, 0.8)'};
+  backdrop-filter: blur(12px);
+  border-radius: 28px;
+  border: 1px solid ${({ theme, $isOverLimit, $color }) => 
+    $isOverLimit ? theme.palette.error.main : $color ? alpha($color, 0.3) : alpha(theme.palette.divider, 0.1)};
+  padding: 1.25rem;
+  position: relative;
+  transition: all 0.3s ease;
 `;
 
-export const ColumnHeader = styled(motion.div)`
+export const ColumnFooterValue = styled.div`
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px dashed ${({ theme }) => theme.palette.divider};
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
+  opacity: 0.8;
 `;
 
-export const StyledColumnTitle = styled(motion.h2)`
-  font-size: ${({ theme }) => theme.typography.h6.fontSize};
-  color: ${({ theme }) => theme.colors.onBackground};
-  margin: 0;
-`;
-
-export const CardCountBadge = styled(motion.span)`
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: ${({ theme }) => theme.colors.onPrimary};
-  border-radius: 50%;
-  padding: 4px 8px;
-  font-size: ${({ theme }) => theme.typography.overline.fontSize};
-  font-weight: bold;
-`;
-
-export const CardsContainer = styled(motion.div)`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-  min-height: 100px; // To make it a valid drop target even when empty
-`;
-
-export const CardContainer = styled(motion.div)`
-  background-color: ${({ theme }) => theme.colors.surface};
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-  box-shadow: ${({ theme }) => theme.shadows.elevation1};
-  padding: ${({ theme }) => theme.spacing.md};
+export const CardContainer = styled(motion.div)<{ 
+  $priority?: string; 
+  $isAging?: boolean; 
+  $color?: string;
+  $isSelected?: boolean;
+  $complexity?: string;
+}>`
+  background: ${({ theme }) => theme.palette.mode === 'dark' ? '#1e293b' : '#ffffff'};
+  border-radius: 20px;
+  padding: 1.25rem;
+  box-shadow: ${({ $isSelected }) => $isSelected ? '0 0 0 2px #1976d2, 0 12px 24px rgba(0,0,0,0.1)' : '0 4px 12px rgba(0, 0, 0, 0.05)'};
   cursor: grab;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
+  border: 1px solid ${({ $isSelected, theme }) => $isSelected ? '#1976d2' : alpha(theme.palette.divider, 0.1)};
+  
+  /* #19 Badge de Complexidade */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 40px;
+    height: 40px;
+    background: ${({ $complexity, theme }) => 
+      $complexity === 'hard' ? theme.palette.error.main : 
+      $complexity === 'medium' ? theme.palette.warning.main : 'transparent'};
+    clip-path: polygon(100% 0, 0 0, 100% 100%);
+    opacity: 0.2;
+    border-radius: 0 20px 0 0;
+  }
+
+  ${({ $priority }) => $priority === 'critical' && css`
+    animation: ${pulse} 2s infinite;
+    border: 1px solid #d32f2f;
+  `}
+
+  ${({ $isAging }) => $isAging && css`
+    filter: saturate(0.5) contrast(0.8);
+    background: ${({ theme }) => alpha(theme.palette.action.disabledBackground, 0.1)};
+  `}
 
   &:hover {
-    box-shadow: ${({ theme }) => theme.shadows.elevation2};
-  }
-
-  h3 {
-    font-size: ${({ theme }) => theme.typography.subtitle2.fontSize};
-    line-height: ${({ theme }) => theme.typography.subtitle2.lineHeight};
-    font-weight: ${({ theme }) => theme.typography.subtitle2.fontWeight};
-    color: ${({ theme }) => theme.colors.onSurface};
-    margin: 0;
-  }
-
-  p {
-    font-size: ${({ theme }) => theme.typography.caption.fontSize};
-    line-height: ${({ theme }) => theme.typography.caption.lineHeight};
-    font-weight: ${({ theme }) => theme.typography.caption.fontWeight};
-    color: ${({ theme }) => theme.colors.onSurface}80;
-    margin: 0;
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
   }
 `;
 
-export const CardActions = styled(motion.div)`
-  position: absolute;
-  top: ${({ theme }) => theme.spacing.xxs};
-  right: ${({ theme }) => theme.spacing.xxs};
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out;
-`;
-
-export const ActionButton = styled(motion.button)`
-  background: none;
-  border: none;
-  color: ${({ theme }) => theme.colors.onSurface}99;
-  cursor: pointer;
-  font-size: 16px;
-  padding: ${({ theme }) => theme.spacing.xxs};
-  border-radius: 50%;
-  transition: all 0.2s ease-in-out;
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.onSurface}14;
-    color: ${({ theme }) => theme.colors.onSurface};
-  }
-`;
-
-export const AddCardButton = styled(motion.button)`
+export const TimerDisplay = styled.div<{ $isActive: boolean }>`
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: ${({ $isActive, theme }) => $isActive ? theme.palette.primary.main : theme.palette.text.disabled};
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: ${({ theme }) => theme.spacing.xxs};
+  gap: 4px;
+  ${({ $isActive }) => $isActive && css`animation: ${timerGlow} 2s infinite;`}
+`;
+
+export const SLABar = styled.div<{ $percent: number; $color: string }>`
   width: 100%;
-  padding: ${({ theme }) => theme.spacing.sm};
-  margin-top: ${({ theme }) => theme.spacing.sm};
-  background-color: ${({ theme }) => theme.colors.primaryLight}22;
-  color: ${({ theme }) => theme.colors.primaryDark};
-  border: 1px dashed ${({ theme }) => theme.colors.primaryLight};
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
+  height: 4px;
+  background: ${({ theme }) => alpha(theme.palette.divider, 0.1)};
+  border-radius: 2px;
+  margin-top: 12px;
+  position: relative;
+  overflow: hidden;
 
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.primaryLight}44;
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: ${({ $percent }) => $percent}%;
+    background: ${({ $color }) => $color};
+    transition: width 0.5s ease;
   }
 `;
 
-export const AddCardForm = styled(motion.div)`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xxs};
-  margin-top: ${({ theme }) => theme.spacing.sm};
-  padding: ${({ theme }) => theme.spacing.sm};
-  background-color: ${({ theme }) => theme.colors.surface}CC;
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
-  box-shadow: ${({ theme }) => theme.shadows.elevation1};
-`;
-
-export const AddCardTextArea = styled(motion.textarea)`
-  width: 100%;
-  padding: ${({ theme }) => theme.spacing.xxs};
-  border: 1px solid ${({ theme }) => theme.colors.onSurface}44;
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-  background-color: ${({ theme }) => theme.colors.background};
-  color: ${({ theme }) => theme.colors.onBackground};
-  font-family: inherit;
-  font-size: 0.9rem;
-  resize: vertical;
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
-  }
-`;
-
-export const AddCardActions = styled(motion.div)`
-  display: flex;
-  justify-content: flex-end;
-  gap: ${({ theme }) => theme.spacing.xxs};
-`;
-
-export const AddCardActionButton = styled(motion.button)<{ cancel?: boolean }>`
-  padding: ${({ theme }) => theme.spacing.xxs} ${({ theme }) => theme.spacing.sm};
-  border: none;
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background-color 0.2s ease-in-out;
-
-  ${({ cancel, theme }) =>
-    cancel
-      ? css`
-          background-color: ${theme.colors.error}22;
-          color: ${theme.colors.error};
-          &:hover {
-            background-color: ${theme.colors.error}44;
-          }
-        `
-      : css`
-          background-color: ${theme.colors.primary};
-          color: ${theme.colors.onPrimary};
-          &:hover {
-            background-color: ${theme.colors.primaryDark};
-          }
-        `}
-`;
-
-export const AssigneeContainer = styled(motion.div)`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.xxs};
-  font-size: ${({ theme }) => theme.typography.overline.fontSize};
-  color: ${({ theme }) => theme.colors.onSurface}99;
-
-  svg {
-    color: ${({ theme }) => theme.colors.primary};
-  }
-`;
-
-export const DueDateContainer = styled(motion.div)`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.xxs};
-  font-size: ${({ theme }) => theme.typography.overline.fontSize};
-  color: ${({ theme }) => theme.colors.onSurface}99;
-
-  svg {
-    color: ${({ theme }) => theme.colors.warning};
-  }
+export const FloatingNote = styled.div`
+  background: #fef9c3;
+  color: #854d0e;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  margin-top: 8px;
+  border-left: 3px solid #eab308;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 `;

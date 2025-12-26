@@ -18,8 +18,8 @@ export const StyledFormField = styled(motion.div)`
 `;
 
 export const StyledLabel = styled(motion.label)`
-  font-size: ${({ theme }) => theme.typography.bodyMedium.fontSize};
-  font-weight: ${({ theme }) => theme.typography.bodyMedium.fontWeight};
+  font-size: ${({ theme }) => theme.typography.body2?.fontSize || '14px'};
+  font-weight: ${({ theme }) => theme.typography.body2?.fontWeight || 400};
   color: ${({ theme }) => theme.colors.onSurface};
 `;
 
@@ -27,8 +27,8 @@ export const StyledInput = styled(motion.input)`
   padding: ${({ theme }) => theme.spacing.sm};
   border: 1px solid ${({ theme }) => theme.colors.onSurface}30;
   border-radius: ${({ theme }) => theme.borderRadius.small};
-  font-family: ${({ theme }) => theme.typography.bodyMedium.fontFamilyPrimary};
-  font-size: ${({ theme }) => theme.typography.bodyMedium.fontSize};
+  font-family: ${({ theme }) => theme.typography.fontFamily};
+  font-size: ${({ theme }) => theme.typography.body2?.fontSize || '14px'};
   color: ${({ theme }) => theme.colors.onSurface};
   background-color: ${({ theme }) => theme.colors.background};
   transition: all 0.2s ease-in-out;
@@ -44,8 +44,8 @@ export const StyledSelect = styled(motion.select)`
   padding: ${({ theme }) => theme.spacing.sm};
   border: 1px solid ${({ theme }) => theme.colors.onSurface}30;
   border-radius: ${({ theme }) => theme.borderRadius.small};
-  font-family: ${({ theme }) => theme.typography.bodyMedium.fontFamilyPrimary};
-  font-size: ${({ theme }) => theme.typography.bodyMedium.fontSize};
+  font-family: ${({ theme }) => theme.typography.fontFamily};
+  font-size: ${({ theme }) => theme.typography.body2?.fontSize || '14px'};
   color: ${({ theme }) => theme.colors.onSurface};
   background-color: ${({ theme }) => theme.colors.background};
   transition: all 0.2s ease-in-out;
@@ -61,8 +61,8 @@ export const StyledTextArea = styled(motion.textarea)`
   padding: ${({ theme }) => theme.spacing.sm};
   border: 1px solid ${({ theme }) => theme.colors.onSurface}30;
   border-radius: ${({ theme }) => theme.borderRadius.small};
-  font-family: ${({ theme }) => theme.typography.bodyMedium.fontFamilyPrimary};
-  font-size: ${({ theme }) => theme.typography.bodyMedium.fontSize};
+  font-family: ${({ theme }) => theme.typography.fontFamily};
+  font-size: ${({ theme }) => theme.typography.body2?.fontSize || '14px'};
   color: ${({ theme }) => theme.colors.onSurface};
   background-color: ${({ theme }) => theme.colors.background};
   transition: all 0.2s ease-in-out;

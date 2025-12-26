@@ -53,7 +53,7 @@ const DiagnosticWizard: React.FC<DiagnosticWizardProps> = ({ onComplete }) => {
 
   return (
     <Paper sx={{ p: 3, maxWidth: 600, mx: 'auto', mt: 4, minHeight: 400, display: 'flex', flexDirection: 'column' }}>
-      <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: '#1976d2' }}>
+      <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
         Diagnóstico Guiado
       </Typography>
       

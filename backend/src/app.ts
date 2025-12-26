@@ -20,7 +20,7 @@ import { requestLoggerMiddleware } from './middlewares/requestLoggerMiddleware.j
 import chaosMiddleware from './middlewares/chaos/chaos.js';
 
 // Import Listeners
-import whatsappListener from './listeners/whatsappListener.js';
+// import whatsappListener from './listeners/whatsappListener.js';
 import { initSocketListeners } from './listeners/socketEvents.js';
 import { initMarketplaceListener } from './listeners/marketplaceListener.js';
 import { initNotificationEventListener } from './listeners/notificationEventListener.js';
@@ -29,21 +29,24 @@ import marketingAutomationListener from './listeners/marketingAutomationListener
 // Import Jobs/Services initialization
 import { initCronJobs } from './jobs/cronJobs.js';
 import { initWorkers } from './jobs/workers.js';
-import { initWhatsapp } from './services/whatsappService.js';
+// import { initWhatsapp } from './services/whatsappService.js';
 
 // Initialize event listeners and services
 if (process.env.NODE_ENV !== 'test') {
   marketingAutomationListener();
-  whatsappListener();
+  // whatsappListener();
   initSocketListeners();
   initMarketplaceListener();
   initNotificationEventListener();
   initCronJobs();
   initWorkers();
-  initWhatsapp();
+  // initWhatsapp();
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+import partsRouter from './routes/parts.js';
+import compatibilityRouter from './routes/compatibility.js';
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -128,7 +131,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Import Routers
 import authRouter from './routes/auth.js';
 import auth2faRouter from './routes/auth2fa.js';
-import usersRouter from './routes/users.js';
+import { usersRouter } from './routes/users.js';
 import rolesRouter from './routes/roles.js';
 import permissionsRouter from './routes/permissions.js';
 import rolePermissionsRouter from './routes/rolePermissions.js';
@@ -199,6 +202,8 @@ import brandingRouter from './routes/branding.js';
 import marketplaceRouter from './routes/marketplace.js';
 import marketplaceConfigRoutes from './routes/marketplaceConfigRoutes.js';
 import pricingRuleRoutes from './routes/pricingRuleRoutes.js';
+import tagsRouter from './routes/tags.js';
+import accountsRouter from './routes/accounts.js';
 import userKeybindsRouter from './routes/userKeybinds.js';
 import ipWhitelistRouter from './routes/ipWhitelist.js';
 import { apiKeyRouter, publicApiRouter } from './routes/api.js';
@@ -207,6 +212,10 @@ import techAppRouter from './routes/techAppRoutes.js';
 import customer360Routes from './routes/customer360Routes.js';
 import commissionRulesRoutes from './routes/commissionRulesRoutes.js';
 import cycleCountsRouter from './routes/cycleCounts.js';
+import couponsRouter from './routes/coupons.js';
+import quarantineRouter from './routes/quarantine.js';
+import reviewsRouter from './routes/reviews.js';
+import discountsRouter from './routes/discounts.js';
 
 // Route Mounting
 app.use('/api/auth', authLimiter, authRouter);
@@ -233,12 +242,18 @@ app.use('/api/referrals', referralsRouter);
 app.use('/api/leads', leadsRouter);
 app.use('/api/sales', salesRouter);
 app.use('/api/sales-goals', salesGoalsRouter);
+app.use('/api/coupons', couponsRouter);
+app.use('/api/discounts', discountsRouter);
+app.use('/api/reviews', reviewsRouter);
 app.use('/api/return-items', returnItemsRouter);
 app.use('/api/returns', returnsRouter);
+app.use('/api/quarantine', quarantineRouter);
 app.use('/api/receipts', receiptsRouter);
 app.use('/api/tef', tefRouter);
 app.use('/api/pix', pixRouter);
 app.use('/api/cash-drawer', cashDrawerRouter);
+app.use('/api/parts', partsRouter);
+app.use('/api/compatibility', compatibilityRouter);
 app.use('/api/service-orders', serviceOrdersRouter);
 app.use('/api/service-order-attachments', serviceOrderAttachmentsRouter);
 app.use('/api/diagnostic-nodes', diagnosticNodesRoutes);
@@ -257,7 +272,7 @@ app.use('/api/accounting', accountingRouter);
 app.use('/api/finance', financeRouter);
 app.use('/api/cash-flow', cashFlowRouter);
 app.use('/api/reports', reportsRouter);
-app.use('/api/reports', extendedReportsRouter);
+app.use('/api/extended-reports', extendedReportsRouter);
 app.use('/api/shift-reports', shiftReportsRouter);
 app.use('/api/reports/z-report', zReportsRouter);
 app.use('/api/reports/pnl', pnlReportRouter);
@@ -282,10 +297,12 @@ app.use('/api/branding', brandingRouter);
 app.use('/api/marketplace', marketplaceRouter);
 app.use('/api/admin/marketplace', marketplaceConfigRoutes);
 app.use('/api/admin/pricing', pricingRuleRoutes);
+app.use('/api/tags', tagsRouter);
+app.use('/api/accounts', accountsRouter);
 app.use('/api/user-keybinds', userKeybindsRouter);
 app.use('/api/ip-whitelist', ipWhitelistRouter);
 app.use('/api/dev', apiKeyRouter);
-app.use('/public-api', publicApiRouter);
+app.use('/api/public', publicApiRouter);
 app.use('/api/portal', publicPortalRouter);
 app.use('/api/tech', techAppRouter);
 app.use('/api/customer360', customer360Routes);

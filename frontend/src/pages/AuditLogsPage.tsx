@@ -13,21 +13,22 @@ import {
   Select,
   InputLabel,
   FormControl,
-  Pagination, // Importar Pagination
+  Pagination,
   SelectChangeEvent,
+  Typography
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker'; // Importar DatePicker
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'; // Importar LocalizationProvider
-import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment'; // Importar AdapterMoment
-import Moment from 'moment'; // Importar Moment
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs, { Dayjs } from 'dayjs';
 
-interface AuditLog {
+export interface AuditLog {
   id: number;
-  user_id?: string; // Changed to string/UUID
+  user_id?: string;
   user_email?: string;
   action: string;
   entity_type?: string;
-  entity_id?: string; // Changed to string/UUID
+  entity_id?: string;
   details?: any;
   timestamp: string;
   previous_hash?: string;
@@ -36,18 +37,18 @@ interface AuditLog {
 
 const AuditLogsPage: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
-  const [totalCount, setTotalCount] = useState(0); // Novo estado para totalCount
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filterEntityType, setFilterEntityType] = useState('');
   const [filterEntityId, setFilterEntityId] = useState('');
   const [filterAction, setFilterAction] = useState('');
   const [filterUserId, setFilterUserId] = useState('');
-  const [filterStartDate, setFilterStartDate] = useState<Moment | null>(null); // Novo estado
-  const [filterEndDate, setFilterEndDate] = useState<Moment | null>(null);     // Novo estado
-  const [page, setPage] = useState(1);       // Novo estado
-  const [limit, setLimit] = useState(10);    // Novo estado
+  const [filterStartDate, setFilterStartDate] = useState<Dayjs | null>(null);
+  const [filterEndDate, setFilterEndDate] = useState<Dayjs | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const { token } = useAuth();
-  const { addToast } = useNotification(); // Usar addToast em vez de addNotification
+  const { addNotification } = useNotification();
 
   const fetchAuditLogs = useCallback(async () => {
     setLoading(true);
@@ -67,15 +68,15 @@ const AuditLogsPage: React.FC = () => {
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
-      setLogs(data.logs); // O backend agora retorna { logs, totalCount }
+      setLogs(data.logs);
       setTotalCount(data.totalCount);
     } catch (error: any) {
       console.error("Error fetching audit logs:", error);
-      addToast(`Falha ao buscar logs de auditoria: ${error.message}`, 'error');
+      addNotification(`Falha ao buscar logs de auditoria: ${error.message}`, 'error');
     } finally {
       setLoading(false);
     }
-  }, [token, filterEntityType, filterEntityId, filterAction, filterUserId, filterStartDate, filterEndDate, page, limit, addToast]);
+  }, [token, filterEntityType, filterEntityId, filterAction, filterUserId, filterStartDate, filterEndDate, page, limit, addNotification]);
 
   useEffect(() => {
     fetchAuditLogs();
@@ -98,11 +99,11 @@ const AuditLogsPage: React.FC = () => {
 
   const handleLimitChange = (event: SelectChangeEvent<number>) => {
     setLimit(event.target.value as number);
-    setPage(1); // Resetar para a primeira página ao mudar o limite
+    setPage(1);
   };
 
   return (
-    <LocalizationProvider dateAdapter={AdapterMoment}>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
       <StyledPageContainer
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -116,12 +117,13 @@ const AuditLogsPage: React.FC = () => {
           Logs de Auditoria
         </StyledPageTitle>
 
-        <Box sx={{ mb: 4, p: 2, border: '1px solid #eee', borderRadius: 2 }}>
-          <Typography variant="h6" gutterBottom>Filtros</Typography>
-          <Grid container spacing={2}>
+        <Box sx={{ mb: 4, p: 3, bgcolor: 'background.paper', borderRadius: '24px', border: '1px solid', borderColor: 'divider' }}>
+          <Typography variant="overline" fontWeight={900} color="text.secondary" gutterBottom display="block">FILTROS DE BUSCA</Typography>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
+                size="small"
                 label="Tipo de Entidade"
                 value={filterEntityType}
                 onChange={(e) => setFilterEntityType(e.target.value)}
@@ -130,6 +132,7 @@ const AuditLogsPage: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
+                size="small"
                 label="ID da Entidade"
                 value={filterEntityId}
                 onChange={(e) => setFilterEntityId(e.target.value)}
@@ -138,6 +141,7 @@ const AuditLogsPage: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
+                size="small"
                 label="Ação"
                 value={filterAction}
                 onChange={(e) => setFilterAction(e.target.value)}
@@ -146,6 +150,7 @@ const AuditLogsPage: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
+                size="small"
                 label="ID do Usuário"
                 value={filterUserId}
                 onChange={(e) => setFilterUserId(e.target.value)}
@@ -156,7 +161,7 @@ const AuditLogsPage: React.FC = () => {
                 label="Data de Início"
                 value={filterStartDate}
                 onChange={(date) => setFilterStartDate(date)}
-                renderInput={(params) => <TextField {...params} fullWidth />}
+                slotProps={{ textField: { fullWidth: true, size: 'small' } }}
               />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
@@ -164,11 +169,11 @@ const AuditLogsPage: React.FC = () => {
                 label="Data Final"
                 value={filterEndDate}
                 onChange={(date) => setFilterEndDate(date)}
-                renderInput={(params) => <TextField {...params} fullWidth />}
+                slotProps={{ textField: { fullWidth: true, size: 'small' } }}
               />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth>
+              <FormControl fullWidth size="small">
                 <InputLabel>Logs por Página</InputLabel>
                 <Select value={limit} onChange={handleLimitChange} label="Logs por Página">
                   <MenuItem value={5}>5</MenuItem>
@@ -178,23 +183,24 @@ const AuditLogsPage: React.FC = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12}>
-              <Button variant="outlined" onClick={handleClearFilters}>Limpar Filtros</Button>
+            <Grid item xs={12} md={3} display="flex" alignItems="flex-end">
+              <Button fullWidth variant="outlined" onClick={handleClearFilters} sx={{ borderRadius: '12px' }}>Limpar Filtros</Button>
             </Grid>
           </Grid>
         </Box>
 
         {loading ? (
-          <Loading />
+          <Box display="flex" justifyContent="center" py={10}><Loading /></Box>
         ) : (
           <>
             <AuditLogList logs={logs} />
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
               <Pagination
                 count={Math.ceil(totalCount / limit)}
                 page={page}
                 onChange={handlePageChange}
                 color="primary"
+                shape="rounded"
               />
             </Box>
           </>

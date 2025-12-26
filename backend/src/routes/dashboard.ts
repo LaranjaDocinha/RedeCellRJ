@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { dashboardService } from '../services/dashboardService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
-import { cacheMiddleware } from '../middlewares/cacheMiddleware.js'; // Added import
+import { cacheMiddleware } from '../middlewares/cacheMiddleware.js';
 
 const dashboardRouter = Router();
 
@@ -9,30 +9,39 @@ dashboardRouter.get(
   '/',
   authMiddleware.authenticate,
   authMiddleware.authorize('read', 'Dashboard'),
-  cacheMiddleware(), // Applied cache middleware
+  cacheMiddleware(60), // Cache de 1 minuto para performance
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { period, startDate, endDate, salesperson, product, region, comparePeriod } = req.query; // Adicionado comparePeriod
+      const { period, salesperson, product, region } = req.query;
 
       const filters = {
         period: period as string,
-        startDate: startDate as string,
-        endDate: endDate as string,
         salesperson: salesperson as string,
         product: product as string,
         region: region as string,
-        comparePeriod: comparePeriod as string, // Adicionado comparePeriod
+        comparePeriod: 'previousPeriod'
       };
 
-      // Passa os filtros para cada método do serviço
-      const totalSales = await dashboardService.getTotalSalesAmount(filters);
-      const salesByMonth = await dashboardService.getSalesByMonth(filters);
-      const topSellingProducts = await dashboardService.getTopSellingProducts(filters);
-      const recentSales = await dashboardService.getRecentSales(filters);
-      const slowMovingProducts = await dashboardService.getSlowMovingProducts(filters);
-      const salesForecast = await dashboardService.getSalesForecast(filters);
-      const averageTicketBySalesperson = await dashboardService.getAverageTicketBySalesperson(filters);
-      const salesHeatmap = await dashboardService.getSalesHeatmapData(filters);
+      // PERFORMANCE: Executa todas as buscas em paralelo no banco de dados
+      const [
+        totalSales,
+        salesByMonth,
+        topSellingProducts,
+        recentSales,
+        slowMovingProducts,
+        salesForecast,
+        averageTicketBySalesperson,
+        salesHeatmap
+      ] = await Promise.all([
+        dashboardService.getTotalSalesAmount(filters),
+        dashboardService.getSalesByMonth(filters),
+        dashboardService.getTopSellingProducts(filters),
+        dashboardService.getRecentSales(filters),
+        dashboardService.getSlowMovingProducts(filters),
+        dashboardService.getSalesForecast(filters),
+        dashboardService.getAverageTicketBySalesperson(filters),
+        dashboardService.getSalesHeatmapData(filters)
+      ]);
 
       res.status(200).json({
         totalSales,
@@ -45,6 +54,7 @@ dashboardRouter.get(
         salesHeatmap,
       });
     } catch (error) {
+      console.error('[Dashboard Error]:', error);
       next(error);
     }
   },

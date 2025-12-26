@@ -62,21 +62,21 @@ const PnlReportPage = () => {
           Relatório de Lucro e Perdas (P&L)
         </Typography>
         <Grid container spacing={3} alignItems="center" sx={{ mb: 3 }}>
-          <Grid item>
+          <Grid>
             <DatePicker
               label="Data de Início"
               value={startDate}
               onChange={(newValue) => setStartDate(newValue)}
             />
           </Grid>
-          <Grid item>
+          <Grid>
             <DatePicker
               label="Data de Fim"
               value={endDate}
               onChange={(newValue) => setEndDate(newValue)}
             />
           </Grid>
-          <Grid item>
+          <Grid>
             <Button variant="contained" onClick={handleGenerateReport} disabled={loading}>
               {loading ? <CircularProgress size={24} /> : 'Gerar Relatório'}
             </Button>
@@ -91,7 +91,7 @@ const PnlReportPage = () => {
 
         {pnlData && (
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography color="text.secondary" gutterBottom>Receita Total</Typography>
@@ -99,7 +99,7 @@ const PnlReportPage = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography color="text.secondary" gutterBottom>Custo da Mercadoria Vendida (COGS)</Typography>
@@ -107,7 +107,7 @@ const PnlReportPage = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography color="text.secondary" gutterBottom>Lucro Bruto</Typography>
@@ -115,7 +115,7 @@ const PnlReportPage = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography color="text.secondary" gutterBottom>Despesas Totais</Typography>
@@ -123,7 +123,7 @@ const PnlReportPage = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Card sx={{ backgroundColor: pnlData.netProfit >= 0 ? '#d4edda' : '#f8d7da' }}>
                 <CardContent>
                   <Typography color="text.secondary" gutterBottom>Lucro Líquido</Typography>

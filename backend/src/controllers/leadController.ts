@@ -5,7 +5,7 @@ import { validate } from '../middlewares/validationMiddleware.js'; // Assuming v
 import { AppError } from '../utils/errors.js'; // Assuming AppError exists
 
 // Zod Schemas for validation
-const createLeadSchema = z.object({
+export const createLeadSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Invalid email format'),
   phone: z.string().optional(),
@@ -13,11 +13,11 @@ const createLeadSchema = z.object({
   assignedTo: z.number().int().positive('Assigned user ID must be a positive integer').optional(),
 });
 
-const updateLeadSchema = createLeadSchema.partial().extend({
+export const updateLeadSchema = createLeadSchema.partial().extend({
   status: z.enum(['new', 'contacted', 'qualified', 'unqualified', 'converted']).optional(),
 });
 
-const createLeadActivitySchema = z.object({
+export const createLeadActivitySchema = z.object({
   activityType: z.enum(['call', 'email', 'meeting', 'note']),
   description: z.string().min(1, 'Description is required'),
   activityDate: z.string().datetime('Invalid date format'),

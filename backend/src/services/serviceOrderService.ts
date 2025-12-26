@@ -3,29 +3,57 @@ import { ServiceOrder, ServiceOrderItem, ServiceOrderStatus } from '../types/ser
 import * as purchaseAutomationService from './purchaseAutomationService.js';
 import { permissionService } from './permissionService.js';
 import * as activityFeedService from './activityFeedService.js';
-import appEvents from '../events/appEvents.js'; // Added import
+import appEvents from '../events/appEvents.js';
 
 // Create a new service order
 export const createServiceOrder = async (
-  orderData: Omit<ServiceOrder, 'id' | 'created_at' | 'updated_at' | 'status'>,
+  orderData: any,
 ): Promise<ServiceOrder> => {
-  const { customer_id, user_id, product_description, imei, entry_checklist, issue_description } =
-    orderData;
+  const { 
+    customer_id, 
+    user_id, 
+    product_description, 
+    brand,
+    imei, 
+    issue_description, 
+    services, 
+    observations, 
+    down_payment, 
+    part_quality, 
+    expected_delivery_date,
+    priority 
+  } = orderData;
+
   const client = await connect();
   try {
     await client.query('BEGIN');
     const initialStatus: ServiceOrderStatus = 'Aguardando Avaliação';
 
+    // Fetch user's branch_id to ensure consistency
+    const userRes = await client.query('SELECT branch_id FROM users WHERE id = $1', [user_id]);
+    const branchId = userRes.rows[0]?.branch_id || 1; // Fallback to 1 if not set
+
     const orderResult = await client.query(
-      'INSERT INTO service_orders (customer_id, user_id, product_description, imei, entry_checklist, issue_description, status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      `INSERT INTO service_orders (
+        customer_id, user_id, product_description, brand, imei, 
+        issue_description, services, observations, down_payment, 
+        part_quality, expected_delivery_date, status, priority, branch_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *`,
       [
-        customer_id,
+        customer_id || null,
         user_id,
         product_description,
-        imei,
-        entry_checklist,
+        brand,
+        imei || null,
         issue_description,
+        JSON.stringify(services),
+        observations || null,
+        down_payment || 0,
+        part_quality || 'Premium',
+        expected_delivery_date || null,
         initialStatus,
+        priority || 'normal',
+        branchId
       ],
     );
     const newOrder = orderResult.rows[0];
@@ -37,9 +65,10 @@ export const createServiceOrder = async (
 
     await client.query('COMMIT');
     return newOrder;
-  } catch (error) {
+  } catch (error: any) {
     await client.query('ROLLBACK');
-    throw error;
+    console.error('CRITICAL ERROR in createServiceOrder:', error.message, error.stack);
+    throw new Error(`Erro ao salvar Ordem de Serviço: ${error.message}`);
   } finally {
     client.release();
   }
@@ -149,6 +178,54 @@ export const updateServiceOrder = async (
   return result.rows[0] || null;
 };
 
+export const updateServiceOrderStatusFromKanban = async (
+  serviceOrderId: number,
+  newStatus: ServiceOrderStatus,
+  changedBy: string, // User ID or 'System Kanban'
+  externalClient?: any // Optional: pass client if already in a transaction
+): Promise<ServiceOrder | null> => {
+  const client = externalClient || (await connect());
+  try {
+    if (!externalClient) await client.query('BEGIN');
+
+    const oldOrderResult = await client.query(
+      'SELECT status FROM service_orders WHERE id = $1 FOR UPDATE',
+      [serviceOrderId],
+    );
+    if (oldOrderResult.rows.length === 0) {
+      throw new Error('Service order not found');
+    }
+    const oldStatus = oldOrderResult.rows[0].status;
+
+    const updatedOrderResult = await client.query(
+      'UPDATE service_orders SET status = $1, updated_at = current_timestamp WHERE id = $2 RETURNING *',
+      [newStatus, serviceOrderId],
+    );
+
+    await client.query(
+      'INSERT INTO service_order_status_history (service_order_id, old_status, new_status, changed_by_user_id) VALUES ($1, $2, $3, $4)',
+      [serviceOrderId, oldStatus, newStatus, changedBy],
+    );
+
+    const updatedOrder = updatedOrderResult.rows[0];
+    appEvents.emit('os.status.updated', {
+      serviceOrder: updatedOrder,
+      oldStatus,
+      newStatus,
+      changedBy: changedBy,
+    });
+
+    if (!externalClient) await client.query('COMMIT');
+    return updatedOrder || null;
+  } catch (error) {
+    if (!externalClient) await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    if (!externalClient) client.release();
+  }
+};
+
+
 // Change the status of a service order
 export const changeOrderStatus = async (
   id: number,
@@ -182,8 +259,6 @@ export const changeOrderStatus = async (
         if (!hasQAPermission) {
           throw new Error('User does not have permission to finalize/reject QA.');
         }
-        // Registrar quem fez o QA (pode ser uma nova coluna na tabela service_orders ou no histórico de status)
-        // Por simplicidade, vamos apenas registrar no histórico de status por enquanto.
       } else {
         throw new Error('Service order must pass QA before being finalized or rejected.');
       }
@@ -245,6 +320,7 @@ export const changeOrderStatus = async (
   }
 };
 
+
 // Suggest a technician for a service order
 export const suggestTechnician = async (serviceOrderId: number): Promise<any[]> => {
   const orderRes = await query('SELECT tags FROM service_orders WHERE id = $1', [
@@ -270,7 +346,6 @@ export const suggestTechnician = async (serviceOrderId: number): Promise<any[]> 
     return technicians.rows;
   }
 
-  // Esta query é complexa. Ela encontra técnicos, conta suas habilidades correspondentes e conta suas ordens de serviço abertas.
   const queryText = `
         SELECT
             u.id,

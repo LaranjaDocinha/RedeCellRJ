@@ -24,9 +24,9 @@ const ActivityFeed: React.FC = () => {
 
   useEffect(() => {
     const fetchFeed = async () => {
-      if (!token) return;
+      if (!token || !user) return;
       try {
-        const res = await fetch(`/api/activity-feed?branchId=${user.branch_id}`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(`/api/activity-feed?branchId=${(user as any).branch_id}`, { headers: { Authorization: `Bearer ${token}` } });
         const data = await res.json();
         setFeed(data);
       } catch (error) {
@@ -55,7 +55,7 @@ const ActivityFeed: React.FC = () => {
 
   return (
     <Paper sx={{ p: 2, mt: 3 }}>
-      <Typography variant="h6" gutterBottom component="div" role="heading" aria-level="2">Feed de Atividades da Loja</Typography>
+      <Typography variant="h6" gutterBottom component="div" role="heading" aria-level={2}>Feed de Atividades da Loja</Typography>
       <List>
         {loading ? <Typography>Carregando feed...</Typography> : feed.map(activity => (
           <ListItem key={activity.id} alignItems="flex-start">

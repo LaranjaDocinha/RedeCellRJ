@@ -4,21 +4,24 @@ import { AppError } from '../utils/errors.js';
 interface Tag {
   id: number;
   name: string;
+  color: string;
   created_at: Date;
   updated_at: Date;
 }
 
 interface CreateTagPayload {
   name: string;
+  color?: string;
 }
 
 interface UpdateTagPayload {
   name?: string;
+  color?: string;
 }
 
 class TagService {
   async getAllTags(): Promise<Tag[]> {
-    const result = await pool.query('SELECT * FROM tags');
+    const result = await pool.query('SELECT * FROM tags ORDER BY name ASC');
     return result.rows;
   }
 
@@ -28,24 +31,23 @@ class TagService {
   }
 
   async createTag(payload: CreateTagPayload): Promise<Tag> {
-    const { name } = payload;
+    const { name, color = '#1976d2' } = payload;
     try {
-      const result = await pool.query('INSERT INTO tags (name) VALUES ($1) RETURNING *', [name]);
+      const result = await pool.query(
+        'INSERT INTO tags (name, color) VALUES ($1, $2) RETURNING *', 
+        [name, color]
+      );
       return result.rows[0];
     } catch (error: unknown) {
-      if (error instanceof AppError) {
-        throw error;
-      }
       if (error instanceof Error && (error as any).code === '23505') {
-        // Unique violation error code
-        throw new AppError('Tag with this name already exists', 409);
+        throw new AppError('Já existe uma tag com este nome', 409);
       }
       throw error;
     }
   }
 
   async updateTag(id: number, payload: UpdateTagPayload): Promise<Tag | undefined> {
-    const { name } = payload;
+    const { name, color } = payload;
     const fields: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
@@ -54,28 +56,22 @@ class TagService {
       fields.push(`name = $${paramIndex++}`);
       values.push(name);
     }
-
-    if (fields.length === 0) {
-      const existingTag = await this.getTagById(id);
-      if (!existingTag) {
-        return undefined; // No tag found to update
-      }
-      return existingTag; // No fields to update, return existing tag
+    if (color !== undefined) {
+      fields.push(`color = $${paramIndex++}`);
+      values.push(color);
     }
 
-    values.push(id); // Add id for WHERE clause
+    if (fields.length === 0) return this.getTagById(id);
+
+    values.push(id);
     const query = `UPDATE tags SET ${fields.join(', ')}, updated_at = current_timestamp WHERE id = $${paramIndex} RETURNING *`;
 
     try {
       const result = await pool.query(query, values);
       return result.rows[0];
     } catch (error: unknown) {
-      if (error instanceof AppError) {
-        throw error;
-      }
       if (error instanceof Error && (error as any).code === '23505') {
-        // Unique violation error code
-        throw new AppError('Tag with this name already exists', 409);
+        throw new AppError('Já existe uma tag com este nome', 409);
       }
       throw error;
     }

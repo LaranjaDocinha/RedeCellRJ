@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
-import express, { Request, Response, NextFunction } from 'express'; // Import express for type hinting
-import http from 'http';
-import * as Sentry from '@sentry/node'; // ADDED: Import Sentry for testing
+import express from 'express';
+import * as Sentry from '@sentry/node';
 import { xssSanitizer } from '../../src/middlewares/sanitizationMiddleware.js';
 
+// Hoisted mocks for simple fns
 const mocks = vi.hoisted(() => ({
   whatsappListener: vi.fn(),
   initSocketListeners: vi.fn(),
@@ -19,10 +19,8 @@ const mocks = vi.hoisted(() => ({
   healthController: {
     check: vi.fn((req, res) => res.status(200).json({ message: 'OK' })),
   },
-  authRouter: express.Router().get('/test', (req, res) => res.status(200).send('Auth Test')),
 }));
 
-// Mockar todas as inicializações que não são relevantes para o teste da estrutura do express
 vi.mock('../../src/listeners/whatsappListener.js', () => ({ default: mocks.whatsappListener }));
 vi.mock('../../src/listeners/socketEvents.js', () => ({ initSocketListeners: mocks.initSocketListeners }));
 vi.mock('../../src/listeners/marketplaceListener.js', () => ({ initMarketplaceListener: mocks.initMarketplaceListener }));
@@ -34,23 +32,31 @@ vi.mock('../../src/services/whatsappService.js', () => ({ initWhatsapp: mocks.in
 vi.mock('../../src/middlewares/chaos/chaos.js', () => ({ default: mocks.chaosMiddleware }));
 vi.mock('../../src/middlewares/requestLoggerMiddleware.js', () => ({ requestLoggerMiddleware: mocks.requestLoggerMiddleware }));
 vi.mock('../../src/controllers/healthController.js', () => ({ healthController: mocks.healthController }));
-vi.mock('../../src/routes/auth.js', () => ({ default: mocks.authRouter }));
 
-// Mockar Sentry para evitar chamadas externas e erros no ambiente de teste
-vi.mock('@sentry/node', () => ({
-  init: vi.fn(),
-  Handlers: {
-    requestHandler: () => (req: any, res: any, next: any) => next(),
-    tracingHandler: () => (req: any, res: any, next: any) => next(),
-    errorHandler: () => (err: any, req: any, res: any, next: any) => next(err),
-  },
-  httpIntegration: vi.fn(),
-  Integrations: {
-    Express: vi.fn(),
-  },
-}));
+// Mock routes that use express
+vi.mock('../../src/routes/auth.js', async () => {
+  const express = await import('express');
+  const router = express.default.Router();
+  router.get('/test', (req, res) => res.status(200).send('Auth Test'));
+  return { default: router };
+});
 
-const { app } = await import('../../src/app.js'); // Importar app DEPOIS dos mocks
+// Mock Sentry
+vi.mock('@sentry/node', async (importOriginal) => {
+  const actual = await importOriginal() as any;
+  return {
+    ...actual,
+    init: vi.fn(),
+    Handlers: {
+      requestHandler: () => (req: any, res: any, next: any) => next(),
+      tracingHandler: () => (req: any, res: any, next: any) => next(),
+      errorHandler: () => (err: any, req: any, res: any, next: any) => next(err),
+    },
+  };
+});
+
+// Import app AFTER mocks are defined
+import { app } from '../../src/app.js';
 
 describe('app.ts', () => {
   beforeEach(() => {
@@ -109,20 +115,15 @@ describe('app.ts', () => {
   });
 
   it('should handle 404 errors with the errorMiddleware', async () => {
-    const localApp = express();
-    // Add some middleware to simulate a real app,
-    // then a 404 handler that sets the status
-    localApp.use((req, res, next) => {
-      res.status(404).send('Not Found');
-    });
-
-    const res = await request(localApp).get('/non-existent-route');
+    const res = await request(app).get('/non-existent-route-very-random');
     expect(res.statusCode).toEqual(404);
     expect(res.text).toEqual('Not Found');
   });
 
   it('should initialize Sentry handlers in non-test environment', async () => {
-    expect(vi.mocked(Sentry.init)).not.toHaveBeenCalled();
+    // Sentry.init is called in app.ts ONLY if NODE_ENV !== 'test'
+    // Since we are in 'test', it shouldn't be called.
+    expect(Sentry.init).not.toHaveBeenCalled();
   });
 
   it('should correctly set CORS headers', async () => {
@@ -138,5 +139,5 @@ describe('app.ts', () => {
       .get('/')
       .set('Origin', 'http://malicious.com'); // A non-allowed origin
     expect(res.headers['access-control-allow-origin']).toBeUndefined();
-  }, 40000); // Increased timeout for this specific test
+  });
 });
