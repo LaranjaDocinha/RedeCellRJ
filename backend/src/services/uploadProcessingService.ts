@@ -23,10 +23,7 @@ export const uploadProcessingService = {
     const outputPath = path.join(outputDirectory, optimizedFileName);
 
     try {
-      await sharp(filePath)
-        .resize(width)
-        .toFormat(format, { quality })
-        .toFile(outputPath);
+      await sharp(filePath).resize(width).toFormat(format, { quality }).toFile(outputPath);
 
       return optimizedFileName; // Retorna apenas o nome do arquivo otimizado
     } catch (error) {
@@ -36,7 +33,7 @@ export const uploadProcessingService = {
   },
 
   // Método placeholder para processamento de documentos com OCR, se necessário no futuro
-  async processDocumentOcr(filePath: string) {
+  async processDocumentOcr(_filePath: string) {
     // Esta função existia no handler, aqui seria um placeholder para o serviço OCR
     // ocrService.recognizeText(filePath) e ocrService.extractDocumentData(ocrText)
     // Para manter a demonstração, apenas um placeholder.

@@ -86,7 +86,7 @@ const SalespersonPerformanceWidget: React.FC<SalespersonPerformanceWidgetProps> 
           minHeight: 200,
         }}
       >
-        <Typography variant="body1" fontWeight="bold">Nenhum dado de desempenho de vendedores disponível.</Typography>
+        <Typography variant="body1" fontWeight={400}>Nenhum dado de desempenho de vendedores disponível.</Typography>
         <Typography variant="body2" sx={{ mt: 1 }}>
           Registre vendas para ver o desempenho dos seus vendedores.
         </Typography>
@@ -168,3 +168,4 @@ const SalespersonPerformanceWidget: React.FC<SalespersonPerformanceWidgetProps> 
 });
 
 export default SalespersonPerformanceWidget;
+

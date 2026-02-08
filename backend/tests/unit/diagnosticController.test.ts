@@ -10,7 +10,6 @@ import {
 } from '../../src/controllers/diagnosticController.js';
 import { diagnosticService } from '../../src/services/diagnosticService.js';
 import { AppError } from '../../src/utils/errors.js';
-import { z } from 'zod';
 
 // Mock diagnosticService
 vi.mock('../../src/services/diagnosticService.js', () => ({
@@ -166,7 +165,11 @@ describe('DiagnosticController', () => {
       const nodeId = 123;
       const selectedOptionId = 101;
       const userId = 456;
-      mockRequest.body = { sessionId, nodeId: nodeId.toString(), selectedOptionId: selectedOptionId.toString() };
+      mockRequest.body = {
+        sessionId,
+        nodeId: nodeId.toString(),
+        selectedOptionId: selectedOptionId.toString(),
+      };
       mockRequest.user = { id: userId };
       (diagnosticService.recordHistory as vi.Mock).mockResolvedValueOnce(undefined);
 

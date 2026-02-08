@@ -9,7 +9,7 @@ export async function loginUser(email, password) {
         // Throw a detailed error to make debugging easier
         throw new Error(`Failed to login as ${email}. Status: ${response.status}, Body: ${JSON.stringify(response.body)}`);
     }
-    return response.body.token;
+    return response.body.accessToken;
 }
 /**
  * A specific helper to get the token for the globally seeded admin user.

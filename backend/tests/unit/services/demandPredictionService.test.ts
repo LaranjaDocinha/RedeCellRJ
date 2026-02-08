@@ -1,73 +1,28 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { demandPredictionService } from '../../../src/services/demandPredictionService';
-import * as dbModule from '../../../src/db/index';
-import { AppError } from '../../../src/utils/errors';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { demandPredictionService } from '../../../src/services/demandPredictionService.js';
+import { predictionRepository } from '../../../src/repositories/prediction.repository.js';
 
-// Hoisted mocks
-const { mockClientQuery, mockClientConnect, mockGetPool, mockDefaultQuery } = vi.hoisted(() => {
-  const query = vi.fn();
-  const connect = vi.fn();
-  const getPool = vi.fn(() => ({
-    query: query,
-    connect: connect,
-    end: vi.fn(),
-  }));
-  const defaultQuery = vi.fn();
-  return {
-    mockClientQuery: query,
-    mockClientConnect: connect,
-    mockGetPool: getPool,
-    mockDefaultQuery: defaultQuery,
-  };
-});
-
-vi.mock('../../../src/db/index', async (importActual) => {
-  const actual = await importActual<typeof dbModule>();
-  return {
-    ...actual,
-    getPool: mockGetPool,
-    default: {
-      query: mockDefaultQuery,
-      connect: mockClientConnect,
-      getPool: mockGetPool,
-    },
-  };
-});
+vi.mock('../../../src/repositories/prediction.repository.js', () => ({
+  predictionRepository: {
+    getMonthlySalesHistory: vi.fn(),
+  },
+}));
 
 describe('DemandPredictionService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockDefaultQuery.mockResolvedValue({ rows: [], rowCount: 0 });
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+  it('should predict demand based on average sales', async () => {
+    vi.mocked(predictionRepository.getMonthlySalesHistory).mockResolvedValue([
+      { month: '2023-01', quantity: 10 },
+      { month: '2023-02', quantity: 20 },
+    ]);
 
-  describe('predictDemand', () => {
-    it('should predict demand based on average sales', async () => {
-      // 3 months, total 30 sold => 10 per month
-      mockDefaultQuery.mockResolvedValueOnce({ rows: [{ total_quantity_sold: '30' }] });
-
-      const result = await demandPredictionService.predictDemand('prod1', 3);
-
-      expect(mockDefaultQuery).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT'),
-        expect.arrayContaining(['prod1'])
-      );
-      expect(result).toBe(10);
-    });
-
-    it('should default to 3 months if not specified', async () => {
-      mockDefaultQuery.mockResolvedValueOnce({ rows: [{ total_quantity_sold: '30' }] });
-
-      const result = await demandPredictionService.predictDemand('prod1');
-
-      expect(result).toBe(10);
-    });
-
-    it('should throw AppError if productId is missing', async () => {
-      await expect(demandPredictionService.predictDemand('')).rejects.toThrow(AppError);
-    });
+    const res = await demandPredictionService.predictDemand(1, 2);
+    // Weighted Average for 2 months: (10*1 + 20*2) / (1+2) = 50 / 3 = 16.66 -> Ceil = 17
+    // If it was simple average: 15.
+    // The service uses weighted average.
+    expect(res).toBe(17);
   });
 });

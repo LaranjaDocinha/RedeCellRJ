@@ -105,11 +105,11 @@ const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '24px' } }}>
-      <DialogTitle sx={{ fontWeight: 800 }}>{t('split_payment')}</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 400 }}>{t('split_payment')}</DialogTitle>
       <DialogContent dividers>
         {customer360Data && (
             <Paper sx={{ p: 2, mb: 3, bgcolor: 'action.hover', borderRadius: '16px' }}>
-                <Typography variant="overline" fontWeight={900} color="text.secondary">CARTEIRA DO CLIENTE</Typography>
+                <Typography variant="overline" fontWeight={400} color="text.secondary">CARTEIRA DO CLIENTE</Typography>
                 <Stack spacing={1} mt={1}>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Typography variant="body2">Crédito Disponível: <strong>R$ {creditAvailable.toFixed(2)}</strong></Typography>
@@ -126,7 +126,7 @@ const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({
         <Box sx={{ mb: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
             <Typography variant="subtitle2" color="textSecondary">Progresso do Pagamento</Typography>
-            <Typography variant="subtitle2" color="primary" sx={{ fontWeight: 'bold' }}>
+            <Typography variant="subtitle2" color="primary" sx={{ fontWeight: 400 }}>
                 {Math.min(100, Math.round((totalPaid / totalAmount) * 100))}%
             </Typography>
           </Box>
@@ -138,7 +138,7 @@ const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({
           />
         </Box>
 
-        <Typography variant="h5" fontWeight={900} color="primary" gutterBottom align="center">
+        <Typography variant="h5" fontWeight={400} color="primary" gutterBottom align="center">
           VALOR FINAL: R$ {totalAmount.toFixed(2)}
         </Typography>
 
@@ -184,17 +184,17 @@ const SplitPaymentModal: React.FC<SplitPaymentModalProps> = ({
         </MuiButton>
 
         <Box sx={{ mt: 4, p: 2, bgcolor: 'primary.900', color: 'white', borderRadius: '16px' }}>
-          <Box display="flex" justifyContent="space-between"><Typography>Total Pago:</Typography><Typography fontWeight={900}>R$ {totalPaid.toFixed(2)}</Typography></Box>
-          <Box display="flex" justifyContent="space-between" mt={1}><Typography>Restante:</Typography><Typography fontWeight={900} color={remainingBalance > 0 ? '#ffeb3b' : 'inherit'}>R$ {remainingBalance.toFixed(2)}</Typography></Box>
+          <Box display="flex" justifyContent="space-between"><Typography>Total Pago:</Typography><Typography fontWeight={400}>R$ {totalPaid.toFixed(2)}</Typography></Box>
+          <Box display="flex" justifyContent="space-between" mt={1}><Typography>Restante:</Typography><Typography fontWeight={400} color={remainingBalance > 0 ? '#ffeb3b' : 'inherit'}>R$ {remainingBalance.toFixed(2)}</Typography></Box>
         </Box>
       </DialogContent>
       <DialogActions sx={{ p: 3 }}>
-        <MuiButton onClick={onClose} sx={{ fontWeight: 700 }}>Cancelar</MuiButton>
+        <MuiButton onClick={onClose} sx={{ fontWeight: 400 }}>Cancelar</MuiButton>
         <MuiButton 
             onClick={handleConfirm} 
             disabled={totalPaid < totalAmount} 
             variant="contained" 
-            sx={{ borderRadius: '12px', px: 4, fontWeight: 800 }}
+            sx={{ borderRadius: '12px', px: 4, fontWeight: 400 }}
         >
           Confirmar e Finalizar
         </MuiButton>

@@ -7,7 +7,7 @@ export const techAppController = {
   getOpenOrders: catchAsync(async (req: Request, res: Response) => {
     const branchId = req.user?.branchId || 1; // Default branch se não tiver
     const userId = req.user?.id;
-    
+
     const orders = await techAppService.getOpenOrders(branchId, userId);
     res.json(orders);
   }),
@@ -21,16 +21,16 @@ export const techAppController = {
     if (!url || !type) throw new AppError('URL and Type are required', 400);
 
     const photo = await techAppService.addServicePhoto({
-        serviceOrderId: Number(id),
-        url,
-        type,
-        userId
+      serviceOrderId: Number(id),
+      url,
+      type,
+      userId,
     });
     res.status(201).json(photo);
   }),
 
   getChecklistTemplate: catchAsync(async (req: Request, res: Response) => {
-    const type = req.query.type as 'pre-repair' | 'post-repair' || 'pre-repair';
+    const type = (req.query.type as 'pre-repair' | 'post-repair') || 'pre-repair';
     const template = await techAppService.getChecklistTemplate(type);
     res.json(template);
   }),
@@ -44,5 +44,5 @@ export const techAppController = {
 
     await techAppService.submitChecklist(Number(id), checklistData, userId);
     res.json({ success: true });
-  })
+  }),
 };

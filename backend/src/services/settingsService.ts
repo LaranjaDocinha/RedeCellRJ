@@ -1,16 +1,7 @@
-import pool from '../db/index.js';
 import { AppError } from '../utils/errors.js';
+import { settingsRepository, Setting } from '../repositories/settings.repository.js';
 
 // Keep original interfaces for compatibility with update/create operations if needed
-interface Setting {
-  id: number;
-  key: string;
-  value: string;
-  description?: string;
-  created_at: Date;
-  updated_at: Date;
-}
-
 interface CreateSettingPayload {
   key: string;
   value: string;
@@ -50,14 +41,12 @@ interface AllSettingsStructured {
 class SettingsService {
   /**
    * Returns a structured, categorized list of settings for the new frontend.
-   * This is temporarily hardcoded. In the future, this should be driven by the database.
    */
   async getAllSettings(): Promise<AllSettingsStructured> {
-    // This mimics fetching all settings and then structuring them.
-    // The actual values could be fetched from the DB and merged into this structure.
+    const dbSettingsList = await settingsRepository.findAll();
     const dbSettings: { [key: string]: string } = {};
-    const dbResult = await pool.query('SELECT key, value FROM settings');
-    dbResult.rows.forEach((row) => {
+
+    dbSettingsList.forEach((row) => {
       dbSettings[row.key] = row.value;
     });
 
@@ -91,24 +80,18 @@ class SettingsService {
   }
 
   async getSettingByKey(key: string): Promise<Setting | undefined> {
-    const result = await pool.query('SELECT * FROM settings WHERE key = $1', [key]);
-    return result.rows[0];
+    return settingsRepository.findByKey(key);
   }
 
   async createSetting(payload: CreateSettingPayload): Promise<Setting> {
     const { key, value, description } = payload;
     try {
-      const result = await pool.query(
-        'INSERT INTO settings (key, value, description) VALUES ($1, $2, $3) RETURNING *',
-        [key, value, description],
-      );
-      return result.rows[0];
+      return await settingsRepository.create({ key, value, description });
     } catch (error: unknown) {
       if (error instanceof AppError) {
         throw error;
       }
       if (error instanceof Error && (error as any).code === '23505') {
-        // Unique violation error code
         throw new AppError('Setting with this key already exists', 409);
       }
       throw error;
@@ -116,34 +99,11 @@ class SettingsService {
   }
 
   async updateSetting(key: string, payload: UpdateSettingPayload): Promise<Setting | undefined> {
-    const { value, description } = payload;
-    const fields: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
-
-    if (value !== undefined) {
-      fields.push(`value = $${paramIndex++}`);
-      values.push(value);
-    }
-    if (description !== undefined) {
-      fields.push(`description = $${paramIndex++}`);
-      values.push(description);
-    }
-
-    if (fields.length === 0) {
-      return this.getSettingByKey(key);
-    }
-
-    values.push(key);
-    const query = `UPDATE settings SET ${fields.join(', ')}, updated_at = current_timestamp WHERE key = $${paramIndex} RETURNING *`;
-
-    const result = await pool.query(query, values);
-    return result.rows[0];
+    return settingsRepository.update(key, payload);
   }
 
   async deleteSetting(key: string): Promise<boolean> {
-    const result = await pool.query('DELETE FROM settings WHERE key = $1 RETURNING key', [key]);
-    return (result?.rowCount ?? 0) > 0;
+    return settingsRepository.delete(key);
   }
 }
 

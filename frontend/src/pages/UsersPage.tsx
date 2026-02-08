@@ -120,12 +120,12 @@ const UsersPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">User Management</h1>
+      <h1 className="text-2xl font-normal mb-4">User Management</h1>
 
       <div className="flex justify-end mb-4">
         <button
           onClick={() => setShowForm(true)}
-          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+          className="bg-green-500 hover:bg-green-700 text-white font-normal py-2 px-4 rounded"
         >
           Add New User
         </button>
@@ -133,7 +133,7 @@ const UsersPage: React.FC = () => {
 
       {showForm && (
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-3">
+          <h2 className="text-xl font-normal mb-3">
             {editingUser ? 'Edit User' : 'Add New User'}
           </h2>
           <UserForm

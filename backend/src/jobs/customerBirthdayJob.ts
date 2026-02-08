@@ -11,7 +11,6 @@ const NOTIFICATIONS_MICROSERVICE_URL =
  */
 export const customerBirthdayJob = async () => {
   try {
-    const today = new Date();
     const customers = await customerService.getCustomersWithBirthdayToday();
 
     for (const customer of customers) {

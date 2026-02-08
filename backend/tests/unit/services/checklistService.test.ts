@@ -28,59 +28,62 @@ describe('ChecklistService', () => {
     });
 
     it('should get all templates', async () => {
-        (pool.query as any).mockResolvedValue({ rows: [{ id: 1 }] });
-        const result = await checklistService.getAllChecklistTemplates();
-        expect(result).toHaveLength(1);
+      (pool.query as any).mockResolvedValue({ rows: [{ id: 1 }] });
+      const result = await checklistService.getAllChecklistTemplates();
+      expect(result).toHaveLength(1);
     });
 
     it('should get template by ID', async () => {
-        (pool.query as any).mockResolvedValue({ rows: [{ id: 1 }] });
-        const result = await checklistService.getChecklistTemplateById(1);
-        expect(result.id).toBe(1);
+      (pool.query as any).mockResolvedValue({ rows: [{ id: 1 }] });
+      const result = await checklistService.getChecklistTemplateById(1);
+      expect(result.id).toBe(1);
     });
 
     it('should update template', async () => {
-        (pool.query as any).mockResolvedValue({ rows: [{ id: 1, name: 'Updated' }] });
-        const result = await checklistService.updateChecklistTemplate(1, { name: 'Updated' });
-        expect(result.name).toBe('Updated');
+      (pool.query as any).mockResolvedValue({ rows: [{ id: 1, name: 'Updated' }] });
+      const result = await checklistService.updateChecklistTemplate(1, { name: 'Updated' });
+      expect(result.name).toBe('Updated');
     });
 
     it('should delete template', async () => {
-        (pool.query as any).mockResolvedValue({ rowCount: 1 });
-        const result = await checklistService.deleteChecklistTemplate(1);
-        expect(result).toBe(true);
+      (pool.query as any).mockResolvedValue({ rowCount: 1 });
+      const result = await checklistService.deleteChecklistTemplate(1);
+      expect(result).toBe(true);
     });
   });
 
   describe('CRUD Checklist Template Items', () => {
     it('should create template item', async () => {
-        (pool.query as any).mockResolvedValue({ rows: [{ id: 10 }] });
-        const result = await checklistService.createChecklistTemplateItem({ template_id: 1, item_text: 'Item' } as any);
-        expect(result.id).toBe(10);
+      (pool.query as any).mockResolvedValue({ rows: [{ id: 10 }] });
+      const result = await checklistService.createChecklistTemplateItem({
+        template_id: 1,
+        item_text: 'Item',
+      } as any);
+      expect(result.id).toBe(10);
     });
 
     it('should update template item', async () => {
-        (pool.query as any).mockResolvedValue({ rows: [{ id: 10, item_text: 'New' }] });
-        const result = await checklistService.updateChecklistTemplateItem(10, { item_text: 'New' });
-        expect(result.item_text).toBe('New');
+      (pool.query as any).mockResolvedValue({ rows: [{ id: 10, item_text: 'New' }] });
+      const result = await checklistService.updateChecklistTemplateItem(10, { item_text: 'New' });
+      expect(result.item_text).toBe('New');
     });
 
     it('should delete template item', async () => {
-        (pool.query as any).mockResolvedValue({ rowCount: 1 });
-        const result = await checklistService.deleteChecklistTemplateItem(10);
-        expect(result).toBe(true);
+      (pool.query as any).mockResolvedValue({ rowCount: 1 });
+      const result = await checklistService.deleteChecklistTemplateItem(10);
+      expect(result).toBe(true);
     });
 
     it('should get items by template ID', async () => {
-        (pool.query as any).mockResolvedValue({ rows: [{ id: 10 }] });
-        const result = await checklistService.getChecklistTemplateItemsByTemplateId(1);
-        expect(result).toHaveLength(1);
+      (pool.query as any).mockResolvedValue({ rows: [{ id: 10 }] });
+      const result = await checklistService.getChecklistTemplateItemsByTemplateId(1);
+      expect(result).toHaveLength(1);
     });
 
     it('should get template item by ID', async () => {
-        (pool.query as any).mockResolvedValue({ rows: [{ id: 10 }] });
-        const result = await checklistService.getChecklistTemplateItemById(10);
-        expect(result.id).toBe(10);
+      (pool.query as any).mockResolvedValue({ rows: [{ id: 10 }] });
+      const result = await checklistService.getChecklistTemplateItemById(10);
+      expect(result.id).toBe(10);
     });
   });
 
@@ -95,9 +98,9 @@ describe('ChecklistService', () => {
     });
 
     it('should return null if template with items not found', async () => {
-        (pool.query as any).mockResolvedValueOnce({ rows: [] });
-        const result = await checklistService.getChecklistTemplateWithItems(999);
-        expect(result).toBeNull();
+      (pool.query as any).mockResolvedValueOnce({ rows: [] });
+      const result = await checklistService.getChecklistTemplateWithItems(999);
+      expect(result).toBeNull();
     });
 
     it('should save checklist answers in a transaction', async () => {
@@ -105,22 +108,26 @@ describe('ChecklistService', () => {
       await checklistService.saveChecklistAnswers(100, 1, answers);
 
       expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
-      expect(mockClient.query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO service_order_checklist_answers'), expect.any(Array));
+      expect(mockClient.query).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO service_order_checklist_answers'),
+        expect.any(Array),
+      );
       expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
       expect(mockClient.release).toHaveBeenCalled();
     });
 
     it('should rollback and throw on error', async () => {
-        mockClient.query.mockImplementation(q => {
-            if (q === 'BEGIN') return Promise.resolve();
-            if (q === 'ROLLBACK') return Promise.resolve();
-            return Promise.reject(new Error('Transaction failed'));
-        });
+      mockClient.query.mockImplementation((q) => {
+        if (q === 'BEGIN') return Promise.resolve();
+        if (q === 'ROLLBACK') return Promise.resolve();
+        return Promise.reject(new Error('Transaction failed'));
+      });
 
-        await expect(checklistService.saveChecklistAnswers(1, 1, [{ template_item_id: 1, answer: 'x' }]))
-            .rejects.toThrow('Transaction failed');
-        
-        expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
+      await expect(
+        checklistService.saveChecklistAnswers(1, 1, [{ template_item_id: 1, answer: 'x' }]),
+      ).rejects.toThrow('Transaction failed');
+
+      expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
     });
   });
 });

@@ -25,13 +25,13 @@ export const ReturnList: React.FC<ReturnListProps> = ({
       <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
         <thead className="bg-gray-800 text-white">
           <tr>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">ID</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Sale ID</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Return Date</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Reason</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Status</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Refund Amount</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Actions</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">ID</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Sale ID</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Return Date</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Reason</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Status</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Refund Amount</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Actions</th>
           </tr>
         </thead>
         <tbody className="text-gray-700">
@@ -55,7 +55,7 @@ export const ReturnList: React.FC<ReturnListProps> = ({
                 <td className="py-3 px-4">
                   <button
                     onClick={() => onViewDetails(returnItem.id)}
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs mr-2"
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-normal py-1 px-2 rounded text-xs mr-2"
                   >
                     View Details
                   </button>
@@ -83,3 +83,4 @@ export const ReturnList: React.FC<ReturnListProps> = ({
     </div>
   );
 };
+

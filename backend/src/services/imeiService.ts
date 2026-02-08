@@ -1,6 +1,4 @@
 import pool from '../db/index.js';
-import { AppError } from '../utils/errors.js';
-import { z } from 'zod';
 
 interface ImeiEventPayload {
   imei: string;

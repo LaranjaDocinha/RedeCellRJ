@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { publicPortalController } from '../controllers/publicPortalController.js';
+import { cacheMiddleware } from '../middlewares/cacheMiddleware.js';
 
 const router = Router();
 
@@ -7,7 +8,12 @@ const router = Router();
 router.post('/auth', publicPortalController.authenticate);
 
 // Rotas protegidas por Token (na URL)
-router.get('/orders/:token', publicPortalController.getOrderByToken);
+// Cache por 60 segundos para evitar sobrecarga em dias de alto fluxo
+router.get(
+  '/orders/:token',
+  cacheMiddleware({ duration: 60, keyPrefix: 'portal-order' }),
+  publicPortalController.getOrderByToken,
+);
 router.post('/orders/:token/approval', publicPortalController.updateApproval);
 
 export default router;

@@ -26,7 +26,7 @@ const SalesForecastWidget: React.FC<{ data: any }> = ({ data }) => {
 
         <Box sx={{ mb: 2 }}>
           <Typography variant="body2" color="textSecondary">{t('projected_sales_end_month')}</Typography>
-          <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+          <Typography variant="h4" sx={{ fontWeight: 400 }}>
             R$ <AnimatedCounter value={data.projected_sales} />
           </Typography>
         </Box>
@@ -45,3 +45,4 @@ const SalesForecastWidget: React.FC<{ data: any }> = ({ data }) => {
 };
 
 export default SalesForecastWidget;
+

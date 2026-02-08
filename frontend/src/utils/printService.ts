@@ -28,7 +28,7 @@ export const printReceipt = async (saleId: string | null, details: any) => {
           .center { text-align: center; }
           .divider { border-bottom: 1px dashed #000; margin: 5px 0; }
           .item { display: flex; justify-content: space-between; }
-          .total { font-weight: bold; font-size: 14px; margin-top: 10px; }
+          .total { font-weight: 400; font-size: 14px; margin-top: 10px; }
         </style>
       </head>
       <body>
@@ -74,3 +74,4 @@ export const printReceipt = async (saleId: string | null, details: any) => {
     }, 1000);
   }, 500);
 };
+

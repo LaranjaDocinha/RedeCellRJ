@@ -23,11 +23,18 @@ publicApiRouter.use(apiKeyMiddleware);
 publicApiRouter.get('/products', async (req, res) => {
   // Check if the API key has 'products:read' permission
   const apiKeyPermissions = (req as any).apiKey.permissions;
-  if (!apiKeyPermissions || !apiKeyPermissions.products || !apiKeyPermissions.products.includes('read')) {
+  if (
+    !apiKeyPermissions ||
+    !apiKeyPermissions.products ||
+    !apiKeyPermissions.products.includes('read')
+  ) {
     return res.status(403).json({ message: 'API Key does not have permission to read products.' });
   }
   // This would typically call a service to fetch products, possibly filtered or limited by API key permissions
-  res.json({ message: 'Public products endpoint accessed via API Key', products: [] /* productService.getPublicProducts() */ });
+  res.json({
+    message: 'Public products endpoint accessed via API Key',
+    products: [] /* productService.getPublicProducts() */,
+  });
 });
 
 export { router as apiKeyRouter, publicApiRouter };

@@ -80,7 +80,9 @@ describe('loyaltyTierService', () => {
 
       expect(result).toEqual(mockTier);
       expect(mockedPool.query).toHaveBeenCalledTimes(1);
-      expect(mockedPool.query).toHaveBeenCalledWith('SELECT * FROM loyalty_tiers WHERE id = $1', [id]);
+      expect(mockedPool.query).toHaveBeenCalledWith('SELECT * FROM loyalty_tiers WHERE id = $1', [
+        id,
+      ]);
     });
 
     it('should return undefined if tier not found', async () => {
@@ -115,7 +117,9 @@ describe('loyaltyTierService', () => {
 
       expect(result).toEqual(mockTiers);
       expect(mockedPool.query).toHaveBeenCalledTimes(1);
-      expect(mockedPool.query).toHaveBeenCalledWith('SELECT * FROM loyalty_tiers ORDER BY min_points ASC');
+      expect(mockedPool.query).toHaveBeenCalledWith(
+        'SELECT * FROM loyalty_tiers ORDER BY min_points ASC',
+      );
     });
 
     it('should return an empty array if no tiers exist', async () => {
@@ -209,7 +213,9 @@ describe('loyaltyTierService', () => {
 
       expect(result).toBe(true);
       expect(mockedPool.query).toHaveBeenCalledTimes(1);
-      expect(mockedPool.query).toHaveBeenCalledWith('DELETE FROM loyalty_tiers WHERE id = $1', [id]);
+      expect(mockedPool.query).toHaveBeenCalledWith('DELETE FROM loyalty_tiers WHERE id = $1', [
+        id,
+      ]);
     });
 
     it('should return false if tier not found for deletion', async () => {
@@ -308,9 +314,7 @@ describe('loyaltyTierService', () => {
       const customerId = 1;
       mockedPool.query.mockResolvedValueOnce({ rows: [{ loyalty_points: 300 }] });
       mockedPool.query.mockResolvedValueOnce({
-        rows: [
-          { id: 2, min_points: 200 },
-        ],
+        rows: [{ id: 2, min_points: 200 }],
       });
       const dbError = new Error('DB error on customer update');
       mockedPool.query.mockRejectedValueOnce(dbError);
@@ -339,9 +343,7 @@ describe('loyaltyTierService', () => {
 
       expect(mockedPool.query).toHaveBeenCalledTimes(7); // 1 para getAllCustomers + 6 para os 2 clientes
       // Verificar se updateCustomerTier foi chamado para cada cliente
-      expect(mockedPool.query).toHaveBeenCalledWith(
-        'SELECT id FROM customers',
-      );
+      expect(mockedPool.query).toHaveBeenCalledWith('SELECT id FROM customers');
       // Nao testar as chamadas internas de updateCustomerTier individualmente, pois ja e testado acima.
     });
 
@@ -358,7 +360,9 @@ describe('loyaltyTierService', () => {
       // Simulate error for first customer's points fetch
       mockedPool.query.mockRejectedValueOnce(new Error('DB error for customer 1 points'));
 
-      await expect(loyaltyTierService.updateAllCustomerTiers()).rejects.toThrow('DB error for customer 1 points');
+      await expect(loyaltyTierService.updateAllCustomerTiers()).rejects.toThrow(
+        'DB error for customer 1 points',
+      );
       expect(mockedPool.query).toHaveBeenCalledTimes(2); // getAllCustomers + first customer points fetch
     });
   });

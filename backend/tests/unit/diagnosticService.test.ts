@@ -35,7 +35,9 @@ describe('DiagnosticService', () => {
       const result = await diagnosticService.getRootNodes();
       expect(result).toEqual(mockNodes);
       expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT id, question_text, is_solution, solution_details, parent_node_id'),
+        expect.stringContaining(
+          'SELECT id, question_text, is_solution, solution_details, parent_node_id',
+        ),
       );
     });
 
@@ -54,7 +56,9 @@ describe('DiagnosticService', () => {
       const result = await diagnosticService.getChildNodes(nodeId);
       expect(result).toEqual(mockNodes);
       expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT id, question_text, is_solution, solution_details, parent_node_id'),
+        expect.stringContaining(
+          'SELECT id, question_text, is_solution, solution_details, parent_node_id',
+        ),
         [nodeId],
       );
     });

@@ -30,11 +30,13 @@ describe('BreakEvenService', () => {
 
       // Mock Sales Data Query
       mockClient.query.mockResolvedValueOnce({
-        rows: [{
-          total_revenue: '20000',
-          total_variable_costs: '10000',
-          total_units_sold: '100',
-        }],
+        rows: [
+          {
+            total_revenue: '20000',
+            total_variable_costs: '10000',
+            total_units_sold: '100',
+          },
+        ],
       });
 
       const result = await calculateBreakEvenPoint(1, '2023-01-01', '2023-01-31');
@@ -64,7 +66,7 @@ describe('BreakEvenService', () => {
       mockClient.query.mockResolvedValueOnce({ rows: [{ total_units_sold: '0' }] });
 
       const result = await calculateBreakEvenPoint(undefined, '2023-01-01', '2023-01-31');
-      
+
       expect(result.averageSellingPrice).toBe(0);
       expect(result.breakEvenUnits).toBe(0);
     });

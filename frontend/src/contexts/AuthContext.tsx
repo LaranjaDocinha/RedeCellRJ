@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { User } from '../types/user';
-import * as Sentry from '@sentry/react'; // Importar Sentry
+import * as Sentry from '@sentry/react';
 
 interface AuthContextType {
   user: User | null;
@@ -23,63 +23,68 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const logout = () => {
+  const authChannel = React.useMemo(() => new BroadcastChannel('auth_channel'), []);
+
+  const logout = React.useCallback((skipBroadcast = false) => {
     setUser(null);
     setToken(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     sessionStorage.removeItem('user');
     sessionStorage.removeItem('token');
-    Sentry.setUser(null); // Limpar o contexto do usuário no Sentry
-  };
+    Sentry.setUser(null);
+
+    if (!skipBroadcast) {
+        authChannel.postMessage('LOGOUT');
+    }
+  }, [authChannel]);
 
   useEffect(() => {
-    const loadAuthData = () => {
-      let storedUser = localStorage.getItem('user');
-      let storedToken = localStorage.getItem('token');
-
-      if (!storedUser || !storedToken) {
-        storedUser = sessionStorage.getItem('user');
-        storedToken = sessionStorage.getItem('token');
-      }
-
-      if (storedUser && storedToken) {
-        // Basic JWT format validation (header.payload.signature)
-        if (storedToken.split('.').length !== 3) {
-          console.warn('AuthContext: Stored token is malformed (invalid format). Logging out.');
-          logout();
-          setLoading(false);
-          return;
+    const handleAuthMessage = (event: MessageEvent) => {
+        if (event.data === 'LOGOUT') {
+            logout(true);
+            window.location.reload();
         }
-
-        try {
-          const decodedToken: { exp: number } = jwtDecode(storedToken);
-          if (decodedToken.exp * 1000 < Date.now()) {
-            console.log('AuthContext: Token expired, logging out.');
-            logout();
-          } else {
-            const userData = JSON.parse(storedUser);
-            setUser(userData);
-            setToken(storedToken);
-            console.log('AuthContext: Token loaded:', storedToken ? 'yes' : 'no', 'isAuthenticated:', !!storedToken);
-            // Definir o contexto do usuário no Sentry ao carregar dados existentes
-            Sentry.setUser({
-              id: userData.id,
-              email: userData.email,
-              username: userData.name || userData.email,
-            });
-            Sentry.setTag('user_id', userData.id);
-            // Sentry.setTag('user_role', userData.role); // Assumindo que o role está no User object
-          }
-        } catch (e) {
-          console.warn('AuthContext: Failed to parse or decode stored user or token. Logging out.', e);
-          logout();
-        }
-      }
-      setLoading(false);
     };
+
+    authChannel.addEventListener('message', handleAuthMessage);
+    
+    const loadAuthData = () => {
+      try {
+        const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+        const storedToken = localStorage.getItem('token') || sessionStorage.getItem('token');
+
+        if (storedUser && storedToken) {
+          // Validação básica do formato do token (deve ter 2 pontos para ser JWT)
+          if (storedToken.split('.').length === 3) {
+            const decoded: any = jwtDecode(storedToken);
+            const currentTime = Date.now() / 1000;
+
+            if (decoded.exp < currentTime) {
+              logout();
+            } else {
+              setUser(JSON.parse(storedUser));
+              setToken(storedToken);
+              Sentry.setUser({ id: decoded.id, email: decoded.email });
+            }
+          } else {
+            logout();
+          }
+        }
+      } catch (error) {
+        console.error('Error loading auth data:', error);
+        logout();
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadAuthData();
-  }, []);
+
+    return () => {
+        authChannel.removeEventListener('message', handleAuthMessage);
+    };
+  }, [authChannel, logout]);
 
   const login = (userData: User, userToken: string, rememberMe?: boolean) => {
     setUser(userData);
@@ -88,14 +93,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     storage.setItem('user', JSON.stringify(userData));
     storage.setItem('token', userToken);
 
-    // Adicionar contexto do usuário ao Sentry no login
     Sentry.setUser({
       id: userData.id,
       email: userData.email,
       username: userData.name || userData.email,
     });
-    Sentry.setTag('user_id', userData.id);
-    // Sentry.setTag('user_role', userData.role); // Assumindo que o role está no User object
   };
 
   const isAuthenticated = !!user && !!token;

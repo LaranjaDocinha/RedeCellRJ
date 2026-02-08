@@ -4,10 +4,11 @@ import { customerService } from '../services/customerService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { customerCommunicationService } from '../services/customerCommunicationService.js';
 
-import { ValidationError, AppError } from '../utils/errors.js';
+import { AppError } from '../utils/errors.js';
 import { uploadDocument } from './uploads.js';
 import { ocrService } from '../services/ocrService.js';
 import { cacheMiddleware } from '../middlewares/cacheMiddleware.js'; // Importar cacheMiddleware
+import { sendSuccess } from '../utils/responseHelper.js';
 
 const customersRouter = Router();
 
@@ -67,7 +68,39 @@ const storeCreditSchema = z.object({
 import { validate } from '../middlewares/validationMiddleware.js';
 import * as churnPredictionService from '../services/churnPredictionService.js'; // Added import
 
+import { getClvReport } from '../controllers/clvController.js';
+import { getStoreCreditHistory } from '../controllers/storeCreditController.js';
+
 customersRouter.use(authMiddleware.authenticate);
+
+// CLV route
+customersRouter.get(
+  '/:id/clv',
+  authMiddleware.authorize('read', 'Report'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Adapt params for getClvReport if needed, but clvController usually expects req.params.customerId
+      req.params.customerId = req.params.id;
+      await getClvReport(req, res, next);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Store Credit History (Unified name matching test expectations)
+customersRouter.get(
+  '/:id/credit/history',
+  authMiddleware.authorize('read', 'StoreCredit'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      req.params.customerId = req.params.id;
+      await getStoreCreditHistory(req, res, next);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 // Get churn risk for a specific customer
 customersRouter.get(
@@ -83,11 +116,11 @@ customersRouter.get(
       if (!churnRisk) {
         return res.status(404).json({ message: 'Customer not found' });
       }
-      res.status(200).json(churnRisk);
+      sendSuccess(res, churnRisk);
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Get customers with high churn risk
@@ -97,11 +130,11 @@ customersRouter.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const highChurnCustomers = await churnPredictionService.getCustomersWithHighChurnRisk();
-      res.status(200).json(highChurnCustomers);
+      sendSuccess(res, highChurnCustomers);
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Get all customers
@@ -112,7 +145,7 @@ customersRouter.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const customers = await customerService.getAllCustomers();
-      res.status(200).json(customers);
+      sendSuccess(res, customers);
     } catch (error) {
       next(error);
     }
@@ -131,7 +164,7 @@ customersRouter.get(
         limit: limit ? parseInt(limit as string, 10) : undefined,
         offset: offset ? parseInt(offset as string, 10) : undefined,
       });
-      res.status(200).json(result);
+      sendSuccess(res, result);
     } catch (error) {
       next(error);
     }
@@ -145,7 +178,7 @@ customersRouter.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const segments = await customerService.getCustomerSegments();
-      res.status(200).json(segments);
+      sendSuccess(res, segments);
     } catch (error) {
       next(error);
     }
@@ -162,7 +195,7 @@ customersRouter.get(
       if (!customer) {
         throw new AppError('Customer not found', 404);
       }
-      res.status(200).json(customer);
+      sendSuccess(res, customer);
     } catch (error) {
       next(error);
     }
@@ -179,7 +212,7 @@ customersRouter.get(
       if (!customer360View) {
         throw new AppError('Customer not found', 404);
       }
-      res.status(200).json(customer360View);
+      sendSuccess(res, customer360View);
     } catch (error) {
       next(error);
     }
@@ -196,7 +229,7 @@ customersRouter.get(
       const communications = await customerCommunicationService.getCommunicationsForCustomer(
         parseInt(customerId),
       );
-      res.status(200).json(communications);
+      sendSuccess(res, communications);
     } catch (error) {
       next(error);
     }
@@ -211,7 +244,7 @@ customersRouter.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const newCustomer = await customerService.createCustomer(req.body);
-      res.status(201).json(newCustomer);
+      sendSuccess(res, newCustomer, 201);
     } catch (error) {
       next(error);
     }
@@ -225,14 +258,11 @@ customersRouter.put(
   validate(updateCustomerSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const updatedCustomer = await customerService.updateCustomer(
-        req.params.id,
-        req.body,
-      );
+      const updatedCustomer = await customerService.updateCustomer(req.params.id, req.body);
       if (!updatedCustomer) {
         throw new AppError('Customer not found', 404);
       }
-      res.status(200).json(updatedCustomer);
+      sendSuccess(res, updatedCustomer);
     } catch (error) {
       next(error);
     }
@@ -268,7 +298,7 @@ customersRouter.post(
       if (!updatedCustomer) {
         throw new AppError('Customer not found', 404);
       }
-      res.status(200).json(updatedCustomer);
+      sendSuccess(res, updatedCustomer);
     } catch (error) {
       next(error);
     }
@@ -287,7 +317,7 @@ customersRouter.post(
       if (!updatedCustomer) {
         throw new AppError('Customer not found', 404);
       }
-      res.status(200).json(updatedCustomer);
+      sendSuccess(res, updatedCustomer);
     } catch (error) {
       next(error);
     }
@@ -296,7 +326,7 @@ customersRouter.post(
 
 // Add store credit to a customer
 customersRouter.post(
-  '/:id/store-credit/add',
+  '/:id/credit/add',
   authMiddleware.authorize('update', 'Customer'),
   validate(storeCreditSchema),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -305,13 +335,14 @@ customersRouter.post(
       const updatedCustomer = await customerService.addStoreCredit(
         req.params.id,
         amount,
-        reason, // Pass reason
-        null // TODO: req.client was here, needs a transaction middleware
-      ); // Pass client for transaction
+        null, // relatedId is null for manual addition
+        null, // client is null (no transaction here yet)
+        reason, // Pass reason as the 5th argument
+      );
       if (!updatedCustomer) {
         throw new AppError('Customer not found', 404);
       }
-      res.status(200).json(updatedCustomer);
+      sendSuccess(res, { message: 'Store credit added successfully', customer: updatedCustomer });
     } catch (error) {
       next(error);
     }
@@ -320,7 +351,7 @@ customersRouter.post(
 
 // Deduct store credit from a customer (manual deduction)
 customersRouter.post(
-  '/:id/store-credit/deduct',
+  '/:id/credit/debit',
   authMiddleware.authorize('update', 'Customer'),
   validate(storeCreditSchema),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -329,13 +360,14 @@ customersRouter.post(
       const updatedCustomer = await customerService.deductStoreCredit(
         req.params.id,
         amount,
-        reason, // Pass reason
-        null // TODO: req.client was here, needs a transaction middleware
-      ); // Pass client for transaction
+        null, // relatedId is null for manual deduction
+        null, // client is null
+        reason, // Pass reason as the 5th argument
+      );
       if (!updatedCustomer) {
         throw new AppError('Customer not found', 404);
       }
-      res.status(200).json(updatedCustomer);
+      sendSuccess(res, { message: 'Store credit debited successfully', customer: updatedCustomer });
     } catch (error) {
       next(error);
     }
@@ -344,12 +376,12 @@ customersRouter.post(
 
 // Get store credit transactions for a customer
 customersRouter.get(
-  '/:id/store-credit/transactions',
+  '/:id/credit/transactions',
   authMiddleware.authorize('read', 'Customer'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const transactions = await customerService.getStoreCreditTransactions(req.params.id);
-      res.status(200).json(transactions);
+      sendSuccess(res, transactions);
     } catch (error) {
       next(error);
     }
@@ -375,7 +407,7 @@ customersRouter.post(
       // Criar ou atualizar cliente com base nos dados extraídos
       const customer = await customerService.createOrUpdateCustomerFromOCR(extractedData);
 
-      res.status(200).json({
+      sendSuccess(res, {
         message: 'Document processed and customer data updated/created successfully',
         customer: customer,
         extracted_data: extractedData,

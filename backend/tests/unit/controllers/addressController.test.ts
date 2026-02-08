@@ -137,7 +137,10 @@ describe('AddressController', () => {
 
       mockRequest.params = { customerId: '1' };
 
-      await addressController.getAddressesByCustomerId(mockRequest as Request, mockResponse as Response);
+      await addressController.getAddressesByCustomerId(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       expect(addressService.getAddressesByCustomerId).toHaveBeenCalledWith(1);
       expect(mockResponse.json).toHaveBeenCalledWith(mockAddresses);
@@ -150,7 +153,10 @@ describe('AddressController', () => {
 
       mockRequest.params = { customerId: '1' };
 
-      await addressController.getAddressesByCustomerId(mockRequest as Request, mockResponse as Response);
+      await addressController.getAddressesByCustomerId(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({ message: errorMessage });

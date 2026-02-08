@@ -43,7 +43,7 @@ describe('churnPredictionService', () => {
       mockQuery.mockResolvedValueOnce({ rows: [{ name: 'Test', email: 't@t.com' }], rowCount: 1 });
       mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 }); // No last sale
       mockQuery.mockResolvedValueOnce({ rows: [{ count: '0' }], rowCount: 1 });
-      
+
       const result = await churnPredictionService.getChurnRisk(1);
       expect(result?.riskScore).toBe(50);
       expect(result?.status).toBe('medium');
@@ -58,7 +58,7 @@ describe('churnPredictionService', () => {
       const result = await churnPredictionService.getChurnRisk(1);
       expect(result?.riskScore).toBe(40);
     });
-    
+
     it('should return low risk for regular activity', async () => {
       const date = new Date();
       mockQuery.mockResolvedValueOnce({ rows: [{ name: 'Test', email: 't@t.com' }], rowCount: 1 });
@@ -73,41 +73,53 @@ describe('churnPredictionService', () => {
   describe('getCustomersWithHighChurnRisk', () => {
     it('should return customers with medium/high churn risk', async () => {
       // 1. Query inicial: lista de candidatos
-      mockQuery.mockResolvedValueOnce({ 
+      mockQuery.mockResolvedValueOnce({
         rows: [
           { id: 1, name: 'High Risk' },
           { id: 2, name: 'No History (Medium)' },
           { id: 3, name: 'Low Risk' },
         ],
-        rowCount: 3 
+        rowCount: 3,
       });
 
       // --- Cliente 1 (High Risk: Inactive + Low Vol) ---
       // getChurnRisk(1):
-      mockQuery.mockResolvedValueOnce({ rows: [{ name: 'High Risk', email: 'h@h.com' }], rowCount: 1 });
-      mockQuery.mockResolvedValueOnce({ rows: [{ last_sale: new Date(Date.now() - 70 * 86400000) }], rowCount: 1 }); // > 60 days (+40)
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ name: 'High Risk', email: 'h@h.com' }],
+        rowCount: 1,
+      });
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ last_sale: new Date(Date.now() - 70 * 86400000) }],
+        rowCount: 1,
+      }); // > 60 days (+40)
       mockQuery.mockResolvedValueOnce({ rows: [{ count: '1' }], rowCount: 1 }); // < 2 purchases (+30)
       // Total Score: 70 -> High
 
       // --- Cliente 2 (Medium Risk: No History) ---
       // getChurnRisk(2):
-      mockQuery.mockResolvedValueOnce({ rows: [{ name: 'No History', email: 'n@n.com' }], rowCount: 1 });
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ name: 'No History', email: 'n@n.com' }],
+        rowCount: 1,
+      });
       mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 }); // No last sale (+50)
       mockQuery.mockResolvedValueOnce({ rows: [{ count: '0' }], rowCount: 1 });
       // Total Score: 50 -> Medium
 
       // --- Cliente 3 (Low Risk) ---
       // getChurnRisk(3):
-      mockQuery.mockResolvedValueOnce({ rows: [{ name: 'Low Risk', email: 'l@l.com' }], rowCount: 1 });
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ name: 'Low Risk', email: 'l@l.com' }],
+        rowCount: 1,
+      });
       mockQuery.mockResolvedValueOnce({ rows: [{ last_sale: new Date() }], rowCount: 1 }); // Recent
       mockQuery.mockResolvedValueOnce({ rows: [{ count: '5' }], rowCount: 1 }); // Frequent
       // Total Score: 0 -> Low
 
       const result = await churnPredictionService.getCustomersWithHighChurnRisk();
-      
+
       // Esperamos que 1 e 2 sejam retornados, pois score > 40
       expect(result).toHaveLength(2);
-      expect(result.map(r => r.customerId)).toEqual([1, 2]);
+      expect(result.map((r) => r.customerId)).toEqual([1, 2]);
     });
 
     it('should return empty array if no customers found', async () => {

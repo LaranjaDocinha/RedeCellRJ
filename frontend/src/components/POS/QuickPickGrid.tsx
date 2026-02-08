@@ -36,7 +36,7 @@ const IconWrapper = styled.div`
   justify-content: center;
   margin-bottom: 0.75rem;
   font-size: 1.5rem;
-  font-weight: bold;
+  font-weight: 400;
 `;
 
 interface QuickPickGridProps {
@@ -52,7 +52,7 @@ const QuickPickGrid: React.FC<QuickPickGridProps> = ({ products, onProductClick 
 
   return (
     <Box sx={{ p: 2, overflowY: 'auto', flexGrow: 1 }}>
-      <Typography variant="overline" sx={{ fontWeight: 800, color: 'text.secondary', mb: 2, display: 'block' }}>
+      <Typography variant="overline" sx={{ fontWeight: 400, color: 'text.secondary', mb: 2, display: 'block' }}>
         Mais Vendidos / Quick Picks
       </Typography>
       <Box sx={{ 
@@ -71,10 +71,10 @@ const QuickPickGrid: React.FC<QuickPickGridProps> = ({ products, onProductClick 
               <IconWrapper>
                 {product.name.charAt(0)}
               </IconWrapper>
-              <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center', lineHeight: 1.2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 400, textAlign: 'center', lineHeight: 1.2 }}>
                 {product.name}
               </Typography>
-              <Typography variant="caption" color="primary" sx={{ fontWeight: 800, mt: 0.5 }}>
+              <Typography variant="caption" color="primary" sx={{ fontWeight: 400, mt: 0.5 }}>
                 R$ {Number(product.price || 0).toFixed(2)}
               </Typography>
             </QuickPickButton>

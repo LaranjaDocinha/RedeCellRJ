@@ -9,7 +9,7 @@ const commands = {
   CUT: [GS, 0x56, 0x41, 0x10], // Cut paper
   TEXT_FORMAT: {
     NORMAL: [ESC, 0x21, 0x00],
-    BOLD: [ESC, 0x21, 0x08],
+    BOLD: [ESC, 0x21, 0x00],
     DOUBLE_HEIGHT: [ESC, 0x21, 0x10],
     DOUBLE_WIDTH: [ESC, 0x21, 0x20],
     UNDERLINE: [ESC, 0x2D, 0x01],

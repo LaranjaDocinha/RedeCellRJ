@@ -37,7 +37,7 @@ export const ModalHeader = styled.div`
 
 export const ModalTitle = styled.h2`
   font-size: 24px;
-  font-weight: 500;
+  font-weight: 400;
   margin: 0;
 `;
 
@@ -59,3 +59,4 @@ export const ModalCloseBtn = styled.button`
 export const ModalBody = styled.div`
   flex-grow: 1;
 `;
+

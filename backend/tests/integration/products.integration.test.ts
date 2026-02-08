@@ -1,6 +1,5 @@
 import request from 'supertest';
 import { app, httpServer } from '../../src/app';
-import { setupTestCleanup } from '../setupTestCleanup';
 import { getPool } from '../../src/db';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 
@@ -9,20 +8,18 @@ describe('Products API Integration', () => {
   let server: any;
   let branchId: number;
 
-  setupTestCleanup();
-
   beforeEach(async () => {
     // server = httpServer.listen(0); // Server usually started once or checking if open
     // Ideally we start server in beforeAll, but for now let's just ensure data exists
-    
+
     // Create a Branch (and ensure server is up if needed, though vitest might handle imports)
     const pool = getPool();
     const branchRes = await pool.query(
-      "INSERT INTO branches (name) VALUES ('Test Branch ' || random()) RETURNING id"
+      "INSERT INTO branches (name) VALUES ('Test Branch ' || random()) RETURNING id",
     );
     branchId = branchRes.rows[0].id;
 
-    // We need a fresh token if we truncated users? 
+    // We need a fresh token if we truncated users?
     // Users are NOT truncated.
   });
 
@@ -31,7 +28,7 @@ describe('Products API Integration', () => {
     const authRes = await request(app)
       .post('/api/auth/login')
       .send({ email: 'admin@pdv.com', password: 'admin123' });
-    adminToken = authRes.body.token;
+    adminToken = authRes.body.accessToken;
   });
 
   afterAll(async () => {
@@ -49,9 +46,9 @@ describe('Products API Integration', () => {
             color: 'Black',
             price: 1000,
             stock_quantity: 10,
-            low_stock_threshold: 2
-          }
-        ]
+            low_stock_threshold: 2,
+          },
+        ],
       };
 
       const res = await request(app)
@@ -60,16 +57,16 @@ describe('Products API Integration', () => {
         .send(newProduct);
 
       expect(res.status).toBe(201);
-      expect(res.body).toHaveProperty('id');
-      expect(res.body.name).toBe(newProduct.name);
-      expect(res.body.variations).toHaveLength(1);
+      expect(res.body.data).toHaveProperty('id');
+      expect(res.body.data.name).toBe(newProduct.name);
+      expect(res.body.data.variations).toHaveLength(1);
     });
 
     it('should fail validation when creating product without required fields', async () => {
       const invalidProduct = {
         name: '', // Empty name
         // Missing branch_id
-        sku: 'INVALID-SKU'
+        sku: 'INVALID-SKU',
       };
 
       const res = await request(app)
@@ -77,7 +74,7 @@ describe('Products API Integration', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send(invalidProduct);
 
-      // Validations usually return 400, but sometimes Zod middleware returns 422. 
+      // Validations usually return 400, but sometimes Zod middleware returns 422.
       // The previous run showed 422.
       expect([400, 422]).toContain(res.status);
     });
@@ -90,7 +87,8 @@ describe('Products API Integration', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.data.products).toBeInstanceOf(Array); // Expecting data field which contains the array
+      expect(res.body.data.products.length).toBeGreaterThan(0);
     });
   });
 
@@ -101,15 +99,15 @@ describe('Products API Integration', () => {
         name: 'Fetch Me Phone',
         branch_id: branchId,
         sku: `FETCH-${Date.now()}`,
-        variations: [{ color: 'White', price: 500, stock_quantity: 5 }]
+        variations: [{ color: 'White', price: 500, stock_quantity: 5 }],
       };
-      
+
       const createRes = await request(app)
         .post('/api/products')
         .set('Authorization', `Bearer ${adminToken}`)
         .send(productData);
-        
-      const productId = createRes.body.id;
+
+      const productId = createRes.body.data.id;
 
       // Then fetch it
       const res = await request(app)
@@ -117,8 +115,8 @@ describe('Products API Integration', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.id).toBe(productId);
-      expect(res.body.name).toBe(productData.name);
+      expect(res.body.data.id).toBe(productId);
+      expect(res.body.data.name).toBe(productData.name);
     });
 
     it('should return 404 for non-existent product', async () => {

@@ -31,13 +31,22 @@ const validate =
 const createChallengeSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
   description: z.string().min(1, 'Descrição é obrigatória'),
-  metric: z.enum(['sales_volume', 'repairs_completed', 'customer_satisfaction', 'new_customers', 'revenue']).default('sales_volume'), // Expandir métricas
+  metric: z
+    .enum([
+      'sales_volume',
+      'repairs_completed',
+      'customer_satisfaction',
+      'new_customers',
+      'revenue',
+    ])
+    .default('sales_volume'), // Expandir métricas
   targetValue: z.number().positive('Valor alvo deve ser positivo'),
   rewardXp: z.number().int().positive('XP de recompensa deve ser um inteiro positivo'),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data de início deve estar no formato YYYY-MM-DD'),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data de início deve estar no formato YYYY-MM-DD'),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data final deve estar no formato YYYY-MM-DD'),
 });
-
 
 router.use(authMiddleware.authenticate); // Require auth for all gamification routes
 
@@ -81,15 +90,28 @@ router.get('/users/:userId/badges', async (req, res) => {
 });
 
 // Challenges Routes
-router.post('/challenges', authMiddleware.authorize('manage', 'Gamification'), validate(createChallengeSchema), async (req, res) => {
-  try {
-    const { title, description, metric, targetValue, rewardXp, startDate, endDate } = req.body;
-    const challenge = await gamificationService.createChallenge(title, description, metric, targetValue, rewardXp, startDate, endDate);
-    res.status(201).json(challenge);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
-});
+router.post(
+  '/challenges',
+  authMiddleware.authorize('manage', 'Gamification'),
+  validate(createChallengeSchema),
+  async (req, res) => {
+    try {
+      const { title, description, metric, targetValue, rewardXp, startDate, endDate } = req.body;
+      const challenge = await gamificationService.createChallenge(
+        title,
+        description,
+        metric,
+        targetValue,
+        rewardXp,
+        startDate,
+        endDate,
+      );
+      res.status(201).json(challenge);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+);
 
 router.get('/my-challenges', async (req, res) => {
   try {

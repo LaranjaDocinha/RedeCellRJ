@@ -31,7 +31,7 @@ describe('AccountingService', () => {
 
       expect(pool.query).toHaveBeenCalledWith(
         'SELECT * FROM sales WHERE sale_date BETWEEN $1 AND $2',
-        ['2023-01-01', '2023-01-31']
+        ['2023-01-01', '2023-01-31'],
       );
       expect(stringify).toHaveBeenCalledWith(mockSales, expect.any(Object));
       expect(result).toBe(mockCsv);

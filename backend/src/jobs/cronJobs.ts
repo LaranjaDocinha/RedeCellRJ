@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 import { badgeQueue, rfmQueue, defaultQueue, addJob } from './queue.js'; // Import BullMQ queues and addJob helper
-import { loyaltyService } from '../services/loyaltyService.js'; // Added import
 import { initSmartPricingJob } from './smartPricingJob.js'; // Import Smart Pricing Job
+import scheduleCrmJobs from './crmJobs.js';
 import { getPool } from '../db/index.js'; // Import getPool
 
 const isTest = process.env.NODE_ENV === 'test';
@@ -35,7 +35,9 @@ if (!isTest) {
   cron.schedule('*/15 * * * *', async () => {
     console.log('Scheduling marketplace orders sync job...');
     // Find all active marketplace integrations and schedule a job for each
-    const integrationsRes = await getPool().query('SELECT id FROM marketplace_configs WHERE is_active = TRUE');
+    const integrationsRes = await getPool().query(
+      'SELECT id FROM marketplace_configs WHERE is_active = TRUE',
+    );
     for (const integration of integrationsRes.rows) {
       await addJob(defaultQueue, 'syncMarketplaceOrders', { integrationId: integration.id });
     }
@@ -44,7 +46,10 @@ if (!isTest) {
   // Run ERP Data Export every day at 04:00 - Add job to queue
   cron.schedule('0 4 * * *', async () => {
     console.log('Scheduling ERP data export job...');
-    await addJob(defaultQueue, 'exportErpData', { startDate: new Date().toISOString().slice(0, 10), endDate: new Date().toISOString().slice(0, 10) });
+    await addJob(defaultQueue, 'exportErpData', {
+      startDate: new Date().toISOString().slice(0, 10),
+      endDate: new Date().toISOString().slice(0, 10),
+    });
   });
 }
 
@@ -55,4 +60,5 @@ export const initCronJobs = () => {
   }
   console.log('Cron jobs initialized and scheduling jobs via BullMQ.');
   initSmartPricingJob(); // Start Smart Pricing Schedule
+  scheduleCrmJobs();
 };

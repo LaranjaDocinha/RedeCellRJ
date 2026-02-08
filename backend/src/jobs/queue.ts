@@ -18,6 +18,7 @@ const redisConfig = {
 
 export let badgeQueue: Queue | undefined;
 export let rfmQueue: Queue | undefined;
+export let whatsappQueue: Queue | undefined;
 export let defaultQueue: Queue | undefined;
 
 let isRedisAvailable = false;
@@ -51,33 +52,40 @@ export const initQueues = async () => {
 
     // Se chegou aqui, podemos tentar instanciar as filas com segurança
     try {
-        // Criar uma conexão compartilhada ou deixar cada fila criar a sua (com a config segura)
-        // BullMQ gerencia conexões internamente, mas precisamos garantir que ele não tente reconectar pra sempre se cair depois
-        
-        badgeQueue = new Queue('badgeQueue', { connection: redisConfig });
-        rfmQueue = new Queue('rfmQueue', { connection: redisConfig });
-        defaultQueue = new Queue('defaultQueue', { connection: redisConfig });
+      // Criar uma conexão compartilhada ou deixar cada fila criar a sua (com a config segura)
+      // BullMQ gerencia conexões internamente, mas precisamos garantir que ele não tente reconectar pra sempre se cair depois
 
-        // Optional: Log events for queues in non-test environments
-        badgeQueue.on('error', (err) => logger.error(`Badge Queue error: ${err}`));
-        rfmQueue.on('error', (err) => logger.error(`RFM Queue error: ${err}`));
-        defaultQueue.on('error', (err) => logger.error(`Default Queue error: ${err}`));
+      badgeQueue = new Queue('badgeQueue', { connection: redisConfig });
+      rfmQueue = new Queue('rfmQueue', { connection: redisConfig });
+      whatsappQueue = new Queue('whatsappQueue', { connection: redisConfig });
+      defaultQueue = new Queue('defaultQueue', { connection: redisConfig });
 
-        logger.info('Queues initialized successfully.');
+      // Optional: Log events for queues in non-test environments
+      badgeQueue.on('error', (err) => logger.error(`Badge Queue error: ${err}`));
+      rfmQueue.on('error', (err) => logger.error(`RFM Queue error: ${err}`));
+      whatsappQueue.on('error', (err) => logger.error(`Whatsapp Queue error: ${err}`));
+      defaultQueue.on('error', (err) => logger.error(`Default Queue error: ${err}`));
+
+      logger.info('Queues initialized successfully.');
     } catch (error) {
-        logger.error('Failed to initialize queues despite successful check:', error);
-        badgeQueue = undefined;
-        rfmQueue = undefined;
-        defaultQueue = undefined;
+      logger.error('Failed to initialize queues despite successful check:', error);
+      badgeQueue = undefined;
+      rfmQueue = undefined;
+      defaultQueue = undefined;
     }
   }
 };
 
-export const addJob = async (queue: Queue | undefined, name: string, data: any, options?: object) => {
+export const addJob = async (
+  queue: Queue | undefined,
+  name: string,
+  data: any,
+  options?: object,
+) => {
   if (!queue) {
     // Silencia o warning se sabemos que o Redis está off
     if (isRedisAvailable) {
-        logger.warn(`Job ${name} not added because queue ${name} is not initialized.`);
+      logger.warn(`Job ${name} not added because queue ${name} is not initialized.`);
     }
     return;
   }

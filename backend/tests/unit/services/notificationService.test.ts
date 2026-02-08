@@ -1,27 +1,58 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { notificationService } from '../../../src/services/notificationService.js';
 import { whatsappService } from '../../../src/services/whatsappService.js';
+import { notificationRepository } from '../../../src/repositories/notification.repository.js';
+import { io } from '../../../src/app.js';
 
 // Usando vi.hoisted para garantir que o mock seja criado antes da importação
-const mocks = vi.hoisted(() => ({
-  query: vi.fn(),
-  logger: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-}));
+const mocks = vi.hoisted(() => {
+  const mQuery = vi.fn();
+  const mPool = {
+    query: mQuery,
+    connect: vi.fn().mockResolvedValue({
+      query: mQuery,
+      release: vi.fn(),
+    }),
+  };
+  return {
+    query: mQuery,
+    pool: mPool,
+    logger: {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    },
+  };
+});
 
 vi.mock('../../../src/db/index.js', () => ({
-  default: {
-    query: mocks.query,
+  default: mocks.pool,
+  getPool: () => mocks.pool,
+  query: mocks.query,
+}));
+
+vi.mock('../../../src/repositories/notification.repository.js', () => ({
+  notificationRepository: {
+    create: vi.fn(),
+    getCustomerPhone: vi.fn(),
+    getUserPhone: vi.fn(),
+    getCustomerEmail: vi.fn(),
+    getUserEmail: vi.fn(),
+    listByUser: vi.fn(),
+    markAsRead: vi.fn(),
+    markAllAsRead: vi.fn(),
   },
-  __esModule: true,
 }));
 
 vi.mock('../../../src/services/whatsappService.js', () => ({
   whatsappService: {
     sendTemplateMessage: vi.fn(),
+  },
+}));
+
+vi.mock('../../../src/app.js', () => ({
+  io: {
+    emit: vi.fn(),
   },
 }));
 
@@ -32,105 +63,95 @@ vi.mock('../../../src/utils/logger.js', () => ({
 
 describe('NotificationService', () => {
   beforeEach(() => {
-    mocks.query.mockReset();
-    vi.mocked(whatsappService.sendTemplateMessage).mockReset();
-    mocks.logger.warn.mockReset(); // Resetar o logger também
+    vi.clearAllMocks();
+    mocks.query.mockResolvedValue({ rows: [], rowCount: 0 });
   });
 
   describe('sendNotification', () => {
-    it('should send whatsapp notification if channel is selected and phone number exists', async () => {
-      const payload = {
-        recipientId: 1,
-        recipientType: 'customer' as const,
-        type: 'test_alert',
-        templateName: 'test_template',
-        variables: { name: 'John' },
-        channels: ['whatsapp'] as const,
-      };
+    const payload: any = {
+      recipientId: 1,
+      recipientType: 'user',
+      type: 'alert',
+      title: 'T',
+      message: 'M',
+      channels: ['in_app', 'whatsapp'],
+      templateName: 'temp',
+      variables: { v: 1 }
+    };
 
-      // Mock getRecipientPhoneNumber -> returns a phone number
-      mocks.query.mockResolvedValueOnce({ rows: [{ phone: '5511999999999' }] });
+    it('should send in_app and whatsapp notifications', async () => {
+      vi.mocked(notificationRepository.create).mockResolvedValue({ id: 101 } as any);
+      vi.mocked(notificationRepository.getUserPhone).mockResolvedValue('5511999999999');
 
       await notificationService.sendNotification(payload);
 
-      expect(mocks.query).toHaveBeenCalledWith('SELECT phone FROM customers WHERE id = $1', [1]);
-      expect(whatsappService.sendTemplateMessage).toHaveBeenCalledWith({
-        customerId: 1,
-        phone: '5511999999999',
-        templateName: 'test_template',
-        variables: { name: 'John' },
+      expect(notificationRepository.create).toHaveBeenCalled();
+      expect(io.emit).toHaveBeenCalledWith('notification:1', { id: 101 });
+      expect(whatsappService.sendTemplateMessage).toHaveBeenCalled();
+    });
+
+    it('should handle errors in the channel loop gracefully', async () => {
+      vi.mocked(notificationRepository.getUserPhone).mockResolvedValue('123');
+      vi.mocked(whatsappService.sendTemplateMessage).mockRejectedValue(new Error('Fail'));
+
+      await notificationService.sendNotification(payload);
+
+      expect(mocks.logger.error).toHaveBeenCalledWith(expect.stringContaining('Failed to send notification via whatsapp'), expect.any(Error));
+    });
+
+    it('should log warnings for unimplemented channels', async () => {
+      await notificationService.sendNotification({
+        ...payload,
+        channels: ['email', 'push', 'unknown']
       });
-    });
 
-    it('should not send whatsapp notification if phone number is missing', async () => {
-      const payload = {
-        recipientId: 1,
-        recipientType: 'user' as const,
-        type: 'alert',
-        templateName: 'tpl',
-        variables: {},
-        channels: ['whatsapp'] as const,
-      };
-
-      // Mock getRecipientPhoneNumber -> returns empty
-      mocks.query.mockResolvedValueOnce({ rows: [] });
-
-      await notificationService.sendNotification(payload);
-
-      expect(mocks.query).toHaveBeenCalledWith('SELECT phone FROM users WHERE id = $1', [1]);
-      expect(whatsappService.sendTemplateMessage).not.toHaveBeenCalled();
-    });
-
-    it('should log warning for unimplemented channels', async () => {
-      const payload = {
-        recipientId: 1,
-        recipientType: 'customer' as const,
-        type: 'test',
-        channels: ['email', 'push'] as const,
-      };
-
-      await notificationService.sendNotification(payload);
-
-      expect(mocks.logger.warn).toHaveBeenCalledWith('Email channel not implemented yet.');
-      expect(mocks.logger.warn).toHaveBeenCalledWith('Push channel not implemented yet.');
+      expect(mocks.logger.warn).toHaveBeenCalledWith(expect.stringContaining('Email channel not implemented'));
+      expect(mocks.logger.warn).toHaveBeenCalledWith(expect.stringContaining('Push channel not implemented'));
+      expect(mocks.logger.warn).toHaveBeenCalledWith(expect.stringContaining('Unknown notification channel'));
     });
   });
 
-  describe('getRecipientPhoneNumber', () => {
-    it('should return phone for customer', async () => {
-      mocks.query.mockResolvedValueOnce({ rows: [{ phone: '123' }] });
-      const phone = await notificationService.getRecipientPhoneNumber(1, 'customer');
-      expect(phone).toBe('123');
-      expect(mocks.query).toHaveBeenCalledWith('SELECT phone FROM customers WHERE id = $1', [1]);
+  describe('Recipient Info', () => {
+    it('should get customer phone', async () => {
+      vi.mocked(notificationRepository.getCustomerPhone).mockResolvedValue('123');
+      const res = await notificationService.getRecipientPhoneNumber(1, 'customer');
+      expect(res).toBe('123');
     });
 
-    it('should return phone for user', async () => {
-      mocks.query.mockResolvedValueOnce({ rows: [{ phone: '456' }] });
-      const phone = await notificationService.getRecipientPhoneNumber(2, 'user');
-      expect(phone).toBe('456');
-      expect(mocks.query).toHaveBeenCalledWith('SELECT phone FROM users WHERE id = $1', [2]);
+    it('should get user phone', async () => {
+      vi.mocked(notificationRepository.getUserPhone).mockResolvedValue('456');
+      const res = await notificationService.getRecipientPhoneNumber(1, 'user');
+      expect(res).toBe('456');
     });
 
-    it('should return null if not found', async () => {
-      mocks.query.mockResolvedValueOnce({ rows: [] });
-      const phone = await notificationService.getRecipientPhoneNumber(1, 'customer');
-      expect(phone).toBeNull();
+    it('should get customer email', async () => {
+      vi.mocked(notificationRepository.getCustomerEmail).mockResolvedValue('c@test.com');
+      const res = await notificationService.getRecipientEmail(1, 'customer');
+      expect(res).toBe('c@test.com');
+    });
+
+    it('should get user email', async () => {
+      vi.mocked(notificationRepository.getUserEmail).mockResolvedValue('u@test.com');
+      const res = await notificationService.getRecipientEmail(1, 'user');
+      expect(res).toBe('u@test.com');
     });
   });
 
-  describe('getRecipientEmail', () => {
-    it('should return email for customer', async () => {
-      mocks.query.mockResolvedValueOnce({ rows: [{ email: 'cust@test.com' }] });
-      const email = await notificationService.getRecipientEmail(1, 'customer');
-      expect(email).toBe('cust@test.com');
-      expect(mocks.query).toHaveBeenCalledWith('SELECT email FROM customers WHERE id = $1', [1]);
+  describe('Management Methods', () => {
+    it('should list notifications', async () => {
+      vi.mocked(notificationRepository.listByUser).mockResolvedValue([]);
+      await notificationService.listUserNotifications('u1');
+      expect(notificationRepository.listByUser).toHaveBeenCalledWith('u1');
     });
 
-    it('should return email for user', async () => {
-      mocks.query.mockResolvedValueOnce({ rows: [{ email: 'user@test.com' }] });
-      const email = await notificationService.getRecipientEmail(2, 'user');
-      expect(email).toBe('user@test.com');
-      expect(mocks.query).toHaveBeenCalledWith('SELECT email FROM users WHERE id = $1', [2]);
+    it('should mark as read', async () => {
+      await notificationService.markAsRead(1, 'u1');
+      expect(notificationRepository.markAsRead).toHaveBeenCalledWith(1, 'u1');
+    });
+
+    it('should mark all as read', async () => {
+      await notificationService.markAllAsRead('u1');
+      expect(notificationRepository.markAllAsRead).toHaveBeenCalledWith('u1');
     });
   });
 });

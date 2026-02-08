@@ -1,12 +1,17 @@
 import { Request, Response } from 'express';
-import * as whatIfService from '../services/whatIfService.js';
+import { whatIfService } from '../services/whatIfService.js';
+import { catchAsync } from '../utils/catchAsync.js';
 
-export const simulatePromotion = async (req: Request, res: Response) => {
-  try {
-    const simulationDetails = req.body;
-    const result = await whatIfService.simulatePromotion(simulationDetails);
+export const whatIfController = {
+  runSimulation: catchAsync(async (req: Request, res: Response) => {
+    const { printPriceMultiplier, salesVolumeMultiplier, costMultiplier } = req.query as any;
+
+    const result = await whatIfService.simulate({
+      printPriceMultiplier: Number(printPriceMultiplier) || 1,
+      salesVolumeMultiplier: Number(salesVolumeMultiplier) || 1,
+      costMultiplier: Number(costMultiplier) || 1,
+    });
+
     res.json(result);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
-  }
+  }),
 };

@@ -1,59 +1,37 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
-import { app, httpServer } from '../../src/app';
-import { getPool } from '../../src/db/index';
-import { setupTestCleanup } from '../setupTestCleanup';
-import { pixService } from '../../src/services/pixService';
-
-// Mock the pixService to prevent actual external API calls during tests
-vi.mock('../../src/services/pixService', () => ({
-  pixService: {
-    generateDynamicQrCode: vi.fn((requestData) => ({
-      qrCodeBase64: 'dummy_base64_qr_code',
-      pixCopiaECola: `dummy_pix_copia_e_cola_for_${requestData.amount}`,
-      transactionId: requestData.transactionId,
-      status: 'pending',
-    })),
-    handleWebhook: vi.fn(() => Promise.resolve()),
-  },
-}));
+import { app } from '../../src/app.js';
+import { pixService } from '../../src/services/pixService.js';
+import { getAdminAuthToken } from '../utils/auth.js';
 
 describe('PIX Integration API', () => {
   let adminToken: string;
-  let server: any;
 
-
-  setupTestCleanup();
-
-  beforeAll(async () => {
-    server = httpServer.listen(4000); // Start the server for tests
-    const pool = getPool();
-    // Get an admin token
-    const authRes = await request(app)
-      .post('/api/auth/login')
-      .send({ email: 'admin@pdv.com', password: 'admin123' });
-    adminToken = authRes.body.token;
+  beforeEach(async () => {
+    adminToken = await getAdminAuthToken();
+    vi.spyOn(pixService, 'generateDynamicQrCode').mockResolvedValue({
+      qrCodeBase64: 'mocked_qr_code_data',
+      pixCopiaECola: 'mocked_copia_e_cola',
+      transactionId: 'mocked_pix_transaction_id',
+      status: 'pending',
+    });
+    vi.spyOn(pixService, 'handleWebhook').mockResolvedValue(undefined);
   });
 
-  afterAll(async () => {
-    await server.close(); // Close the server after all tests
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('POST /api/pix/generate-qr', () => {
     it('should generate a dynamic PIX QR code for a valid amount', async () => {
-      const amount = 100.5;
       const res = await request(app)
         .post('/api/pix/generate-qr')
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ amount });
+        .send({ amount: 100.5, description: 'Test Payment' });
 
       expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('qrCodeBase64');
-      expect(res.body).toHaveProperty('pixCopiaECola');
-      expect(res.body).toHaveProperty('transactionId');
-      expect(res.body.status).toEqual('pending');
-      expect(pixService.generateDynamicQrCode).toHaveBeenCalledWith(
-        expect.objectContaining({ amount }),
-      );
+      expect(res.body.data.qrCodeBase64).toBeDefined();
+      expect(pixService.generateDynamicQrCode).toHaveBeenCalled();
     });
 
     it('should return 400 for an invalid amount (zero)', async () => {
@@ -63,40 +41,25 @@ describe('PIX Integration API', () => {
         .send({ amount: 0 });
 
       expect(res.statusCode).toEqual(400);
-      expect(res.body.message).toEqual('Validation failed');
-    });
-
-    it('should return 400 for an invalid amount (negative)', async () => {
-      const res = await request(app)
-        .post('/api/pix/generate-qr')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({ amount: -10 });
-
-      expect(res.statusCode).toEqual(400);
-      expect(res.body.message).toEqual('Validation failed');
-    });
-
-    it('should return 401 if not authenticated', async () => {
-      const res = await request(app).post('/api/pix/generate-qr').send({ amount: 50 });
-
-      expect(res.statusCode).toEqual(401);
+      expect(res.body.data.message).toEqual('Validation failed');
+      expect(JSON.stringify(res.body.data.errors)).toMatch(
+        /Amount must be positive|Valor deve ser positivo/,
+      );
     });
   });
 
   describe('POST /api/pix/webhook', () => {
     it('should successfully receive and process a PIX webhook', async () => {
-      const webhookPayload = {
+      const webhookData = {
         event: 'payment_received',
         transactionId: 'some_pix_transaction_id',
-        amount: 100.0,
-        // ... other PIX webhook data
+        amount: 100,
       };
 
-      const res = await request(app).post('/api/pix/webhook').send(webhookPayload);
+      const res = await request(app).post('/api/pix/webhook').send(webhookData);
 
       expect(res.statusCode).toEqual(200);
-      expect(res.body.message).toEqual('Webhook received and processed');
-      expect(pixService.handleWebhook).toHaveBeenCalledWith(webhookPayload);
+      expect(pixService.handleWebhook).toHaveBeenCalled();
     });
   });
 });

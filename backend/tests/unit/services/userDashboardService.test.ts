@@ -23,7 +23,7 @@ describe('UserDashboardService', () => {
       expect(result).toEqual(mockSettings);
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('SELECT * FROM user_dashboard_settings'),
-        ['user1']
+        ['user1'],
       );
     });
 
@@ -43,7 +43,7 @@ describe('UserDashboardService', () => {
       expect(result).toEqual(newSettings);
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO user_dashboard_settings'),
-        ['user1', newSettings]
+        ['user1', newSettings],
       );
     });
   });

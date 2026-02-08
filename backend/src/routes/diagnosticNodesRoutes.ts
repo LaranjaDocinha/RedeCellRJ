@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import * as diagnosticNodesController from '../controllers/diagnosticController.js';
 
 const router = Router();
 

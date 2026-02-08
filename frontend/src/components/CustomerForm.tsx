@@ -11,7 +11,8 @@ import {
   StyledButtonContainer,
 } from './CustomerForm.styled';
 import { Button } from '../components/Button';
-import { Box, Chip, Stack, FormHelperText } from '@mui/material';
+import { Box, Chip, Stack, FormHelperText, CircularProgress, InputAdornment } from '@mui/material';
+import { fetchAddressByCep } from '../utils/addressUtils';
 
 // Schema de Validação Profissional
 const customerSchema = z.object({
@@ -19,21 +20,9 @@ const customerSchema = z.object({
   email: z.string().email('E-mail inválido'),
   phone: z.string().min(10, 'Telefone inválido'),
   cpf: z.string().optional().or(z.literal('')),
+  cep: z.string().optional().or(z.literal('')),
   address: z.string().optional(),
-  birth_date: z.string().optional(),
-  referral_code: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-});
-
-type CustomerFormData = z.infer<typeof customerSchema>;
-
-interface CustomerFormProps {
-  initialData?: any;
-  onSubmit: (data: CustomerFormData) => void;
-  onCancel: () => void;
-  loading?: boolean;
-}
-
+// ...
 export const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, onSubmit, onCancel, loading }) => {
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<CustomerFormData>({
     resolver: zodResolver(customerSchema),
@@ -42,77 +31,49 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, onSubmi
 
   const tags = watch('tags') || [];
   const [tagInput, setTagInput] = React.useState('');
+  const [isCepLoading, setIsCepLoading] = React.useState(false);
+
+  const cepValue = watch('cep');
 
   useEffect(() => {
-    if (initialData) {
-      Object.keys(initialData).forEach((key: any) => {
-        setValue(key, initialData[key]);
-      });
-    }
-  }, [initialData, setValue]);
-
-  const handleAddTag = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && tagInput.trim()) {
-      e.preventDefault();
-      if (!tags.includes(tagInput.trim())) {
-        setValue('tags', [...tags, tagInput.trim()]);
-      }
-      setTagInput('');
-    }
-  };
-
-  const removeTag = (tagToDelete: string) => {
-    setValue('tags', tags.filter(t => t !== tagToDelete));
-  };
-
-  // Funções de Máscara
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const masked = e.target.value.replace(/\D/g, '').replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2').slice(0, 15);
-    setValue('phone', masked);
-  };
-
-  const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const masked = e.target.value.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').slice(0, 14);
-    setValue('cpf', masked);
-  };
-
-  return (
-    <StyledForm onSubmit={handleSubmit(onSubmit)}>
-      <StyledFormField>
-        <StyledLabel>Nome Completo</StyledLabel>
-        <StyledInput {...register('name')} placeholder="Ex: João Silva" autoFocus />
-        {errors.name && <FormHelperText error sx={{ ml: 1 }}>{errors.name.message}</FormHelperText>}
-      </StyledFormField>
-
+    const handleCepBlur = async () => {
+        if (cepValue && cepValue.replace(/\D/g, '').length === 8) {
+            setIsCepLoading(true);
+            const address = await fetchAddressByCep(cepValue);
+            if (address) {
+                setValue('address', `${address.street}, - ${address.neighborhood}, ${address.city} - ${address.state}`);
+            }
+            setIsCepLoading(false);
+        }
+    };
+    
+    const timeout = setTimeout(handleCepBlur, 1000);
+    return () => clearTimeout(timeout);
+  }, [cepValue, setValue]);
+// ...
       <Box sx={{ display: 'flex', gap: 2, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', minWidth: { xs: '100%', sm: 0 } }}>
-          <StyledLabel>E-mail</StyledLabel>
-          <StyledInput {...register('email')} type="email" placeholder="joao@email.com" />
-          {errors.email && <FormHelperText error sx={{ ml: 1 }}>{errors.email.message}</FormHelperText>}
+          <StyledLabel>CEP</StyledLabel>
+          <StyledInput 
+            {...register('cep')} 
+            placeholder="00000-000" 
+            onChange={(e) => {
+                const masked = e.target.value.replace(/\D/g, '').replace(/(\d{5})(\d)/, '$1-$2').slice(0, 9);
+                setValue('cep', masked);
+            }}
+          />
         </Box>
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', minWidth: { xs: '100%', sm: 0 } }}>
-          <StyledLabel>WhatsApp</StyledLabel>
-          <StyledInput {...register('phone')} onChange={handlePhoneChange} placeholder="(00) 00000-0000" value={watch('phone') || ''} />
-          {errors.phone && <FormHelperText error sx={{ ml: 1 }}>{errors.phone.message}</FormHelperText>}
+        <Box sx={{ flex: 2, display: 'flex', flexDirection: 'column', gap: '8px', minWidth: { xs: '100%', sm: 0 } }}>
+          <StyledLabel>Endereço Completo</StyledLabel>
+          <StyledTextArea 
+            {...register('address')} 
+            rows={2} 
+            placeholder="Rua, Número, Bairro..." 
+            disabled={isCepLoading}
+          />
+          {isCepLoading && <LinearProgress sx={{ height: 2, borderRadius: 1 }} />}
         </Box>
       </Box>
-
-      <Box sx={{ display: 'flex', gap: 2, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', minWidth: { xs: '100%', sm: 0 } }}>
-          <StyledLabel>CPF</StyledLabel>
-          <StyledInput name="cpf" onChange={handleCPFChange} placeholder="000.000.000-00" value={watch('cpf') || ''} />
-          {errors.cpf && <FormHelperText error sx={{ ml: 1 }}>{errors.cpf.message}</FormHelperText>}
-        </Box>
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', minWidth: { xs: '100%', sm: 0 } }}>
-          <StyledLabel>Data de Nascimento</StyledLabel>
-          <StyledInput {...register('birth_date')} type="date" />
-        </Box>
-      </Box>
-
-      <StyledFormField>
-        <StyledLabel>Endereço</StyledLabel>
-        <StyledTextArea {...register('address')} rows={2} placeholder="Rua, Número, Bairro..." />
-      </StyledFormField>
 
       <StyledFormField>
         <StyledLabel>Tags de Interesse</StyledLabel>

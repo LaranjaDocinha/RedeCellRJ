@@ -69,7 +69,7 @@ describe('PartService', () => {
       mockQuery
         .mockResolvedValueOnce({ rows: [mockNewPart], rowCount: 1 }) // INSERT into parts
         .mockResolvedValueOnce({ rows: [mockNewPart], rowCount: 1 }); // SELECT from getPartById
-      
+
       vi.mocked(partSupplierService.getSuppliersForPart).mockResolvedValueOnce([]);
 
       const createdPart = await partService.createPart(partData);
@@ -176,10 +176,8 @@ describe('PartService', () => {
       const parts = await partService.getAllParts();
 
       expect(parts).toHaveLength(1);
-      expect(parts[0].suppliers).toEqual([
-        { id: 10, name: 'Sup A', cost: 20, supplier_count: 1 },
-      ]);
-      
+      expect(parts[0].suppliers).toEqual([{ id: 10, name: 'Sup A', cost: 20, supplier_count: 1 }]);
+
       const sql = mockQuery.mock.calls[0][0];
       expect(sql).toContain('WITH supplier_info AS');
       expect(sql).toContain('COALESCE(ps.supplier_count, 0) as supplier_count');
@@ -221,7 +219,9 @@ describe('PartService', () => {
 
     it('should return a part by ID with its suppliers', async () => {
       mockQuery.mockResolvedValueOnce({ rows: [mockPart], rowCount: 1 });
-      vi.mocked(partSupplierService.getSuppliersForPart).mockResolvedValueOnce(mockSuppliers as any);
+      vi.mocked(partSupplierService.getSuppliersForPart).mockResolvedValueOnce(
+        mockSuppliers as any,
+      );
 
       const part = await partService.getPartById(1);
 
@@ -244,7 +244,7 @@ describe('PartService', () => {
     const initialPart = { id: partId, name: 'Old Name', sku: 'OLD-SKU' };
     const updateData = { name: 'New Name', stock_quantity: 20 };
     const mockUpdatedPart = { ...initialPart, ...updateData };
-    const mockExistingSuppliers = [{ id: 1, name: 'Sup1', cost: 10, supplier_id: 1 }]; 
+    const mockExistingSuppliers = [{ id: 1, name: 'Sup1', cost: 10, supplier_id: 1 }];
     const mockIncomingSuppliers = [
       { supplier_id: 1, cost: 12 }, // Update
       { supplier_id: 2, cost: 15 }, // Add
@@ -321,7 +321,9 @@ describe('PartService', () => {
         .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
         .mockResolvedValueOnce({ rows: [mockUpdatedPart], rowCount: 1 }); // UPDATE parts
 
-      vi.mocked(partSupplierService.getSuppliersForPart).mockResolvedValueOnce(mockExistingSuppliers as any);
+      vi.mocked(partSupplierService.getSuppliersForPart).mockResolvedValueOnce(
+        mockExistingSuppliers as any,
+      );
       vi.mocked(partSupplierService.addSupplierToPart).mockRejectedValueOnce(
         new Error('Supplier add failed'),
       ); // Simulate supplier sync failure

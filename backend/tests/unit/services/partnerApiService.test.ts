@@ -22,7 +22,7 @@ describe('PartnerApiService', () => {
       expect(result).toEqual(mockKey);
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO partner_api_keys'),
-        ['Partner', expect.any(String), ['read'], undefined]
+        ['Partner', expect.any(String), ['read'], undefined],
       );
     });
   });
@@ -36,7 +36,7 @@ describe('PartnerApiService', () => {
       expect(result).toEqual(mockKey);
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE partner_api_keys SET is_active = FALSE'),
-        [1]
+        [1],
       );
     });
   });
@@ -60,7 +60,7 @@ describe('PartnerApiService', () => {
       expect(result).toEqual(mockKey);
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('SELECT * FROM partner_api_keys WHERE api_key = $1'),
-        ['valid']
+        ['valid'],
       );
     });
 

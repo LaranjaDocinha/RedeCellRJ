@@ -46,7 +46,7 @@ describe('ReturnService', () => {
     vi.clearAllMocks();
     mockQuery.mockResolvedValue({ rows: [], rowCount: 0 });
     mockConnect.mockResolvedValue((dbModule as any)._mockClient);
-    
+
     vi.mocked(inventoryService.receiveStock).mockClear();
     vi.mocked(storeCreditService.addCredit).mockClear();
   });
@@ -88,7 +88,12 @@ describe('ReturnService', () => {
         .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // COMMIT
 
       await returnService.createReturn(payloadStoreCredit);
-      expect(storeCreditService.addCredit).toHaveBeenCalledWith(10, 100, expect.stringContaining('Refund'), 1);
+      expect(storeCreditService.addCredit).toHaveBeenCalledWith(
+        10,
+        100,
+        expect.stringContaining('Refund'),
+        1,
+      );
     });
 
     it('should throw error if sale item not found', async () => {
@@ -96,26 +101,43 @@ describe('ReturnService', () => {
         .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
         .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // SELECT price (empty)
 
-      await expect(returnService.createReturn(payload)).rejects.toThrow('Item with variation_id 10 not found in sale 1');
+      await expect(returnService.createReturn(payload)).rejects.toThrow(
+        'Item with variation_id 10 not found in sale 1',
+      );
       expect(mockQuery).toHaveBeenCalledWith('ROLLBACK');
     });
   });
 
   describe('inspectReturnItem', () => {
     const returnItemId = 1;
-    const mockReturnItem = { id: 1, sale_id: 1, variation_id: 10, quantity: 1, inspection_status: 'pending' };
+    const mockReturnItem = {
+      id: 1,
+      sale_id: 1,
+      variation_id: 10,
+      quantity: 1,
+      inspection_status: 'pending',
+    };
 
     it('should approve item and return to stock', async () => {
       mockQuery
         .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
         .mockResolvedValueOnce({ rows: [mockReturnItem], rowCount: 1 }) // SELECT return item
         .mockResolvedValueOnce({ rows: [{ cost_at_sale: 50 }], rowCount: 1 }) // SELECT cost
-        .mockResolvedValueOnce({ rows: [{ ...mockReturnItem, inspection_status: 'approved' }], rowCount: 1 }) // UPDATE
+        .mockResolvedValueOnce({
+          rows: [{ ...mockReturnItem, inspection_status: 'approved' }],
+          rowCount: 1,
+        }) // UPDATE
         .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // COMMIT
 
       await returnService.inspectReturnItem(returnItemId, 'approved', 'OK', 'user1');
 
-      expect(inventoryService.receiveStock).toHaveBeenCalledWith(10, 1, 50, 'user1', expect.anything());
+      expect(inventoryService.receiveStock).toHaveBeenCalledWith(
+        10,
+        1,
+        50,
+        'user1',
+        expect.anything(),
+      );
       expect(mockQuery).toHaveBeenCalledWith('COMMIT');
     });
 
@@ -123,7 +145,10 @@ describe('ReturnService', () => {
       mockQuery
         .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
         .mockResolvedValueOnce({ rows: [mockReturnItem], rowCount: 1 }) // SELECT return item
-        .mockResolvedValueOnce({ rows: [{ ...mockReturnItem, inspection_status: 'rejected' }], rowCount: 1 }) // UPDATE
+        .mockResolvedValueOnce({
+          rows: [{ ...mockReturnItem, inspection_status: 'rejected' }],
+          rowCount: 1,
+        }) // UPDATE
         .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // COMMIT
 
       await returnService.inspectReturnItem(returnItemId, 'rejected', 'Damaged', 'user1');
@@ -138,7 +163,7 @@ describe('ReturnService', () => {
         .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // SELECT return item (empty)
 
       await expect(returnService.inspectReturnItem(returnItemId, 'approved', 'OK')).rejects.toThrow(
-        'Return item not found'
+        'Return item not found',
       );
       expect(mockQuery).toHaveBeenCalledWith('ROLLBACK');
     });
@@ -146,10 +171,13 @@ describe('ReturnService', () => {
     it('should throw error if item already inspected', async () => {
       mockQuery
         .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
-        .mockResolvedValueOnce({ rows: [{ ...mockReturnItem, inspection_status: 'approved' }], rowCount: 1 }); // SELECT return item (already approved)
+        .mockResolvedValueOnce({
+          rows: [{ ...mockReturnItem, inspection_status: 'approved' }],
+          rowCount: 1,
+        }); // SELECT return item (already approved)
 
       await expect(returnService.inspectReturnItem(returnItemId, 'approved', 'OK')).rejects.toThrow(
-        'Item has already been inspected'
+        'Item has already been inspected',
       );
       expect(mockQuery).toHaveBeenCalledWith('ROLLBACK');
     });
@@ -177,7 +205,10 @@ describe('ReturnService', () => {
       mockQuery.mockResolvedValueOnce({ rows: [mockReturn], rowCount: 1 }); // getReturnById
       const result = await returnService.updateReturn(1, {});
       expect(result).toEqual(mockReturn);
-      expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining('SELECT * FROM returns WHERE id = $1'), [1]);
+      expect(mockQuery).toHaveBeenCalledWith(
+        expect.stringContaining('SELECT * FROM returns WHERE id = $1'),
+        [1],
+      );
     });
 
     it('should return undefined if return not found for update (no fields)', async () => {
@@ -199,14 +230,14 @@ describe('ReturnService', () => {
       expect(result).toBe(true);
     });
   });
-  
+
   describe('getPendingInspectionItems', () => {
-      it('should return pending items', async () => {
-          const mockItems = [{ id: 1 }];
-          mockQuery.mockResolvedValueOnce({ rows: mockItems, rowCount: 1 });
-          const result = await returnService.getPendingInspectionItems();
-          expect(result).toEqual(mockItems);
-      });
+    it('should return pending items', async () => {
+      const mockItems = [{ id: 1 }];
+      mockQuery.mockResolvedValueOnce({ rows: mockItems, rowCount: 1 });
+      const result = await returnService.getPendingInspectionItems();
+      expect(result).toEqual(mockItems);
+    });
   });
 
   describe('getReturnById', () => {

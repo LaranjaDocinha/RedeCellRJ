@@ -29,6 +29,9 @@ RUN npm install --omit=dev
 # Copy the built application from the builder stage
 COPY --from=builder /usr/src/app/dist ./dist
 
+# Copiar eng.traineddata para o container
+COPY data/eng.traineddata /app/data/eng.traineddata
+
 # Make port 3000 available
 EXPOSE 3000
 

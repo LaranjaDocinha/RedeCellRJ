@@ -30,11 +30,15 @@ describe('UserRepository', () => {
         created_at: new Date(),
         updated_at: new Date(),
       };
-      mockQuery.mockResolvedValueOnce({ rows: [mockUser] });
+      const dbRow = { ...mockUser, password_hash: 'secret' };
+      mockQuery.mockResolvedValueOnce({ rows: [dbRow] });
 
       const user = await userRepository.findById('1');
-      expect(user).toEqual(mockUser);
-      expect(mockQuery).toHaveBeenCalledWith('SELECT * FROM users WHERE id = $1', ['1']);
+      expect(user).toEqual(mockUser); // Should be sanitized
+      expect(mockQuery).toHaveBeenCalledWith(
+        'SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL',
+        ['1'],
+      );
     });
 
     it('should return null if user not found', async () => {
@@ -54,11 +58,15 @@ describe('UserRepository', () => {
         created_at: new Date(),
         updated_at: new Date(),
       };
-      mockQuery.mockResolvedValueOnce({ rows: [mockUser] });
+      const dbRow = { ...mockUser, password_hash: 'secret' };
+      mockQuery.mockResolvedValueOnce({ rows: [dbRow] });
 
       const user = await userRepository.findByEmail('test@example.com');
-      expect(user).toEqual(mockUser);
-      expect(mockQuery).toHaveBeenCalledWith('SELECT * FROM users WHERE email = $1', ['test@example.com']);
+      expect(user).toEqual(mockUser); // Should be sanitized
+      expect(mockQuery).toHaveBeenCalledWith(
+        'SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL',
+        ['test@example.com'],
+      );
     });
 
     it('should return null if user not found by email', async () => {
@@ -71,15 +79,17 @@ describe('UserRepository', () => {
 
   describe('findAll', () => {
     it('should return all users', async () => {
-      const mockUsers: User[] = [
-        { id: '1', name: 'User 1', email: 'user1@example.com', created_at: new Date(), updated_at: new Date() },
-        { id: '2', name: 'User 2', email: 'user2@example.com', created_at: new Date(), updated_at: new Date() },
+      const mockUsers: any[] = [
+        { id: '1', name: 'User 1', email: 'user1@example.com', role: 'admin' },
+        { id: '2', name: 'User 2', email: 'user2@example.com', role: 'user' },
       ];
       mockQuery.mockResolvedValueOnce({ rows: mockUsers });
 
       const users = await userRepository.findAll();
       expect(users).toEqual(mockUsers);
-      expect(mockQuery).toHaveBeenCalledWith('SELECT * FROM users');
+      expect(mockQuery).toHaveBeenCalledWith(
+        expect.stringContaining('SELECT u.id, u.name, u.email'),
+      );
     });
 
     it('should return empty array if no users found', async () => {
@@ -92,7 +102,11 @@ describe('UserRepository', () => {
 
   describe('create', () => {
     it('should create a new user', async () => {
-      const newUser = { name: 'New User', email: 'new@example.com', password_hash: 'hashed_password' };
+      const newUser = {
+        name: 'New User',
+        email: 'new@example.com',
+        password_hash: 'hashed_password',
+      };
       const createdUser = { id: '3', ...newUser, created_at: new Date(), updated_at: new Date() };
       mockQuery.mockResolvedValueOnce({ rows: [createdUser] });
 
@@ -100,7 +114,7 @@ describe('UserRepository', () => {
       expect(user).toEqual(createdUser);
       expect(mockQuery).toHaveBeenCalledWith(
         'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING *',
-        [newUser.name, newUser.email, newUser.password_hash]
+        [newUser.name, newUser.email, newUser.password_hash],
       );
     });
   });
@@ -108,54 +122,67 @@ describe('UserRepository', () => {
   describe('update', () => {
     it('should update user name', async () => {
       const updatedUser: User = {
-        id: '1', name: 'Updated Name', email: 'test@example.com', created_at: new Date(), updated_at: new Date()
+        id: '1',
+        name: 'Updated Name',
+        email: 'test@example.com',
+        created_at: new Date(),
+        updated_at: new Date(),
       };
       mockQuery.mockResolvedValueOnce({ rows: [updatedUser] });
 
       const user = await userRepository.update('1', { name: 'Updated Name' });
       expect(user).toEqual(updatedUser);
-      expect(mockQuery).toHaveBeenCalledWith('UPDATE users SET name = $1 WHERE id = $2 RETURNING *', ['Updated Name', '1']);
+      expect(mockQuery).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE users SET name = $1, updated_at = NOW() WHERE id = $2'),
+        ['Updated Name', '1'],
+      );
     });
 
     it('should update user password_hash', async () => {
       const updatedUser: User = {
-        id: '1', name: 'Test User', email: 'test@example.com', password_hash: 'new_hashed_password', created_at: new Date(), updated_at: new Date()
+        id: '1',
+        name: 'Test User',
+        email: 'test@example.com',
+        password_hash: 'new_hashed_password',
+        created_at: new Date(),
+        updated_at: new Date(),
       };
       mockQuery.mockResolvedValueOnce({ rows: [updatedUser] });
 
       const user = await userRepository.update('1', { password_hash: 'new_hashed_password' });
       expect(user).toEqual(updatedUser);
-      expect(mockQuery).toHaveBeenCalledWith('UPDATE users SET password_hash = $1 WHERE id = $2 RETURNING *', ['new_hashed_password', '1']);
+      expect(mockQuery).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
+        ),
+        ['new_hashed_password', '1'],
+      );
     });
 
     it('should update reset_password_token and reset_password_expires', async () => {
       const expires = new Date();
       const updatedUser: User = {
-        id: '1', name: 'Test User', email: 'test@example.com', reset_password_token: 'new_token', reset_password_expires: expires, created_at: new Date(), updated_at: new Date()
-      };
-      mockQuery.mockResolvedValueOnce({ rows: [updatedUser] });
-
-      const user = await userRepository.update('1', { reset_password_token: 'new_token', reset_password_expires: expires });
-      expect(user).toEqual(updatedUser);
-      expect(mockQuery).toHaveBeenCalledWith(
-        'UPDATE users SET reset_password_token = $1, reset_password_expires = $2 WHERE id = $3 RETURNING *',
-        ['new_token', expires, '1']
-      );
-    });
-
-    it('should return existing user if no data to update', async () => {
-      const mockUser: User = {
         id: '1',
         name: 'Test User',
         email: 'test@example.com',
+        reset_password_token: 'new_token',
+        reset_password_expires: expires,
         created_at: new Date(),
         updated_at: new Date(),
       };
-      // Mock findById for when no update data is provided
-      mockQuery.mockResolvedValueOnce({ rows: [mockUser] }); 
+      mockQuery.mockResolvedValueOnce({ rows: [updatedUser] });
 
-      const user = await userRepository.update('1', {});
-      expect(user).toEqual(mockUser);
+      const user = await userRepository.update('1', {
+        reset_password_token: 'new_token',
+        reset_password_expires: expires,
+      });
+      expect(user).toEqual(updatedUser);
+      expect(mockQuery).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'UPDATE users SET reset_password_token = $1, reset_password_expires = $2, updated_at = NOW() WHERE id = $3',
+        ),
+        ['new_token', expires, '1'],
+      );
     });
   });
 
@@ -165,7 +192,9 @@ describe('UserRepository', () => {
 
       const result = await userRepository.delete('1');
       expect(result).toBe(true);
-      expect(mockQuery).toHaveBeenCalledWith('DELETE FROM users WHERE id = $1', ['1']);
+      expect(mockQuery).toHaveBeenCalledWith('UPDATE users SET deleted_at = NOW() WHERE id = $1', [
+        '1',
+      ]);
     });
 
     it('should return false if user not found for deletion', async () => {
@@ -184,7 +213,8 @@ describe('UserRepository', () => {
         email: 'test@example.com',
         reset_password_token: 'hashed_token',
         reset_password_expires: new Date(Date.now() + 10000), // Future date
-        created_at: new Date(), updated_at: new Date()
+        created_at: new Date(),
+        updated_at: new Date(),
       };
       mockQuery.mockResolvedValueOnce({ rows: [mockUser] });
 
@@ -192,7 +222,7 @@ describe('UserRepository', () => {
       expect(user).toEqual(mockUser);
       expect(mockQuery).toHaveBeenCalledWith(
         'SELECT * FROM users WHERE reset_password_token = $1 AND reset_password_expires > $2',
-        ['hashed_token', expect.any(Date)]
+        ['hashed_token', expect.any(Date)],
       );
     });
 
@@ -213,7 +243,7 @@ describe('UserRepository', () => {
       expect(permissions).toEqual(mockPermissions);
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('SELECT p.id, p.action, p.subject'),
-        ['1']
+        ['1'],
       );
     });
 
@@ -233,7 +263,7 @@ describe('UserRepository', () => {
       expect(role).toBe('admin');
       expect(mockQuery).toHaveBeenCalledWith(
         'SELECT r.name FROM roles r JOIN user_roles ur ON r.id = ur.role_id WHERE ur.user_id = $1',
-        ['1']
+        ['1'],
       );
     });
 
@@ -253,14 +283,18 @@ describe('UserRepository', () => {
       await userRepository.assignRole('1', 'admin');
 
       expect(mockQuery).toHaveBeenCalledWith('SELECT id FROM roles WHERE name = $1', ['admin']);
-      expect(mockQuery).toHaveBeenCalledWith('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)', ['1', 'role1']);
+      expect(mockQuery).toHaveBeenCalledWith(
+        'INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)',
+        ['1', 'role1'],
+      );
     });
 
     it('should throw error if role not found', async () => {
       mockQuery.mockResolvedValueOnce({ rows: [] }); // Mock role lookup returns no rows
 
-      await expect(userRepository.assignRole('1', 'nonexistent_role'))
-        .rejects.toThrow("Role 'nonexistent_role' not found");
+      await expect(userRepository.assignRole('1', 'nonexistent_role')).rejects.toThrow(
+        "Role 'nonexistent_role' not found",
+      );
     });
   });
 });

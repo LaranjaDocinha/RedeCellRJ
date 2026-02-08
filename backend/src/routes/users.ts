@@ -58,13 +58,13 @@ usersRouter.patch(
     try {
       const userId = (req as any).user.id;
       const { theme } = req.body;
-      
+
       const updatedUser = await userRepository.update(userId, { theme_preference: theme });
       res.status(200).json({ theme: updatedUser.theme_preference });
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 usersRouter.get(

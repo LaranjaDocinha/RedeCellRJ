@@ -90,7 +90,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6 space-y-4">
       <div>
-        <label htmlFor="supplier_id" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="supplier_id" className="block text-sm font-normal text-gray-700">
           Supplier
         </label>
         <select
@@ -109,7 +109,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
         </select>
       </div>
       <div>
-        <label htmlFor="expected_delivery_date" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="expected_delivery_date" className="block text-sm font-normal text-gray-700">
           Expected Delivery Date
         </label>
         <input
@@ -123,7 +123,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       </div>
       {initialData && (
         <div>
-          <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="status" className="block text-sm font-normal text-gray-700">
             Status
           </label>
           <select
@@ -141,13 +141,13 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
         </div>
       )}
 
-      <h3 className="text-lg font-semibold mb-2">Order Items</h3>
+      <h3 className="text-lg font-normal mb-2">Order Items</h3>
       {formData.items.map((item, index) => (
         <div key={index} className="flex space-x-2 mb-2 items-end">
           <div className="flex-1">
             <label
               htmlFor={`product_id-${index}`}
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-normal text-gray-700"
             >
               Product ID
             </label>
@@ -164,7 +164,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
           <div className="flex-1">
             <label
               htmlFor={`variation_id-${index}`}
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-normal text-gray-700"
             >
               Variation ID
             </label>
@@ -181,7 +181,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
           <div className="flex-1">
             <label
               htmlFor={`quantity-${index}`}
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-normal text-gray-700"
             >
               Quantity
             </label>
@@ -198,7 +198,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
           <div className="flex-1">
             <label
               htmlFor={`unit_price-${index}`}
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-normal text-gray-700"
             >
               Unit Price
             </label>
@@ -216,7 +216,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
           <button
             type="button"
             onClick={() => handleRemoveItem(index)}
-            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-3 rounded text-sm"
+            className="bg-red-500 hover:bg-red-700 text-white font-normal py-2 px-3 rounded text-sm"
           >
             Remove
           </button>
@@ -225,7 +225,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       <button
         type="button"
         onClick={handleAddItem}
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
+        className="bg-blue-500 hover:bg-blue-700 text-white font-normal py-2 px-4 rounded text-sm"
       >
         Add Item
       </button>
@@ -234,13 +234,13 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
         <button
           type="button"
           onClick={onCancel}
-          className="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-normal text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-normal text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
           {initialData ? 'Update Order' : 'Create Order'}
         </button>
@@ -248,3 +248,4 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     </form>
   );
 };
+

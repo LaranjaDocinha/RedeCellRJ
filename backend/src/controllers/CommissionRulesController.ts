@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CommissionRulesService } from '../services/CommissionRulesService.js';
+import { CommissionRulesService } from '../services/commissionRulesService.js';
 
 export class CommissionRulesController {
   constructor(private commissionRulesService: CommissionRulesService) {}

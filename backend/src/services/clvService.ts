@@ -31,7 +31,11 @@ export const calculateClv = async (customerId: string) => {
     const total_revenue = parseFloat(totalRevenueStr || '0');
 
     if (!num_purchases || num_purchases === '0') {
-      return { customer_id: parseInt(customerId, 10), clv: 0, message: 'No purchase data for this customer.' };
+      return {
+        customer_id: parseInt(customerId, 10),
+        clv: 0,
+        message: 'No purchase data for this customer.',
+      };
     }
 
     const apv = total_revenue / parseInt(num_purchases);

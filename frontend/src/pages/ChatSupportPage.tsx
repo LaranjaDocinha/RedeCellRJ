@@ -102,7 +102,7 @@ const ChatSupportPage: React.FC = () => {
         flexDirection: 'column'
       }}>
         <Box p={3}>
-          <Typography variant="h5" fontWeight={900} sx={{ mb: 2 }}>Mensagens</Typography>
+          <Typography variant="h5" fontWeight={400} sx={{ mb: 2 }}>Mensagens</Typography>
           <Paper elevation={0} sx={{ 
             p: '2px 12px', 
             display: 'flex', 
@@ -139,7 +139,7 @@ const ChatSupportPage: React.FC = () => {
               <ListItemText 
                 primary={
                   <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography fontWeight={700} variant="body2">{chat.name}</Typography>
+                    <Typography fontWeight={400} variant="body2">{chat.name}</Typography>
                     <Typography variant="caption" color="text.secondary">{chat.time}</Typography>
                   </Box>
                 }
@@ -166,7 +166,7 @@ const ChatSupportPage: React.FC = () => {
               <Box display="flex" alignItems="center" gap={2}>
                 <Avatar src={`https://i.pravatar.cc/150?u=${activeChatId}`} sx={{ width: 40, height: 40 }} />
                 <Box>
-                  <Typography variant="subtitle2" fontWeight={800}>{chats.find(c => c.id === activeChatId)?.name}</Typography>
+                  <Typography variant="subtitle2" fontWeight={400}>{chats.find(c => c.id === activeChatId)?.name}</Typography>
                   <Typography variant="caption" color="success.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <OnlineIcon sx={{ fontSize: 8 }} /> Online agora
                   </Typography>
@@ -181,7 +181,7 @@ const ChatSupportPage: React.FC = () => {
             {/* Mensagens */}
             <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Box textAlign="center" my={2}>
-                <Chip label="Hoje" size="small" sx={{ bgcolor: 'divider', color: 'text.secondary', fontWeight: 700 }} />
+                <Chip label="Hoje" size="small" sx={{ bgcolor: 'divider', color: 'text.secondary', fontWeight: 400 }} />
               </Box>
 
               <AnimatePresence>
@@ -214,7 +214,7 @@ const ChatSupportPage: React.FC = () => {
               
               {!sessionId && (
                 <Box display="flex" justifyContent="center" mt={4}>
-                  <Button variant="contained" onClick={handleStartChat} sx={{ borderRadius: '12px', px: 4, py: 1.5, fontWeight: 700 }}>
+                  <Button variant="contained" onClick={handleStartChat} sx={{ borderRadius: '12px', px: 4, py: 1.5, fontWeight: 400 }}>
                     Iniciar Conversa com Suporte
                   </Button>
                 </Box>
@@ -272,28 +272,28 @@ const ChatSupportPage: React.FC = () => {
           bgcolor: 'background.paper',
           p: 3
         }}>
-          <Typography variant="subtitle2" fontWeight={800} gutterBottom>Detalhes do Cliente</Typography>
+          <Typography variant="subtitle2" fontWeight={400} gutterBottom>Detalhes do Cliente</Typography>
           <Box textAlign="center" mt={4} mb={4}>
             <Avatar src={`https://i.pravatar.cc/150?u=${activeChatId}`} sx={{ width: 80, height: 80, margin: '0 auto mb-2' }} />
-            <Typography variant="h6" fontWeight={800}>{chats.find(c => c.id === activeChatId)?.name}</Typography>
+            <Typography variant="h6" fontWeight={400}>{chats.find(c => c.id === activeChatId)?.name}</Typography>
             <Typography variant="caption" color="text.secondary">ID: 12948 • Cliente desde 2023</Typography>
           </Box>
           
           <Divider sx={{ my: 3 }} />
           
-          <Typography variant="caption" fontWeight={800} color="text.secondary" display="block" mb={2}>HISTÓRICO RECENTE</Typography>
+          <Typography variant="caption" fontWeight={400} color="text.secondary" display="block" mb={2}>HISTÓRICO RECENTE</Typography>
           <Stack spacing={2}>
             <Box display="flex" gap={1.5}>
               <Box sx={{ p: 1, bgcolor: 'success.light', borderRadius: '8px', color: 'white', display: 'flex' }}><WhatsAppIcon sx={{ fontSize: 16 }} /></Box>
-              <Box><Typography variant="caption" fontWeight={700} display="block">Venda Finalizada</Typography><Typography variant="caption" color="text.secondary">R$ 1.500,00 • Há 2 dias</Typography></Box>
+              <Box><Typography variant="caption" fontWeight={400} display="block">Venda Finalizada</Typography><Typography variant="caption" color="text.secondary">R$ 1.500,00 • Há 2 dias</Typography></Box>
             </Box>
             <Box display="flex" gap={1.5}>
               <Box sx={{ p: 1, bgcolor: 'primary.light', borderRadius: '8px', color: 'white', display: 'flex' }}><ChatIcon sx={{ fontSize: 16 }} /></Box>
-              <Box><Typography variant="caption" fontWeight={700} display="block">OS Criada</Typography><Typography variant="caption" color="text.secondary">iPhone 13 Pro • Há 1 semana</Typography></Box>
+              <Box><Typography variant="caption" fontWeight={400} display="block">OS Criada</Typography><Typography variant="caption" color="text.secondary">iPhone 13 Pro • Há 1 semana</Typography></Box>
             </Box>
           </Stack>
           
-          <Button fullWidth variant="outlined" sx={{ mt: 4, borderRadius: '12px', textTransform: 'none', fontWeight: 700 }}>
+          <Button fullWidth variant="outlined" sx={{ mt: 4, borderRadius: '12px', textTransform: 'none', fontWeight: 400 }}>
             Ver Perfil Completo
           </Button>
         </Box>

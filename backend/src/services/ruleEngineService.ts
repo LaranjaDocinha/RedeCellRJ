@@ -13,7 +13,15 @@ interface Rule {
 
 interface Condition {
   fact: string; // O 'fato' a ser avaliado (ex: 'cart.total', 'product.category', 'customer.loyaltyLevel')
-  operator: 'equal' | 'notEqual' | 'greaterThan' | 'lessThan' | 'greaterThanInclusive' | 'lessThanInclusive' | 'contains' | 'notContains';
+  operator:
+    | 'equal'
+    | 'notEqual'
+    | 'greaterThan'
+    | 'lessThan'
+    | 'greaterThanInclusive'
+    | 'lessThanInclusive'
+    | 'contains'
+    | 'notContains';
   value: any;
 }
 
@@ -27,11 +35,12 @@ const predefinedRules: Rule[] = [
     id: 'discount_over_500',
     name: 'Desconto 10% para compras acima de R$500',
     eventType: 'cart.total_change',
-    conditions: [
-      { fact: 'cart.total', operator: 'greaterThanInclusive', value: 500 },
-    ],
+    conditions: [{ fact: 'cart.total', operator: 'greaterThanInclusive', value: 500 }],
     actions: [
-      { type: 'apply_discount_percentage', params: { percentage: 10, reason: 'Bulk Purchase Discount' } },
+      {
+        type: 'apply_discount_percentage',
+        params: { percentage: 10, reason: 'Bulk Purchase Discount' },
+      },
     ],
     isActive: true,
   },
@@ -41,10 +50,13 @@ const predefinedRules: Rule[] = [
     eventType: 'customer.loyalty_status',
     conditions: [
       { fact: 'customer.loyaltyLevel', operator: 'equal', value: 'Silver' },
-      { fact: 'cart.total', operator: 'greaterThan', value: 100 } // Só aplica se a compra for acima de 100
+      { fact: 'cart.total', operator: 'greaterThan', value: 100 }, // Só aplica se a compra for acima de 100
     ],
     actions: [
-      { type: 'apply_discount_percentage', params: { percentage: 5, reason: 'Loyalty Silver Discount' } },
+      {
+        type: 'apply_discount_percentage',
+        params: { percentage: 5, reason: 'Loyalty Silver Discount' },
+      },
     ],
     isActive: true,
   },
@@ -54,16 +66,18 @@ const predefinedRules: Rule[] = [
     eventType: 'customer.created',
     conditions: [], // Always trigger for new customer
     actions: [
-      { type: 'send_notification', params: { templateName: 'customer_welcome', channels: ['whatsapp', 'email'] } },
+      {
+        type: 'send_notification',
+        params: { templateName: 'customer_welcome', channels: ['whatsapp', 'email'] },
+      },
     ],
     isActive: true,
-  }
+  },
 ];
-
 
 export const ruleEngineService = {
   // Em um sistema real, as regras seriam carregadas do banco de dados
-  rules: predefinedRules as Rule[], 
+  rules: predefinedRules as Rule[],
 
   async evaluate(eventType: string, facts: Record<string, any>): Promise<Action[]> {
     const applicableActions: Action[] = [];
@@ -102,15 +116,28 @@ export const ruleEngineService = {
 
   evaluateCondition(factValue: any, operator: Condition['operator'], compareValue: any): boolean {
     switch (operator) {
-      case 'equal': return factValue === compareValue;
-      case 'notEqual': return factValue !== compareValue;
-      case 'greaterThan': return factValue > compareValue;
-      case 'lessThan': return factValue < compareValue;
-      case 'greaterThanInclusive': return factValue >= compareValue;
-      case 'lessThanInclusive': return factValue <= compareValue;
-      case 'contains': return Array.isArray(factValue) ? factValue.includes(compareValue) : String(factValue).includes(String(compareValue));
-      case 'notContains': return Array.isArray(factValue) ? !factValue.includes(compareValue) : !String(factValue).includes(String(compareValue));
-      default: return false;
+      case 'equal':
+        return factValue === compareValue;
+      case 'notEqual':
+        return factValue !== compareValue;
+      case 'greaterThan':
+        return factValue > compareValue;
+      case 'lessThan':
+        return factValue < compareValue;
+      case 'greaterThanInclusive':
+        return factValue >= compareValue;
+      case 'lessThanInclusive':
+        return factValue <= compareValue;
+      case 'contains':
+        return Array.isArray(factValue)
+          ? factValue.includes(compareValue)
+          : String(factValue).includes(String(compareValue));
+      case 'notContains':
+        return Array.isArray(factValue)
+          ? !factValue.includes(compareValue)
+          : !String(factValue).includes(String(compareValue));
+      default:
+        return false;
     }
   },
 
@@ -120,7 +147,7 @@ export const ruleEngineService = {
   },
 
   async createOrUpdateRule(rule: Rule): Promise<Rule> {
-    const existingIndex = this.rules.findIndex(r => r.id === rule.id);
+    const existingIndex = this.rules.findIndex((r) => r.id === rule.id);
     if (existingIndex > -1) {
       this.rules[existingIndex] = rule;
     } else {
@@ -132,7 +159,7 @@ export const ruleEngineService = {
 
   async deleteRule(ruleId: string): Promise<boolean> {
     const initialLength = this.rules.length;
-    this.rules = this.rules.filter(r => r.id !== ruleId);
+    this.rules = this.rules.filter((r) => r.id !== ruleId);
     return this.rules.length < initialLength;
-  }
+  },
 };

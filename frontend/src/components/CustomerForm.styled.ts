@@ -19,7 +19,7 @@ export const StyledFormField = styled('div')`
 
 export const StyledLabel = styled('label')`
   font-size: ${({ theme }) => theme.typography.body2.fontSize};
-  font-weight: 600;
+  font-weight: 400;
   color: ${({ theme }) => theme.palette.text.secondary};
   margin-bottom: 4px;
 `;
@@ -65,3 +65,4 @@ export const StyledButtonContainer = styled('div')`
   gap: 16px;
   margin-top: 24px;
 `;
+

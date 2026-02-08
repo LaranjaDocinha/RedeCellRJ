@@ -1,223 +1,183 @@
 import React, { useState, useEffect } from 'react';
-import { PurchaseOrderList } from '../components/PurchaseOrderList';
-import { PurchaseOrderForm } from '../components/PurchaseOrderForm';
+import { 
+  Box, 
+  Typography, 
+  Paper, 
+  Grid, 
+  CircularProgress, 
+  Button, 
+  Stack, 
+  Chip, 
+  IconButton, 
+  Tooltip,
+  Divider,
+  useTheme,
+  alpha,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody
+} from '@mui/material';
+import { 
+  FaPlus, FaTruck, FaCheckCircle, FaTimesCircle, FaFileInvoiceDollar, 
+  FaSearch, FaFilter, FaHistory, FaArrowRight, FaBoxOpen
+} from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
-
-interface PurchaseOrder {
-  id: number;
-  supplier_id: number;
-  order_date: string;
-  expected_delivery_date?: string;
-  status: 'pending' | 'ordered' | 'received' | 'cancelled';
-  total_amount: number;
-  items?: Array<{ product_id: number; variation_id: number; quantity: number; unit_price: number }>;
-}
-
-interface PurchaseOrderFormData {
-  supplier_id: number;
-  expected_delivery_date?: string;
-  status?: 'pending' | 'ordered' | 'received' | 'cancelled';
-  items: Array<{ product_id: number; variation_id: number; quantity: number; unit_price: number }>;
-}
-
-interface Supplier {
-  id: number;
-  name: string;
-}
+import axios from 'axios';
+import moment from 'moment';
 
 const PurchaseOrdersPage: React.FC = () => {
-  const [orders, setOrders] = useState<PurchaseOrder[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [editingOrder, setEditingOrder] = useState<PurchaseOrder | undefined>(undefined);
-  const [showForm, setShowForm] = useState(false);
+  const theme = useTheme();
   const { token } = useAuth();
   const { addNotification } = useNotification();
-
-  useEffect(() => {
-    fetchOrders();
-    fetchSuppliers();
-  }, []);
+  
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('/api/purchase-orders', {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const data = await response.json();
-      setOrders(data);
-    } catch (error: any) {
-      console.error("Error fetching purchase orders:", error);
-      addNotification(`Failed to fetch purchase orders: ${error.message}`, 'error');
+      setLoading(true);
+      const res = await axios.get('/api/v1/purchase-orders', { headers: { Authorization: `Bearer ${token}` } });
+      setOrders(res.data);
+    } catch (err) {
+      addNotification('Erro ao carregar ordens de compra.', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const fetchSuppliers = async () => {
-    try {
-      const response = await fetch('/api/suppliers', {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const data = await response.json();
-      setSuppliers(data);
-    } catch (error: any) {
-      console.error("Error fetching suppliers:", error);
-      addNotification(`Failed to fetch suppliers: ${error.message}`, 'error');
-    }
-  };
+  useEffect(() => { fetchOrders(); }, []);
 
-  const handleCreateOrder = async (orderData: PurchaseOrderFormData) => {
+  const handleReceiveOrder = async (id: number) => {
+    if (!window.confirm('Confirmar o recebimento total desta ordem? O estoque será atualizado e a conta será lançada no financeiro.')) return;
+    
     try {
-      const response = await fetch('/api/purchase-orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(orderData),
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      await response.json();
-      setShowForm(false);
+      await axios.post(`/api/v1/purchase-orders/${id}/receive`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      addNotification('Ordem recebida! Estoque e Financeiro atualizados.', 'success');
       fetchOrders();
-      addNotification('Purchase order created successfully!', 'success');
-    } catch (error: any) {
-      console.error("Error creating purchase order:", error);
-      addNotification(`Failed to create purchase order: ${error.message}`, 'error');
+    } catch (err) {
+      addNotification('Falha ao processar recebimento.', 'error');
     }
   };
 
-  const handleUpdateOrder = async (id: number, orderData: PurchaseOrderFormData) => {
-    try {
-      const response = await fetch(`/api/purchase-orders/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(orderData),
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      await response.json();
-      setEditingOrder(undefined);
-      setShowForm(false);
-      fetchOrders();
-      addNotification('Purchase order updated successfully!', 'success');
-    } catch (error: any) {
-      console.error("Error updating purchase order:", error);
-      addNotification(`Failed to update purchase order: ${error.message}`, 'error');
+  const getStatusChip = (status: string) => {
+    switch (status) {
+        case 'pending': return <Chip label="Pendente" color="warning" size="small" variant="outlined" sx={{ fontWeight: 400 }} />;
+        case 'ordered': return <Chip label="Enviado" color="info" size="small" variant="outlined" sx={{ fontWeight: 400 }} />;
+        case 'received': return <Chip label="Recebido" color="success" size="small" sx={{ fontWeight: 400 }} />;
+        case 'cancelled': return <Chip label="Cancelado" color="error" size="small" sx={{ fontWeight: 400 }} />;
+        default: return <Chip label={status} size="small" />;
     }
   };
 
-  const handleDeleteOrder = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this purchase order?')) return;
-    try {
-      const response = await fetch(`/api/purchase-orders/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      fetchOrders();
-      addNotification('Purchase order deleted successfully!', 'success');
-    } catch (error: any) {
-      console.error("Error deleting purchase order:", error);
-      addNotification(`Failed to delete purchase order: ${error.message}`, 'error');
-    }
-  };
-
-  const handleEditClick = (id: number) => {
-    const orderToEdit = orders.find((o) => o.id === id);
-    if (orderToEdit) {
-      setEditingOrder(orderToEdit);
-      setShowForm(true);
-    }
-  };
-
-  const handleUpdateStatus = async (id: number, status: 'pending' | 'ordered' | 'received' | 'cancelled') => {
-    try {
-      const response = await fetch(`/api/purchase-orders/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ status }),
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      await response.json();
-      fetchOrders();
-      addNotification('Purchase order status updated successfully!', 'success');
-    } catch (error: any) {
-      console.error("Error updating purchase order status:", error);
-      addNotification(`Failed to update purchase order status: ${error.message}`, 'error');
-    }
-  };
-
-  const handleReceiveItems = async (id: number) => {
-    // For simplicity, assume all items in the order are received
-    // In a real app, you'd have a form to specify quantities received
-    const orderToReceive = orders.find(o => o.id === id);
-    if (!orderToReceive || !orderToReceive.items) {
-      addNotification('Order not found or has no items to receive.', 'warning');
-      return;
-    }
-
-    const receivedItemsPayload = orderToReceive.items.map(item => ({
-      variation_id: item.variation_id,
-      quantity: item.quantity,
-    }));
-
-    try {
-      const response = await fetch(`/api/purchase-orders/${id}/receive`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ items: receivedItemsPayload }),
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      addNotification('Items received and stock updated!', 'success');
-      fetchOrders();
-    } catch (error: any) {
-      console.error("Error receiving items:", error);
-      addNotification(`Failed to receive items: ${error.message}`, 'error');
-    }
-  };
+  if (loading) return <Box display="flex" justifyContent="center" py={10}><CircularProgress /></Box>;
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Purchase Order Management</h1>
+    <Box sx={{ p: 4, bgcolor: 'background.default', minHeight: '100vh' }}>
+      
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
+        <Box>
+            <Typography variant="h4" fontWeight={400} sx={{ letterSpacing: '-1.5px' }}>
+                Gestão de Compras
+            </Typography>
+            <Typography variant="body2" color="text.secondary">Controle de suprimentos e entrada de mercadorias</Typography>
+        </Box>
+        <Button variant="contained" startIcon={<FaPlus />} sx={{ borderRadius: '12px', px: 3 }}>
+            Nova Ordem de Compra
+        </Button>
+      </Stack>
 
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Create New Purchase Order
-        </button>
-      </div>
+      <Grid container spacing={3}>
+        {orders.map((order) => (
+            <Grid item xs={12} md={6} lg={4} key={order.id}>
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                    <Paper sx={{ p: 3, borderRadius: '24px', border: `1px solid ${theme.palette.divider}`, '&:hover': { borderColor: 'primary.main', boxShadow: '0 8px 24px rgba(0,0,0,0.05)' } }}>
+                        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                            <Box>
+                                <Typography variant="caption" color="text.secondary" fontWeight={400} display="block" sx={{ textTransform: 'uppercase' }}>{order.supplier_name}</Typography>
+                                <Typography variant="h6" fontWeight={400}>Pedido #{order.id}</Typography>
+                            </Box>
+                            {getStatusChip(order.status)}
+                        </Box>
 
-      {showForm && (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-3">
-            {editingOrder ? 'Edit Purchase Order' : 'Create New Purchase Order'}
-          </h2>
-          <PurchaseOrderForm
-            initialData={editingOrder}
-            onSubmit={(data) => {
-              if (editingOrder) {
-                handleUpdateOrder(editingOrder.id, data);
-              } else {
-                handleCreateOrder(data);
-              }
-            }}
-            onCancel={() => {
-              setEditingOrder(undefined);
-              setShowForm(false);
-            }}
-            suppliers={suppliers}
-          />
-        </div>
-      )}
+                        <Divider sx={{ my: 2, borderStyle: 'dashed' }} />
 
-      <PurchaseOrderList
-        orders={orders}
-        onViewDetails={handleEditClick} // Using edit click to view details for now
-        onUpdateStatus={handleUpdateStatus}
-        onReceiveItems={handleReceiveItems}
-      />
-    </div>
+                        <Stack spacing={1.5}>
+                            <Box display="flex" justifyContent="space-between">
+                                <Typography variant="body2" color="text.secondary">Total do Pedido:</Typography>
+                                <Typography variant="body2" fontWeight={400}>R$ {Number(order.total_amount).toFixed(2)}</Typography>
+                            </Box>
+                            <Box display="flex" justifyContent="space-between">
+                                <Typography variant="body2" color="text.secondary">Previsão Entrega:</Typography>
+                                <Typography variant="body2">{moment(order.expected_delivery_date).format('DD/MM/YYYY')}</Typography>
+                            </Box>
+                        </Stack>
+
+                        <Stack direction="row" spacing={1} mt={3}>
+                            {order.status !== 'received' && (
+                                <Button 
+                                    fullWidth 
+                                    variant="contained" 
+                                    color="success" 
+                                    startIcon={<FaCheckCircle />}
+                                    onClick={() => handleReceiveOrder(order.id)}
+                                    sx={{ borderRadius: '10px', fontWeight: 400 }}
+                                >
+                                    Receber
+                                </Button>
+                            )}
+                            <Button 
+                                fullWidth 
+                                variant="outlined" 
+                                startIcon={<FaSearch />}
+                                onClick={() => { setSelectedOrder(order); setIsModalOpen(true); }}
+                                sx={{ borderRadius: '10px', fontWeight: 400 }}
+                            >
+                                Detalhes
+                            </Button>
+                        </Stack>
+                    </Paper>
+                </motion.div>
+            </Grid>
+        ))}
+      </Grid>
+
+      {/* Modal de Detalhes */}
+      <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '24px' } }}>
+        <DialogTitle sx={{ fontWeight: 400 }}>Itens do Pedido #{selectedOrder?.id}</DialogTitle>
+        <DialogContent>
+            <Table size="small">
+                <TableHead>
+                    <TableRow>
+                        <TableCell sx={{ fontWeight: 400 }}>Item</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 400 }}>Qtd</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 400 }}>Unit.</TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {selectedOrder?.items?.map((item: any, i: number) => (
+                        <TableRow key={i}>
+                            <TableCell>{item.product_name}</TableCell>
+                            <TableCell align="center">{item.quantity}</TableCell>
+                            <TableCell align="right">R$ {Number(item.unit_price).toFixed(2)}</TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </DialogContent>
+      </Dialog>
+
+    </Box>
   );
 };
 
 export default PurchaseOrdersPage;
+

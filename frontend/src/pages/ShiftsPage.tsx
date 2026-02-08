@@ -123,7 +123,7 @@ const ShiftsPage: React.FC = () => {
         border: 'none',
         display: 'block',
         fontSize: '0.75rem',
-        fontWeight: 700,
+        fontWeight: 400,
         padding: '4px 8px'
       }
     };
@@ -137,11 +137,11 @@ const ShiftsPage: React.FC = () => {
             <Box sx={{ p: 1, bgcolor: 'primary.main', borderRadius: '10px', color: 'white', display: 'flex' }}>
               <TeamIcon />
             </Box>
-            <Typography variant="overline" sx={{ fontWeight: 800, color: 'primary.main', letterSpacing: 2 }}>
+            <Typography variant="overline" sx={{ fontWeight: 400, color: 'primary.main', letterSpacing: 2 }}>
               RECURSOS HUMANOS
             </Typography>
           </Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
+          <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px' }}>
             Escala de Turnos
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
@@ -156,7 +156,7 @@ const ShiftsPage: React.FC = () => {
               <MenuItem value="2">Filial Barra</MenuItem>
             </Select>
           </FormControl>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setIsModalOpen(true)} sx={{ borderRadius: '12px', px: 3, fontWeight: 800 }}>Novo Turno</Button>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setIsModalOpen(true)} sx={{ borderRadius: '12px', px: 3, fontWeight: 400 }}>Novo Turno</Button>
         </Stack>
       </Box>
 
@@ -190,29 +190,29 @@ const ShiftsPage: React.FC = () => {
         <Grid item xs={12} lg={3}>
           <Stack spacing={3}>
             <Paper sx={{ p: 3, borderRadius: '24px', border: '1px solid', borderColor: 'divider' }}>
-              <Typography variant="subtitle2" fontWeight={800} gutterBottom>Legenda de Cores</Typography>
+              <Typography variant="subtitle2" fontWeight={400} gutterBottom>Legenda de Cores</Typography>
               <Stack spacing={1.5} mt={2}>
                 <Box display="flex" alignItems="center" gap={1.5}>
                   <Box sx={{ width: 12, height: 12, borderRadius: '4px', bgcolor: 'primary.main' }} />
-                  <Typography variant="caption" fontWeight={700}>GERÊNCIA / ADM</Typography>
+                  <Typography variant="caption" fontWeight={400}>GERÊNCIA / ADM</Typography>
                 </Box>
                 <Box display="flex" alignItems="center" gap={1.5}>
                   <Box sx={{ width: 12, height: 12, borderRadius: '4px', bgcolor: '#4caf50' }} />
-                  <Typography variant="caption" fontWeight={700}>VENDAS / PDV</Typography>
+                  <Typography variant="caption" fontWeight={400}>VENDAS / PDV</Typography>
                 </Box>
                 <Box display="flex" alignItems="center" gap={1.5}>
                   <Box sx={{ width: 12, height: 12, borderRadius: '4px', bgcolor: '#9c27b0' }} />
-                  <Typography variant="caption" fontWeight={700}>TÉCNICA / OFICINA</Typography>
+                  <Typography variant="caption" fontWeight={400}>TÉCNICA / OFICINA</Typography>
                 </Box>
               </Stack>
             </Paper>
 
             <Paper sx={{ p: 3, borderRadius: '24px', bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider' }}>
-              <Typography variant="subtitle2" fontWeight={800} gutterBottom>Insights da Escala</Typography>
+              <Typography variant="subtitle2" fontWeight={400} gutterBottom>Insights da Escala</Typography>
               <Box mt={3}>
                 <Typography variant="body2" color="text.secondary" gutterBottom>Cobertura de hoje:</Typography>
-                <Typography variant="h5" fontWeight={900}>8 Colaboradores</Typography>
-                <Typography variant="caption" color="success.main" fontWeight={700}>Capacidade Ideal atingida</Typography>
+                <Typography variant="h5" fontWeight={400}>8 Colaboradores</Typography>
+                <Typography variant="caption" color="success.main" fontWeight={400}>Capacidade Ideal atingida</Typography>
               </Box>
               <Divider sx={{ my: 2 }} />
               <Typography variant="caption" color="text.secondary" display="block">
@@ -226,7 +226,7 @@ const ShiftsPage: React.FC = () => {
       {/* Modal de Turno */}
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 450, bgcolor: 'background.paper', borderRadius: '24px', p: 4, boxShadow: 24 }}>
-          <Typography variant="h5" fontWeight={900} mb={3}>{selectedEvent ? 'Editar' : 'Programar'} Turno</Typography>
+          <Typography variant="h5" fontWeight={400} mb={3}>{selectedEvent ? 'Editar' : 'Programar'} Turno</Typography>
           
           <Stack spacing={3}>
             <FormControl fullWidth>
@@ -250,12 +250,12 @@ const ShiftsPage: React.FC = () => {
             <TextField fullWidth label="Função / Cargo" value={formData.role} placeholder="Ex: Vendedor, Caixa, Técnico" onChange={(e) => setFormData({ ...formData, role: e.target.value })} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
 
             <Box mt={2} display="flex" gap={2}>
-              <Button fullWidth onClick={() => setIsModalOpen(false)} sx={{ borderRadius: '12px', fontWeight: 700 }}>Cancelar</Button>
-              <Button fullWidth variant="contained" startIcon={<SaveIcon />} onClick={handleSave} sx={{ borderRadius: '12px', fontWeight: 800 }}>Salvar Turno</Button>
+              <Button fullWidth onClick={() => setIsModalOpen(false)} sx={{ borderRadius: '12px', fontWeight: 400 }}>Cancelar</Button>
+              <Button fullWidth variant="contained" startIcon={<SaveIcon />} onClick={handleSave} sx={{ borderRadius: '12px', fontWeight: 400 }}>Salvar Turno</Button>
             </Box>
             
             {selectedEvent && (
-              <Button fullWidth color="error" startIcon={<DeleteIcon />} onClick={() => {}} sx={{ fontWeight: 700 }}>Excluir este horário</Button>
+              <Button fullWidth color="error" startIcon={<DeleteIcon />} onClick={() => {}} sx={{ fontWeight: 400 }}>Excluir este horário</Button>
             )}
           </Stack>
         </Box>

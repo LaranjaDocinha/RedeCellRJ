@@ -80,7 +80,7 @@ const ReportsPage: React.FC = () => {
         }}
       >
         <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: isSidebarOpen ? 'space-between' : 'center' }}>
-          {isSidebarOpen && <Typography variant="h6" fontWeight={800}>Intelligence BI</Typography>}
+          {isSidebarOpen && <Typography variant="h6" fontWeight={400}>Intelligence BI</Typography>}
           <IconButton onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
             <FaFilter size={16} />
           </IconButton>
@@ -107,7 +107,7 @@ const ReportsPage: React.FC = () => {
                 <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>
                   {cat.icon}
                 </ListItemIcon>
-                {isSidebarOpen && <ListItemText primary={cat.label} primaryTypographyProps={{ fontWeight: 700, fontSize: '0.9rem' }} />}
+                {isSidebarOpen && <ListItemText primary={cat.label} primaryTypographyProps={{ fontWeight: 400, fontSize: '0.9rem' }} />}
               </ListItemButton>
             </ListItem>
           ))}
@@ -116,7 +116,7 @@ const ReportsPage: React.FC = () => {
         <Box sx={{ mt: 'auto', p: 3 }}>
           {isSidebarOpen && (
             <Paper variant="outlined" sx={{ p: 2, borderRadius: '12px', bgcolor: 'action.hover' }}>
-              <Typography variant="caption" color="text.secondary" fontWeight={700} display="block" mb={1}>
+              <Typography variant="caption" color="text.secondary" fontWeight={400} display="block" mb={1}>
                 EXPORTAÇÃO GLOBAL
               </Typography>
               <Button fullWidth variant="contained" size="small" startIcon={<FaFileExport />} sx={{ borderRadius: '8px' }}>
@@ -135,11 +135,11 @@ const ReportsPage: React.FC = () => {
           <Breadcrumbs sx={{ mb: 1 }}>
             <Link underline="hover" color="inherit" href="/">Home</Link>
             <Typography color="text.primary">Relatórios</Typography>
-            <Typography color="primary" fontWeight={700}>
+            <Typography color="primary" fontWeight={400}>
               {categories.find(c => c.id === activeCategory)?.label}
             </Typography>
           </Breadcrumbs>
-          <Typography variant="h4" fontWeight={900} letterSpacing="-1px">
+          <Typography variant="h4" fontWeight={400} letterSpacing="-1px">
             {categories.find(c => c.id === activeCategory)?.label} Dashboard
           </Typography>
           <Typography variant="body1" color="text.secondary">

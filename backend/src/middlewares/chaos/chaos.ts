@@ -1,29 +1,31 @@
 import { Request, Response, NextFunction } from 'express';
+import { logger } from '../../utils/logger.js';
 
-interface ChaosConfig {
-  level: number; // 0 to 1, probability of chaos
-  delay: number; // max delay in ms
-}
-
-const chaosConfig: ChaosConfig = {
-  level: parseFloat(process.env.CHAOS_LEVEL || '0.0'),
-  delay: parseInt(process.env.CHAOS_DELAY || '1000', 10),
-};
-
+/**
+ * Middleware de Engenharia do Caos.
+ * Útil para testar a resiliência do frontend e timeouts.
+ * Ativado apenas se ENABLE_CHAOS=true no .env
+ */
 const chaosMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  if (Math.random() < chaosConfig.level) {
-    const chaosType = Math.random();
+  if (process.env.ENABLE_CHAOS !== 'true') {
+    return next();
+  }
 
-    if (chaosType < 0.5) {
-      // Introduce a delay
-      const delay = Math.floor(Math.random() * chaosConfig.delay);
-      console.log(`CHAOS: Delaying request by ${delay}ms`);
-      return setTimeout(next, delay);
-    } else {
-      // Return an error
-      console.log('CHAOS: Returning a 500 error');
-      return res.status(500).send('Chaos engineering!');
-    }
+  // 10% de chance de erro
+  if (Math.random() < 0.1) {
+    logger.warn('[CHAOS] Simulando erro 500 aleatório');
+    return res.status(500).json({
+      status: 'error',
+      message: 'Chaos Monkey: Falha simulada do servidor.',
+    });
+  }
+
+  // 20% de chance de latência alta (1s - 5s)
+  if (Math.random() < 0.2) {
+    const delay = Math.floor(Math.random() * 4000) + 1000;
+    logger.warn(`[CHAOS] Injetando latência de ${delay}ms`);
+    setTimeout(next, delay);
+    return;
   }
 
   next();

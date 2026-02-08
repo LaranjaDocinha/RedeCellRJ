@@ -1,5 +1,3 @@
-
-
 export const generateSecureViewCredentials = async (toolName: string) => {
   console.log(`Simulating generating secure view credentials for ${toolName}`);
   // In a real scenario, this would involve creating a database user with limited permissions

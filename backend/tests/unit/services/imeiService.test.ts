@@ -68,7 +68,7 @@ describe('ImeiService', () => {
       expect(mockDefaultQuery).toHaveBeenCalledOnce();
       expect(mockDefaultQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO imei_lifecycle_events'),
-        [payload.imei, payload.event_type, undefined, undefined]
+        [payload.imei, payload.event_type, undefined, undefined],
       );
       expect(result).toEqual(mockEvent);
     });
@@ -84,7 +84,7 @@ describe('ImeiService', () => {
       expect(mockDefaultQuery).toHaveBeenCalledOnce();
       expect(mockDefaultQuery).toHaveBeenCalledWith(
         expect.stringContaining('SELECT * FROM imei_lifecycle_events WHERE imei = $1'),
-        ['123']
+        ['123'],
       );
       expect(result).toEqual(mockHistory);
     });

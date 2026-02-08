@@ -30,8 +30,11 @@ export interface AuditLog {
   entity_type?: string;
   entity_id?: string;
   details?: any;
+  old_values?: any;
+  new_values?: any;
+  ip_address?: string;
+  user_agent?: string;
   timestamp: string;
-  previous_hash?: string;
   hash?: string;
 }
 
@@ -118,7 +121,7 @@ const AuditLogsPage: React.FC = () => {
         </StyledPageTitle>
 
         <Box sx={{ mb: 4, p: 3, bgcolor: 'background.paper', borderRadius: '24px', border: '1px solid', borderColor: 'divider' }}>
-          <Typography variant="overline" fontWeight={900} color="text.secondary" gutterBottom display="block">FILTROS DE BUSCA</Typography>
+          <Typography variant="overline" fontWeight={400} color="text.secondary" gutterBottom display="block">FILTROS DE BUSCA</Typography>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12} sm={6} md={3}>
               <TextField
@@ -211,3 +214,4 @@ const AuditLogsPage: React.FC = () => {
 };
 
 export default AuditLogsPage;
+

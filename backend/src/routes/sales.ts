@@ -3,13 +3,14 @@ import { z } from 'zod';
 
 import { saleService } from '../services/saleService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
-import { ValidationError, AppError } from '../utils/errors.js';
+import { AppError } from '../utils/errors.js';
 import {
   getSalesHistoryController,
   getSaleDetailsController,
 } from '../controllers/salesHistoryController.js';
 
 import { validate } from '../middlewares/validationMiddleware.js';
+import { sendSuccess } from '../utils/responseHelper.js';
 
 const salesRouter = Router();
 
@@ -36,7 +37,9 @@ const paymentSchema = z.object({
 const createSaleSchema = z.object({
   items: z.array(saleItemSchema).min(1, 'Items array cannot be empty'),
   payment_type: z.enum(['cash', 'installment', 'credit_sale', 'mixed', 'pix'], {
-    errorMap: () => ({ message: 'Payment type must be "cash", "installment", "credit_sale", "mixed" or "pix"' }),
+    errorMap: () => ({
+      message: 'Payment type must be "cash", "installment", "credit_sale", "mixed" or "pix"',
+    }),
   }),
   payments: z.array(paymentSchema).min(1, 'At least one payment is required'),
   total_installments: z
@@ -70,7 +73,8 @@ salesRouter.post(
         customerId: req.body.customerId,
         branchId: req.body.branchId,
       });
-      res.status(201).json(newSale);
+      console.log('DEBUG SALES RESPONSE:', JSON.stringify(newSale));
+      return sendSuccess(res, newSale, 201);
     } catch (error) {
       next(error);
     }
@@ -85,24 +89,7 @@ salesRouter.get(
     console.log('Accessing GET /sales route.');
     try {
       const sales = await saleService.getAllSales();
-      res.status(200).json(sales);
-    } catch (error) {
-      next(error);
-    }
-  },
-);
-
-salesRouter.get(
-  '/:id',
-  authMiddleware.authenticate,
-  authMiddleware.authorize('read', 'Sale'),
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const sale = await saleService.getSaleById(parseInt(req.params.id));
-      if (!sale) {
-        throw new AppError('Sale not found', 404);
-      }
-      res.status(200).json(sale);
+      return sendSuccess(res, sales);
     } catch (error) {
       next(error);
     }
@@ -121,6 +108,23 @@ salesRouter.get(
   authMiddleware.authenticate,
   authMiddleware.authorize('read', 'Sale'),
   getSaleDetailsController,
+);
+
+salesRouter.get(
+  '/:id',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('read', 'Sale'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const sale = await saleService.getSaleById(parseInt(req.params.id));
+      if (!sale) {
+        throw new AppError('Sale not found', 404);
+      }
+      return sendSuccess(res, sale);
+    } catch (error) {
+      next(error);
+    }
+  },
 );
 
 export default salesRouter;

@@ -24,7 +24,7 @@ const AverageTicketWidget: React.FC<{ data: any[] }> = ({ data }) => {
                 primary={item.user_name} 
                 secondary={`${item.total_sales} ${t('sales')}`} 
               />
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+              <Typography variant="body1" sx={{ fontWeight: 400 }}>
                 R$ {item.avg_ticket.toFixed(2)}
               </Typography>
             </ListItem>
@@ -36,3 +36,4 @@ const AverageTicketWidget: React.FC<{ data: any[] }> = ({ data }) => {
 };
 
 export default AverageTicketWidget;
+

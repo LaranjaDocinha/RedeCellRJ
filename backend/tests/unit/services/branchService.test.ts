@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { branchService } from '../../../src/services/branchService';
-import pool from '../../../src/db/index';
-import { AppError } from '../../../src/utils/errors';
+import { branchService } from '../../../src/services/branchService.js';
+import pool from '../../../src/db/index.js';
+import { AppError } from '../../../src/utils/errors.js';
 
-vi.mock('../../../src/db/index', () => ({
+vi.mock('../../../src/db/index.js', () => ({
   default: {
     query: vi.fn(),
   },
@@ -12,13 +12,28 @@ vi.mock('../../../src/db/index', () => ({
 describe('BranchService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (pool.query as any).mockReset();
+  });
+
+  describe('getAllBranches', () => {
+    it('should return all branches from db', async () => {
+      vi.mocked(pool.query).mockResolvedValueOnce({ rows: [{ id: 1 }] } as any);
+      const res = await branchService.getAllBranches();
+      expect(res).toHaveLength(1);
+    });
+  });
+
+  describe('getBranchById', () => {
+    it('should return a branch by id', async () => {
+      vi.mocked(pool.query).mockResolvedValueOnce({ rows: [{ id: 1 }] } as any);
+      const res = await branchService.getBranchById(1);
+      expect(res?.id).toBe(1);
+    });
   });
 
   describe('createBranch', () => {
     it('should create branch', async () => {
       const mockBranch = { id: 1, name: 'B1' };
-      (pool.query as any).mockResolvedValue({ rows: [mockBranch] });
+      vi.mocked(pool.query).mockResolvedValueOnce({ rows: [mockBranch] } as any);
 
       const result = await branchService.createBranch({ name: 'B1' });
       expect(result).toEqual(mockBranch);
@@ -27,47 +42,62 @@ describe('BranchService', () => {
     it('should throw AppError on duplicate name', async () => {
       const error: any = new Error('Dup');
       error.code = '23505';
-      (pool.query as any).mockRejectedValue(error);
+      vi.mocked(pool.query).mockRejectedValueOnce(error);
 
       await expect(branchService.createBranch({ name: 'B1' })).rejects.toThrow(AppError);
     });
 
     it('should rethrow other errors', async () => {
-        (pool.query as any).mockRejectedValue(new Error('Other'));
-        await expect(branchService.createBranch({ name: 'B1' })).rejects.toThrow('Other');
+      vi.mocked(pool.query).mockRejectedValueOnce(new Error('Other'));
+      await expect(branchService.createBranch({ name: 'B1' })).rejects.toThrow('Other');
     });
   });
 
   describe('updateBranch', () => {
-    it('should update branch', async () => {
-        const mockBranch = { id: 1, name: 'B1' };
-        const mockUpdatedBranch = { ...mockBranch, name: 'B2' };
-        // Apenas uma chamada ao pool.query (UPDATE) é esperada quando há campos
-        (pool.query as any).mockResolvedValueOnce({ rows: [mockUpdatedBranch] }); 
+    it('should update branch with all fields', async () => {
+      const mockBranch = { id: 1, name: 'B2', address: 'A', phone: 'P', email: 'E' };
+      vi.mocked(pool.query).mockResolvedValueOnce({ rows: [mockBranch] } as any);
 
-        const result = await branchService.updateBranch(1, { name: 'B2' });
-        expect(result).toEqual(mockUpdatedBranch);
-        expect(pool.query).toHaveBeenCalledTimes(1); 
-        expect(pool.query).toHaveBeenCalledWith(
-          expect.stringContaining('UPDATE branches SET name = $1'),
-          expect.arrayContaining(['B2', 1])
-        );
+      const result = await branchService.updateBranch(1, { name: 'B2', address: 'A', phone: 'P', email: 'E' });
+      expect(result).toEqual(mockBranch);
+      expect(pool.query).toHaveBeenCalledWith(
+        expect.stringContaining('name = $1, address = $2, phone = $3, email = $4'),
+        ['B2', 'A', 'P', 'E', 1]
+      );
     });
 
-    it('should return undefined if branch not found', async () => {
-        // UPDATE retorna vazio se ID não existe
-        (pool.query as any).mockResolvedValueOnce({ rows: [] }); 
-        const result = await branchService.updateBranch(1, { name: 'B2' });
-        expect(result).toBeUndefined();
-        expect(pool.query).toHaveBeenCalledTimes(1);
+    it('should throw AppError if update results in duplicate name', async () => {
+      const error: any = new Error('Dup');
+      error.code = '23505';
+      vi.mocked(pool.query).mockRejectedValueOnce(error);
+
+      await expect(branchService.updateBranch(1, { name: 'Exists' })).rejects.toThrow(AppError);
     });
 
-    it('should return existing branch if no fields', async () => {
-        const mockBranch = { id: 1 };
-        (pool.query as any).mockResolvedValue({ rows: [mockBranch] });
-        const result = await branchService.updateBranch(1, {});
-        expect(result).toEqual(mockBranch);
-        expect(pool.query).toHaveBeenCalledTimes(1);
+    it('should return existing branch if no fields provided', async () => {
+      vi.mocked(pool.query).mockResolvedValueOnce({ rows: [{ id: 1, name: 'B1' }] } as any);
+      const result = await branchService.updateBranch(1, {});
+      expect(result?.name).toBe('B1');
+    });
+
+    it('should return undefined if no fields and branch not found', async () => {
+      vi.mocked(pool.query).mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
+      const result = await branchService.updateBranch(1, {});
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('deleteBranch', () => {
+    it('should return true if deleted', async () => {
+      vi.mocked(pool.query).mockResolvedValueOnce({ rowCount: 1 } as any);
+      const result = await branchService.deleteBranch(1);
+      expect(result).toBe(true);
+    });
+
+    it('should return false if not found', async () => {
+      vi.mocked(pool.query).mockResolvedValueOnce({ rowCount: 0 } as any);
+      const result = await branchService.deleteBranch(999);
+      expect(result).toBe(false);
     });
   });
 });

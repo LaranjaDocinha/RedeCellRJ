@@ -6,8 +6,6 @@ import './index.css';
 import './i18n'; // Importar a configuração do i18n
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { GlobalStyle } from './styles/globalStyles';
 
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -50,17 +48,15 @@ root.render(
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <PermissionProvider> {/* Add PermissionProvider */}
-            <ThemeProvider>
-              <SoundProvider>
-                <NotificationProvider>
-                  <AnimationProvider> {/* Add AnimationProvider */}
-                    <CartProvider> {/* Add CartProvider */}
-                      <App />
-                    </CartProvider>
-                  </AnimationProvider>
-                </NotificationProvider>
-              </SoundProvider>
-            </ThemeProvider>
+            <SoundProvider>
+              <NotificationProvider>
+                <AnimationProvider> {/* Add AnimationProvider */}
+                  <CartProvider> {/* Add CartProvider */}
+                    <App />
+                  </CartProvider>
+                </AnimationProvider>
+              </NotificationProvider>
+            </SoundProvider>
           </PermissionProvider>
         </AuthProvider>
       </QueryClientProvider>

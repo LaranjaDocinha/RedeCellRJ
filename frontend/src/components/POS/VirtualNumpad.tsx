@@ -14,7 +14,7 @@ const NumpadContainer = styled.div`
 const DigitButton = styled(Button)`
   height: 60px;
   font-size: 1.5rem !important;
-  font-weight: bold !important;
+  font-weight: 400 !important;
   border-radius: 12px !important;
 `;
 
@@ -50,3 +50,4 @@ const VirtualNumpad: React.FC<VirtualNumpadProps> = ({ onDigit, onBackspace, onC
 };
 
 export default VirtualNumpad;
+

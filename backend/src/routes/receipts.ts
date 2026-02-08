@@ -19,17 +19,24 @@ const sendEmailSchema = z.object({
 });
 
 // Validation Middleware
-const validate = (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
-  try {
-    schema.parse(req.body);
-    next();
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return next(new AppError('Validation failed', 400, error.errors.map(err => ({ path: err.path.join('.'), message: err.message }))));
+const validate =
+  (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
+    try {
+      schema.parse(req.body);
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return next(
+          new AppError(
+            'Validation failed',
+            400,
+            error.errors.map((err) => ({ path: err.path.join('.'), message: err.message })),
+          ),
+        );
+      }
+      next(error);
     }
-    next(error);
-  }
-};
+  };
 
 // Route to get a sale receipt
 receiptsRouter.get(

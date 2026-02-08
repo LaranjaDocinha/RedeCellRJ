@@ -1,5 +1,3 @@
-import { getPool } from '../db/index.js';
-
 export const generateInvoicePdf = async (invoiceId: number) => {
   console.log(`Simulating generating PDF for invoice ${invoiceId}`);
   // In a real scenario, this would generate a PDF document for the invoice.

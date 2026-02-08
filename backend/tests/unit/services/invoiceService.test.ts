@@ -46,7 +46,11 @@ describe('InvoiceService', () => {
 
     mockClientQuery.mockResolvedValue({ rows: [], rowCount: 0 }); // Default mock
     mockClientConnect.mockResolvedValue({ query: mockClientQuery, release: vi.fn() }); // Mocka a conexão
-    mockGetPool.mockReturnValue({ query: mockClientQuery, connect: mockClientConnect, end: vi.fn() }); // Garante que getPool retorne nossa instância mockada
+    mockGetPool.mockReturnValue({
+      query: mockClientQuery,
+      connect: mockClientConnect,
+      end: vi.fn(),
+    }); // Garante que getPool retorne nossa instância mockada
     mockDefaultQuery.mockResolvedValue({ rows: [], rowCount: 0 }); // Default mock para o default pool.query
   });
 

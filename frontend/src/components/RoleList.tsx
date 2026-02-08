@@ -1,4 +1,12 @@
 import React from 'react';
+import { FaEdit, FaTrash, FaShieldAlt } from 'react-icons/fa';
+import {
+  StyledTableContainer,
+  StyledTable,
+  StyledTableHead,
+  StyledTableBody,
+  ActionButton,
+} from './PermissionList.styled'; // Reutilizando estilos de tabela
 
 interface Role {
   id: number;
@@ -12,59 +20,66 @@ interface RoleListProps {
   onManagePermissions: (id: number) => void;
 }
 
-export const RoleList: React.FC<RoleListProps> = ({
+const RoleList: React.FC<RoleListProps> = ({
   roles,
   onEdit,
   onDelete,
   onManagePermissions,
 }) => {
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-        <thead className="bg-gray-800 text-white">
+    <StyledTableContainer
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <StyledTable>
+        <StyledTableHead>
           <tr>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">ID</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Name</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Actions</th>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Actions</th>
           </tr>
-        </thead>
-        <tbody className="text-gray-700">
-          {roles.length === 0 ? (
-            <tr>
-              <td colSpan={3} className="text-center py-4">
-                No roles found.
+        </StyledTableHead>
+        <StyledTableBody>
+          {roles.map((role) => (
+            <tr key={role.id}>
+              <td>{role.id}</td>
+              <td>{role.name}</td>
+              <td>
+                <ActionButton
+                  color="edit"
+                  onClick={() => onManagePermissions(role.id)}
+                  title="Manage Permissions"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <FaShieldAlt />
+                </ActionButton>
+                <ActionButton
+                  color="edit"
+                  onClick={() => onEdit(role.id)}
+                  title="Edit Role"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <FaEdit />
+                </ActionButton>
+                <ActionButton
+                  color="delete"
+                  onClick={() => onDelete(role.id)}
+                  title="Delete Role"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <FaTrash />
+                </ActionButton>
               </td>
             </tr>
-          ) : (
-            roles.map((role) => (
-              <tr key={role.id} className="border-b border-gray-200 hover:bg-gray-100">
-                <td className="py-3 px-4">{role.id}</td>
-                <td className="py-3 px-4">{role.name}</td>
-                <td className="py-3 px-4">
-                  <button
-                    onClick={() => onEdit(role.id)}
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs mr-2"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => onDelete(role.id)}
-                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-xs mr-2"
-                  >
-                    Delete
-                  </button>
-                  <button
-                    onClick={() => onManagePermissions(role.id)}
-                    className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-1 px-2 rounded text-xs"
-                  >
-                    Manage Permissions
-                  </button>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+          ))}
+        </StyledTableBody>
+      </StyledTable>
+    </StyledTableContainer>
   );
 };
+
+export default RoleList;

@@ -1,7 +1,10 @@
 import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
 import Button from '../components/Button';
-import { AppError } from '../../../backend/src/utils/errors'; // Ajuste o caminho conforme necessário
+import { AppError } from '../../../backend/src/utils/errors';
+import { removeBackground } from '../utils/imageUtils';
+import { AutoFixHigh } from '@mui/icons-material';
+import { CircularProgress, Box } from '@mui/material';
 
 const UploadContainer = styled.div`
   display: flex;
@@ -76,6 +79,7 @@ const PhotoUploadComponent: React.FC<PhotoUploadComponentProps> = ({
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [photoType, setPhotoType] = useState<'entry' | 'exit' | 'internal'>('internal');
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -92,6 +96,19 @@ const PhotoUploadComponent: React.FC<PhotoUploadComponentProps> = ({
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
       setError(null);
+    }
+  };
+
+  const handleRemoveBg = async () => {
+    if (!selectedFile) return;
+    setIsRemovingBg(true);
+    try {
+        const resultUrl = await removeBackground(selectedFile);
+        setPreviewUrl(resultUrl);
+    } catch (e) {
+        setError('Falha ao remover fundo.');
+    } finally {
+        setIsRemovingBg(false);
     }
   };
 
@@ -145,11 +162,26 @@ const PhotoUploadComponent: React.FC<PhotoUploadComponentProps> = ({
     <UploadContainer>
       <h3>Upload de Fotos</h3>
       {error && <ErrorMessage>{error}</ErrorMessage>}
-      <PhotoTypeSelect value={photoType} onChange={(e) => setPhotoType(e.target.value as 'entry' | 'exit' | 'internal')} disabled={isLoading}>
-        <option value="internal">Interna (Reparo)</option>
-        <option value="entry">Entrada (Antes)</option>
-        <option value="exit">Saída (Depois)</option>
-      </PhotoTypeSelect>
+      
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <PhotoTypeSelect value={photoType} onChange={(e) => setPhotoType(e.target.value as 'entry' | 'exit' | 'internal')} disabled={isLoading}>
+            <option value="internal">Interna (Reparo)</option>
+            <option value="entry">Entrada (Antes)</option>
+            <option value="exit">Saída (Depois)</option>
+          </PhotoTypeSelect>
+
+          {previewUrl && (
+              <Button 
+                variant="outlined" 
+                onClick={handleRemoveBg} 
+                disabled={isRemovingBg}
+                sx={{ mt: 1, borderRadius: '10px' }}
+              >
+                {isRemovingBg ? <CircularProgress size={20} /> : <><AutoFixHigh sx={{ mr: 1, verticalAlign: 'middle' }} /> Limpar Fundo (IA)</>}
+              </Button>
+          )}
+      </Box>
+
       <FileInputLabel htmlFor={`file-upload-${serviceOrderId}`}>
         {selectedFile ? selectedFile.name : 'Selecionar Imagem'}
       </FileInputLabel>

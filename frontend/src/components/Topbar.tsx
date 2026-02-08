@@ -5,19 +5,20 @@ import { FaSun, FaMoon, FaBars } from 'react-icons/fa';
 import { StyledTopbar, TopbarBtn, TopbarActions } from './Topbar.styled';
 import { useBranding } from '../contexts/BrandingContext'; // Import useBranding
 import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { Link } from 'react-router-dom';
 
 // Import new components
 import UserMenu from './UserMenu';
 import SearchButton from './SearchButton';
-import NotificationsDropdown from './NotificationsDropdown';
+import NotificationCenter from './NotificationCenter';
 import QuickCreateMenu from './QuickCreateMenu';
-import AccessibilityMenu from './AccessibilityMenu';
-import { AccessibilityNew } from '@mui/icons-material';
 
 interface TopbarProps {
   onToggleSidebar: () => void;
   isSidebarOpen: boolean;
-  onSearchClick: () => void; // Callback to open search modal
+  onSearchClick: () => void;
+  onNotificationClick?: () => void;
+  onRestartTour?: () => void;
 }
 
 const iconAnimation = {
@@ -25,11 +26,10 @@ const iconAnimation = {
   whileTap: { scale: 0.9 },
 };
 
-const Topbar = React.forwardRef<HTMLButtonElement, TopbarProps>(({ onToggleSidebar, isSidebarOpen, onSearchClick }, ref) => {
+const Topbar = React.forwardRef<HTMLButtonElement, TopbarProps>(({ onToggleSidebar, isSidebarOpen, onSearchClick, onNotificationClick, onRestartTour }, ref) => {
   const { theme, toggleTheme } = useTheme();
   const { branding } = useBranding(); // Use branding context
   const { t } = useTranslation(); // Use translation hook
-  const [accessibilityOpen, setAccessibilityOpen] = React.useState(false);
 
   return (
     <StyledTopbar>
@@ -49,31 +49,25 @@ const Topbar = React.forwardRef<HTMLButtonElement, TopbarProps>(({ onToggleSideb
             <FaBars />
           </motion.div>
         </TopbarBtn>
-        {branding.logoUrl && (
-          <img src={branding.logoUrl} alt={branding.appName} style={{ height: '30px', marginRight: '8px' }} />
-        )}
-        <h1 style={{ fontSize: '20px', fontWeight: 600, margin: 0 }}>{branding.appName}</h1>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: 'inherit' }}>
+            {branding.logoUrl && (
+            <img src={branding.logoUrl} alt={branding.appName} style={{ height: '30px', marginRight: '8px' }} />
+            )}
+            <h1 style={{ fontSize: '20px', fontWeight: 600, margin: 0, fontFamily: '"Inter", sans-serif', letterSpacing: '-0.5px' }}>{branding.appName}</h1>
+        </Link>
       </div>
 
       <TopbarActions>
         <SearchButton onClick={onSearchClick} />
         <QuickCreateMenu />
-        <NotificationsDropdown />
+        <NotificationCenter />
         
-        <TopbarBtn onClick={() => setAccessibilityOpen(true)} aria-label="Acessibilidade">
-          <motion.div {...iconAnimation}>
-            <AccessibilityNew sx={{ fontSize: 20 }} />
-          </motion.div>
-        </TopbarBtn>
-
         <TopbarBtn onClick={toggleTheme} aria-label={t('toggle_theme')}> {/* Use translation */}
           <motion.div {...iconAnimation}>
             {theme === 'light' ? <FaMoon /> : <FaSun />}
           </motion.div>
         </TopbarBtn>
         <UserMenu />
-
-        <AccessibilityMenu open={accessibilityOpen} onClose={() => setAccessibilityOpen(false)} />
       </TopbarActions>
     </StyledTopbar>
   );

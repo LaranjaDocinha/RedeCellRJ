@@ -29,7 +29,10 @@ describe('AccountingIntegrationController', () => {
 
       mockRequest.body = { data: 'sales data' };
 
-      await accountingIntegrationController.syncSales(mockRequest as Request, mockResponse as Response);
+      await accountingIntegrationController.syncSales(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       expect(accountingIntegrationService.syncSales).toHaveBeenCalledWith(mockRequest.body);
       expect(mockResponse.json).toHaveBeenCalledWith(mockResult);
@@ -42,7 +45,10 @@ describe('AccountingIntegrationController', () => {
 
       mockRequest.body = { data: 'sales data' };
 
-      await accountingIntegrationController.syncSales(mockRequest as Request, mockResponse as Response);
+      await accountingIntegrationController.syncSales(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       expect(accountingIntegrationService.syncSales).toHaveBeenCalledWith(mockRequest.body);
       expect(mockResponse.status).toHaveBeenCalledWith(500);
@@ -57,7 +63,10 @@ describe('AccountingIntegrationController', () => {
 
       mockRequest.body = { data: 'expenses data' };
 
-      await accountingIntegrationController.syncExpenses(mockRequest as Request, mockResponse as Response);
+      await accountingIntegrationController.syncExpenses(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       expect(accountingIntegrationService.syncExpenses).toHaveBeenCalledWith(mockRequest.body);
       expect(mockResponse.json).toHaveBeenCalledWith(mockResult);
@@ -70,7 +79,10 @@ describe('AccountingIntegrationController', () => {
 
       mockRequest.body = { data: 'expenses data' };
 
-      await accountingIntegrationController.syncExpenses(mockRequest as Request, mockResponse as Response);
+      await accountingIntegrationController.syncExpenses(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       expect(accountingIntegrationService.syncExpenses).toHaveBeenCalledWith(mockRequest.body);
       expect(mockResponse.status).toHaveBeenCalledWith(500);
@@ -83,7 +95,10 @@ describe('AccountingIntegrationController', () => {
       const mockStatus = { status: 'active', lastSync: '2025-01-01' };
       (accountingIntegrationService.getIntegrationStatus as any).mockResolvedValue(mockStatus);
 
-      await accountingIntegrationController.getStatus(mockRequest as Request, mockResponse as Response);
+      await accountingIntegrationController.getStatus(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       expect(accountingIntegrationService.getIntegrationStatus).toHaveBeenCalled();
       expect(mockResponse.json).toHaveBeenCalledWith(mockStatus);
@@ -92,9 +107,14 @@ describe('AccountingIntegrationController', () => {
 
     it('should return 500 if getIntegrationStatus service throws an error', async () => {
       const errorMessage = 'Failed to get status';
-      (accountingIntegrationService.getIntegrationStatus as any).mockRejectedValue(new Error(errorMessage));
+      (accountingIntegrationService.getIntegrationStatus as any).mockRejectedValue(
+        new Error(errorMessage),
+      );
 
-      await accountingIntegrationController.getStatus(mockRequest as Request, mockResponse as Response);
+      await accountingIntegrationController.getStatus(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       expect(accountingIntegrationService.getIntegrationStatus).toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(500);

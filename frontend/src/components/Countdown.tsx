@@ -32,10 +32,11 @@ export const Countdown: React.FC<{ targetDate: Date }> = ({ targetDate }) => {
         <Box sx={{display: 'flex', gap: 2, textAlign: 'center'}}>
             {Object.entries(timeLeft).map(([unit, value]) => (
                 <Box key={unit}>
-                    <Typography variant="h4" fontWeight="bold">{String(value).padStart(2, '0')}</Typography>
+                    <Typography variant="h4" fontWeight={400}>{String(value).padStart(2, '0')}</Typography>
                     <Typography variant="caption">{unit.toUpperCase()}</Typography>
                 </Box>
             ))}
         </Box>
     );
 };
+

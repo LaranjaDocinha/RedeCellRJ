@@ -1,21 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as stockTransferService from '../services/stockTransferService.js';
-import { z } from 'zod';
-import { validate } from '../middlewares/validationMiddleware.js'; // Assuming validationMiddleware exists
 import { AppError } from '../utils/errors.js'; // Assuming AppError exists
-
-const requestTransferSchema = z.object({
-  productId: z.number().int().positive('Product ID must be a positive integer'),
-  variationId: z.number().int().positive('Variation ID must be a positive integer'),
-  fromBranchId: z.number().int().positive('From Branch ID must be a positive integer'),
-  toBranchId: z.number().int().positive('To Branch ID must be a positive integer'),
-  quantity: z.number().int().positive('Quantity must be a positive integer'),
-  requestedBy: z.number().int().positive('Requester User ID must be a positive integer'),
-});
-
-const approveRejectTransferSchema = z.object({
-  approvedBy: z.number().int().positive('Approver User ID must be a positive integer'),
-});
 
 export const requestTransfer = async (req: Request, res: Response, next: NextFunction) => {
   try {

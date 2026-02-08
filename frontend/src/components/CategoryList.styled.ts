@@ -21,7 +21,7 @@ export const StyledTableHead = styled(motion.thead)`
   font-family: ${({ theme }) => theme.typography.fontFamily};
   font-size: ${({ theme }) => theme.typography.labelLarge?.fontSize || '14px'};
   line-height: ${({ theme }) => theme.typography.labelLarge?.lineHeight || '20px'};
-  font-weight: ${({ theme }) => theme.typography.labelLarge?.fontWeight || 500};
+  font-weight: ${({ theme }) => theme.typography.labelLarge?.fontWeight || 400};
 
   th {
     padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
@@ -72,3 +72,4 @@ export const ActionButton = styled(motion.button)`
     margin-right: ${({ theme }) => theme.spacing.xs};
   }
 `;
+

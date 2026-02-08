@@ -88,7 +88,7 @@ const RevenueByHourWidget: React.FC<RevenueByHourWidgetProps> = React.memo(({ se
         }}
       >
         <FaClock style={{ fontSize: '4rem', marginBottom: '1rem' }} />
-        <Typography variant="body1" fontWeight="bold">Nenhum dado de receita por hora disponível.</Typography>
+        <Typography variant="body1" fontWeight={400}>Nenhum dado de receita por hora disponível.</Typography>
         <Typography variant="body2" sx={{ mt: 1 }}>
           Registre vendas para ver a receita por hora do dia.
         </Typography>
@@ -170,3 +170,4 @@ const RevenueByHourWidget: React.FC<RevenueByHourWidgetProps> = React.memo(({ se
 });
 
 export default RevenueByHourWidget;
+

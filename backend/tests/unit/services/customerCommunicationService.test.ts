@@ -59,7 +59,15 @@ describe('CustomerCommunicationService', () => {
 
       expect(mockDefaultQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO customer_communications'),
-        [payload.customer_id, payload.user_id, payload.channel, payload.direction, payload.summary, undefined, undefined]
+        [
+          payload.customer_id,
+          payload.user_id,
+          payload.channel,
+          payload.direction,
+          payload.summary,
+          undefined,
+          undefined,
+        ],
       );
       expect(result).toEqual(createdComm);
     });
@@ -74,7 +82,7 @@ describe('CustomerCommunicationService', () => {
 
       expect(mockDefaultQuery).toHaveBeenCalledWith(
         expect.stringContaining('SELECT * FROM customer_communications'),
-        [1]
+        [1],
       );
       expect(result).toEqual(comms);
     });

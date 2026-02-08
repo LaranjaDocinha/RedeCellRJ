@@ -1,44 +1,47 @@
-import pino from 'pino';
+import pino, { Logger } from 'pino';
+import { getLogger as getContextLogger } from './context.js';
 
-// Serializer para erros, para que o stack trace seja incluído nos logs JSON
-export const errorSerializer = (err: any) => {
-  if (err instanceof Error) {
-    return {
-      message: err.message,
-      name: err.name,
-      stack: err.stack,
-      // Adicionar outras propriedades do erro se necessário
-    };
-  }
-  return err;
-};
-
-// Configuração para pino-pretty em desenvolvimento
-const transport = pino.transport({
-  target: 'pino-pretty',
-  options: {
-    colorize: true,
-    translateTime: 'SYS:standard',
-    ignore: 'pid,hostname',
+const pinoLogger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  transport: {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+      translateTime: 'SYS:standard',
+      ignore: 'pid,hostname',
+    },
+  },
+  serializers: {
+    err: pino.stdSerializers.err,
+    error: pino.stdSerializers.err,
   },
 });
 
-export const logger = pino(
-  {
-    level: process.env.LOG_LEVEL || 'info',
-    // Adicionar informações base para o log
-    base: {
-      pid: process.pid,
-      hostname: process.env.HOSTNAME || 'unknown',
-      serviceName: process.env.OTEL_SERVICE_NAME || 'backend-service', // Reutiliza o nome do serviço OTEL
-      environment: process.env.NODE_ENV || 'development',
-    },
-    // Serializadores para formatar objetos específicos no log
-    serializers: {
-      err: errorSerializer,
-      error: errorSerializer,
-    },
+// A simpler way to delegate without full Proxy recursion risk
+const delegate = (method: keyof Logger) => {
+  return (...args: any[]) => {
+    const contextLogger = getContextLogger();
+    // Use context logger if available and it's not our base logger to avoid loops
+    if (contextLogger && typeof contextLogger[method] === 'function') {
+      return (contextLogger[method] as any)(...args);
+    }
+    return (pinoLogger[method] as any)(...args);
+  };
+};
+
+export const logger = {
+  ...pinoLogger, // Keep properties
+  info: delegate('info'),
+  error: delegate('error'),
+  warn: delegate('warn'),
+  debug: delegate('debug'),
+  fatal: delegate('fatal'),
+  trace: delegate('trace'),
+  child: (bindings: pino.Bindings) => {
+    const contextLogger = getContextLogger();
+    if (contextLogger) return contextLogger.child(bindings);
+    return pinoLogger.child(bindings);
   },
-  // Usar pino-pretty apenas em desenvolvimento
-  process.env.NODE_ENV === 'development' ? transport : undefined
-);
+} as unknown as Logger;
+
+export const errorSerializer = pino.stdSerializers.err;

@@ -1,5 +1,3 @@
-import { getPool } from '../db/index.js';
-
 export const syncProductsToWordPress = async (productsData: any) => {
   console.log('Simulating product synchronization to WordPress/WooCommerce:', productsData);
   // In a real scenario, this would involve API calls to WordPress/WooCommerce REST API.

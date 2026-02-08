@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { VitePWA } from 'vite-plugin-pwa';
+import viteCompression from 'vite-plugin-compression';
 
 import path from 'path'; // Import the 'path' module
 
@@ -11,6 +12,7 @@ export default defineConfig({
     react({
       include: ['**/*.tsx', '**/*.ts'],
     }),
+    viteCompression(),
     visualizer({ open: true, filename: 'dist/stats.html' }),
     VitePWA({
       strategies: 'injectManifest',
@@ -62,13 +64,14 @@ export default defineConfig({
     },
   },
   resolve: { // Add resolve configuration
-    alias: {
-      '@utils': path.resolve(__dirname, './src/utils'),
-      stream: 'stream-browserify',
-      events: 'events', // Add events alias
-      assert: 'assert',
-      zlib: 'browserify-zlib',
-    },
+    alias: [
+      { find: '@utils', replacement: path.resolve(__dirname, './src/utils') },
+      { find: 'stream', replacement: 'stream-browserify' },
+      { find: 'events', replacement: 'events' },
+      { find: 'assert', replacement: 'assert' },
+      { find: 'zlib', replacement: 'browserify-zlib' },
+      { find: /.+\.(css|less|scss|sass)$/, replacement: path.resolve(__dirname, './src/__mocks__/styleMock.js') }
+    ],
     mainFields: ['module', 'jsnext:main', 'jsnext', 'main'],
   },
   server: {
@@ -87,16 +90,27 @@ export default defineConfig({
     include: ['axios', 'react-window', 'react-virtualized-auto-sizer'],
     exclude: [],
   },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: './src/setupTests.tsx',
-    testTimeout: 100000,
-    // isolate: true,
-    include: ['**/*.test.tsx', '**/*.test.ts'],
+      test: {
+        globals: true,
+        environment: 'jsdom',
+        setupFiles: './src/setupTests.tsx',
+                    testTimeout: 100000,
+                    css: false,
+                    deps: {
+                        inline: ['styled-components', '@mui/material', 'react-joyride', '@mui/x-data-grid'],
+        },
+        include: ['**/*.test.tsx', '**/*.test.ts'],
+  
     // pool: 'forks',
     esbuild: {
       jsx: 'automatic',
+    },
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      include: ['src/components/**', 'src/pages/**', 'src/contexts/**', 'src/hooks/**', 'src/services/**', 'src/store/**', 'src/utils/**'],
+      exclude: ['src/**/*.test.tsx', 'src/**/*.test.ts', 'src/stories/**', 'src/test-utils/**'],
+      all: true
     },
     server: {
       deps: {

@@ -1,19 +1,4 @@
-import { shopifyApi, ApiVersion } from '@shopify/shopify-api';
-import { restResources } from '@shopify/shopify-api/rest/admin/2023-10'; // Example API version
-import '@shopify/shopify-api/adapters/node';
-
-// Placeholder for Shopify API client initialization
-// In a real app, this would be configured with credentials from .env
-const shopify = shopifyApi({
-  apiKey: process.env.SHOPIFY_API_KEY || 'YOUR_SHOPIFY_API_KEY',
-  apiSecretKey: process.env.SHOPIFY_API_SECRET || 'YOUR_SHOPIFY_API_SECRET',
-  scopes: ['read_products', 'write_products', 'read_orders'],
-  hostName: process.env.SHOPIFY_APP_URL || 'ngrok-tunnel-address', // Replace with your app's URL
-  apiVersion: ApiVersion.October23, // Assuming October23 is the correct enum for '2023-10'
-  isEmbeddedApp: false, // Or true if it's an embedded app
-  restResources,
-});
-
+// Simulated methods for Shopify integration
 export const syncProductToShopify = async (productId: number) => {
   console.log(`Simulating sync for product ${productId} to Shopify.`);
   // 1. Fetch product data from local DB

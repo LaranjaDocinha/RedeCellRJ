@@ -68,7 +68,7 @@ const LockContent = styled(motion.div)`
 const LockTitle = styled.h2`
   font-size: 2rem;
   margin-bottom: 0.5rem;
-  font-weight: 800;
+  font-weight: 400;
   letter-spacing: -1px;
   
   /* Gradient Text Style */
@@ -152,3 +152,4 @@ const LockScreen: React.FC = () => {
 };
 
 export default LockScreen;
+

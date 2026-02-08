@@ -1,8 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import httpStatus from 'http-status';
 import { salesGoalService } from '../services/salesGoalService.js';
 import { catchAsync } from '../utils/catchAsync.js';
-import { AppError } from '../utils/errors.js';
 import { z } from 'zod';
 
 // Zod Schema for branchId validation (if needed, for query params or body)
@@ -14,8 +13,6 @@ export const getSalesGoalSchema = z.object({
     )
     .optional(), // Optional for now, will use user's branch if not provided
 });
-
-
 
 export const getCurrentDailySalesGoal = catchAsync(async (req: Request, res: Response) => {
   // In a real application, branchId would come from the authenticated user's context

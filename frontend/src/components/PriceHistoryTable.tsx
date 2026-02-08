@@ -17,9 +17,9 @@ export const PriceHistoryTable: React.FC<PriceHistoryTableProps> = ({ history })
       <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
         <thead className="bg-gray-800 text-white">
           <tr>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Date</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Old Price</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">New Price</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Date</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Old Price</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">New Price</th>
           </tr>
         </thead>
         <tbody className="text-gray-700">
@@ -43,3 +43,4 @@ export const PriceHistoryTable: React.FC<PriceHistoryTableProps> = ({ history })
     </div>
   );
 };
+

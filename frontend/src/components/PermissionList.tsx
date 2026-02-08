@@ -1,6 +1,5 @@
 import React from 'react';
 import { FaEdit, FaTrash } from 'react-icons/fa';
-import { Permission } from '../pages/PermissionsPage'; // Importar a interface Permission
 import {
   StyledTableContainer,
   StyledTable,
@@ -9,13 +8,18 @@ import {
   ActionButton,
 } from './PermissionList.styled';
 
+interface Permission {
+  id: number;
+  name: string;
+}
+
 interface PermissionListProps {
   permissions: Permission[];
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
 }
 
-export const PermissionList: React.FC<PermissionListProps> = ({
+const PermissionList: React.FC<PermissionListProps> = ({
   permissions,
   onEdit,
   onDelete,
@@ -24,11 +28,12 @@ export const PermissionList: React.FC<PermissionListProps> = ({
     <StyledTableContainer
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.3 }}
+      transition={{ duration: 0.5 }}
     >
       <StyledTable>
         <StyledTableHead>
           <tr>
+            <th>ID</th>
             <th>Name</th>
             <th>Actions</th>
           </tr>
@@ -36,19 +41,24 @@ export const PermissionList: React.FC<PermissionListProps> = ({
         <StyledTableBody>
           {permissions.map((permission) => (
             <tr key={permission.id}>
+              <td>{permission.id}</td>
               <td>{permission.name}</td>
               <td>
                 <ActionButton
-                  onClick={() => onEdit(permission.id)}
                   color="edit"
-                  aria-label={`Edit ${permission.name}`}
+                  onClick={() => onEdit(permission.id)}
+                  title="Edit Permission"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                 >
                   <FaEdit />
                 </ActionButton>
                 <ActionButton
-                  onClick={() => onDelete(permission.id)}
                   color="delete"
-                  aria-label={`Delete ${permission.name}`}
+                  onClick={() => onDelete(permission.id)}
+                  title="Delete Permission"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                 >
                   <FaTrash />
                 </ActionButton>
@@ -60,3 +70,5 @@ export const PermissionList: React.FC<PermissionListProps> = ({
     </StyledTableContainer>
   );
 };
+
+export default PermissionList;

@@ -89,7 +89,7 @@ const AbandonedCartsWidget: React.FC<AbandonedCartsWidgetProps> = React.memo(({ 
         }}
       >
         <FaShoppingCart style={{ fontSize: '4rem', marginBottom: '1rem' }} />
-        <Typography variant="body1" fontWeight="bold">Nenhum carrinho abandonado encontrado.</Typography>
+        <Typography variant="body1" fontWeight={400}>Nenhum carrinho abandonado encontrado.</Typography>
         <Typography variant="body2" sx={{ mt: 1 }}>
           Otimize seu checkout para reduzir abandonos!
         </Typography>
@@ -112,7 +112,7 @@ const AbandonedCartsWidget: React.FC<AbandonedCartsWidgetProps> = React.memo(({ 
         textAlign: 'center',
       }}
     >
-      <Typography variant="h3" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
+      <Typography variant="h3" component="div" sx={{ fontWeight: 400, mb: 1 }}>
         {data.totalAbandonedCarts} Carrinhos
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
@@ -126,3 +126,5 @@ const AbandonedCartsWidget: React.FC<AbandonedCartsWidgetProps> = React.memo(({ 
 });
 
 export default AbandonedCartsWidget;
+
+

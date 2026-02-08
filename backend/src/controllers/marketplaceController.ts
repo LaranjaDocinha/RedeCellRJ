@@ -3,7 +3,9 @@ import { getPool } from '../db/index.js';
 
 export const getIntegrations = async (req: Request, res: Response) => {
   try {
-    const result = await getPool().query('SELECT id, platform, shop_id, is_active, last_synced_at FROM marketplace_integrations');
+    const result = await getPool().query(
+      'SELECT id, platform, shop_id, is_active, last_synced_at FROM marketplace_integrations',
+    );
     res.json(result.rows);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -38,7 +40,7 @@ export const toggleIntegration = async (req: Request, res: Response) => {
   try {
     const result = await getPool().query(
       'UPDATE marketplace_integrations SET is_active = $1 WHERE id = $2 RETURNING id, is_active',
-      [is_active, id]
+      [is_active, id],
     );
     res.json(result.rows[0]);
   } catch (error: any) {

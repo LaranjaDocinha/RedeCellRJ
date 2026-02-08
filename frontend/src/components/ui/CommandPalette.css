@@ -1,0 +1,120 @@
+[cmdk-root] {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  max-width: 640px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  font-family: var(--font-family);
+  z-index: 9999;
+  animation: cmkd-fade-in 0.2s ease;
+}
+
+.dark [cmdk-root] {
+  background: rgba(20, 20, 20, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+[cmdk-input] {
+  font-family: var(--font-family);
+  border: none;
+  width: 100%;
+  font-size: 18px;
+  padding: 16px;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  margin-bottom: 8px;
+}
+
+.dark [cmdk-input] {
+  color: #fff;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+[cmdk-item] {
+  content-visibility: auto;
+  cursor: pointer;
+  height: 48px;
+  border-radius: 8px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  color: var(--text-secondary);
+  user-select: none;
+  will-change: background, color;
+  transition: all 0.1s ease;
+}
+
+[cmdk-item][data-selected='true'] {
+  background: var(--primary-color);
+  color: #fff;
+  font-weight: 500;
+}
+
+[cmdk-item][data-disabled='true'] {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+[cmdk-group-heading] {
+  user-select: none;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  padding: 8px 8px 8px 16px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+[cmdk-empty] {
+  font-size: 14px;
+  margin: 32px;
+  text-align: center;
+  color: var(--text-tertiary);
+}
+
+[cmdk-kbd] {
+  font-family: monospace;
+  background: rgba(0,0,0,0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-left: auto;
+}
+
+.dark [cmdk-kbd] {
+  background: rgba(255,255,255,0.1);
+}
+
+@keyframes cmkd-fade-in {
+  0% { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Scrollbar invisível mas funcional */
+[cmdk-list] {
+  max-height: 400px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  transition: 100ms ease;
+  scroll-behavior: smooth;
+}
+
+[cmdk-list]::-webkit-scrollbar {
+  display: none;
+}

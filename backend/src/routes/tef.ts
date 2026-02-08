@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import * as tefController from '../controllers/tefController.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { z } from 'zod';
-import { AppError, ValidationError } from '../utils/errors.js';
+import { ValidationError } from '../utils/errors.js';
 
 const tefRouter = Router();
 

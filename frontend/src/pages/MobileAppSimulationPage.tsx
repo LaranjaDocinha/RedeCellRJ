@@ -78,7 +78,7 @@ const MobileAppSimulationPage: React.FC = () => {
     <Box p={4} sx={{ maxWidth: 1400, margin: '0 auto' }}>
       <Box mb={6} display="flex" justifyContent="space-between" alignItems="flex-end">
         <Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
+          <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px' }}>
             Simulador PWA
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -86,12 +86,12 @@ const MobileAppSimulationPage: React.FC = () => {
           </Typography>
         </Box>
         <Stack direction="row" spacing={2}>
-          <Button variant="outlined" startIcon={<ResetIcon />} onClick={() => setAppLogs([])} sx={{ borderRadius: '12px', fontWeight: 700 }}>Limpar Console</Button>
+          <Button variant="outlined" startIcon={<ResetIcon />} onClick={() => setAppLogs([])} sx={{ borderRadius: '12px', fontWeight: 400 }}>Limpar Console</Button>
           <Button 
             variant="contained" 
             startIcon={<PlayIcon />} 
             onClick={handleSyncMobileData}
-            sx={{ borderRadius: '12px', px: 3, fontWeight: 800, boxShadow: '0 10px 20px rgba(25, 118, 210, 0.2)' }}
+            sx={{ borderRadius: '12px', px: 3, fontWeight: 400, boxShadow: '0 10px 20px rgba(25, 118, 210, 0.2)' }}
           >
             Forçar Sync
           </Button>
@@ -115,7 +115,7 @@ const MobileAppSimulationPage: React.FC = () => {
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ height: '100%', backgroundColor: '#fff', display: 'flex', flexDirection: 'column' }}>
                     {/* Status Bar */}
                     <Box sx={{ height: 40, bgcolor: 'primary.main', display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 3, pt: 1, color: 'white' }}>
-                      <Typography variant="caption" fontWeight={900}>09:41</Typography>
+                      <Typography variant="caption" fontWeight={400}>09:41</Typography>
                       <Stack direction="row" spacing={0.5}>
                         <SignalIcon sx={{ fontSize: 14 }} />
                         <WifiIcon sx={{ fontSize: 14 }} />
@@ -126,19 +126,19 @@ const MobileAppSimulationPage: React.FC = () => {
                     <Box p={2} sx={{ flexGrow: 1, overflowY: 'auto' }}>
                       <Box display="flex" alignItems="center" gap={1} mb={3}>
                         <Avatar sx={{ bgcolor: 'primary.main', width: 24, height: 24, fontSize: '0.7rem' }}>RC</Avatar>
-                        <Typography variant="body2" fontWeight={900} color="primary.main">REDECELL PDV</Typography>
+                        <Typography variant="body2" fontWeight={400} color="primary.main">REDECELL PDV</Typography>
                       </Box>
                       
                       <Paper sx={{ p: 2, borderRadius: '16px', bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider', mb: 2 }}>
-                        <Typography variant="caption" fontWeight={800} color="text.secondary">VENDA RÁPIDA</Typography>
-                        <Typography variant="h6" fontWeight={900}>R$ 0,00</Typography>
+                        <Typography variant="caption" fontWeight={400} color="text.secondary">VENDA RÁPIDA</Typography>
+                        <Typography variant="h6" fontWeight={400}>R$ 0,00</Typography>
                       </Paper>
 
-                      <Typography variant="caption" fontWeight={800} sx={{ mb: 1, display: 'block' }}>REPAROS AGENDADOS</Typography>
+                      <Typography variant="caption" fontWeight={400} sx={{ mb: 1, display: 'block' }}>REPAROS AGENDADOS</Typography>
                       <Stack spacing={1}>
                         {[1, 2].map(i => (
                           <Paper key={i} sx={{ p: 1.5, borderRadius: '12px', border: '1px solid', borderColor: 'divider' }}>
-                            <Typography variant="caption" fontWeight={700}>#{440+i} - iPhone 13</Typography>
+                            <Typography variant="caption" fontWeight={400}>#{440+i} - iPhone 13</Typography>
                             <Typography variant="caption" display="block" color="text.secondary">Tela Quebrada</Typography>
                           </Paper>
                         ))}
@@ -168,31 +168,31 @@ const MobileAppSimulationPage: React.FC = () => {
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
               <Paper sx={{ p: 3, borderRadius: '24px', border: '1px solid', borderColor: 'divider' }}>
-                <Typography variant="h6" fontWeight={800} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="h6" fontWeight={400} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <SyncIcon color="primary" /> Estado de Sincronização
                 </Typography>
                 <Box mt={3} display="flex" flexDirection="column" gap={2}>
                   <Box display="flex" justifyContent="space-between">
                     <Typography variant="body2" color="text.secondary">Status Global</Typography>
-                    <Chip size="small" label={appStatus.status.toUpperCase()} color="success" sx={{ fontWeight: 900, borderRadius: '6px' }} />
+                    <Chip size="small" label={appStatus.status.toUpperCase()} color="success" sx={{ fontWeight: 400, borderRadius: '6px' }} />
                   </Box>
                   <Box display="flex" justifyContent="space-between">
                     <Typography variant="body2" color="text.secondary">Versão Local</Typography>
-                    <Typography variant="body2" fontWeight={700}>v{appStatus.appVersion}</Typography>
+                    <Typography variant="body2" fontWeight={400}>v{appStatus.appVersion}</Typography>
                   </Box>
                   <Box display="flex" justifyContent="space-between">
                     <Typography variant="body2" color="text.secondary">Última Sync</Typography>
-                    <Typography variant="body2" fontWeight={700}>{moment(appStatus.lastSync).fromNow()}</Typography>
+                    <Typography variant="body2" fontWeight={400}>{moment(appStatus.lastSync).fromNow()}</Typography>
                   </Box>
                 </Box>
                 <Divider sx={{ my: 2 }} />
-                <Button fullWidth variant="contained" onClick={handleFetchOfflineData} sx={{ borderRadius: '10px', py: 1, fontWeight: 700 }}>Atualizar Cache Offline</Button>
+                <Button fullWidth variant="contained" onClick={handleFetchOfflineData} sx={{ borderRadius: '10px', py: 1, fontWeight: 400 }}>Atualizar Cache Offline</Button>
               </Paper>
             </Grid>
 
             <Grid item xs={12} sm={6}>
               <Paper sx={{ p: 3, borderRadius: '24px', bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider', height: '100%' }}>
-                <Typography variant="h6" fontWeight={800} gutterBottom>Configurações de Teste</Typography>
+                <Typography variant="h6" fontWeight={400} gutterBottom>Configurações de Teste</Typography>
                 <TextField
                   fullWidth
                   label="Simular User ID"
@@ -212,7 +212,7 @@ const MobileAppSimulationPage: React.FC = () => {
               <Paper sx={{ p: 3, borderRadius: '24px', bgcolor: '#1e1e1e', color: '#d4d4d4', position: 'relative' }}>
                 <Box display="flex" alignItems="center" gap={1} mb={2}>
                   <ConsoleIcon sx={{ color: '#4caf50' }} />
-                  <Typography variant="subtitle2" fontWeight={800} sx={{ color: '#fff' }}>Debug Console</Typography>
+                  <Typography variant="subtitle2" fontWeight={400} sx={{ color: '#fff' }}>Debug Console</Typography>
                 </Box>
                 <Box sx={{ height: 250, overflowY: 'auto', fontFamily: 'monospace', fontSize: '0.8rem' }}>
                   <AnimatePresence>

@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { syncProductToShopify, pullOrdersFromShopify } from '../../../src/services/ecommerceService';
+import {
+  syncProductToShopify,
+  pullOrdersFromShopify,
+} from '../../../src/services/ecommerceService';
 import * as shopifyApiModule from '@shopify/shopify-api';
 
 // Mock Fetch API

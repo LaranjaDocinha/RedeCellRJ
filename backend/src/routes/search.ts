@@ -18,7 +18,6 @@ const suggestionsQuerySchema = z.object({
   entityType: z.enum(['products', 'customers', 'all']).optional(), // Adicionado entityType
 });
 
-
 // Validation Middleware for query parameters
 const validateQuery =
   (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {

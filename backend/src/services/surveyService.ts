@@ -33,11 +33,12 @@ export const surveyService = {
     try {
       const result = await pool.query(
         'INSERT INTO satisfaction_surveys (sale_id, customer_id, sent_at) VALUES ($1, $2, $3) RETURNING *',
-        [sale_id, customer_id, sent_at]
+        [sale_id, customer_id, sent_at],
       );
       return result.rows[0];
     } catch (error: any) {
-      if (error.code === '23505') { // Unique violation on sale_id
+      if (error.code === '23505') {
+        // Unique violation on sale_id
         throw new AppError('A survey for this sale already exists.', 409);
       }
       throw new AppError('Failed to create survey.', 500);
@@ -57,7 +58,7 @@ export const surveyService = {
 
     const result = await pool.query(
       'UPDATE satisfaction_surveys SET score = $1, comments = $2, sentiment_score = $3, sentiment_label = $4, completed_at = NOW() WHERE id = $5 RETURNING *',
-      [score, comments, sentimentScore, sentimentLabel, surveyId]
+      [score, comments, sentimentScore, sentimentLabel, surveyId],
     );
     if (result.rows.length === 0) {
       throw new AppError('Survey not found.', 404);
@@ -70,12 +71,22 @@ export const surveyService = {
     return result.rows[0];
   },
 
-  async schedulePostSaleSurvey(saleId: number, customerId: string, customerEmail: string, delayDays: number = 3): Promise<void> {
+  async schedulePostSaleSurvey(
+    saleId: number,
+    customerId: string,
+    customerEmail: string,
+    delayDays: number = 3,
+  ): Promise<void> {
     const scheduledAt = new Date();
     scheduledAt.setDate(scheduledAt.getDate() + delayDays);
 
     // Add job to BullMQ queue
-    await addJob(defaultQueue, 'sendSurveyEmail', { saleId, customerId, customerEmail, delayDays }, { delay: delayDays * 24 * 60 * 60 * 1000 });
+    await addJob(
+      defaultQueue,
+      'sendSurveyEmail',
+      { saleId, customerId, customerEmail, delayDays },
+      { delay: delayDays * 24 * 60 * 60 * 1000 },
+    );
     console.log(`Scheduled survey for sale ${saleId} to be sent in ${delayDays} days.`);
   },
 
@@ -83,7 +94,7 @@ export const surveyService = {
     try {
       // Create survey entry in DB first
       const survey = await this.createSurvey({ sale_id: saleId, customer_id: customerId });
-      
+
       const surveyLink = `${process.env.FRONTEND_URL}/survey/${survey.id}`; // Assuming a frontend survey page
       const subject = 'Sua opinião é importante! Avalie sua compra na RedecellRJ';
       const body = `Olá!\n\nGostaríamos muito de saber sobre sua experiência de compra (Pedido #${saleId}) na RedecellRJ. Por favor, reserve um momento para avaliar-nos:\n\n${surveyLink}\n\nObrigado!`;

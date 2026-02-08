@@ -19,7 +19,7 @@ dashboardRouter.get(
         salesperson: salesperson as string,
         product: product as string,
         region: region as string,
-        comparePeriod: 'previousPeriod'
+        comparePeriod: 'previousPeriod',
       };
 
       // PERFORMANCE: Executa todas as buscas em paralelo no banco de dados
@@ -31,7 +31,9 @@ dashboardRouter.get(
         slowMovingProducts,
         salesForecast,
         averageTicketBySalesperson,
-        salesHeatmap
+        salesHeatmap,
+        stockABC,
+        hourlySales,
       ] = await Promise.all([
         dashboardService.getTotalSalesAmount(filters),
         dashboardService.getSalesByMonth(filters),
@@ -40,7 +42,9 @@ dashboardRouter.get(
         dashboardService.getSlowMovingProducts(filters),
         dashboardService.getSalesForecast(filters),
         dashboardService.getAverageTicketBySalesperson(filters),
-        dashboardService.getSalesHeatmapData(filters)
+        dashboardService.getSalesHeatmapData(filters),
+        dashboardService.getStockABC(),
+        dashboardService.getHourlySalesData(filters),
       ]);
 
       res.status(200).json({
@@ -52,6 +56,8 @@ dashboardRouter.get(
         salesForecast,
         averageTicketBySalesperson,
         salesHeatmap,
+        stockABC,
+        hourlySales,
       });
     } catch (error) {
       console.error('[Dashboard Error]:', error);

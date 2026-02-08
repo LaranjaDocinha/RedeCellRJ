@@ -120,7 +120,7 @@ const LeadProfilePage: React.FC = () => {
       <Button 
         onClick={() => navigate('/leads')} 
         startIcon={<ArrowBackIcon />} 
-        sx={{ mb: 3, textTransform: 'none', fontWeight: 600 }}
+        sx={{ mb: 3, textTransform: 'none', fontWeight: 400 }}
       >
         Voltar para a Gestão de Leads
       </Button>
@@ -133,7 +133,7 @@ const LeadProfilePage: React.FC = () => {
             </Avatar>
           </Grid>
           <Grid item xs>
-            <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700 }}>
+            <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 400 }}>
               {lead.name}
             </Typography>
             <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
@@ -148,7 +148,7 @@ const LeadProfilePage: React.FC = () => {
         <Divider sx={{ my: 3 }} />
         <Grid container spacing={4}>
           <Grid item xs={12} md={6}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 400 }}>
               Informações Detalhadas
             </Typography>
             <List dense>
@@ -175,7 +175,7 @@ const LeadProfilePage: React.FC = () => {
       <Grid container spacing={4}>
         <Grid item xs={12} md={7}>
           <Paper sx={{ p: 3, borderRadius: '16px', boxShadow: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 400 }}>
               Timeline de Atividades
             </Typography>
             <List>
@@ -211,7 +211,7 @@ const LeadProfilePage: React.FC = () => {
         </Grid>
         <Grid item xs={12} md={5}>
           <Paper sx={{ p: 3, borderRadius: '16px', boxShadow: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 400 }}>
               Negócios Associados
             </Typography>
             <List>
@@ -233,3 +233,4 @@ const LeadProfilePage: React.FC = () => {
 };
 
 export default LeadProfilePage;
+

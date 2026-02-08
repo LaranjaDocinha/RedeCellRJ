@@ -1,12 +1,12 @@
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import { motion } from 'framer-motion';
 
 const shimmer = keyframes`
   0% {
-    background-position: -1000px 0;
+    transform: translateX(-100%);
   }
   100% {
-    background-position: 1000px 0;
+    transform: translateX(100%);
   }
 `;
 
@@ -17,32 +17,46 @@ interface StyledSkeletonLoaderProps {
 }
 
 export const StyledSkeletonLoader = styled(motion.div)<StyledSkeletonLoaderProps>`
-  background-color: ${({ theme }) => theme.colors.onSurface}1A; // Light gray for skeleton
-  background-image: linear-gradient(
-    to right,
-    ${({ theme }) => theme.colors.onSurface}1A 0%,
-    ${({ theme }) => theme.colors.onSurface}33 20%,
-    ${({ theme }) => theme.colors.onSurface}1A 40%
-  );
-  background-repeat: no-repeat;
-  background-size: 1000px 100%;
-  animation: ${shimmer} 1.5s infinite linear;
-  border-radius: 4px;
+  background-color: ${({ theme }) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)'};
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  border-radius: ${({ theme }) => theme.borderRadius.medium}; // Modern rounding
+
+  // The Shimmer Effect Overlay
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0,
+      ${({ theme }) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.4)'} 20%,
+      ${({ theme }) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.7)'} 60%,
+      rgba(255, 255, 255, 0)
+    );
+    animation: ${shimmer} 2s infinite cubic-bezier(0.4, 0.0, 0.2, 1); // Natural ease
+  }
 
   ${({ variant }) =>
     variant === 'text' &&
     css`
-      height: 1em;
+      height: 1.2em; // Matches updated Airy line-height
       width: 100%;
-      margin-bottom: 0.5em;
+      margin-bottom: 0.8em;
+      border-radius: 6px;
     `}
 
   ${({ variant }) =>
     variant === 'circle' &&
     css`
       border-radius: 50%;
-      width: 50px;
-      height: 50px;
+      width: 48px;
+      height: 48px;
     `}
 
   ${({ width }) => width && `width: ${width};`}

@@ -5,7 +5,7 @@ import { marketingAutomationService } from '../services/marketingAutomationServi
 const marketingAutomationJob = cron.schedule('* * * * *', async () => {
   console.log('Running marketing automation job...');
   try {
-    await marketingAutomationService.processPendingRuns();
+    await marketingAutomationService.runReengagementCampaign();
     console.log('Marketing automation job completed successfully.');
   } catch (error) {
     console.error('Error during scheduled marketing automation job:', error);

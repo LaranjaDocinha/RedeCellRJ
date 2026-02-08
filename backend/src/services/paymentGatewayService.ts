@@ -1,6 +1,5 @@
 import pool from '../db/index.js';
 import { AppError, NotFoundError } from '../utils/errors.js';
-import axios from 'axios';
 
 interface PaymentGateway {
   id: number;
@@ -33,7 +32,10 @@ export const paymentGatewayService = {
   },
 
   async getActiveGatewaysByType(type: string): Promise<PaymentGateway[]> {
-    const result = await pool.query('SELECT * FROM payment_gateways WHERE type = $1 AND is_active = TRUE', [type]);
+    const result = await pool.query(
+      'SELECT * FROM payment_gateways WHERE type = $1 AND is_active = TRUE',
+      [type],
+    );
     return result.rows;
   },
 
@@ -46,7 +48,8 @@ export const paymentGatewayService = {
       );
       return result.rows[0];
     } catch (error: any) {
-      if (error.code === '23505') { // Unique violation
+      if (error.code === '23505') {
+        // Unique violation
         throw new AppError(`Payment gateway with name ${name} already exists.`, 409);
       }
       throw new AppError('Failed to create payment gateway.', 500);
@@ -115,15 +118,36 @@ export const paymentGatewayService = {
       // Simulate API call to a credit card processor
       const mockTransactionId = `CC-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
       // Simulate success/failure based on card number or other data
-      if (paymentData.cardNumber && paymentData.cardNumber.startsWith('4')) { // Visa success mock
-        return { success: true, transactionId: mockTransactionId, status: 'approved', gatewayResponse: { /* ... */ } };
+      if (paymentData.cardNumber && paymentData.cardNumber.startsWith('4')) {
+        // Visa success mock
+        return {
+          success: true,
+          transactionId: mockTransactionId,
+          status: 'approved',
+          gatewayResponse: {
+            /* ... */
+          },
+        };
       } else {
-        return { success: false, transactionId: mockTransactionId, status: 'denied', gatewayResponse: { /* ... */ } };
+        return {
+          success: false,
+          transactionId: mockTransactionId,
+          status: 'denied',
+          gatewayResponse: {
+            /* ... */
+          },
+        };
       }
     } else if (gateway.type === 'pix') {
       // Simulate PIX API
       const mockPixId = `PIX-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
-      return { success: true, transactionId: mockPixId, status: 'pending', qrCode: 'mock_qr_code_base64', copyPaste: 'mock_pix_copy_paste' };
+      return {
+        success: true,
+        transactionId: mockPixId,
+        status: 'pending',
+        qrCode: 'mock_qr_code_base64',
+        copyPaste: 'mock_pix_copy_paste',
+      };
     } else {
       return { success: false, message: `Unsupported payment gateway type: ${gateway.type}` };
     }

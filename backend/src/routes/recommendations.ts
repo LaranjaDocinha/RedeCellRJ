@@ -28,7 +28,9 @@ router.get('/customer/:customerId/personalized-recommendations', async (req, res
     const recommendations = await recommendationService.getPersonalizedRecommendations(customerId);
     res.json(recommendations);
   } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Error getting personalized recommendations' });
+    res
+      .status(500)
+      .json({ message: error.message || 'Error getting personalized recommendations' });
   }
 });
 
@@ -36,7 +38,7 @@ router.post('/cart-upsell', async (req, res) => {
   try {
     const { productIds } = req.body;
     if (!Array.isArray(productIds)) {
-        return res.status(400).json({ message: 'productIds must be an array' });
+      return res.status(400).json({ message: 'productIds must be an array' });
     }
     const recommendations = await recommendationService.getCartUpsellRecommendations(productIds);
     res.json(recommendations);
@@ -51,10 +53,15 @@ router.post('/collaborative', async (req, res) => {
     if (!Array.isArray(customerHistoryProductIds)) {
       return res.status(400).json({ message: 'customerHistoryProductIds must be an array' });
     }
-    const recommendations = await recommendationService.getCollaborativeRecommendations(customerHistoryProductIds, excludeProductIds);
+    const recommendations = await recommendationService.getCollaborativeRecommendations(
+      customerHistoryProductIds,
+      excludeProductIds,
+    );
     res.json(recommendations);
   } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Error getting collaborative recommendations' });
+    res
+      .status(500)
+      .json({ message: error.message || 'Error getting collaborative recommendations' });
   }
 });
 

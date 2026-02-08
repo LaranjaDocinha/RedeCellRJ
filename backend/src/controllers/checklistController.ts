@@ -9,10 +9,12 @@ export const createChecklistTemplateSchema = z.object({
   entity_type: z.enum(['service_order', 'product', 'customer']).default('service_order'),
 });
 
-export const updateChecklistTemplateSchema = z.object({
-  name: z.string().min(1, 'Template name is required'),
-  description: z.string().optional(),
-}).partial();
+export const updateChecklistTemplateSchema = z
+  .object({
+    name: z.string().min(1, 'Template name is required'),
+    description: z.string().optional(),
+  })
+  .partial();
 
 export const createChecklistTemplateItemSchema = z.object({
   label: z.string().min(1, 'Item label is required'),
@@ -22,14 +24,15 @@ export const createChecklistTemplateItemSchema = z.object({
   order_index: z.number().int().min(0).default(0),
 });
 
-export const updateChecklistTemplateItemSchema = z.object({
-  label: z.string().min(1, 'Item label is required'),
-  description: z.string().optional(),
-  item_type: z.enum(['checkbox', 'text', 'photo', 'signature']),
-  is_required: z.boolean(),
-  order_index: z.number().int().min(0),
-}).partial();
-
+export const updateChecklistTemplateItemSchema = z
+  .object({
+    label: z.string().min(1, 'Item label is required'),
+    description: z.string().optional(),
+    item_type: z.enum(['checkbox', 'text', 'photo', 'signature']),
+    is_required: z.boolean(),
+    order_index: z.number().int().min(0),
+  })
+  .partial();
 
 export const getTemplate = async (req: Request, res: Response) => {
   try {

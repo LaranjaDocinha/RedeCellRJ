@@ -39,7 +39,7 @@ export const InstallmentCalculator: React.FC<InstallmentCalculatorProps> = ({
 
   return (
     <Box>
-        <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Opções de Parcelamento</Typography>
+        <Typography variant="subtitle1" fontWeight={400} gutterBottom>Opções de Parcelamento</Typography>
         <TableContainer component={Paper} variant="outlined">
             <Table size="small">
                 <TableBody>

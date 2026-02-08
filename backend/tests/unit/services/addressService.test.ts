@@ -36,7 +36,7 @@ describe('AddressService', () => {
 
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO customer_addresses'),
-        [1, ...Object.values(addressData)]
+        [1, ...Object.values(addressData)],
       );
       expect(result).toEqual(mockAddress);
     });
@@ -61,7 +61,7 @@ describe('AddressService', () => {
 
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE customer_addresses SET'),
-        [...Object.values(addressData), 1]
+        [...Object.values(addressData), 1],
       );
       expect(result).toEqual(mockAddress);
     });
@@ -76,7 +76,7 @@ describe('AddressService', () => {
 
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('DELETE FROM customer_addresses'),
-        [1]
+        [1],
       );
       expect(result).toEqual(mockAddress);
     });
@@ -91,7 +91,7 @@ describe('AddressService', () => {
 
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('SELECT * FROM customer_addresses'),
-        [1]
+        [1],
       );
       expect(result).toEqual(mockAddresses);
     });

@@ -105,18 +105,18 @@ const BiIntegrationPage: React.FC = () => {
             <Box sx={{ p: 1, bgcolor: '#ff9800', borderRadius: '10px', color: 'white', display: 'flex' }}>
               <BIIcon />
             </Box>
-            <Typography variant="overline" sx={{ fontWeight: 800, color: '#ff9800', letterSpacing: 2 }}>
+            <Typography variant="overline" sx={{ fontWeight: 400, color: '#ff9800', letterSpacing: 2 }}>
               DATA WAREHOUSE & ANALYTICS
             </Typography>
           </Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
+          <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px' }}>
             Business Intelligence
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
             Conecte suas ferramentas de análise favoritas diretamente ao nosso Data Lake seguro.
           </Typography>
         </Box>
-        <Chip icon={<LockIcon />} label="END-TO-END ENCRYPTED" color="primary" sx={{ fontWeight: 900, borderRadius: '8px', px: 1 }} />
+        <Chip icon={<LockIcon />} label="END-TO-END ENCRYPTED" color="primary" sx={{ fontWeight: 400, borderRadius: '8px', px: 1 }} />
       </Box>
 
       <Grid container spacing={4}>
@@ -124,7 +124,7 @@ const BiIntegrationPage: React.FC = () => {
         <Grid size={{ xs: 12, lg: 7 }}>
           <Stack spacing={3}>
             <Paper sx={{ p: 4, borderRadius: '32px', border: '1px solid', borderColor: 'divider' }}>
-              <Typography variant="h6" fontWeight={800} mb={4}>Conectar Nova Ferramenta</Typography>
+              <Typography variant="h6" fontWeight={400} mb={4}>Conectar Nova Ferramenta</Typography>
               
               <Grid container spacing={2} sx={{ mb: 4 }}>
                 {biTools.map(tool => (
@@ -140,7 +140,7 @@ const BiIntegrationPage: React.FC = () => {
                       }}
                     >
                       <CardActionArea onClick={() => setSelectedBiTool(tool.name)} sx={{ p: 2, textAlign: 'center' }}>
-                        <Typography variant="subtitle2" fontWeight={800}>{tool.name}</Typography>
+                        <Typography variant="subtitle2" fontWeight={400}>{tool.name}</Typography>
                         <Typography variant="caption" color="text.secondary">{tool.provider}</Typography>
                       </CardActionArea>
                     </Card>
@@ -154,7 +154,7 @@ const BiIntegrationPage: React.FC = () => {
                 size="large"
                 startIcon={<KeyIcon />}
                 onClick={handleGenerateCredentials}
-                sx={{ borderRadius: '16px', py: 2, fontWeight: 800, bgcolor: 'text.primary', color: 'background.paper', '&:hover': { bgcolor: 'text.secondary' } }}
+                sx={{ borderRadius: '16px', py: 2, fontWeight: 400, bgcolor: 'text.primary', color: 'background.paper', '&:hover': { bgcolor: 'text.secondary' } }}
               >
                 GERAR CREDENCIAIS DE ACESSO
               </Button>
@@ -163,7 +163,7 @@ const BiIntegrationPage: React.FC = () => {
                 {generatedCredentials && (
                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} mt={4}>
                     <Box sx={{ mt: 4, p: 3, borderRadius: '24px', bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider' }}>
-                      <Typography variant="subtitle2" fontWeight={800} mb={3} display="flex" alignItems="center" gap={1}>
+                      <Typography variant="subtitle2" fontWeight={400} mb={3} display="flex" alignItems="center" gap={1}>
                         <LockIcon sx={{ fontSize: 18 }} /> Credenciais Seguras (PostgreSQL)
                       </Typography>
                       <Grid container spacing={2}>
@@ -172,7 +172,7 @@ const BiIntegrationPage: React.FC = () => {
                         <Grid size={{ xs: 12, sm: 6 }}><TextField fullWidth label="Usuário" value={generatedCredentials.user} size="small" InputProps={{ readOnly: true }} sx={{ bgcolor: 'background.paper' }} /></Grid>
                         <Grid size={{ xs: 12, sm: 6 }}><TextField fullWidth label="Senha" type="password" value={generatedCredentials.pass} size="small" InputProps={{ readOnly: true }} sx={{ bgcolor: 'background.paper' }} /></Grid>
                       </Grid>
-                      <Typography variant="caption" color="error.main" sx={{ mt: 2, display: 'block', fontWeight: 700 }}>
+                      <Typography variant="caption" color="error.main" sx={{ mt: 2, display: 'block', fontWeight: 400 }}>
                         * Por segurança, estas credenciais expiram em 24h se não forem utilizadas.
                       </Typography>
                     </Box>
@@ -182,14 +182,14 @@ const BiIntegrationPage: React.FC = () => {
             </Paper>
 
             <Paper sx={{ p: 4, borderRadius: '32px', border: '1px solid', borderColor: 'divider' }}>
-              <Typography variant="h6" fontWeight={800} mb={3}>Fontes de Dados Disponíveis</Typography>
+              <Typography variant="h6" fontWeight={400} mb={3}>Fontes de Dados Disponíveis</Typography>
               <Grid container spacing={2}>
                 {availableDataSources.map(ds => (
                   <Grid size={{ xs: 12, sm: 6 }} key={ds.name}>
                     <Box sx={{ p: 2, borderRadius: '16px', bgcolor: 'action.hover', display: 'flex', alignItems: 'center', gap: 2 }}>
                       <Avatar sx={{ bgcolor: 'white', color: 'primary.main', border: '1px solid', borderColor: 'divider' }}><DbIcon sx={{ fontSize: 20 }} /></Avatar>
                       <Box>
-                        <Typography variant="body2" fontWeight={800}>{ds.name}</Typography>
+                        <Typography variant="body2" fontWeight={400}>{ds.name}</Typography>
                         <Typography variant="caption" color="text.secondary">{ds.type} • {ds.updated}</Typography>
                       </Box>
                     </Box>
@@ -204,11 +204,11 @@ const BiIntegrationPage: React.FC = () => {
         <Grid size={{ xs: 12, lg: 5 }}>
           <Stack spacing={3} height="100%">
             <Paper sx={{ p: 3, borderRadius: '24px', bgcolor: '#ff9800', color: 'white' }}>
-              <Typography variant="subtitle2" fontWeight={800} gutterBottom>Volume de Dados</Typography>
+              <Typography variant="subtitle2" fontWeight={400} gutterBottom>Volume de Dados</Typography>
               <Box display="flex" alignItems="center" gap={2} mt={2}>
                 <ExportIcon sx={{ fontSize: 40 }} />
                 <Box>
-                  <Typography variant="h5" fontWeight={900}>4.2 GB</Typography>
+                  <Typography variant="h5" fontWeight={400}>4.2 GB</Typography>
                   <Typography variant="caption" sx={{ opacity: 0.8 }}>Total sincronizado este mês</Typography>
                 </Box>
               </Box>
@@ -217,7 +217,7 @@ const BiIntegrationPage: React.FC = () => {
             <Paper sx={{ p: 3, borderRadius: '24px', bgcolor: '#1e1e1e', color: '#d4d4d4', flexGrow: 1, minHeight: 450 }}>
               <Box display="flex" alignItems="center" gap={1} mb={2}>
                 <LogIcon sx={{ color: '#4caf50' }} />
-                <Typography variant="subtitle2" fontWeight={800} sx={{ color: '#fff' }}>BI Data Stream Console</Typography>
+                <Typography variant="subtitle2" fontWeight={400} sx={{ color: '#fff' }}>BI Data Stream Console</Typography>
               </Box>
               <Box sx={{ height: 400, overflowY: 'auto', fontFamily: 'monospace', fontSize: '0.8rem' }}>
                 <AnimatePresence>

@@ -13,7 +13,7 @@ describe('Telemetry Lib', () => {
   it('should initialize SDK', async () => {
     // Import to trigger side effects
     await import('../../../src/lib/telemetry.js');
-    
+
     expect(NodeSDK).toHaveBeenCalled();
   });
 });

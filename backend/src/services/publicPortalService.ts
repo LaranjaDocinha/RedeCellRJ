@@ -17,7 +17,7 @@ export const publicPortalService = {
        JOIN customers c ON so.customer_id = c.id
        JOIN branches b ON so.branch_id = b.id
        WHERE so.public_token = $1`,
-      [token]
+      [token],
     );
 
     if (res.rows.length === 0) {
@@ -27,13 +27,19 @@ export const publicPortalService = {
     const order = res.rows[0];
 
     // Buscar itens e fotos
-    const itemsRes = await pool.query('SELECT * FROM service_order_items WHERE service_order_id = $1', [order.id]);
-    const photosRes = await pool.query("SELECT * FROM service_order_attachments WHERE service_order_id = $1 AND file_type = 'image'", [order.id]);
+    const itemsRes = await pool.query(
+      'SELECT * FROM service_order_items WHERE service_order_id = $1',
+      [order.id],
+    );
+    const photosRes = await pool.query(
+      "SELECT * FROM service_order_attachments WHERE service_order_id = $1 AND file_type = 'image'",
+      [order.id],
+    );
 
     return {
       ...order,
       items: itemsRes.rows,
-      photos: photosRes.rows
+      photos: photosRes.rows,
     };
   },
 
@@ -54,7 +60,7 @@ export const publicPortalService = {
          REPLACE(REPLACE(REPLACE(c.cpf, '.', ''), '-', ''), ' ', '') = $2 OR 
          REPLACE(REPLACE(REPLACE(REPLACE(c.phone, '(', ''), ')', ''), '-', ''), ' ', '') LIKE '%' || $2
        )`,
-      [osId, cleanIdentity]
+      [osId, cleanIdentity],
     );
 
     if (res.rows.length === 0) {
@@ -81,9 +87,12 @@ export const publicPortalService = {
     }
 
     const pool = getPool();
-    
+
     // Verifica status atual para não alterar OS já finalizada
-    const checkRes = await pool.query('SELECT id, status FROM service_orders WHERE public_token = $1', [token]);
+    const checkRes = await pool.query(
+      'SELECT id, status FROM service_orders WHERE public_token = $1',
+      [token],
+    );
     if (checkRes.rows.length === 0) {
       throw new AppError('Order not found', 404);
     }
@@ -100,24 +109,25 @@ export const publicPortalService = {
       // Atualiza status da aprovação
       await client.query(
         `UPDATE service_orders 
-         SET customer_approval_status = $1, 
+         SET customer_approval_status = $1::varchar, 
              customer_approval_date = NOW(),
-             notes = CASE WHEN $3::text IS NOT NULL THEN notes || E'\n[Portal] Cliente ' || $1 || ': ' || $3 ELSE notes END,
-             status = CASE WHEN $1 = 'approved' THEN 'Aprovado' ELSE 'Não Aprovado' END -- Auto-move workflow
+             notes = CASE WHEN $3::text IS NOT NULL THEN notes || E'\n[Portal] Cliente ' || $1::text || ': ' || $3::text ELSE notes END,
+             status = CASE WHEN $1::text = 'approved' THEN 'Aprovado'::varchar ELSE 'Não Aprovado'::varchar END -- Auto-move workflow
          WHERE public_token = $2`,
-        [status, token, feedback]
+        [status, token, feedback],
       );
 
-      // Log de atividade/Notificação interna seria bom aqui (emitir evento) 
-      
+      // Log de atividade/Notificação interna seria bom aqui (emitir evento)
+
       await client.query('COMMIT');
-      
+
       return { success: true, newStatus: status };
     } catch (error) {
+      console.error('[publicPortalService] updateApproval Error:', error);
       await client.query('ROLLBACK');
       throw error;
     } finally {
       client.release();
     }
-  }
+  },
 };

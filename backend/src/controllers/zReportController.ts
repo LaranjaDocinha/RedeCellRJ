@@ -1,9 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
-import httpStatus from 'http-status';
+import { Request, Response } from 'express';
 import { zReportService } from '../services/zReportService.js';
 import { catchAsync } from '../utils/catchAsync.js';
-import { AppError } from '../utils/errors.js';
 import { z } from 'zod';
+import { sendSuccess } from '../utils/responseHelper.js';
 
 // Zod Schema for getZReport
 export const getZReportSchema = z.object({
@@ -11,18 +10,17 @@ export const getZReportSchema = z.object({
   endDate: z.string().datetime('Invalid end date format').optional(),
 });
 
-
-
 export const generateZReport = catchAsync(async (req: Request, res: Response) => {
-  const { startDate, endDate } = req.query;
+  const validatedQuery = getZReportSchema.parse(req.query);
+  const { startDate, endDate } = validatedQuery;
 
   // Default to current day if dates are not provided
-  const start = startDate ? new Date(startDate as string) : new Date();
+  const start = startDate ? new Date(startDate) : new Date();
   start.setHours(0, 0, 0, 0); // Start of the day
 
-  const end = endDate ? new Date(endDate as string) : new Date();
+  const end = endDate ? new Date(endDate) : new Date();
   end.setHours(23, 59, 59, 999); // End of the day
 
   const report = await zReportService.generateZReport(start, end);
-  res.status(httpStatus.OK).send(report);
+  sendSuccess(res, report);
 });

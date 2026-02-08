@@ -1,5 +1,3 @@
-
-
 class CashDrawerService {
   /**
    * Simulates opening the cash drawer.

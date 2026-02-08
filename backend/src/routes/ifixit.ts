@@ -52,7 +52,9 @@ router.get('/service-order/:serviceOrderId/guides', async (req, res) => {
     const guides = await ifixitService.searchGuides(device);
     res.json(guides);
   } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Error searching for guides for service order' });
+    res
+      .status(500)
+      .json({ message: error.message || 'Error searching for guides for service order' });
   }
 });
 

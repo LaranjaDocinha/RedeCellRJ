@@ -1,30 +1,62 @@
 import pool from '../db/index.js';
 
-// NOTE: This is a highly simplified P&L report. A real one would be much more complex,
-// involving COGS, operational expenses, etc.
-export const getSimplePLReport = async (startDate: string, endDate: string) => {
+// DRE Completo (Demonstrativo de Resultado do Exercício)
+export const getDRE = async (startDate: string, endDate: string) => {
+  // 1. Receita Bruta (Vendas + Serviços)
   const revenueRes = await pool.query(
-    'SELECT SUM(total_amount) as total_revenue FROM sales WHERE sale_date BETWEEN $1 AND $2',
+    'SELECT COALESCE(SUM(total_amount), 0) as total_revenue FROM sales WHERE sale_date BETWEEN $1 AND $2',
     [startDate, endDate],
   );
+  const grossRevenue = parseFloat(revenueRes.rows[0].total_revenue);
 
-  const partsCostRes = await pool.query(
-    `
-    SELECT SUM(p.cost_price * soi.quantity) as total_cost
-    FROM service_order_items soi
-    JOIN parts p ON soi.part_id = p.id
-    JOIN service_orders so ON soi.service_order_id = so.id
-    WHERE so.updated_at BETWEEN $1 AND $2 AND so.status = 'Entregue'
-  `,
+  // 2. Impostos (Simples Nacional - Est. 6%)
+  const taxes = grossRevenue * 0.06;
+
+  // 3. Receita Líquida
+  const netRevenue = grossRevenue - taxes;
+
+  // 4. CMV (Custo da Mercadoria Vendida)
+  const cogsRes = await pool.query(
+    `SELECT COALESCE(SUM(si.cost_price * si.quantity), 0) as total_cogs 
+     FROM sale_items si 
+     JOIN sales s ON si.sale_id = s.id 
+     WHERE s.sale_date BETWEEN $1 AND $2`,
     [startDate, endDate],
   );
+  const cogs = parseFloat(cogsRes.rows[0].total_cogs);
 
-  const revenue = parseFloat(revenueRes.rows[0].total_revenue || 0);
-  const cost = parseFloat(partsCostRes.rows[0].total_cost || 0);
-  const profit = revenue - cost;
+  // 5. Lucro Bruto
+  const grossProfit = netRevenue - cogs;
 
-  return { revenue, cost, profit };
+  // 6. Despesas Operacionais
+  const expensesRes = await pool.query(
+    `SELECT COALESCE(SUM(amount), 0) as total_expenses 
+     FROM expense_reimbursements 
+     WHERE status = 'approved' AND created_at BETWEEN $1 AND $2`,
+    [startDate, endDate],
+  );
+  const expenses = parseFloat(expensesRes.rows[0].total_expenses);
+
+  // 7. Comissões (Estimativa 3% geral)
+  const commissions = grossRevenue * 0.03;
+
+  // 8. Lucro Líquido
+  const netProfit = grossProfit - expenses - commissions;
+
+  return {
+    grossRevenue,
+    taxes,
+    netRevenue,
+    cogs,
+    grossProfit,
+    expenses,
+    commissions,
+    netProfit,
+    margin: grossRevenue > 0 ? (netProfit / grossRevenue) * 100 : 0,
+  };
 };
+
+export const getSimplePLReport = getDRE; // Alias for backward compatibility
 
 export const getCashFlowReport = async (startDate: string, endDate: string) => {
   const query = `
@@ -59,14 +91,14 @@ export const getProductProfitabilityReport = async (startDate: string, endDate: 
     WHERE s.sale_date BETWEEN $1 AND $2
     GROUP BY p.name, pv.color, pv.storage_capacity
     ORDER BY gross_profit DESC;`,
-    [startDate, endDate]
+    [startDate, endDate],
   );
-  return result.rows.map(row => ({
+  return result.rows.map((row) => ({
     ...row,
     total_quantity_sold: parseInt(row.total_quantity_sold),
     total_revenue: parseFloat(row.total_revenue),
     total_cost_of_goods_sold: parseFloat(row.total_cost_of_goods_sold),
     gross_profit: parseFloat(row.gross_profit),
-    gross_margin_percentage: parseFloat(row.gross_margin_percentage || 0)
+    gross_margin_percentage: parseFloat(row.gross_margin_percentage || 0),
   }));
 };

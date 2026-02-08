@@ -25,7 +25,9 @@ describe('TemplateService', () => {
 
       const result = await templateService.getAllTemplates();
       expect(result).toEqual(mockRows);
-      expect(mocks.query).toHaveBeenCalledWith(expect.stringContaining('SELECT id, name, type, subject, content FROM templates'));
+      expect(mocks.query).toHaveBeenCalledWith(
+        expect.stringContaining('SELECT id, name, type, subject, content FROM templates'),
+      );
     });
   });
 
@@ -47,7 +49,9 @@ describe('TemplateService', () => {
 
       const result = await templateService.getTemplateByName('Welcome');
       expect(result).toEqual(mockRow);
-      expect(mocks.query).toHaveBeenCalledWith(expect.stringContaining('WHERE name = $1'), ['Welcome']);
+      expect(mocks.query).toHaveBeenCalledWith(expect.stringContaining('WHERE name = $1'), [
+        'Welcome',
+      ]);
     });
   });
 
@@ -58,10 +62,12 @@ describe('TemplateService', () => {
 
       const result = await templateService.createTemplate('New', 'email', 'Sub', 'Content');
       expect(result).toEqual(mockRow);
-      expect(mocks.query).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO templates'),
-        ['New', 'email', 'Sub', 'Content']
-      );
+      expect(mocks.query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO templates'), [
+        'New',
+        'email',
+        'Sub',
+        'Content',
+      ]);
     });
   });
 
@@ -70,12 +76,21 @@ describe('TemplateService', () => {
       const mockRow = { id: '1', name: 'Updated' };
       mocks.query.mockResolvedValueOnce({ rows: [mockRow] });
 
-      const result = await templateService.updateTemplate('1', 'Updated', 'email', 'Sub', 'Content');
-      expect(result).toEqual(mockRow);
-      expect(mocks.query).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE templates SET'),
-        ['Updated', 'email', 'Sub', 'Content', '1']
+      const result = await templateService.updateTemplate(
+        '1',
+        'Updated',
+        'email',
+        'Sub',
+        'Content',
       );
+      expect(result).toEqual(mockRow);
+      expect(mocks.query).toHaveBeenCalledWith(expect.stringContaining('UPDATE templates SET'), [
+        'Updated',
+        'email',
+        'Sub',
+        'Content',
+        '1',
+      ]);
     });
   });
 
@@ -86,10 +101,9 @@ describe('TemplateService', () => {
 
       const result = await templateService.deleteTemplate('1');
       expect(result).toEqual(mockRow);
-      expect(mocks.query).toHaveBeenCalledWith(
-        expect.stringContaining('DELETE FROM templates'),
-        ['1']
-      );
+      expect(mocks.query).toHaveBeenCalledWith(expect.stringContaining('DELETE FROM templates'), [
+        '1',
+      ]);
     });
   });
 
@@ -97,7 +111,7 @@ describe('TemplateService', () => {
     it('should replace placeholders with context values', async () => {
       const content = 'Hello {{ name }}, welcome to {{ company }}!';
       const context = { name: 'Alice', company: 'Redecell' };
-      
+
       const result = await templateService.renderTemplate(content, context);
       expect(result).toBe('Hello Alice, welcome to Redecell!');
     });
@@ -105,7 +119,7 @@ describe('TemplateService', () => {
     it('should handle extra spaces in placeholders', async () => {
       const content = 'Value: {{  val  }}';
       const context = { val: '123' };
-      
+
       const result = await templateService.renderTemplate(content, context);
       expect(result).toBe('Value: 123');
     });

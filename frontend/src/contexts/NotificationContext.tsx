@@ -1,67 +1,111 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { Snackbar, Alert, AlertColor } from '@mui/material';
-import { motion, AnimatePresence } from 'framer-motion'; // Importar Framer Motion
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { Snackbar, Alert, AlertColor, Box, alpha } from '@mui/material';
+import { motion, AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti';
+import { useAuth } from './AuthContext';
+import { useSocket } from './SocketContext';
+import api from '../services/api';
+
+export interface AppNotification {
+  id: string | number;
+  message: string;
+  title?: string;
+  severity: AlertColor;
+  timestamp: Date | string;
+  read: boolean;
+  type?: string;
+  link?: string;
+  metadata?: any;
+}
 
 interface NotificationContextType {
-  addNotification: (message: string, severity?: AlertColor) => void;
-  showNotification: (message: string, severity?: AlertColor) => void;
+  notifications: AppNotification[];
+  addNotification: (msg: string, sev?: AlertColor, type?: string, metadata?: any) => void;
+  markAsRead: (id: string | number) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
+  loading: boolean;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
-// Componente de Transição customizado para o Snackbar do MUI
-const MotionTransition: React.FC<{ children: React.ReactElement }> = ({ children }) => {
-  const variants = {
-    initial: { opacity: 0, y: 50, scale: 0.9 },
-    animate: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 200, damping: 20 } },
-    exit: { opacity: 0, y: 50, scale: 0.9, transition: { duration: 0.2 } },
-  };
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        variants={variants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        style={{ originX: 1, originY: 1 }} // Define o ponto de origem da animação (canto inferior direito)
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
-  );
-};
+const MotionTransition = React.forwardRef(function Transition(props: any, ref: React.Ref<unknown>) {
+  return <motion.div ref={ref} initial={{ opacity: 0, y: 50, scale: 0.3 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }} {...props} />;
+});
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [open, setOpen] = useState(false);
-  const [message, setMessage] = useState('');
-  const [severity, setSeverity] = useState<AlertColor>('info');
+  const { user, isAuthenticated } = useAuth();
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [loading, setLoading] = useState(false);
+  
+  // Snackbar State
+  const [snackOpen, setSnackOpen] = useState(false);
+  const [snackMsg, setSnackMsg] = useState('');
+  const [snackSev, setSnackSev] = useState<AlertColor>('info');
+
+  const fetchNotifications = useCallback(async () => {
+    if (!isAuthenticated) return;
+    setLoading(true);
+    try {
+      const response = await api.get('/notifications');
+      // Map backend type to frontend severity
+      const mapped = response.data.map((n: any) => ({
+          ...n,
+          severity: n.type === 'error' ? 'error' : n.type === 'warning' ? 'warning' : n.type === 'success' ? 'success' : 'info'
+      }));
+      setNotifications(mapped);
+    } catch (error) {
+      console.error('Failed to fetch notifications', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   const addNotification = useCallback((msg: string, sev: AlertColor = 'info') => {
-    setMessage(msg);
-    setSeverity(sev);
-    setOpen(true);
+    setSnackMsg(msg);
+    setSnackSev(sev);
+    setSnackOpen(true);
   }, []);
 
-  const handleClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
-    if (reason === 'clickaway') {
-      return;
+  const markAsRead = async (id: string | number) => {
+    try {
+      await api.patch(`/notifications/${id}/read`);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    } catch (error) {
+      console.error('Failed to mark notification as read', error);
     }
-    setOpen(false);
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      await api.post('/notifications/read-all');
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (error) {
+      console.error('Failed to mark all as read', error);
+    }
   };
 
   return (
-    <NotificationContext.Provider value={{ addNotification, showNotification: addNotification }}>
+    <NotificationContext.Provider value={{ 
+        notifications, 
+        addNotification,
+        markAsRead, 
+        markAllAsRead, 
+        loading 
+    }}>
       {children}
       <Snackbar 
-        open={open} 
-        autoHideDuration={6000} 
-        onClose={handleClose} 
+        open={snackOpen} 
+        autoHideDuration={5000} 
+        onClose={() => setSnackOpen(false)} 
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        TransitionComponent={MotionTransition} // Usar nosso componente de transição com Framer Motion
+        TransitionComponent={MotionTransition}
       >
-        <Alert onClose={handleClose} severity={severity} sx={{ width: '100%' }} variant="filled">
-          {message}
+        <Alert severity={snackSev} variant="filled" sx={{ borderRadius: '12px', boxShadow: 3 }}>
+          {snackMsg}
         </Alert>
       </Snackbar>
     </NotificationContext.Provider>
@@ -70,8 +114,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
 export const useNotification = () => {
   const context = useContext(NotificationContext);
-  if (!context) {
-    throw new Error('useNotification must be used within a NotificationProvider');
-  }
+  if (!context) throw new Error('useNotification must be used within a NotificationProvider');
   return context;
 };

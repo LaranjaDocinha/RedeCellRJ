@@ -46,20 +46,20 @@ describe('InventoryValuationService', () => {
 
     it('should calculate using fifo', async () => {
       (settingsService.getSettingByKey as any).mockResolvedValue({ value: 'fifo' });
-      
+
       // Mock stock variations
       (pool.query as any).mockResolvedValueOnce({ rows: [{ id: 1, stock_quantity: 5 }] });
-      
+
       // Mock purchase layers for var 1
       // 5 items in stock.
       // Layer 1: cost 10, remaining 3. (Take 3)
       // Layer 2: cost 20, remaining 5. (Take 2)
       // Total = 3*10 + 2*20 = 30 + 40 = 70.
-      (pool.query as any).mockResolvedValueOnce({ 
+      (pool.query as any).mockResolvedValueOnce({
         rows: [
           { unit_cost: '10', quantity_remaining: 3 },
-          { unit_cost: '20', quantity_remaining: 5 }
-        ] 
+          { unit_cost: '20', quantity_remaining: 5 },
+        ],
       });
 
       const result = await inventoryValuationService.calculateInventoryValue();

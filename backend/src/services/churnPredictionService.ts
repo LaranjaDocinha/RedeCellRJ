@@ -9,10 +9,9 @@ interface ChurnRisk {
 }
 
 export const getChurnRisk = async (customerId: number): Promise<ChurnRisk | null> => {
-  const customerRes = await pool.query(
-    'SELECT name, email FROM customers WHERE id = $1',
-    [customerId]
-  );
+  const customerRes = await pool.query('SELECT name, email FROM customers WHERE id = $1', [
+    customerId,
+  ]);
   if (customerRes.rows.length === 0) return null;
   const customer = customerRes.rows[0];
 
@@ -27,11 +26,12 @@ export const getChurnRisk = async (customerId: number): Promise<ChurnRisk | null
   // Inatividade
   const lastPurchaseRes = await pool.query(
     'SELECT MAX(sale_date) as last_sale FROM sales WHERE customer_id = $1',
-    [customerId]
+    [customerId],
   );
   const lastSaleDate: Date | null = lastPurchaseRes.rows[0]?.last_sale;
   if (lastSaleDate) {
-    const daysSinceLastSale = (new Date().getTime() - lastSaleDate.getTime()) / (1000 * 60 * 60 * 24);
+    const daysSinceLastSale =
+      (new Date().getTime() - lastSaleDate.getTime()) / (1000 * 60 * 60 * 24);
     if (daysSinceLastSale > 60) {
       riskScore += 40;
       reasons.push(`Inatividade: Sem compras há ${Math.floor(daysSinceLastSale)} dias.`);
@@ -47,11 +47,12 @@ export const getChurnRisk = async (customerId: number): Promise<ChurnRisk | null
 
   // Baixo número de compras
   const purchaseCountRes = await pool.query(
-    'SELECT COUNT(id) FROM sales WHERE customer_id = $1 AND sale_date >= NOW() - INTERVAL \'90 days\'',
-    [customerId]
+    "SELECT COUNT(id) FROM sales WHERE customer_id = $1 AND sale_date >= NOW() - INTERVAL '90 days'",
+    [customerId],
   );
   const purchaseCount = parseInt(purchaseCountRes.rows[0].count, 10);
-  if (purchaseCount < 2 && lastSaleDate) { // Se tiver histórico, mas poucas compras
+  if (purchaseCount < 2 && lastSaleDate) {
+    // Se tiver histórico, mas poucas compras
     riskScore += 30;
     reasons.push(`Baixo volume de compras: Apenas ${purchaseCount} nos últimos 90 dias.`);
   }
@@ -66,7 +67,7 @@ export const getChurnRisk = async (customerId: number): Promise<ChurnRisk | null
     customerName: customer.name,
     riskScore: Math.min(riskScore, 100), // Max 100
     status,
-    reason: reasons.length > 0 ? reasons : ['Atividade regular.']
+    reason: reasons.length > 0 ? reasons : ['Atividade regular.'],
   };
 };
 
@@ -84,7 +85,8 @@ export const getCustomersWithHighChurnRisk = async () => {
   const churnRisks: ChurnRisk[] = [];
   for (const row of result.rows) {
     const risk = await getChurnRisk(row.id);
-    if (risk && risk.riskScore > 40) { // Filter for medium/high risk
+    if (risk && risk.riskScore > 40) {
+      // Filter for medium/high risk
       churnRisks.push(risk);
     }
   }

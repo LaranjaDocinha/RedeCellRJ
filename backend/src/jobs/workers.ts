@@ -5,6 +5,8 @@ import { customerJourneyService } from '../services/customerJourneyService.js';
 import { loyaltyService } from '../services/loyaltyService.js';
 import { marketplaceSyncService } from '../services/marketplaceSyncService.js';
 import { erpService } from '../services/erpService.js';
+import { whatsappService } from '../services/whatsappService.js';
+import { saleService } from '../services/saleService.js';
 import { logger } from '../utils/logger.js';
 import IORedis from 'ioredis';
 
@@ -15,7 +17,9 @@ const redisConfig = {
   maxRetriesPerRequest: null,
   retryStrategy(times: number) {
     if (times > 3) {
-      logger.warn('Redis (Worker) connection failed too many times. Disabling workers for this session.');
+      logger.warn(
+        'Redis (Worker) connection failed too many times. Disabling workers for this session.',
+      );
       return null;
     }
     return Math.min(times * 50, 2000);
@@ -25,6 +29,7 @@ const redisConfig = {
 // Export workers as let so they can be initialized optionally
 export let badgeWorker: Worker | undefined;
 export let rfmWorker: Worker | undefined;
+export let whatsappWorker: Worker | undefined;
 export let defaultWorker: Worker | undefined;
 
 const checkRedisConnection = async (): Promise<boolean> => {
@@ -34,7 +39,7 @@ const checkRedisConnection = async (): Promise<boolean> => {
       client.disconnect();
       resolve(true);
     });
-    client.on('error', (err) => {
+    client.on('error', (_err) => {
       client.disconnect();
       resolve(false);
     });
@@ -55,66 +60,106 @@ export const initWorkers = async () => {
 
   try {
     // Worker for badge awarding
-    badgeWorker = new Worker('badgeQueue', async (job) => {
-      logger.info(`Processing badge job ${job.id}: ${job.name}`);
-      if (job.name === 'awardBadges') {
-        await checkAndAwardBadges();
-      }
-    }, { connection: redisConfig });
+    badgeWorker = new Worker(
+      'badgeQueue',
+      async (job) => {
+        logger.info(`Processing badge job ${job.id}: ${job.name}`);
+        if (job.name === 'awardBadges') {
+          await checkAndAwardBadges();
+        }
+      },
+      { connection: redisConfig },
+    );
 
     badgeWorker.on('completed', (job) => {
       logger.info(`Badge job ${job.id} completed.`);
     });
 
     badgeWorker.on('failed', (job, err) => {
-      logger.error(`Badge job ${job?.id} failed with error: ${err.message}`);
+      logger.error(`Badge job ${job?.id} failed: ${err.message}`);
     });
 
     // Worker for RFM calculation
-    rfmWorker = new Worker('rfmQueue', async (job) => {
-      logger.info(`Processing RFM job ${job.id}: ${job.name}`);
-      if (job.name === 'calculateRfm') {
-        await rfmService.calculateRfmScores();
-      }
-    }, { connection: redisConfig });
+    rfmWorker = new Worker(
+      'rfmQueue',
+      async (job) => {
+        logger.info(`Processing RFM job ${job.id}: ${job.name}`);
+        if (job.name === 'calculateRfm') {
+          await rfmService.calculateRfmScores();
+        }
+      },
+      { connection: redisConfig },
+    );
 
     rfmWorker.on('completed', (job) => {
       logger.info(`RFM job ${job.id} completed.`);
     });
 
     rfmWorker.on('failed', (job, err) => {
-      logger.error(`RFM job ${job?.id} failed with error: ${err.message}`);
+      logger.error(`RFM job ${job?.id} failed: ${err.message}`);
+    });
+
+    // Worker for WhatsApp messages
+    whatsappWorker = new Worker(
+      'whatsappQueue',
+      async (job) => {
+        logger.info(`Processing WhatsApp job ${job.id}: ${job.name}`);
+        if (job.name === 'sendTemplate') {
+          await whatsappService.sendTemplateMessage(job.data);
+        }
+      },
+      { connection: redisConfig },
+    );
+
+    whatsappWorker.on('completed', (job) => {
+      logger.info(`WhatsApp job ${job.id} completed.`);
+    });
+
+    whatsappWorker.on('failed', (job, err) => {
+      logger.error(`WhatsApp job ${job?.id} failed: ${err.message}`);
     });
 
     // Worker for other background jobs
-    defaultWorker = new Worker('defaultQueue', async (job) => {
-      logger.info(`Processing default job ${job.id}: ${job.name}`);
-      if (job.name === 'processCustomerJourneys') {
-        await customerJourneyService.processCustomerJourneys();
-      } else if (job.name === 'updateCustomerTiers') {
-        await loyaltyService.updateAllCustomerTiers();
-      } else if (job.name === 'syncMarketplaceOrders') {
-        await marketplaceSyncService.syncOrdersFromMarketplace(job.data.integrationId);
-      } else if (job.name === 'exportErpData') {
-        await erpService.exportSalesToERP(new Date(job.data.startDate), new Date(job.data.endDate));
-        await erpService.exportExpensesToERP(new Date(job.data.startDate), new Date(job.data.endDate));
-      }
-    }, { connection: redisConfig });
+    defaultWorker = new Worker(
+      'defaultQueue',
+      async (job) => {
+        logger.info(`Processing default job ${job.id}: ${job.name}`);
+        if (job.name === 'processCustomerJourneys') {
+          await customerJourneyService.processCustomerJourneys();
+        } else if (job.name === 'updateCustomerTiers') {
+          await loyaltyService.updateAllCustomerTiers();
+        } else if (job.name === 'syncMarketplaceOrders') {
+          await marketplaceSyncService.syncOrdersFromMarketplace(job.data.integrationId);
+        } else if (job.name === 'exportErpData') {
+          await erpService.exportSalesToERP(
+            new Date(job.data.startDate),
+            new Date(job.data.endDate),
+          );
+          await erpService.exportExpensesToERP(
+            new Date(job.data.startDate),
+            new Date(job.data.endDate),
+          );
+        } else if (job.name === 'processPostSale') {
+          await saleService.handlePostSale(job.data);
+        }
+      },
+      { connection: redisConfig },
+    );
 
     defaultWorker.on('completed', (job) => {
       logger.info(`Default job ${job.id} completed.`);
     });
 
-    defaultWorker.on('failed', (job, err) => {
-      logger.error(`Default job ${job?.id} failed with error: ${err.message}`);
+    defaultWorker.on('failed', (job, _err) => {
+      logger.error(`Default job ${job?.id} failed: ${_err.message}`);
     });
 
     logger.info('BullMQ Workers initialized.');
-
   } catch (error) {
-     logger.error('Failed to initialize workers:', error);
-     badgeWorker = undefined;
-     rfmWorker = undefined;
-     defaultWorker = undefined;
+    logger.error('Failed to initialize workers:', error);
+    badgeWorker = undefined;
+    rfmWorker = undefined;
+    whatsappWorker = undefined;
+    defaultWorker = undefined;
   }
 };

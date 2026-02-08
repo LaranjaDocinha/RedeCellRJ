@@ -45,7 +45,7 @@ const StyledPageContainer = styled(motion.div)`
 
 const StyledPageTitle = styled(motion.h1)`
   font-size: 2rem;
-  font-weight: 800;
+  font-weight: 400;
   margin-bottom: 24px;
   letter-spacing: -1px;
 `;
@@ -149,9 +149,9 @@ const LoyaltyPage: React.FC = () => {
                 <Table size="small">
                     <TableHead sx={{ bgcolor: 'action.hover' }}>
                         <TableRow>
-                            <TableCell sx={{ fontWeight: 800 }}>CLIENTE</TableCell>
-                            <TableCell sx={{ fontWeight: 800 }}>PONTOS</TableCell>
-                            <TableCell sx={{ fontWeight: 800 }}>NÍVEL</TableCell>
+                            <TableCell sx={{ fontWeight: 400 }}>CLIENTE</TableCell>
+                            <TableCell sx={{ fontWeight: 400 }}>PONTOS</TableCell>
+                            <TableCell sx={{ fontWeight: 400 }}>NÍVEL</TableCell>
                             <TableCell align="right"></TableCell>
                         </TableRow>
                     </TableHead>
@@ -161,14 +161,14 @@ const LoyaltyPage: React.FC = () => {
                         ) : filteredCustomers.map(c => (
                             <TableRow key={c.customer_id} hover selected={selectedCustomer?.customer_id === c.customer_id} onClick={() => handleSelectCustomer(c)} sx={{ cursor: 'pointer' }}>
                                 <TableCell>
-                                    <Typography variant="body2" fontWeight={600}>{c.name}</Typography>
+                                    <Typography variant="body2" fontWeight={400}>{c.name}</Typography>
                                     <Typography variant="caption" color="text.secondary">{c.phone || 'Sem telefone'}</Typography>
                                 </TableCell>
                                 <TableCell>
-                                    <Chip label={`${c.loyalty_points} pts`} color="primary" size="small" sx={{ fontWeight: 800 }} />
+                                    <Chip label={`${c.loyalty_points} pts`} color="primary" size="small" sx={{ fontWeight: 400 }} />
                                 </TableCell>
                                 <TableCell>
-                                    <Chip label={c.tier_name || 'Standard'} size="small" variant="outlined" sx={{ fontWeight: 700 }} />
+                                    <Chip label={c.tier_name || 'Standard'} size="small" variant="outlined" sx={{ fontWeight: 400 }} />
                                 </TableCell>
                                 <TableCell align="right">
                                     <IconButton size="small"><FaHistory size={12} /></IconButton>
@@ -190,7 +190,7 @@ const LoyaltyPage: React.FC = () => {
                             <Card sx={{ borderRadius: '20px', textAlign: 'center', bgcolor: 'primary.50' }}>
                                 <CardContent>
                                     <FaStar color="#ed6c02" />
-                                    <Typography variant="h5" fontWeight={900}>{selectedCustomer.loyalty_points}</Typography>
+                                    <Typography variant="h5" fontWeight={400}>{selectedCustomer.loyalty_points}</Typography>
                                     <Typography variant="caption">Saldo Atual</Typography>
                                 </CardContent>
                             </Card>
@@ -199,7 +199,7 @@ const LoyaltyPage: React.FC = () => {
                             <Card sx={{ borderRadius: '20px', textAlign: 'center' }}>
                                 <CardContent>
                                     <FaArrowUp color="green" />
-                                    <Typography variant="h5" fontWeight={900}>{selectedCustomer.total_earned || 0}</Typography>
+                                    <Typography variant="h5" fontWeight={400}>{selectedCustomer.total_earned || 0}</Typography>
                                     <Typography variant="caption">Total Ganho</Typography>
                                 </CardContent>
                             </Card>
@@ -208,7 +208,7 @@ const LoyaltyPage: React.FC = () => {
                             <Card sx={{ borderRadius: '20px', textAlign: 'center' }}>
                                 <CardContent>
                                     <FaArrowDown color="red" />
-                                    <Typography variant="h5" fontWeight={900}>{selectedCustomer.total_redeemed || 0}</Typography>
+                                    <Typography variant="h5" fontWeight={400}>{selectedCustomer.total_redeemed || 0}</Typography>
                                     <Typography variant="caption">Total Resgatado</Typography>
                                 </CardContent>
                             </Card>
@@ -217,7 +217,7 @@ const LoyaltyPage: React.FC = () => {
                             <Card sx={{ borderRadius: '20px', textAlign: 'center', bgcolor: 'secondary.50' }}>
                                 <CardContent>
                                     <FaGift color="#9c27b0" />
-                                    <Typography variant="h5" fontWeight={900}>R$ {(selectedCustomer.loyalty_points * 0.1).toFixed(2)}</Typography>
+                                    <Typography variant="h5" fontWeight={400}>R$ {(selectedCustomer.loyalty_points * 0.1).toFixed(2)}</Typography>
                                     <Typography variant="caption">Valor em R$</Typography>
                                 </CardContent>
                             </Card>
@@ -226,15 +226,15 @@ const LoyaltyPage: React.FC = () => {
 
                     {/* Tabela de Transações */}
                     <Paper sx={{ borderRadius: '24px', p: 3, border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
-                        <Typography variant="h6" fontWeight={800} mb={2}>Histórico de Movimentações</Typography>
+                        <Typography variant="h6" fontWeight={400} mb={2}>Histórico de Movimentações</Typography>
                         <TableContainer>
                             <Table size="small">
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 700 }}>DATA</TableCell>
-                                        <TableCell sx={{ fontWeight: 700 }}>TIPO</TableCell>
-                                        <TableCell sx={{ fontWeight: 700 }}>PONTOS</TableCell>
-                                        <TableCell sx={{ fontWeight: 700 }}>MOTIVO</TableCell>
+                                        <TableCell sx={{ fontWeight: 400 }}>DATA</TableCell>
+                                        <TableCell sx={{ fontWeight: 400 }}>TIPO</TableCell>
+                                        <TableCell sx={{ fontWeight: 400 }}>PONTOS</TableCell>
+                                        <TableCell sx={{ fontWeight: 400 }}>MOTIVO</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -246,10 +246,10 @@ const LoyaltyPage: React.FC = () => {
                                                     label={t.action_type === 'earn' ? 'GANHO' : 'RESGATE'} 
                                                     size="small" 
                                                     color={t.action_type === 'earn' ? 'success' : 'secondary'}
-                                                    sx={{ fontSize: '0.6rem', height: 20, fontWeight: 800 }}
+                                                    sx={{ fontSize: '0.6rem', height: 20, fontWeight: 400 }}
                                                 />
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 700, color: t.points_change > 0 ? 'success.main' : 'error.main' }}>
+                                            <TableCell sx={{ fontWeight: 400, color: t.points_change > 0 ? 'success.main' : 'error.main' }}>
                                                 {t.points_change > 0 ? `+${t.points_change}` : t.points_change}
                                             </TableCell>
                                             <TableCell variant="body2" sx={{ fontSize: '0.75rem' }}>{t.reason || 'Venda PDV'}</TableCell>
@@ -268,3 +268,4 @@ const LoyaltyPage: React.FC = () => {
 };
 
 export default LoyaltyPage;
+

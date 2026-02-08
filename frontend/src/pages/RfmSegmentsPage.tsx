@@ -84,11 +84,11 @@ const RfmSegmentsPage: React.FC = () => {
           <Box sx={{ p: 1, bgcolor: 'primary.main', borderRadius: '10px', color: 'white', display: 'flex' }}>
             <VipIcon />
           </Box>
-          <Typography variant="overline" sx={{ fontWeight: 800, color: 'primary.main', letterSpacing: 2 }}>
+          <Typography variant="overline" sx={{ fontWeight: 400, color: 'primary.main', letterSpacing: 2 }}>
             INTELIGÊNCIA DE CLIENTES
           </Typography>
         </Box>
-        <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
+        <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px' }}>
           Matriz de Segmentação RFM
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mt: 1, maxWidth: 800 }}>
@@ -127,10 +127,10 @@ const RfmSegmentsPage: React.FC = () => {
                       </Avatar>
                       <Chip 
                         label={`${segment.customer_count} Clientes`} 
-                        sx={{ fontWeight: 900, bgcolor: segment.color, color: 'white', borderRadius: '8px' }} 
+                        sx={{ fontWeight: 400, bgcolor: segment.color, color: 'white', borderRadius: '8px' }} 
                       />
                     </Box>
-                    <Typography variant="h6" fontWeight={800} gutterBottom>{segment.rfm_segment}</Typography>
+                    <Typography variant="h6" fontWeight={400} gutterBottom>{segment.rfm_segment}</Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 3, height: 40, overflow: 'hidden' }}>
                       {segment.description}
                     </Typography>
@@ -138,8 +138,8 @@ const RfmSegmentsPage: React.FC = () => {
                     <Divider sx={{ mb: 2, opacity: 0.5 }} />
                     
                     <Box sx={{ p: 1.5, bgcolor: 'action.hover', borderRadius: '12px' }}>
-                      <Typography variant="caption" fontWeight={800} color="primary" display="block">RECOMENDAÇÃO:</Typography>
-                      <Typography variant="caption" fontWeight={700} color="text.primary">{segment.action}</Typography>
+                      <Typography variant="caption" fontWeight={400} color="primary" display="block">RECOMENDAÇÃO:</Typography>
+                      <Typography variant="caption" fontWeight={400} color="text.primary">{segment.action}</Typography>
                     </Box>
                   </CardContent>
                 </Card>
@@ -152,13 +152,13 @@ const RfmSegmentsPage: React.FC = () => {
       <Box mt={8} p={4} sx={{ borderRadius: '32px', bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider' }}>
         <Grid container spacing={4} alignItems="center">
           <Grid item xs={12} md={8}>
-            <Typography variant="h6" fontWeight={800} gutterBottom>Como funciona o RFM?</Typography>
+            <Typography variant="h6" fontWeight={400} gutterBottom>Como funciona o RFM?</Typography>
             <Typography variant="body2" color="text.secondary">
               O modelo pontua os clientes de 1 a 5 em cada pilar. O resultado final gera clusters automáticos que permitem diferenciar quem são seus melhores clientes daqueles que estão parando de comprar, facilitando o investimento correto em marketing.
             </Typography>
           </Grid>
           <Grid item xs={12} md={4} textAlign="right">
-            <Button variant="contained" size="large" sx={{ borderRadius: '12px', fontWeight: 800, px: 4 }}>
+            <Button variant="contained" size="large" sx={{ borderRadius: '12px', fontWeight: 400, px: 4 }}>
               Atualizar Matriz Agora
             </Button>
           </Grid>

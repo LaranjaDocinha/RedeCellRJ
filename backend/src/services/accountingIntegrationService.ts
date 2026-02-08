@@ -1,5 +1,3 @@
-
-
 export const syncSales = async (salesData: any) => {
   console.log('Simulating sales synchronization with accounting software:', salesData);
   // In a real scenario, this would involve API calls to QuickBooks, Xero, etc.

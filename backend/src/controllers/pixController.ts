@@ -1,8 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import httpStatus from 'http-status';
 import { pixService } from '../services/pixService.js';
 import { catchAsync } from '../utils/catchAsync.js';
-import { AppError } from '../utils/errors.js';
 import { z } from 'zod';
 
 // Zod Schemas
@@ -12,10 +11,9 @@ export const generateQrCodeSchema = z.object({
   description: z.string().optional(),
 });
 
-
-
 export const generatePixQrCode = catchAsync(async (req: Request, res: Response) => {
-  const { amount, description } = req.body;
+  const validatedBody = generateQrCodeSchema.parse(req.body);
+  const { amount, description } = validatedBody;
   const transactionId = `TXID-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`; // Generate a unique transaction ID
 
   const qrCodeData = await pixService.generateDynamicQrCode({ amount, transactionId, description });

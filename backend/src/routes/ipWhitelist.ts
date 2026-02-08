@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import { ipWhitelistController } from '../controllers/ipWhitelistController.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { validate } from '../middlewares/validationMiddleware.js'; // Assuming validate middleware is available

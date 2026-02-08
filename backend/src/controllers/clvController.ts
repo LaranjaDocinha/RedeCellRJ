@@ -1,12 +1,14 @@
 import { Request, Response } from 'express';
+import { catchAsync } from '../utils/catchAsync.js';
+import { AppError } from '../utils/errors.js';
 import * as clvService from '../services/clvService.js';
+import { sendSuccess } from '../utils/responseHelper.js';
 
-export const getClvReport = async (req: Request, res: Response) => {
-  try {
-    const { customerId } = req.params;
-    const clvReport = await clvService.calculateClv(customerId);
-    res.status(200).json(clvReport);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message });
+export const getClvReport = catchAsync(async (req: Request, res: Response) => {
+  const customerId = req.params.customerId || req.params.id;
+  if (!customerId) {
+    throw new AppError('Customer ID is required', 400);
   }
-};
+  const report = await clvService.calculateClv(customerId);
+  sendSuccess(res, report);
+});

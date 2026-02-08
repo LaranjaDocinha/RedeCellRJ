@@ -58,12 +58,12 @@ describe('CategoryProfitabilityService', () => {
 
     expect(mockGetPool).toHaveBeenCalled();
     expect(mockClientConnect).toHaveBeenCalled();
-    expect(mockClientQuery).toHaveBeenCalledWith(
-      expect.stringContaining('SELECT'),
-      [startDate, endDate]
-    );
+    expect(mockClientQuery).toHaveBeenCalledWith(expect.stringContaining('SELECT'), [
+      startDate,
+      endDate,
+    ]);
     expect(mockClientRelease).toHaveBeenCalled();
-    
+
     expect(result).toEqual([
       {
         category_id: 1,
@@ -82,10 +82,11 @@ describe('CategoryProfitabilityService', () => {
     const branchId = 5;
     await getCategoryProfitability(branchId, '2023-01-01', '2023-01-31');
 
-    expect(mockClientQuery).toHaveBeenCalledWith(
-      expect.stringContaining('AND s.branch_id = $3'),
-      ['2023-01-01', '2023-01-31', '5']
-    );
+    expect(mockClientQuery).toHaveBeenCalledWith(expect.stringContaining('AND s.branch_id = $3'), [
+      '2023-01-01',
+      '2023-01-31',
+      '5',
+    ]);
   });
 
   it('should handle division by zero or empty values gracefully', async () => {
@@ -117,9 +118,10 @@ describe('CategoryProfitabilityService', () => {
   it('should release client even if query fails', async () => {
     mockClientQuery.mockRejectedValueOnce(new Error('DB Error'));
 
-    await expect(getCategoryProfitability(undefined, '2023-01-01', '2023-01-31'))
-      .rejects.toThrow('DB Error');
-    
+    await expect(getCategoryProfitability(undefined, '2023-01-01', '2023-01-31')).rejects.toThrow(
+      'DB Error',
+    );
+
     expect(mockClientRelease).toHaveBeenCalled();
   });
 });

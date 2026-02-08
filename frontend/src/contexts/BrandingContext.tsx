@@ -28,13 +28,15 @@ export const BrandingProvider: React.FC<{ children: ReactNode }> = ({ children }
   const { user, token } = useAuth(); // Get user and token from auth context
 
   const fetchBranding = async () => {
-    if (!token) { // Only fetch branding if a token exists
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
     try {
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+      
+      setLoading(true);
+      setError(null);
+      
       const franchiseId = user?.franchiseId || new URLSearchParams(window.location.search).get('franchiseId');
 
       const response = await fetch(`/api/branding?franchiseId=${franchiseId || ''}`, {
@@ -54,7 +56,7 @@ export const BrandingProvider: React.FC<{ children: ReactNode }> = ({ children }
     } catch (err: any) {
       console.error('Error fetching branding:', err);
       setError(err.message || 'Failed to load branding');
-      // setBranding(getBranding()); // Optional: fallback
+      // Fallback to default branding already set in useState
     } finally {
       setLoading(false);
     }

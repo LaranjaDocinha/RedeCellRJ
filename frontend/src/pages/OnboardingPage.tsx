@@ -115,7 +115,7 @@ const OnboardingPage: React.FC = () => {
     <Box p={4} sx={{ maxWidth: 1400, margin: '0 auto' }}>
       <Box mb={6} display="flex" justifyContent="space-between" alignItems="center">
         <Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
+          <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px' }}>
             {isManager ? 'Gestão de Treinamento' : 'Meu Onboarding'}
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -135,12 +135,12 @@ const OnboardingPage: React.FC = () => {
           <Paper sx={{ p: 4, borderRadius: '32px', boxShadow: '0 20px 60px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden' }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
               <Box>
-                <Typography variant="h5" fontWeight={800} gutterBottom>Roteiro de Integração</Typography>
+                <Typography variant="h5" fontWeight={400} gutterBottom>Roteiro de Integração</Typography>
                 <Typography variant="body2" color="text.secondary">Complete as etapas para liberar novas funções no sistema.</Typography>
               </Box>
               <Box textAlign="right">
-                <Typography variant="h4" fontWeight={900} color="primary">{completionPercentage}%</Typography>
-                <Typography variant="caption" fontWeight={700} color="text.secondary">CONCLUÍDO</Typography>
+                <Typography variant="h4" fontWeight={400} color="primary">{completionPercentage}%</Typography>
+                <Typography variant="caption" fontWeight={400} color="text.secondary">CONCLUÍDO</Typography>
               </Box>
             </Box>
             
@@ -176,10 +176,10 @@ const OnboardingPage: React.FC = () => {
                       checkedIcon={<CheckCircle sx={{ fontSize: 28 }} />}
                     />
                     <ListItemText 
-                      primary={<Typography fontWeight={700} sx={{ textDecoration: item.completed ? 'line-through' : 'none', color: item.completed ? 'text.disabled' : 'text.primary' }}>{item.item_name}</Typography>}
+                      primary={<Typography fontWeight={400} sx={{ textDecoration: item.completed ? 'line-through' : 'none', color: item.completed ? 'text.disabled' : 'text.primary' }}>{item.item_name}</Typography>}
                       secondary={item.completed ? `Finalizado em ${moment(item.completed_at).format('LLL')}` : 'Etapa pendente'}
                     />
-                    {!item.completed && <Chip label="OBRIGATÓRIO" size="small" variant="outlined" sx={{ borderRadius: '6px', fontSize: '0.6rem', fontWeight: 900 }} />}
+                    {!item.completed && <Chip label="OBRIGATÓRIO" size="small" variant="outlined" sx={{ borderRadius: '6px', fontSize: '0.6rem', fontWeight: 400 }} />}
                   </Paper>
                 </motion.div>
               )) : (
@@ -199,7 +199,7 @@ const OnboardingPage: React.FC = () => {
               <Paper sx={{ p: 4, borderRadius: '32px', bgcolor: 'primary.main', color: 'white', boxShadow: '0 20px 40px rgba(25, 118, 210, 0.2)' }}>
                 <Box display="flex" alignItems="center" gap={2} mb={3}>
                   <ManagerIcon sx={{ fontSize: 32 }} />
-                  <Typography variant="h6" fontWeight={800}>Manager Hub</Typography>
+                  <Typography variant="h6" fontWeight={400}>Manager Hub</Typography>
                 </Box>
                 <Typography variant="body2" sx={{ opacity: 0.9, mb: 4 }}>
                   Atribua trilhas de conhecimento e monitore o progresso dos novos colaboradores em tempo real.
@@ -234,7 +234,7 @@ const OnboardingPage: React.FC = () => {
                     fullWidth 
                     variant="contained" 
                     color="secondary" 
-                    sx={{ borderRadius: '12px', fontWeight: 800, py: 1.5 }}
+                    sx={{ borderRadius: '12px', fontWeight: 400, py: 1.5 }}
                     onClick={() => {}} // Implementation placeholder
                   >
                     Atribuir Treinamento
@@ -243,7 +243,7 @@ const OnboardingPage: React.FC = () => {
               </Paper>
 
               <Paper sx={{ p: 3, borderRadius: '24px', border: '1px solid', borderColor: 'divider' }}>
-                <Typography variant="subtitle2" fontWeight={800} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="subtitle2" fontWeight={400} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <TimelineIcon color="primary" /> Recent Training Activity
                 </Typography>
                 <List sx={{ mt: 2 }}>
@@ -251,7 +251,7 @@ const OnboardingPage: React.FC = () => {
                     <ListItem key={i} sx={{ px: 0, py: 1.5 }}>
                       <ListItemIcon sx={{ minWidth: 40 }}><Avatar sx={{ width: 32, height: 32, fontSize: '0.8rem' }}>JD</Avatar></ListItemIcon>
                       <ListItemText 
-                        primary={<Typography variant="body2" fontWeight={700}>Juliana Dias</Typography>} 
+                        primary={<Typography variant="body2" fontWeight={400}>Juliana Dias</Typography>} 
                         secondary="Completou 'Manual de Segurança'" 
                       />
                       <Typography variant="caption" color="text.secondary">Há {i*5}m</Typography>

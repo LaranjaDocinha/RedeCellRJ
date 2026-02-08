@@ -88,7 +88,7 @@ const PriceTrendsWidget: React.FC<PriceTrendsWidgetProps> = React.memo(({ select
         }}
       >
         <FaChartLine style={{ fontSize: '4rem', marginBottom: '1rem' }} />
-        <Typography variant="body1" fontWeight="bold">Nenhum dado de tendência de preços disponível.</Typography>
+        <Typography variant="body1" fontWeight={400}>Nenhum dado de tendência de preços disponível.</Typography>
         <Typography variant="body2" sx={{ mt: 1 }}>
           Monitore seus produtos para ver as tendências de preços.
         </Typography>
@@ -152,3 +152,4 @@ const PriceTrendsWidget: React.FC<PriceTrendsWidgetProps> = React.memo(({ select
 });
 
 export default PriceTrendsWidget;
+

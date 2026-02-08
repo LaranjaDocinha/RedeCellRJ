@@ -11,7 +11,7 @@ export const RecentlyViewed: React.FC = () => {
 
     return (
         <Paper sx={{ p: 2, mt: 4, borderRadius: '16px' }}>
-            <Typography variant="h6" fontWeight="bold" gutterBottom>Vistos Recentemente</Typography>
+            <Typography variant="h6" fontWeight={400} gutterBottom>Vistos Recentemente</Typography>
             <Grid container spacing={2}>
                 {recentlyViewedItems.map(item => (
                     <Grid item key={item.id} xs>
@@ -25,3 +25,4 @@ export const RecentlyViewed: React.FC = () => {
         </Paper>
     );
 };
+

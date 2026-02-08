@@ -4,6 +4,7 @@ import { permissionService } from '../services/permissionService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 import { ValidationError, AppError } from '../utils/errors.js';
+import { sendSuccess } from '../utils/responseHelper.js';
 
 const permissionsRouter = Router();
 
@@ -46,7 +47,7 @@ permissionsRouter.use(authMiddleware.authorize('manage', 'Permissions')); // Onl
 permissionsRouter.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const permissions = await permissionService.getAllPermissions();
-    res.status(200).json(permissions);
+    sendSuccess(res, permissions);
   } catch (error) {
     next(error);
   }
@@ -59,7 +60,7 @@ permissionsRouter.get('/:id', async (req: Request, res: Response, next: NextFunc
     if (!permission) {
       throw new AppError('Permission not found', 404);
     }
-    res.status(200).json(permission);
+    sendSuccess(res, permission);
   } catch (error) {
     next(error);
   }
@@ -72,7 +73,7 @@ permissionsRouter.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const newPermission = await permissionService.createPermission(req.body);
-      res.status(201).json(newPermission);
+      sendSuccess(res, newPermission, 201);
     } catch (error) {
       next(error);
     }
@@ -92,7 +93,7 @@ permissionsRouter.put(
       if (!updatedPermission) {
         throw new AppError('Permission not found', 404);
       }
-      res.status(200).json(updatedPermission);
+      sendSuccess(res, updatedPermission);
     } catch (error) {
       next(error);
     }

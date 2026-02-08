@@ -88,7 +88,7 @@ const CustomerSegmentationWidget: React.FC<CustomerSegmentationWidgetProps> = Re
         }}
       >
         <FaUsers style={{ fontSize: '4rem', marginBottom: '1rem' }} />
-        <Typography variant="body1" fontWeight="bold">Nenhum dado de segmentação de clientes disponível.</Typography>
+        <Typography variant="body1" fontWeight={400}>Nenhum dado de segmentação de clientes disponível.</Typography>
         <Typography variant="body2" sx={{ mt: 1 }}>
           Analise o comportamento dos seus clientes para segmentá-los.
         </Typography>
@@ -142,3 +142,4 @@ const CustomerSegmentationWidget: React.FC<CustomerSegmentationWidgetProps> = Re
 });
 
 export default CustomerSegmentationWidget;
+

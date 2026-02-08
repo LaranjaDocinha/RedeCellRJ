@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
-  Box, Typography, Paper, Grid, Skeleton, Card, CardContent, Select, 
+  Box, Typography, Paper, Grid, CardContent, Select, 
   MenuItem, FormControl, InputLabel, TextField, IconButton, Tooltip, 
   useTheme, Stack, alpha, Divider, Button, Drawer, Badge, List, 
   ListItem, ListItemText, Avatar, SpeedDial, SpeedDialAction, SpeedDialIcon,
@@ -34,16 +34,16 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import ReactApexChart from 'react-apexcharts';
 import moment from 'moment';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { AnimatedCounter } from '../components/AnimatedCounter';
 import { ExpenseForm } from '../components/ExpenseForm'; 
+import { useLoaderData, useNavigate, useNavigation, useLocation } from 'react-router-dom';
 
 // --- Styled Components ---
-
 import styled from 'styled-components';
 
-const PremiumCard = motion.create(styled(Card)(({ theme }) => ({
+const PremiumCard = motion.create(styled(Paper)(({ theme }) => ({
   borderRadius: '28px',
   background: theme.palette.mode === 'dark' 
     ? alpha(theme.palette.background.paper, 0.6) 
@@ -88,11 +88,19 @@ const UPCOMING_BILLS = [
 
 const CashFlowPage: React.FC = () => {
   const theme = useTheme();
-  const { token } = useAuth();
+  const navigate = useNavigate();
+  const navigation = useNavigation();
+  const location = useLocation();
   const { addNotification } = useNotification();
+  const cashFlowData = useLoaderData() as any;
   
-  // States
-  const [loading, setLoading] = useState(true);
+  // URL Params
+  const queryParams = new URLSearchParams(location.search);
+  const selectedBranch = queryParams.get('branchId') || 'all';
+  const startDate = queryParams.get('startDate') || moment().startOf('month').format('YYYY-MM-DD');
+  const endDate = queryParams.get('endDate') || moment().endOf('month').format('YYYY-MM-DD');
+
+  // UI States
   const [isPrivate, setIsPrivate] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
@@ -101,42 +109,18 @@ const CashFlowPage: React.FC = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewType, setViewType] = useState<'day' | 'week' | 'month'>('day');
-  
-  const [branches, setBranches] = useState<any[]>([]);
-  const [selectedBranch, setSelectedBranch] = useState<string>('all'); 
-  const [startDate, setStartDate] = useState(moment().startOf('month').format('YYYY-MM-DD'));
-  const [endDate, setEndDate] = useState(moment().endOf('month').format('YYYY-MM-DD'));
-  const [cashFlowData, setCashFlowData] = useState<any>(null);
 
   // Shortcuts
   useHotkeys('f', () => setFilterDrawerOpen(true));
   useHotkeys('p', () => setIsPrivate(prev => !prev));
-  useHotkeys('r', () => fetchCashFlowData());
+  useHotkeys('r', () => navigate('.', { replace: true }));
 
-  const fetchBranches = async () => {
-    if (!token) return;
-    try {
-      const res = await fetch('/api/branches', { headers: { Authorization: `Bearer ${token}` } });
-      const data = await res.json();
-      setBranches(Array.isArray(data) ? data : []);
-    } catch (e) {}
+  const handleFilterChange = (key: string, value: string) => {
+    const params = new URLSearchParams(location.search);
+    if (value === 'all') params.delete(key);
+    else params.set(key, value);
+    navigate({ search: params.toString() });
   };
-
-  const fetchCashFlowData = async () => {
-    if (!token) return;
-    setLoading(true);
-    try {
-      const branchParam = selectedBranch === 'all' ? '' : `branchId=${selectedBranch}&`;
-      const res = await fetch(`/api/cash-flow?${branchParam}startDate=${startDate}&endDate=${endDate}`, { headers: { Authorization: `Bearer ${token}` } });
-      const data = await res.json();
-      setCashFlowData(data);
-    } catch (e) {} finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchBranches(); }, [token]);
-  useEffect(() => { fetchCashFlowData(); }, [token, selectedBranch, startDate, endDate]);
 
   const handleExport = () => {
     setIsExporting(true);
@@ -163,8 +147,6 @@ const CashFlowPage: React.FC = () => {
     addNotification('Iniciando conciliação bancária...', 'info');
     setTimeout(() => addNotification('Transações conciliadas.', 'success'), 1500);
   };
-
-  // --- Gráficos e Lógica de Inteligência ---
 
   const trendChartOptions: any = useMemo(() => ({
     chart: { type: 'area', height: 350, toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', background: 'transparent' },
@@ -204,11 +186,13 @@ const CashFlowPage: React.FC = () => {
     dataLabels: { enabled: false }
   }), [theme]);
 
+  const isNavigating = navigation.state === 'loading';
+
   return (
     <Box sx={{ position: 'relative' }}>
-      {isExporting && <LinearProgress sx={{ position: 'fixed', top: 64, left: 0, right: 0, zIndex: 2000, height: 3 }} color="primary" />}
+      {(isExporting || isNavigating) && <LinearProgress sx={{ position: 'fixed', top: 64, left: 0, right: 0, zIndex: 2000, height: 3 }} color="primary" />}
 
-      <Box p={4} sx={{ maxWidth: 1600, margin: '0 auto' }}>
+      <Box p={4} sx={{ maxWidth: 1600, margin: '0 auto', opacity: isNavigating ? 0.6 : 1, transition: 'opacity 0.2s' }}>
         
         {/* HEADER */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', mb: 6 }}>
@@ -233,23 +217,23 @@ const CashFlowPage: React.FC = () => {
 
         {/* TOP CARDS */}
         <Grid container spacing={3} sx={{ mb: 6 }}>
-          <Grid size={{ xs: 12, md: 3 }}>
+          <Grid item xs={12} md={3}>
             <PremiumCard whileHover={{ y: -5 }}><CardContent sx={{ p: 4 }}><Stack direction="row" justifyContent="space-between" mb={2}><Typography variant="overline" color="text.secondary">RECEITAS</Typography><TrendingUp color="success" /></Stack><Typography variant="h4" sx={{ filter: isPrivate ? 'blur(10px)' : 'none' }}><AnimatedCounter value={cashFlowData?.totalInflow || 0} /></Typography><Typography variant="caption" color="success.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>+12% <Typography variant="caption" color="text.secondary" component="span">vs mês ant.</Typography></Typography></CardContent></PremiumCard>
           </Grid>
-          <Grid size={{ xs: 12, md: 3 }}>
+          <Grid item xs={12} md={3}>
             <PremiumCard whileHover={{ y: -5 }}><CardContent sx={{ p: 4 }}><Stack direction="row" justifyContent="space-between" mb={2}><Typography variant="overline" color="text.secondary">DESPESAS</Typography><TrendingDown color="error" /></Stack><Typography variant="h4" sx={{ filter: isPrivate ? 'blur(10px)' : 'none' }}><AnimatedCounter value={cashFlowData?.totalOutflow || 0} /></Typography><Typography variant="caption" color="error.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>-4% <Typography variant="caption" color="text.secondary" component="span">Burn: R$ 450/dia</Typography></Typography></CardContent></PremiumCard>
           </Grid>
-          <Grid size={{ xs: 12, md: 3 }}>
+          <Grid item xs={12} md={3}>
             <PremiumCard whileHover={{ y: -5 }} sx={{ border: `1px solid ${theme.palette.success.main}` }}><CardContent sx={{ p: 4 }}><Stack direction="row" justifyContent="space-between" mb={2}><Typography variant="overline" color="text.secondary">LUCRO ESTIMADO</Typography><InsightIcon color="success" /></Stack><Typography variant="h4" color="success.main" sx={{ filter: isPrivate ? 'blur(10px)' : 'none' }}><AnimatedCounter value={(cashFlowData?.totalInflow || 0) - (cashFlowData?.totalOutflow || 0)} /></Typography><Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>Margem líquida: 32%</Typography></CardContent></PremiumCard>
           </Grid>
-          <Grid size={{ xs: 12, md: 3 }}>
+          <Grid item xs={12} md={3}>
             <PremiumCard whileHover={{ y: -5 }} sx={{ bgcolor: 'primary.main', color: 'white' }}><CardContent sx={{ p: 4 }}><Typography variant="overline" sx={{ opacity: 0.8 }}>SALDO DISPONÍVEL</Typography><Typography variant="h4" sx={{ mt: 2, filter: isPrivate ? 'blur(10px)' : 'none' }}><AnimatedCounter value={cashFlowData?.netCashFlow || 0} /></Typography><Box sx={{ position: 'absolute', right: -20, bottom: -20, opacity: 0.1, transform: 'rotate(-15deg)' }}><WalletIcon sx={{ fontSize: 120 }} /></Box></CardContent></PremiumCard>
           </Grid>
         </Grid>
 
         {/* MIDDLE SECTION */}
         <Grid container spacing={4} sx={{ mb: 6 }}>
-          <Grid size={{ xs: 12, lg: 8 }}>
+          <Grid item xs={12} lg={8}>
             <PremiumCard sx={{ p: 4, height: '100%' }}>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
                 <Box><Typography variant="h6">Tendência de Fluxo</Typography><Typography variant="caption" color="text.secondary">Projeção Baseada em IA (Próximos 7 dias)</Typography></Box>
@@ -263,7 +247,7 @@ const CashFlowPage: React.FC = () => {
             </PremiumCard>
           </Grid>
 
-          <Grid size={{ xs: 12, lg: 4 }}>
+          <Grid item xs={12} lg={4}>
             <PremiumCard sx={{ p: 4, height: '100%', textAlign: 'center' }}>
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}><PieChartIcon color="primary" /> Centro de Custo</Typography>
               <Typography variant="caption" color="text.secondary" display="block" mb={4}>Distribuição de gastos por categoria</Typography>
@@ -274,7 +258,7 @@ const CashFlowPage: React.FC = () => {
 
         {/* BOTTOM SECTION */}
         <Grid container spacing={4}>
-          <Grid size={{ xs: 12, lg: 8 }}>
+          <Grid item xs={12} lg={8}>
             <PremiumCard sx={{ display: 'flex', flexDirection: 'column' }}>
               <Box p={3} borderBottom={`1px solid ${alpha(theme.palette.divider, 0.1)}`} display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="subtitle1">Lançamentos Recentes</Typography>
@@ -292,7 +276,7 @@ const CashFlowPage: React.FC = () => {
             </PremiumCard>
           </Grid>
 
-          <Grid size={{ xs: 12, lg: 4 }}>
+          <Grid item xs={12} lg={4}>
             <PremiumCard sx={{ p: 3, height: '100%' }}>
               <Typography variant="subtitle1" mb={3} display="flex" alignItems="center" gap={1}><PendingIcon color="warning" /> Próximos Vencimentos</Typography>
               <Stack spacing={2}>
@@ -315,9 +299,9 @@ const CashFlowPage: React.FC = () => {
         <Drawer anchor="right" open={filterDrawerOpen} onClose={() => setFilterDrawerOpen(false)} PaperProps={{ sx: { width: 350, p: 4, borderRadius: '32px 0 0 32px' } }}>
           <Typography variant="h5" mb={4}>Filtros Avançados</Typography>
           <Stack spacing={4}>
-            <FormControl fullWidth><InputLabel>Filial</InputLabel><Select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value as string)} label="Filial"><MenuItem value="all">Todas as Unidades</MenuItem>{branches.map(b => <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>)}</Select></FormControl>
-            <TextField label="De" type="date" fullWidth value={startDate} onChange={(e) => setStartDate(e.target.value)} InputLabelProps={{ shrink: true }} />
-            <TextField label="Até" type="date" fullWidth value={endDate} onChange={(e) => setEndDate(e.target.value)} InputLabelProps={{ shrink: true }} />
+            <FormControl fullWidth><InputLabel>Filial</InputLabel><Select value={selectedBranch} onChange={(e) => handleFilterChange('branchId', e.target.value as string)} label="Filial"><MenuItem value="all">Todas as Unidades</MenuItem></Select></FormControl>
+            <TextField label="De" type="date" fullWidth value={startDate} onChange={(e) => handleFilterChange('startDate', e.target.value)} InputLabelProps={{ shrink: true }} />
+            <TextField label="Até" type="date" fullWidth value={endDate} onChange={(e) => handleFilterChange('endDate', e.target.value)} InputLabelProps={{ shrink: true }} />
             <Divider /><Typography variant="caption" color="text.secondary">CATEGORIAS</Typography>
             <Box display="flex" flexWrap="wrap" gap={1}>{['Vendas', 'Serviços', 'Aluguel', 'Fornecedores'].map(c => <Chip key={c} label={c} onClick={() => {}} variant="outlined" sx={{ borderRadius: '8px' }} />)}</Box>
             <Button variant="contained" fullWidth size="large" onClick={() => setFilterDrawerOpen(false)} sx={{ borderRadius: '14px', mt: 'auto' }}>Aplicar Filtros</Button>
@@ -342,7 +326,7 @@ const CashFlowPage: React.FC = () => {
           <SpeedDialAction icon={<ConciliatedIcon />} tooltipTitle="Conciliação Bancária" onClick={handleConciliation} />
         </SpeedDial>
 
-        <Dialog open={quickEntryOpen} onClose={() => setQuickEntryOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '24px' } }}><DialogTitle>Novo Lançamento de Caixa</DialogTitle><DialogContent><Box mt={1}><ExpenseForm onSubmit={(d) => { addNotification('Lançamento registrado.', 'success'); setQuickEntryOpen(false); fetchCashFlowData(); }} onCancel={() => setQuickEntryOpen(false)} /></Box></DialogContent></Dialog>
+        <Dialog open={quickEntryOpen} onClose={() => setQuickEntryOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '24px' } }}><DialogTitle>Novo Lançamento de Caixa</DialogTitle><DialogContent><Box mt={1}><ExpenseForm onSubmit={(d) => { addNotification('Lançamento registrado.', 'success'); setQuickEntryOpen(false); navigate('.', { replace: true }); }} onCancel={() => setQuickEntryOpen(false)} /></Box></DialogContent></Dialog>
 
       </Box>
     </Box>

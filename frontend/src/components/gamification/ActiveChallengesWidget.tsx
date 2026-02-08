@@ -45,7 +45,7 @@ const ActiveChallengesWidget: React.FC = () => {
             return (
               <Box key={challenge.id} sx={{ border: '1px solid #eee', p: 1.5, borderRadius: 1 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>{challenge.title}</Typography>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 400 }}>{challenge.title}</Typography>
                   <Chip 
                     label={`+${challenge.reward_xp} XP`} 
                     size="small" 
@@ -75,3 +75,4 @@ const ActiveChallengesWidget: React.FC = () => {
 };
 
 export default ActiveChallengesWidget;
+

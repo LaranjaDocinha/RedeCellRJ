@@ -72,21 +72,30 @@ describe('RoleService', () => {
 
   describe('createRole', () => {
     it('should create a new role and assign permissions', async () => {
-      const newRoleData = { id: 1, name: 'New Role', created_at: new Date(), updated_at: new Date() };
+      const newRoleData = {
+        id: 1,
+        name: 'New Role',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
       const newRolePermissions = [{ id: 1, action: 'view', subject: 'products' }];
 
       mockClientQuery
         .mockResolvedValueOnce({}) // BEGIN
         .mockResolvedValueOnce({ rows: [newRoleData] }) // INSERT roles RETURNING *
         .mockResolvedValueOnce({}) // INSERT role_permissions
-        .mockResolvedValueOnce({}) // COMMIT
+        .mockResolvedValueOnce({}); // COMMIT
 
       const newRole = await roleService.createRole({ name: 'New Role', permissionIds: [1, 2] });
-      
+
       expect(newRole).toEqual(newRoleData); // It returns just the role without fetched permissions
       expect(mockClientQuery).toHaveBeenCalledWith('BEGIN');
-      expect(mockClientQuery).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO roles'), ['New Role']);
-      expect(mockClientQuery).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO role_permissions'));
+      expect(mockClientQuery).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO roles'), [
+        'New Role',
+      ]);
+      expect(mockClientQuery).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO role_permissions'),
+      );
       expect(mockClientQuery).toHaveBeenCalledWith('COMMIT');
       expect(mockClientRelease).toHaveBeenCalled();
     });
@@ -107,9 +116,14 @@ describe('RoleService', () => {
 
   describe('updateRole', () => {
     it('should update role name and permissions', async () => {
-      const updatedRoleData = { id: 1, name: 'Updated Role', created_at: new Date(), updated_at: new Date() };
+      const updatedRoleData = {
+        id: 1,
+        name: 'Updated Role',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
       const updatedPermissions = [{ id: 3, action: 'manage', subject: 'products' }];
-      
+
       // Mock for internal roleService.getRoleById call
       vi.spyOn(roleService, 'getRoleById').mockResolvedValueOnce({
         ...updatedRoleData,
@@ -127,13 +141,21 @@ describe('RoleService', () => {
         name: 'Updated Role',
         permissionIds: [3],
       });
-      
+
       expect(updatedRole?.name).toBe('Updated Role');
       expect(updatedRole?.permissions).toEqual(updatedPermissions);
       expect(mockClientQuery).toHaveBeenCalledWith('BEGIN');
-      expect(mockClientQuery).toHaveBeenCalledWith(expect.stringContaining('UPDATE roles'), ['Updated Role', 1]);
-      expect(mockClientQuery).toHaveBeenCalledWith('DELETE FROM role_permissions WHERE role_id = $1', [1]);
-      expect(mockClientQuery).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO role_permissions'));
+      expect(mockClientQuery).toHaveBeenCalledWith(expect.stringContaining('UPDATE roles'), [
+        'Updated Role',
+        1,
+      ]);
+      expect(mockClientQuery).toHaveBeenCalledWith(
+        'DELETE FROM role_permissions WHERE role_id = $1',
+        [1],
+      );
+      expect(mockClientQuery).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO role_permissions'),
+      );
       expect(mockClientQuery).toHaveBeenCalledWith('COMMIT');
       expect(mockClientRelease).toHaveBeenCalled();
     });

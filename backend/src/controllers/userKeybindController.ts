@@ -10,10 +10,12 @@ export const createKeybindSchema = z.object({
   context: z.string().optional(),
 });
 
-export const updateKeybindSchema = z.object({
-  key_combination: z.string().min(1, 'Key combination is required').optional(),
-  context: z.string().optional(),
-}).partial();
+export const updateKeybindSchema = z
+  .object({
+    key_combination: z.string().min(1, 'Key combination is required').optional(),
+    context: z.string().optional(),
+  })
+  .partial();
 
 export const userKeybindController = {
   async getUserKeybinds(req: Request, res: Response) {
@@ -31,7 +33,10 @@ export const userKeybindController = {
     try {
       const userId = (req as any).user.id;
       const validatedData = createKeybindSchema.parse(req.body);
-      const newKeybind = await userKeybindService.createKeybind({ ...validatedData, user_id: userId });
+      const newKeybind = await userKeybindService.createKeybind({
+        ...validatedData,
+        user_id: userId,
+      });
       res.status(201).json(newKeybind);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -49,12 +54,12 @@ export const userKeybindController = {
       const userId = (req as any).user.id; // Ensure user owns the keybind
       const id = parseInt(req.params.id, 10);
       const validatedData = updateKeybindSchema.parse(req.body);
-      
+
       const existingKeybind = await userKeybindService.getUserKeybinds(userId);
-      const keybindToUpdate = existingKeybind.find(kb => kb.id === id);
+      const keybindToUpdate = existingKeybind.find((kb) => kb.id === id);
 
       if (!keybindToUpdate) {
-          return res.status(404).json({ message: 'Keybind not found or not owned by user.' });
+        return res.status(404).json({ message: 'Keybind not found or not owned by user.' });
       }
 
       const updatedKeybind = await userKeybindService.updateKeybind(id, validatedData);
@@ -73,10 +78,10 @@ export const userKeybindController = {
       const id = parseInt(req.params.id, 10);
 
       const existingKeybind = await userKeybindService.getUserKeybinds(userId);
-      const keybindToDelete = existingKeybind.find(kb => kb.id === id);
+      const keybindToDelete = existingKeybind.find((kb) => kb.id === id);
 
       if (!keybindToDelete) {
-          return res.status(404).json({ message: 'Keybind not found or not owned by user.' });
+        return res.status(404).json({ message: 'Keybind not found or not owned by user.' });
       }
 
       await userKeybindService.deleteKeybind(id);

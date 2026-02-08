@@ -31,7 +31,7 @@ export const ProductCardSimple: React.FC<ProductCardProps> = ({ id, imageUrl, na
             ⭐ {rating.toFixed(1)}
           </Typography>
         </Box>
-        <Typography variant="h5" component="p" fontWeight="bold">
+        <Typography variant="h5" component="p" fontWeight={400}>
           R$ {price.toFixed(2)}
         </Typography>
       </CardContent>
@@ -45,3 +45,4 @@ export const ProductCardSimple: React.FC<ProductCardProps> = ({ id, imageUrl, na
     </Card>
   );
 };
+

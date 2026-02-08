@@ -16,7 +16,6 @@ export const updateIpEntrySchema = z.object({
   is_active: z.boolean().optional(),
 });
 
-
 export const ipWhitelistController = {
   async getAllEntries(req: Request, res: Response) {
     try {

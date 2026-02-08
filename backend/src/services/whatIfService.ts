@@ -1,99 +1,47 @@
-import { getPool } from '../db/index.js';
-import moment from 'moment';
+import pool from '../db/index.js';
 
-interface PromotionDetails {
-  discount_percentage: number;
-  target_product_ids?: number[];
-  target_category_ids?: number[];
-  duration_days: number;
-  expected_sales_increase_percentage: number;
-  branch_id?: number;
-}
+export const whatIfService = {
+  async simulate(variables: {
+    printPriceMultiplier: number;
+    salesVolumeMultiplier: number;
+    costMultiplier: number;
+  }) {
+    const client = await pool.connect();
+    try {
+      // 1. Obter base histórica (último mês)
+      const baseQuery = `
+        SELECT 
+            (SELECT SUM(total_amount) FROM sales WHERE sale_date >= CURRENT_DATE - INTERVAL '30 days') as total_sales,
+            (SELECT SUM(base_amount) FROM commissions_earned WHERE created_at >= CURRENT_DATE - INTERVAL '30 days') as total_service_revenue
+      `;
 
-export const simulatePromotion = async (details: PromotionDetails) => {
-  const client = await getPool().connect();
-  try {
-    const {
-      discount_percentage,
-      target_product_ids,
-      target_category_ids,
-      duration_days,
-      expected_sales_increase_percentage,
-      branch_id,
-    } = details;
+      const baseRes = await client.query(baseQuery);
+      const baseSales = Number(baseRes.rows[0].total_sales || 0);
+      const baseServices = Number(baseRes.rows[0].total_service_revenue || 0);
+      const baseRevenue = baseSales + baseServices;
 
-    // Define a historical period for baseline calculation (e.g., last 30 days)
-    const historicalEndDate = moment().subtract(duration_days, 'days').toISOString();
-    const historicalStartDate = moment(historicalEndDate)
-      .subtract(duration_days, 'days')
-      .toISOString();
+      // 2. Aplicar Projeções
+      const projectedSales = baseSales * variables.salesVolumeMultiplier;
+      const projectedServices = baseServices; // Assumindo volume fixo por enquanto
+      const projectedRevenue = projectedSales + projectedServices;
 
-    let baseQuery = `
-      SELECT 
-        SUM(si.total_price) as total_revenue,
-        SUM(si.cost_price * si.quantity) as total_cost,
-        SUM(si.total_price - (si.cost_price * si.quantity)) as total_profit,
-        SUM(si.quantity) as total_quantity_sold
-      FROM sale_items si
-      JOIN sales s ON si.sale_id = s.id
-      JOIN product_variations pv ON si.variation_id = pv.id
-      JOIN products p ON pv.product_id = p.id
-      WHERE s.sale_date BETWEEN $1 AND $2
-    `;
-    const queryParams: any[] = [historicalStartDate, historicalEndDate];
-    let paramIndex = 3;
+      // Impacto no lucro (assumindo margem média de 30% e custos variáveis de 70%)
+      const baseProfit = baseRevenue * 0.3;
+      const projectedProfit = projectedRevenue * 0.3 * (1 / variables.costMultiplier);
 
-    if (branch_id) {
-      baseQuery += ` AND s.branch_id = $${paramIndex++}`;
-      queryParams.push(branch_id);
+      return {
+        baseline: {
+          revenue: baseRevenue.toFixed(2),
+          profit: baseProfit.toFixed(2),
+        },
+        projection: {
+          revenue: projectedRevenue.toFixed(2),
+          profit: projectedProfit.toFixed(2),
+          impact: (projectedProfit - baseProfit).toFixed(2),
+        },
+      };
+    } finally {
+      client.release();
     }
-    if (target_product_ids && target_product_ids.length > 0) {
-      baseQuery += ` AND p.id = ANY($${paramIndex++}::int[])`;
-      queryParams.push(target_product_ids);
-    }
-    if (target_category_ids && target_category_ids.length > 0) {
-      baseQuery += ` AND p.category_id = ANY($${paramIndex++}::int[])`;
-      queryParams.push(target_category_ids);
-    }
-
-    const baselineRes = await client.query(baseQuery, queryParams);
-    const baseline = baselineRes.rows[0];
-
-    const currentRevenue = parseFloat(baseline.total_revenue) || 0;
-    const currentCost = parseFloat(baseline.total_cost) || 0;
-    const currentProfit = parseFloat(baseline.total_profit) || 0;
-    const currentQuantity = parseFloat(baseline.total_quantity_sold) || 0;
-
-    // Simulate new scenario
-    const newRevenuePerUnitFactor = (100 - discount_percentage) / 100;
-    const newQuantityFactor = (100 + expected_sales_increase_percentage) / 100;
-
-    const simulatedQuantity = currentQuantity * newQuantityFactor;
-    const simulatedRevenue =
-      (currentRevenue / currentQuantity) * newRevenuePerUnitFactor * simulatedQuantity;
-    const simulatedCost = currentCost * newQuantityFactor; // Assuming cost per unit remains same
-    const simulatedProfit = simulatedRevenue - simulatedCost;
-
-    return {
-      baseline: {
-        revenue: parseFloat(currentRevenue.toFixed(2)),
-        cost: parseFloat(currentCost.toFixed(2)),
-        profit: parseFloat(currentProfit.toFixed(2)),
-        quantity: parseFloat(currentQuantity.toFixed(2)),
-      },
-      simulated: {
-        revenue: parseFloat(simulatedRevenue.toFixed(2)),
-        cost: parseFloat(simulatedCost.toFixed(2)),
-        profit: parseFloat(simulatedProfit.toFixed(2)),
-        quantity: parseFloat(simulatedQuantity.toFixed(2)),
-      },
-      impact: {
-        profitChange: parseFloat((simulatedProfit - currentProfit).toFixed(2)),
-        revenueChange: parseFloat((simulatedRevenue - currentRevenue).toFixed(2)),
-        quantityChange: parseFloat((simulatedQuantity - currentQuantity).toFixed(2)),
-      },
-    };
-  } finally {
-    client.release();
-  }
+  },
 };

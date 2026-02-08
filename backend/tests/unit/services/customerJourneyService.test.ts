@@ -72,14 +72,23 @@ describe('CustomerJourneyService', () => {
 
       const result = await customerJourneyService.getAllJourneys();
 
-      expect(mockDefaultQuery).toHaveBeenCalledWith('SELECT * FROM customer_journeys ORDER BY name ASC');
+      expect(mockDefaultQuery).toHaveBeenCalledWith(
+        'SELECT * FROM customer_journeys ORDER BY name ASC',
+      );
       expect(result).toEqual(journeys);
     });
   });
 
   describe('createJourney', () => {
     it('should create a journey', async () => {
-      const payload: any = { name: 'Welcome', trigger_segment: 'new', action_type: 'email', template_id: '1', delay_days: 1, is_active: true };
+      const payload: any = {
+        name: 'Welcome',
+        trigger_segment: 'new',
+        action_type: 'email',
+        template_id: '1',
+        delay_days: 1,
+        is_active: true,
+      };
       const created = { id: 1, ...payload };
       mockDefaultQuery.mockResolvedValueOnce({ rows: [created], rowCount: 1 });
 
@@ -87,7 +96,7 @@ describe('CustomerJourneyService', () => {
 
       expect(mockDefaultQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO customer_journeys'),
-        expect.arrayContaining(['Welcome', 'new', 'email', '1', 1, true])
+        expect.arrayContaining(['Welcome', 'new', 'email', '1', 1, true]),
       );
       expect(result).toEqual(created);
     });
@@ -95,7 +104,14 @@ describe('CustomerJourneyService', () => {
 
   describe('processCustomerJourneys', () => {
     it('should schedule actions for eligible customers', async () => {
-      const activeJourney = { id: 1, name: 'Welcome', trigger_segment: 'new', action_type: 'email', template_id: 'tpl1', delay_days: 1 };
+      const activeJourney = {
+        id: 1,
+        name: 'Welcome',
+        trigger_segment: 'new',
+        action_type: 'email',
+        template_id: 'tpl1',
+        delay_days: 1,
+      };
       const customer = { id: 'cust1', name: 'John', email: 'john@example.com', phone: '12345' };
 
       mockDefaultQuery
@@ -108,7 +124,7 @@ describe('CustomerJourneyService', () => {
 
       expect(mockDefaultQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO customer_journey_actions'),
-        expect.arrayContaining(['cust1', 1, 'email', 'tpl1', 'pending'])
+        expect.arrayContaining(['cust1', 1, 'email', 'tpl1', 'pending']),
       );
     });
 
@@ -119,7 +135,7 @@ describe('CustomerJourneyService', () => {
         action_type: 'email',
         template_id: 'tpl1',
         email: 'john@example.com',
-        name: 'John'
+        name: 'John',
       };
 
       mockDefaultQuery
@@ -130,10 +146,14 @@ describe('CustomerJourneyService', () => {
 
       await customerJourneyService.processCustomerJourneys();
 
-      expect(emailService.sendEmail).toHaveBeenCalledWith('john@example.com', expect.any(String), expect.any(String));
+      expect(emailService.sendEmail).toHaveBeenCalledWith(
+        'john@example.com',
+        expect.any(String),
+        expect.any(String),
+      );
       expect(mockDefaultQuery).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE customer_journey_actions SET status = $1'),
-        ['sent', 10]
+        ['sent', 10],
       );
     });
 
@@ -144,7 +164,7 @@ describe('CustomerJourneyService', () => {
         action_type: 'email',
         template_id: 'tpl1',
         email: 'john@example.com',
-        name: 'John'
+        name: 'John',
       };
 
       mockDefaultQuery
@@ -159,7 +179,7 @@ describe('CustomerJourneyService', () => {
 
       expect(mockDefaultQuery).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE customer_journey_actions SET status = $1'),
-        ['failed', 10]
+        ['failed', 10],
       );
     });
 
@@ -170,7 +190,7 @@ describe('CustomerJourneyService', () => {
         action_type: 'whatsapp_message',
         template_id: 'Hello WhatsApp',
         phone: '123456789',
-        name: 'Jane'
+        name: 'Jane',
       };
 
       mockDefaultQuery
@@ -180,8 +200,10 @@ describe('CustomerJourneyService', () => {
         .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // UPDATE action status
 
       await customerJourneyService.processCustomerJourneys();
-      
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Sending WhatsApp to 123456789: Hello WhatsApp'));
+
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Sending WhatsApp to 123456789: Hello WhatsApp'),
+      );
     });
 
     it('should handle push notification actions', async () => {
@@ -190,7 +212,7 @@ describe('CustomerJourneyService', () => {
         customer_id: 'cust3',
         action_type: 'push_notification',
         template_id: 'Push Template',
-        name: 'Bob'
+        name: 'Bob',
       };
 
       mockDefaultQuery
@@ -204,9 +226,8 @@ describe('CustomerJourneyService', () => {
       expect(pushNotificationService.sendNotificationToUser).toHaveBeenCalledWith(
         'cust3',
         expect.stringContaining('Jornada: Push Template'),
-        expect.stringContaining('Olá Bob, Push Template')
+        expect.stringContaining('Olá Bob, Push Template'),
       );
     });
   });
 });
-

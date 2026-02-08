@@ -34,7 +34,7 @@ const ItemLabel = styled.label`
   flex-grow: 1;
   color: #333;
   font-size: 1em;
-  font-weight: 500;
+  font-weight: 400;
 `;
 
 const Title = styled.h3`
@@ -152,3 +152,4 @@ const ChecklistFormComponent: React.FC<ChecklistFormComponentProps> = ({
 };
 
 export default ChecklistFormComponent;
+

@@ -49,7 +49,7 @@ export async function seedDatabase() {
 
     // Seed Users
     try {
-      await authService.register('Admin Test User', 'admin@test.com', 'password123', 'admin');
+      await authService.register('Admin Test User', 'admin@pdv.com', 'admin123', 'admin');
       await authService.register('Regular Test User', 'user@test.com', 'password123', 'user');
     } catch (error) {
       console.error('Error registering users in seed:', error);

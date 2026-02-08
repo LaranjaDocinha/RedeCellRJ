@@ -50,11 +50,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSubmit }) => {
           <Field name="sku" label="SKU" />
           <Field name="branch_id" label="Branch ID" type="number" />
 
-          <h3 className="text-lg font-semibold mt-4 mb-2">Product Image</h3>
+          <h3 className="text-lg font-normal mt-4 mb-2">Product Image</h3>
           <ImageUpload onImageUpload={handleImageUpload} currentImageUrl={currentImageUrl} />
 
           {/* Variations - Simplificado por enquanto, idealmente seria um componente separado com FieldArray */}
-          <h3 className="text-lg font-semibold mt-4 mb-2">Variations</h3>
+          <h3 className="text-lg font-normal mt-4 mb-2">Variations</h3>
           <Field name="variations.0.color" label="Color" />
           <Field name="variations.0.price" label="Price" type="number" />
           <Field name="variations.0.stock_quantity" label="Stock Quantity" type="number" />
@@ -67,3 +67,4 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSubmit }) => {
 };
 
 export default ProductForm;
+

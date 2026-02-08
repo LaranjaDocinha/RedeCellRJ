@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createFranchise, updateFranchiseStatus, deleteFranchise, getFranchises, getConsolidatedReports, getFranchiseSettings } from '../../../src/services/franchiseService';
+import {
+  createFranchise,
+  updateFranchiseStatus,
+  deleteFranchise,
+  getFranchises,
+  getConsolidatedReports,
+  getFranchiseSettings,
+} from '../../../src/services/franchiseService';
 import * as dbModule from '../../../src/db/index'; // Importa o módulo real para tipagem
 
 // Define os mocks hoisted para serem acessíveis dentro de vi.mock e nos testes
@@ -64,7 +71,7 @@ describe('FranchiseService', () => {
       const result = await createFranchise('Franchise 1');
       expect(mockClientQuery).toHaveBeenCalledWith(
         'INSERT INTO franchises (name, address, contact_person, contact_email) VALUES ($1, $2, $3, $4) RETURNING *',
-        ['Franchise 1', undefined, undefined, undefined]
+        ['Franchise 1', undefined, undefined, undefined],
       );
       expect(result).toEqual(mockFranchise);
     });
@@ -78,7 +85,7 @@ describe('FranchiseService', () => {
       const result = await updateFranchiseStatus(1, true);
       expect(mockClientQuery).toHaveBeenCalledWith(
         'UPDATE franchises SET is_active = $1 WHERE id = $2 RETURNING *',
-        [true, 1]
+        [true, 1],
       );
       expect(result).toEqual(mockFranchise);
     });
@@ -90,7 +97,10 @@ describe('FranchiseService', () => {
       mockClientQuery.mockResolvedValueOnce({ rows: [mockFranchise] });
 
       const result = await deleteFranchise(1);
-      expect(mockClientQuery).toHaveBeenCalledWith('DELETE FROM franchises WHERE id = $1 RETURNING *', [1]);
+      expect(mockClientQuery).toHaveBeenCalledWith(
+        'DELETE FROM franchises WHERE id = $1 RETURNING *',
+        [1],
+      );
       expect(result).toEqual(mockFranchise);
     });
   });
@@ -101,7 +111,9 @@ describe('FranchiseService', () => {
       mockClientQuery.mockResolvedValueOnce({ rows: mockFranchises });
 
       const result = await getFranchises();
-      expect(mockClientQuery).toHaveBeenCalledWith('SELECT * FROM franchises ORDER BY created_at DESC');
+      expect(mockClientQuery).toHaveBeenCalledWith(
+        'SELECT * FROM franchises ORDER BY created_at DESC',
+      );
       expect(result).toEqual(mockFranchises);
     });
   });

@@ -30,7 +30,7 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onChangeSelec
 
     return (
         <Box>
-            <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
+            <Typography variant="h4" component="h1" fontWeight={400} gutterBottom>
                 {product.name}
             </Typography>
 
@@ -41,7 +41,7 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onChangeSelec
                 </Typography>
             </Box>
 
-            <Typography variant="h3" component="p" fontWeight="bold" sx={{ my: 2 }}>
+            <Typography variant="h3" component="p" fontWeight={400} sx={{ my: 2 }}>
                 R$ {currentVariation?.price.toFixed(2) || product.price?.toFixed(2) || '0.00'}
             </Typography>
 
@@ -91,3 +91,4 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({ product, onChangeSelec
         </Box>
     );
 }
+

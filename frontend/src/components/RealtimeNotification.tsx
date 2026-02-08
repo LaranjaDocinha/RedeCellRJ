@@ -44,10 +44,11 @@ export const RealtimeNotification: React.FC<RealtimeNotificationProps> = ({
           setIsVisible(false);
           onClose();
         }}
-        className="ml-4 text-white font-bold"
+        className="ml-4 text-white font-normal"
       >
         &times;
       </button>
     </div>
   );
 };
+

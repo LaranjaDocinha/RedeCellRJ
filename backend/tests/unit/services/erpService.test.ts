@@ -80,11 +80,11 @@ describe('ErpService', () => {
     mockDefaultQuery.mockReset();
     (loggerModule.logger.info as ReturnType<typeof vi.fn>).mockReset();
     (loggerModule.logger.error as ReturnType<typeof vi.fn>).mockReset();
-    
+
     // Acessar os mocks via vi.mocked para garantir que o mock seja usado
     vi.mocked(fs.default).mkdir.mockReset(); // Correção aqui
     vi.mocked(fs.default).writeFile.mockReset(); // Correção aqui
-    
+
     (path.default.join as ReturnType<typeof vi.fn>).mockReset();
 
     mockClientQuery.mockResolvedValue({ rows: [], rowCount: 0 }); // Default mock
@@ -126,10 +126,12 @@ describe('ErpService', () => {
 
       expect(mockDefaultQuery).toHaveBeenCalledOnce();
       // O path.resolve mockado retorna o argumento 'temp/erp_exports', e a variável de ambiente não afeta a constante já inicializada
-      expect(vi.mocked(fs.default).mkdir).toHaveBeenCalledWith('temp/erp_exports', { recursive: true }); // Correção aqui
+      expect(vi.mocked(fs.default).mkdir).toHaveBeenCalledWith('temp/erp_exports', {
+        recursive: true,
+      }); // Correção aqui
       expect(vi.mocked(fs.default).writeFile).toHaveBeenCalledWith(
         expect.stringContaining('temp/erp_exports/sales_erp_export_'),
-        expect.any(String)
+        expect.any(String),
       );
       expect(result).toContain('temp/erp_exports/sales_erp_export_');
     });
@@ -168,10 +170,12 @@ describe('ErpService', () => {
       const result = await erpService.exportExpensesToERP(startDate, endDate);
 
       expect(mockDefaultQuery).toHaveBeenCalledOnce();
-      expect(vi.mocked(fs.default).mkdir).toHaveBeenCalledWith('temp/erp_exports', { recursive: true }); // Correção aqui
+      expect(vi.mocked(fs.default).mkdir).toHaveBeenCalledWith('temp/erp_exports', {
+        recursive: true,
+      }); // Correção aqui
       expect(vi.mocked(fs.default).writeFile).toHaveBeenCalledWith(
         expect.stringContaining('temp/erp_exports/expenses_erp_export_'),
-        expect.any(String)
+        expect.any(String),
       );
       expect(result).toContain('temp/erp_exports/expenses_erp_export_');
     });

@@ -9,58 +9,44 @@ import { useNotification } from '../../contexts/NotificationContext'; // Import 
 import { motion, AnimatePresence } from 'framer-motion'; // Import motion and AnimatePresence
 import FeedbackForm from '../../components/Diagnostics/FeedbackForm'; // Import FeedbackForm
 
+import { useNavigate } from 'react-router-dom';
+import { FaCheckCircle, FaTools, FaRedo } from 'react-icons/fa';
+
 const DiagnosticWizard: React.FC = () => {
+  const navigate = useNavigate();
   const [history, setHistory] = useState<DiagnosticNode[]>([]);
-  const [currentNode, setCurrentNode] = useState<DiagnosticNode | null>(null);
-  const [currentOptions, setCurrentOptions] = useState<DiagnosticNodeOption[]>([]);
-  const [sessionId] = useState(uuidv4()); // Unique session ID for history tracking
-  const { addNotification } = useNotification(); // Initialize useNotification
+  // ... rest of state
+  const [isFinished, setIsFinished] = useState(false);
 
   const { data: rootNodes, isLoading: isLoadingRootNodes, isError: isErrorRootNodes } = useQuery<DiagnosticNode[]>({
     queryKey: ['diagnosticRootNodes'],
     queryFn: async () => {
-      const response = await axios.get<DiagnosticNode[]>('/api/diagnostics/root');
+      const response = await axios.get<DiagnosticNode[]>('/api/v1/diagnostics/root');
       return response.data;
     },
-    staleTime: Infinity, // Root nodes don't change often
+    staleTime: Infinity,
   });
-
-  useEffect(() => {
-    if (rootNodes && rootNodes.length > 0 && !currentNode) {
-      // Start with the first root node if available
-      setCurrentNode(rootNodes[0]);
-      // Record history for the initial node
-      axios.post('/api/diagnostics/history', { sessionId, nodeId: rootNodes[0].id });
-    }
-  }, [rootNodes, currentNode, sessionId]);
-
-  useEffect(() => {
-    const fetchOptions = async () => {
-      if (currentNode) {
-        const response = await axios.get<DiagnosticNodeOption[]>(`/api/diagnostics/${currentNode.id}/options`);
-        setCurrentOptions(response.data);
-      }
-    };
-    fetchOptions();
-  }, [currentNode]);
 
   const handleOptionClick = async (option: DiagnosticNodeOption) => {
     if (option.next_node_id) {
-      // Record history for the selected option
-      axios.post('/api/diagnostics/history', { sessionId, nodeId: currentNode?.id, selectedOptionId: option.id });
-
-      // Fetch the next node
-      const response = await axios.get<DiagnosticNode>(`/api/diagnostics/${option.next_node_id}`);
-      const nextNode = response.data;
-
-      setHistory([...history, currentNode!]); // Add current node to history
-      setCurrentNode(nextNode);
+      axios.post('/api/v1/diagnostics/history', { sessionId, nodeId: currentNode?.id, selectedOptionId: option.id });
+      const response = await axios.get<DiagnosticNode>(`/api/v1/diagnostics/${option.next_node_id}`);
+      setHistory([...history, currentNode!]);
+      setCurrentNode(response.data);
     } else {
-      // This option leads to a solution or end of path
-      axios.post('/api/diagnostics/history', { sessionId, nodeId: currentNode?.id, selectedOptionId: option.id });
-      // If the current node is a solution, display it
-      // Otherwise, this option might lead to a solution node that needs to be fetched
+      axios.post('/api/v1/diagnostics/history', { sessionId, nodeId: currentNode?.id, selectedOptionId: option.id });
+      setIsFinished(true);
     }
+  };
+
+  const handleCreateOS = () => {
+    const diagnosticSummary = history.map(h => h.question_text).join(' -> ');
+    navigate('/service-orders/new', { 
+        state: { 
+            issue_description: `Diagnóstico: ${diagnosticSummary}`,
+            suggested_solution: currentNode?.solution_details || 'Avaliação técnica necessária'
+        } 
+    });
   };
 
   const handleGoBack = async () => {
@@ -149,9 +135,20 @@ const DiagnosticWizard: React.FC = () => {
       </Box>
       <hr />
       <AnimatePresence mode="wait">
-        {currentNode && (
+        {isFinished ? (
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ textAlign: 'center', padding: '40px' }}>
+                <FaCheckCircle size={80} color={theme.palette.success.main} style={{ marginBottom: '20px' }} />
+                <Typography variant="h4" fontWeight={400} gutterBottom>Diagnóstico Concluído!</Typography>
+                <Typography variant="body1" color="text.secondary" mb={4}>O sistema identificou a provável causa e solução.</Typography>
+                
+                <Stack direction="row" spacing={2} justifyContent="center">
+                    <Button variant="outlined" startIcon={<FaRedo />} onClick={() => { setIsFinished(false); setHistory([]); setCurrentNode(rootNodes?.[0] || null); }}>Reiniciar</Button>
+                    <Button variant="contained" size="large" startIcon={<FaTools />} onClick={handleCreateOS} sx={{ px: 4, borderRadius: '12px' }}>Abrir Ordem de Serviço</Button>
+                </Stack>
+            </motion.div>
+        ) : currentNode && (
           <motion.div
-            key={currentNode.id} // Key is important for AnimatePresence to detect changes
+            key={currentNode.id} 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -173,5 +170,6 @@ const DiagnosticWizard: React.FC = () => {
 };
 
 export default DiagnosticWizard;
+
 
 

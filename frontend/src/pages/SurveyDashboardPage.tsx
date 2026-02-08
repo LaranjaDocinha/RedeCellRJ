@@ -64,7 +64,7 @@ const SurveyDashboardPage: React.FC = () => {
           value: { 
             offsetY: 10, 
             fontSize: '32px', 
-            fontWeight: 900,
+            fontWeight: 400,
             formatter: (val) => val.toString()
           }
         }
@@ -99,25 +99,25 @@ const SurveyDashboardPage: React.FC = () => {
             <Box sx={{ p: 1, bgcolor: 'primary.main', borderRadius: '10px', color: 'white', display: 'flex' }}>
               <HappyIcon />
             </Box>
-            <Typography variant="overline" sx={{ fontWeight: 800, color: 'primary.main', letterSpacing: 2 }}>
+            <Typography variant="overline" sx={{ fontWeight: 400, color: 'primary.main', letterSpacing: 2 }}>
               CUSTOMER SUCCESS
             </Typography>
           </Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
+          <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px' }}>
             Voz do Cliente
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
             Acompanhe métricas de satisfação e feedbacks em tempo real.
           </Typography>
         </Box>
-        <Chip label="ZONA DE EXCELÊNCIA" color="success" sx={{ fontWeight: 900, borderRadius: '8px', px: 1 }} />
+        <Chip label="ZONA DE EXCELÊNCIA" color="success" sx={{ fontWeight: 400, borderRadius: '8px', px: 1 }} />
       </Box>
 
       <Grid container spacing={4}>
         {/* NPS Card */}
         <Grid item xs={12} md={4}>
           <Paper sx={{ p: 4, borderRadius: '32px', border: '1px solid', borderColor: 'divider', textAlign: 'center', height: '100%', position: 'relative', overflow: 'hidden' }}>
-            <Typography variant="h6" fontWeight={800} gutterBottom>Net Promoter Score</Typography>
+            <Typography variant="h6" fontWeight={400} gutterBottom>Net Promoter Score</Typography>
             <Typography variant="caption" color="text.secondary" display="block" mb={4}>
               Métrica de lealdade e recomendação
             </Typography>
@@ -125,9 +125,9 @@ const SurveyDashboardPage: React.FC = () => {
               <ReactApexChart options={npsChartOptions} series={[results?.nps.score || 0]} type="radialBar" height={300} />
             </Box>
             <Box display="flex" justifyContent="center" gap={3} mt={2}>
-              <Box><Typography variant="h6" fontWeight={900}>154</Typography><Typography variant="caption" color="text.secondary">RESPOSTAS</Typography></Box>
+              <Box><Typography variant="h6" fontWeight={400}>154</Typography><Typography variant="caption" color="text.secondary">RESPOSTAS</Typography></Box>
               <Divider orientation="vertical" flexItem sx={{ opacity: 0.5 }} />
-              <Box><Typography variant="h6" fontWeight={900} color="success.main">+12</Typography><Typography variant="caption" color="text.secondary">VARIAÇÃO</Typography></Box>
+              <Box><Typography variant="h6" fontWeight={400} color="success.main">+12</Typography><Typography variant="caption" color="text.secondary">VARIAÇÃO</Typography></Box>
             </Box>
           </Paper>
         </Grid>
@@ -138,22 +138,22 @@ const SurveyDashboardPage: React.FC = () => {
             <Paper sx={{ p: 4, borderRadius: '32px', border: '1px solid', borderColor: 'divider' }}>
               <Grid container spacing={4} alignItems="center">
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="h6" fontWeight={800} gutterBottom>Customer Satisfaction</Typography>
-                  <Typography variant="h2" fontWeight={900} color="primary" sx={{ my: 1 }}>{results?.csat.score}%</Typography>
+                  <Typography variant="h6" fontWeight={400} gutterBottom>Customer Satisfaction</Typography>
+                  <Typography variant="h2" fontWeight={400} color="primary" sx={{ my: 1 }}>{results?.csat.score}%</Typography>
                   <Typography variant="body2" color="text.secondary">Média de satisfação geral com o serviço prestado.</Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <Stack spacing={2}>
                     <Box>
-                      <Box display="flex" justifyContent="space-between" mb={0.5}><Typography variant="caption" fontWeight={700}>Qualidade Técnica</Typography><Typography variant="caption" fontWeight={800}>92%</Typography></Box>
+                      <Box display="flex" justifyContent="space-between" mb={0.5}><Typography variant="caption" fontWeight={400}>Qualidade Técnica</Typography><Typography variant="caption" fontWeight={400}>92%</Typography></Box>
                       <LinearProgress variant="determinate" value={92} color="success" sx={{ height: 6, borderRadius: 3 }} />
                     </Box>
                     <Box>
-                      <Box display="flex" justifyContent="space-between" mb={0.5}><Typography variant="caption" fontWeight={700}>Agilidade</Typography><Typography variant="caption" fontWeight={800}>78%</Typography></Box>
+                      <Box display="flex" justifyContent="space-between" mb={0.5}><Typography variant="caption" fontWeight={400}>Agilidade</Typography><Typography variant="caption" fontWeight={400}>78%</Typography></Box>
                       <LinearProgress variant="determinate" value={78} color="primary" sx={{ height: 6, borderRadius: 3 }} />
                     </Box>
                     <Box>
-                      <Box display="flex" justifyContent="space-between" mb={0.5}><Typography variant="caption" fontWeight={700}>Atendimento</Typography><Typography variant="caption" fontWeight={800}>95%</Typography></Box>
+                      <Box display="flex" justifyContent="space-between" mb={0.5}><Typography variant="caption" fontWeight={400}>Atendimento</Typography><Typography variant="caption" fontWeight={400}>95%</Typography></Box>
                       <LinearProgress variant="determinate" value={95} color="success" sx={{ height: 6, borderRadius: 3 }} />
                     </Box>
                   </Stack>
@@ -162,14 +162,14 @@ const SurveyDashboardPage: React.FC = () => {
             </Paper>
 
             <Paper sx={{ p: 4, borderRadius: '32px', border: '1px solid', borderColor: 'divider', flexGrow: 1 }}>
-              <Typography variant="h6" fontWeight={800} mb={3}>Feedbacks Recentes</Typography>
+              <Typography variant="h6" fontWeight={400} mb={3}>Feedbacks Recentes</Typography>
               <Stack spacing={2.5}>
                 {recentFeedbacks.map(f => (
                   <Box key={f.id} display="flex" gap={2} alignItems="flex-start">
                     <Avatar sx={{ bgcolor: f.sentiment === 'positive' ? 'success.light' : 'action.disabled' }}>{f.user[0]}</Avatar>
                     <Box flexGrow={1}>
                       <Box display="flex" justifyContent="space-between">
-                        <Typography variant="body2" fontWeight={800}>{f.user}</Typography>
+                        <Typography variant="body2" fontWeight={400}>{f.user}</Typography>
                         <Typography variant="caption" color="text.secondary">{f.time}</Typography>
                       </Box>
                       <Stack direction="row" spacing={0.5} my={0.5}>
@@ -180,7 +180,7 @@ const SurveyDashboardPage: React.FC = () => {
                   </Box>
                 ))}
               </Stack>
-              <Button fullWidth variant="text" sx={{ mt: 3, fontWeight: 700, textTransform: 'none' }}>Ver Muro de Elogios</Button>
+              <Button fullWidth variant="text" sx={{ mt: 3, fontWeight: 400, textTransform: 'none' }}>Ver Muro de Elogios</Button>
             </Paper>
           </Stack>
         </Grid>

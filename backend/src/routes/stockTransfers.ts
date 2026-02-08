@@ -21,31 +21,31 @@ stockTransfersRouter.post(
   '/request',
   authMiddleware.authorize('create', 'StockTransfer'),
   validate(requestTransferSchema),
-  stockTransferController.requestTransfer
+  stockTransferController.requestTransfer,
 );
 
 stockTransfersRouter.post(
   '/:id/approve',
   authMiddleware.authorize('approve', 'StockTransfer'),
-  stockTransferController.approveTransfer // approvedBy comes from authMiddleware
+  stockTransferController.approveTransfer, // approvedBy comes from authMiddleware
 );
 
 stockTransfersRouter.post(
   '/:id/reject',
   authMiddleware.authorize('reject', 'StockTransfer'),
-  stockTransferController.rejectTransfer // approvedBy comes from authMiddleware
+  stockTransferController.rejectTransfer, // approvedBy comes from authMiddleware
 );
 
 stockTransfersRouter.get(
   '/pending',
   authMiddleware.authorize('read', 'StockTransfer'),
-  stockTransferController.getPendingTransfers
+  stockTransferController.getPendingTransfers,
 );
 
 stockTransfersRouter.get(
   '/history',
   authMiddleware.authorize('read', 'StockTransfer'),
-  stockTransferController.getTransferHistory
+  stockTransferController.getTransferHistory,
 );
 
 export default stockTransfersRouter;

@@ -20,14 +20,14 @@ export const generatePurchaseSuggestions = async () => {
   const suggestions = salesHistory.rows.map((product: any) => {
     const totalSold = Number(product.total_sold_90d || 0);
     const avgDailySales = totalSold / 90;
-    
+
     // Regra: Estoque para cobrir 30 dias + Margem de segurança de 20%
     const idealStock = Math.ceil(avgDailySales * 30 * 1.2);
     const currentStock = Number(product.stock_quantity || 0);
-    
+
     // Sugestão de compra: Ideal - Atual. Se negativo, é zero.
     const toBuy = Math.max(0, idealStock - currentStock);
-    
+
     // Status do inventário
     let status = 'healthy';
     if (currentStock === 0) status = 'critical';
@@ -41,7 +41,7 @@ export const generatePurchaseSuggestions = async () => {
       avgDailySales: avgDailySales.toFixed(2),
       idealStock,
       suggestion: toBuy,
-      status
+      status,
     };
   });
 

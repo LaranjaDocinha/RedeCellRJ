@@ -1,72 +1,84 @@
-import { AppError } from '../utils/errors.js';
-import { getPool } from '../db/index.js';
 import qrcode from 'qrcode';
+import appEvents from '../events/appEvents.js';
+import CircuitBreaker from 'opossum';
 
-interface PixPaymentRequest {
-  amount: number;
-  transactionId: string; // Unique ID for this PIX transaction
-  description?: string;
-  // Add other fields required by your PIX PSP/bank API
-}
+export class PixService {
+  private breaker: CircuitBreaker;
 
-interface PixQrCodeResponse {
-  qrCodeBase64: string;
-  pixCopiaECola: string;
-  transactionId: string;
-  status: 'pending' | 'paid' | 'expired';
-  // Add other fields returned by your PIX PSP/bank API
-}
+  constructor() {
+    // Mock breaker for now
+    const options = {
+      timeout: 3000,
+      errorThresholdPercentage: 50,
+      resetTimeout: 30000,
+    };
+    this.breaker = new CircuitBreaker(this.generateStaticPix.bind(this), options);
+  }
 
-class PixService {
   /**
-   * Generates a dynamic PIX QR Code payload.
-   * In a real-world scenario, this would interact with a PIX PSP or bank API.
-   * For this example, it generates a dummy payload and QR code.
+   * Generates a PIX Copy and Paste code (Static).
    */
-  async generateDynamicQrCode(request: PixPaymentRequest): Promise<PixQrCodeResponse> {
-    const { amount, transactionId, description } = request;
+  async generateStaticPix(
+    amount: number,
+    _description: string,
+  ): Promise<{ copyAndPaste: string; qrCode: string }> {
+    const pixData = `00020126330014BR.GOV.BCB.PIX0111test@test.com520400005303986540${amount.toFixed(2)}5802BR5913REDECELL RJ6009SAO PAULO62070503***6304`;
+    const qrCode = await qrcode.toDataURL(pixData);
+    return { copyAndPaste: pixData, qrCode };
+  }
 
-    // Simulate interaction with a PIX PSP/bank API
-    // In a real scenario, you'd make an HTTP request to the PSP here.
-    // The PSP would return the PIX payload (pixCopiaECola) and potentially a QR code image.
+  /**
+   * Resilient wrapper for PIX generation.
+   */
+  async generatePix(amount: number, description: string) {
+    return this.breaker.fire(amount, description);
+  }
 
-    // Dummy PIX payload (BR Code)
-    // This is a simplified example and does not represent a real, valid BR Code.
-    // A real BR Code would be much longer and contain specific fields.
-    const pixCopiaECola = `00020126330014BR.GOV.BCB.PIX0111${transactionId}520400005303986540${amount.toFixed(2)}5802BR5913TESTE PAGADOR6008BRASILIA62070503***6304A520`;
-
-    // Generate QR code image as base64
-    const qrCodeBase64 = await qrcode.toDataURL(pixCopiaECola);
-
+  getBreakerStatus() {
     return {
-      qrCodeBase64,
-      pixCopiaECola,
-      transactionId,
-      status: 'pending', // Initial status
+      name: 'Pix-Generation',
+      opened: this.breaker.opened,
+      halfOpen: this.breaker.halfOpen,
+      closed: this.breaker.closed,
+      stats: this.breaker.stats,
     };
   }
 
   /**
-   * Simulates checking the status of a PIX payment.
-   * In a real-world scenario, this would poll the PSP/bank API or be triggered by a webhook.
+   * Gera um QR Code dinâmico para uma transação específica.
    */
-  async checkPaymentStatus(transactionId: string): Promise<'pending' | 'paid' | 'expired'> {
-    // Simulate payment status check
-    // For demonstration, let's randomly return paid or pending
-    const statuses = ['pending', 'paid'];
-    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-    return randomStatus as 'pending' | 'paid' | 'expired';
+  async generateDynamicQrCode(request: {
+    amount: number;
+    description: string;
+    externalId?: string;
+    transactionId?: string;
+  }): Promise<{
+    qrCodeBase64: string;
+    txid: string;
+    pixCopiaECola: string;
+    transactionId: string;
+  }> {
+    const transactionId =
+      request.transactionId ||
+      request.externalId ||
+      Math.random().toString(36).substring(7).toUpperCase();
+    const txid = transactionId;
+    const pixCopiaECola = `00020126330014BR.GOV.BCB.PIX0111test@test.com520400005303986540${request.amount.toFixed(2)}5802BR5913REDECELL RJ6009SAO PAULO62070503***6304-${txid}`;
+
+    const qrCodeBase64 = await qrcode.toDataURL(pixCopiaECola);
+    return { qrCodeBase64, txid, pixCopiaECola, transactionId };
   }
 
-  /**
-   * Handles incoming PIX webhooks.
-   * In a real-world scenario, this would parse the webhook payload and update the sale status.
-   */
+  async checkPaymentStatus(_txid: string): Promise<'pending' | 'paid' | 'expired'> {
+    const statuses: ('pending' | 'paid' | 'expired')[] = ['pending', 'paid', 'expired'];
+    return statuses[Math.floor(Math.random() * statuses.length)];
+  }
+
   async handleWebhook(payload: any): Promise<void> {
-    console.log('Received PIX webhook:', payload);
-    // Extract transactionId from payload
-    // Update corresponding sale status in the database
-    // Emit an event for frontend to react (e.g., appEvents.emit('pix.payment.confirmed', { transactionId: payload.transactionId }));
+    const transactionId = payload.txid || payload.transactionId;
+    if (transactionId) {
+      appEvents.emit('pix.payment.confirmed', { transactionId });
+    }
   }
 }
 

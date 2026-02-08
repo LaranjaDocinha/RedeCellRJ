@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Box, 
   Typography, 
@@ -21,7 +21,8 @@ import {
   Slider,
   Dialog,
   DialogTitle,
-  DialogContent
+  DialogContent,
+  Checkbox
 } from '@mui/material';
 import { 
   FaBoxOpen, 
@@ -38,11 +39,10 @@ import {
   FaWhatsapp,
   FaCamera,
   FaFire,
-  FaDownload,
-  FaQrcode,
   FaFileInvoice,
   FaPlusCircle,
-  FaMoneyBillWave
+  FaMoneyBillWave,
+  FaQrcode
 } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import moment from 'moment';
@@ -52,34 +52,27 @@ import { Button } from '../components/Button';
 import ErrorBoundary from '../components/ErrorBoundary';
 import api from '../services/api';
 import { QuarantineForm } from '../components/QuarantineForm';
+import RMABorderou from '../components/ui/RMABorderou';
+import { useReactToPrint } from 'react-to-print';
 
 const QuarantinePage: React.FC = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
-  const { addNotification } = useNotification();
+  const { showNotification } = useNotification();
   
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [priceRange, setPriceRange] = useState<number[]>([0, 3000]);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const printRef = useRef<HTMLDivElement>(null);
 
-  // #5 Custo de Prejuízo e #41 Evolução
-  const totalLoss = useMemo(() => items.reduce((sum, item) => sum + Number(item.item_cost || 0), 0), [items]);
-  const batteryRisks = useMemo(() => items.filter(i => i.is_battery_risk).length, [items]);
-
-  const filteredItems = useMemo(() => {
-    return items.filter(item => {
-        const matchesSearch = item.product_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                              item.supplier?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              item.reason?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === 'All' || item.status === statusFilter;
-        const matchesPrice = (item.item_cost || 0) >= priceRange[0] && (item.item_cost || 0) <= priceRange[1];
-        
-        return matchesSearch && matchesStatus && matchesPrice;
-    });
-  }, [items, searchTerm, statusFilter, priceRange]);
+  const handlePrintRMA = useReactToPrint({
+    contentRef: printRef,
+  });
 
   const fetchQuarantine = async () => {
     try {
@@ -88,24 +81,58 @@ const QuarantinePage: React.FC = () => {
       setItems(res.data || []);
     } catch (err) {
       console.error('Failed to fetch quarantine items', err);
-      // Fallback mock handled by initial seed or empty state
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => { fetchQuarantine(); }, []);
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const selectedItemsForRMA = useMemo(() => 
+    items.filter(i => selectedIds.includes(i.id)), 
+  [items, selectedIds]);
+
+  const supplierStats = useMemo(() => {
+    const stats: Record<string, { total: number, defects: number }> = {};
+    items.forEach(i => {
+        if (!stats[i.supplier]) stats[i.supplier] = { total: 100, defects: 0 }; 
+        stats[i.supplier].defects++;
+    });
+    return Object.entries(stats).map(([name, data]) => ({
+        name,
+        rate: (data.defects / data.total) * 100
+    })).sort((a, b) => b.rate - a.rate);
+  }, [items]);
+
+  const totalLoss = useMemo(() => items.reduce((sum, item) => sum + Number(item.item_cost || 0), 0), [items]);
+  const batteryRisks = useMemo(() => items.filter(i => i.is_battery_risk).length, [items]);
+
+  const filteredItems = useMemo(() => {
+    return items.filter(item => {
+        const matchesSearch = (item.product_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                              item.supplier?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              item.reason?.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesStatus = statusFilter === 'All' || item.status === statusFilter;
+        const matchesPrice = (item.item_cost || 0) >= priceRange[0] && (item.item_cost || 0) <= priceRange[1];
+        
+        return matchesSearch && matchesStatus && matchesPrice;
+    });
+  }, [items, searchTerm, statusFilter, priceRange]);
 
   const handleAddItem = async (data: any) => {
     try {
       const res = await api.post('/api/quarantine', data);
       setItems([res.data, ...items]);
       setIsModalOpen(false);
-      addNotification('Item enviado para quarentena.', 'success');
+      showNotification('Item enviado para quarentena.', 'success');
     } catch (err) {
-      addNotification('Erro ao adicionar item.', 'error');
+      showNotification('Erro ao adicionar item.', 'error');
     }
   };
-
-  useEffect(() => { fetchQuarantine(); }, []);
 
   const getStatusInfo = (status: string) => {
     switch (status) {
@@ -121,21 +148,34 @@ const QuarantinePage: React.FC = () => {
     <ErrorBoundary>
       <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1600, margin: '0 auto' }}>
         
-        {/* HEADER DE ELITE */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 5, flexWrap: 'wrap', gap: 2 }}>
           <Box>
             <Typography variant="h4" sx={{ fontWeight: 400, letterSpacing: '-0.5px' }}>Centro de Quarentena & RMA</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 400 }}>Gestão estratégica de peças defeituosas e ativos em garantia</Typography>
           </Box>
           <Stack direction="row" spacing={2}>
-            <Button variant="outlined" label="Exportar RMA (PDF)" startIcon={<FaFileInvoice />} />
+            <Button 
+                variant="outlined" 
+                label={`Exportar RMA (${selectedIds.length})`} 
+                startIcon={<FaFileInvoice />} 
+                disabled={selectedIds.length === 0}
+                onClick={() => handlePrintRMA()}
+            />
             <Button variant="contained" label="Adicionar Peça Defeituosa" startIcon={<FaPlusCircle />} onClick={() => setIsModalOpen(true)} />
           </Stack>
         </Box>
 
-        {/* DASHBOARD INDUSTRIAL (#5, #13, #16, #41) */}
+        <Box sx={{ mb: 4, p: 2, bgcolor: alpha(theme.palette.error.main, 0.05), borderRadius: '16px', display: 'flex', alignItems: 'center', gap: 3 }}>
+            <Typography variant="caption" fontWeight={400} color="error.main">MAIOR TAXA DE DEFEITO:</Typography>
+            <Stack direction="row" spacing={2}>
+                {supplierStats.slice(0, 3).map((s, i) => (
+                    <Chip key={i} label={`${s.name}: ${s.rate.toFixed(1)}%`} size="small" color="error" sx={{ fontWeight: 400 }} />
+                ))}
+            </Stack>
+        </Box>
+
         <Grid container spacing={3} sx={{ mb: 5 }}>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid item xs={12} md={3}>
                 <Paper variant="outlined" sx={{ p: 3, borderRadius: '24px', bgcolor: alpha(theme.palette.error.main, 0.02), border: `1px solid ${alpha(theme.palette.error.main, 0.1)}` }}>
                     <Stack direction="row" spacing={2} alignItems="center">
                         <Avatar sx={{ bgcolor: alpha(theme.palette.error.main, 0.1), color: theme.palette.error.main, borderRadius: '14px' }}><FaMoneyBillWave /></Avatar>
@@ -146,7 +186,7 @@ const QuarantinePage: React.FC = () => {
                     </Stack>
                 </Paper>
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid item xs={12} md={3}>
                 <Paper variant="outlined" sx={{ p: 3, borderRadius: '24px', bgcolor: batteryRisks > 0 ? alpha(theme.palette.warning.main, 0.05) : theme.palette.background.paper, border: batteryRisks > 0 ? `1px solid ${theme.palette.warning.main}` : `1px solid ${theme.palette.divider}` }}>
                     <Stack direction="row" spacing={2} alignItems="center">
                         <Avatar sx={{ bgcolor: alpha(theme.palette.warning.main, 0.1), color: theme.palette.warning.main, borderRadius: '14px' }}><FaFire /></Avatar>
@@ -157,7 +197,7 @@ const QuarantinePage: React.FC = () => {
                     </Stack>
                 </Paper>
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid item xs={12} md={3}>
                 <Paper variant="outlined" sx={{ p: 3, borderRadius: '24px', bgcolor: theme.palette.background.paper }}>
                     <Stack direction="row" spacing={2} alignItems="center">
                         <Avatar sx={{ bgcolor: alpha(theme.palette.info.main, 0.1), color: theme.palette.info.main, borderRadius: '14px' }}><FaTruckLoading /></Avatar>
@@ -168,7 +208,7 @@ const QuarantinePage: React.FC = () => {
                     </Stack>
                 </Paper>
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid item xs={12} md={3}>
                 <Paper variant="outlined" sx={{ p: 3, borderRadius: '24px', bgcolor: theme.palette.background.paper }}>
                     <Stack direction="row" spacing={2} alignItems="center">
                         <Avatar sx={{ bgcolor: alpha(theme.palette.success.main, 0.1), color: theme.palette.success.main, borderRadius: '14px' }}><FaChartBar /></Avatar>
@@ -181,7 +221,6 @@ const QuarantinePage: React.FC = () => {
             </Grid>
         </Grid>
 
-        {/* FILTROS AVANÇADOS (#29, #32) */}
         <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 3 }}>
             <Stack direction="row" spacing={2} alignItems="center" flexGrow={1}>
                 <TextField 
@@ -207,7 +246,6 @@ const QuarantinePage: React.FC = () => {
             </Box>
         </Box>
 
-        {/* LISTAGEM DE CARDS PREMIUM (#27, #30, #33, #39) */}
         <Box sx={{ minHeight: '500px' }}>
             {loading ? (
                 <Box display="flex" justifyContent="center" py={10}><CircularProgress thickness={2} /></Box>
@@ -220,7 +258,7 @@ const QuarantinePage: React.FC = () => {
                             const daysInStore = moment().diff(moment(item.created_at), 'days');
 
                             return (
-                                <Grid size={{ xs: 12, md: 6, lg: 4 }} key={item.id} component={motion.div} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
+                                <Grid item xs={12} md={6} lg={4} key={item.id} component={motion.div} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
                                     <Card variant="outlined" sx={{ 
                                         borderRadius: '24px', 
                                         border: `1px solid ${theme.palette.divider}`, 
@@ -228,13 +266,12 @@ const QuarantinePage: React.FC = () => {
                                         position: 'relative', 
                                         overflow: 'hidden', 
                                         transition: 'all 0.3s',
-                                        height: '480px', // Altura fixa garantida
+                                        height: '480px', 
                                         display: 'flex',
                                         flexDirection: 'column',
                                         '&:hover': { boxShadow: isDarkMode ? '0 8px 32px rgba(0,0,0,0.4)' : '0 8px 32px rgba(0,0,0,0.05)' } 
                                     }}>
                                         
-                                        {/* Alerta de Gravidade (#3, #16) */}
                                         {item.is_battery_risk && (
                                             <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, ${theme.palette.error.main}, ${theme.palette.warning.main})` }} />
                                         )}
@@ -244,6 +281,11 @@ const QuarantinePage: React.FC = () => {
 
                                         <Box sx={{ p: 2.5, bgcolor: alpha(status.color, 0.03), borderBottom: `1px solid ${theme.palette.divider}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
                                             <Stack direction="row" spacing={1.5} alignItems="center">
+                                                <Checkbox 
+                                                    checked={selectedIds.includes(item.id)}
+                                                    onChange={() => toggleSelect(item.id)}
+                                                    size="small"
+                                                />
                                                 <Avatar sx={{ width: 32, height: 32, bgcolor: alpha(status.color, 0.1), color: status.color, fontSize: '0.8rem' }}>{status.icon}</Avatar>
                                                 <Box>
                                                     <Typography variant="body2">{item.supplier}</Typography>
@@ -265,7 +307,6 @@ const QuarantinePage: React.FC = () => {
                                                 <Typography variant="h6" color="error.main">R$ {Number(item.item_cost).toFixed(2)}</Typography>
                                             </Box>
 
-                                            {/* Detalhes do Defeito (#10) */}
                                             <Box sx={{ p: 2, borderRadius: '16px', bgcolor: isDarkMode ? alpha('#fff', 0.02) : '#f8f9fa', mb: 2, border: `1px solid ${theme.palette.divider}`, height: '80px', overflow: 'hidden' }}>
                                                 <Stack direction="row" spacing={1} alignItems="center" mb={1} sx={{ opacity: 0.6 }}>
                                                     <FaExclamationTriangle size={12} color={theme.palette.warning.main} />
@@ -274,9 +315,8 @@ const QuarantinePage: React.FC = () => {
                                                 <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>{item.reason}</Typography>
                                             </Box>
 
-                                            {/* Localização e Prazos (#14, #15) */}
                                             <Grid container spacing={2} sx={{ mb: 3 }}>
-                                                <Grid size={{ xs: 6 }}>
+                                                <Grid item xs={6}>
                                                     <Stack direction="row" spacing={1} alignItems="center">
                                                         <FaMapMarkerAlt size={12} style={{ opacity: 0.5 }} />
                                                         <Box>
@@ -285,7 +325,7 @@ const QuarantinePage: React.FC = () => {
                                                         </Box>
                                                     </Stack>
                                                 </Grid>
-                                                <Grid size={{ xs: 6 }}>
+                                                <Grid item xs={6}>
                                                     <Stack direction="row" spacing={1} alignItems="center">
                                                         <FaCalendarTimes size={12} color={isExpired ? theme.palette.error.main : 'inherit'} style={{ opacity: 0.5 }} />
                                                         <Box>
@@ -304,8 +344,8 @@ const QuarantinePage: React.FC = () => {
                                                 <Box display="flex" justifyContent="space-between" alignItems="center">
                                                     <Typography variant="caption" color="text.secondary">Entrada há {daysInStore} dias</Typography>
                                                     <Stack direction="row" spacing={1}>
-                                                        <Tooltip title="Avisar Fornecedor (WhatsApp #21)"><IconButton size="small" color="success" sx={{ border: `1px solid ${theme.palette.divider}` }}><FaWhatsapp size={14} /></IconButton></Tooltip>
-                                                        <Tooltip title="Anexar Prova Visual (#8, #9)"><IconButton size="small" sx={{ border: `1px solid ${theme.palette.divider}` }}><FaCamera size={14} /></IconButton></Tooltip>
+                                                        <Tooltip title="Avisar Fornecedor (WhatsApp)"><IconButton size="small" color="success" sx={{ border: `1px solid ${theme.palette.divider}` }}><FaWhatsapp size={14} /></IconButton></Tooltip>
+                                                        <Tooltip title="Anexar Prova Visual"><IconButton size="small" sx={{ border: `1px solid ${theme.palette.divider}` }}><FaCamera size={14} /></IconButton></Tooltip>
                                                         <Button variant="text" size="small" label="Gerir RMA" endIcon={<FaArrowRight />} sx={{ fontWeight: 400 }} />
                                                     </Stack>
                                                 </Box>
@@ -320,7 +360,6 @@ const QuarantinePage: React.FC = () => {
             )}
         </Box>
 
-        {/* Modal de Entrada de Quarentena */}
         <Dialog 
           open={isModalOpen} 
           onClose={() => setIsModalOpen(false)}
@@ -335,6 +374,17 @@ const QuarantinePage: React.FC = () => {
             </Box>
           </DialogContent>
         </Dialog>
+
+        <div style={{ display: 'none' }}>
+            <div ref={printRef}>
+                {selectedItemsForRMA.length > 0 && (
+                    <RMABorderou 
+                        supplier={selectedItemsForRMA[0].supplier}
+                        items={selectedItemsForRMA}
+                    />
+                )}
+            </div>
+        </div>
 
       </Box>
     </ErrorBoundary>

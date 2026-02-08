@@ -80,7 +80,7 @@ const GlassActionCard = styled(motion.div)<{ color?: string }>`
 `;
 
 const StatusPill = styled(Chip)<{ status: 'online' | 'offline' }>`
-  font-weight: 900;
+  font-weight: 400;
   font-size: 0.65rem;
   height: 22px;
   background: ${({ status, theme }) => status === 'online' ? theme.palette.success.main : theme.palette.error.main};
@@ -164,16 +164,16 @@ const HomePage: React.FC = () => {
             <Box component={motion.div} variants={item}>
               <Stack direction="row" spacing={2.5} alignItems="center">
                 <Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} variant="dot" color={isClockedIn ? "success" : "error"} sx={{ '& .MuiBadge-badge': { width: 14, height: 14, borderRadius: '50%', border: `3px solid ${theme.palette.background.default}` } }}>
-                  <Avatar sx={{ width: 72, height: 72, bgcolor: 'primary.main', fontWeight: 900, fontSize: '1.8rem', boxShadow: '0 12px 24px rgba(0,0,0,0.1)' }}>
+                  <Avatar sx={{ width: 72, height: 72, bgcolor: 'primary.main', fontWeight: 400, fontSize: '1.8rem', boxShadow: '0 12px 24px rgba(0,0,0,0.1)' }}>
                     {user?.name?.[0].toUpperCase()}
                   </Avatar>
                 </Badge>
                 <Box>
-                  <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px', mb: 0.5 }}>
+                  <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px', mb: 0.5 }}>
                     {greeting}, {user?.name.split(' ')[0]}
                   </Typography>
                   <Stack direction="row" spacing={2} alignItems="center">
-                    <Typography variant="body1" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 600 }}>
+                    <Typography variant="body1" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 400 }}>
                       {time.getHours() >= 18 ? <DarkMode fontSize="small" /> : <LightMode fontSize="small" color="warning" />}
                       {moment(time).format('HH:mm')}
                     </Typography>
@@ -186,13 +186,13 @@ const HomePage: React.FC = () => {
             <Box component={motion.div} variants={item} sx={{ display: { xs: 'none', md: 'block' } }}>
               <Paper elevation={0} sx={{ p: 2, borderRadius: '24px', border: '1px solid', borderColor: 'divider', display: 'flex', gap: 4, bgcolor: 'background.paper' }}>
                 <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, display: 'block' }}>VENDAS HOJE</Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 900, color: 'primary.main' }}>R$ {(stats?.totalSales?.mainPeriodSales || 0).toLocaleString()}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 400, display: 'block' }}>VENDAS HOJE</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 400, color: 'primary.main' }}>R$ {(stats?.totalSales?.mainPeriodSales || 0).toLocaleString()}</Typography>
                 </Box>
                 <Divider orientation="vertical" flexItem />
                 <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, display: 'block' }}>OS ATIVAS</Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 900 }}>08</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 400, display: 'block' }}>OS ATIVAS</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 400 }}>08</Typography>
                 </Box>
                 <IconButton onClick={() => refetchStats()} size="small" sx={{ alignSelf: 'center', bgcolor: 'action.hover' }}><Sync fontSize="small" /></IconButton>
               </Paper>
@@ -213,10 +213,10 @@ const HomePage: React.FC = () => {
                   <Box sx={{ width: 56, height: 56, borderRadius: '16px', bgcolor: isClockedIn ? alpha(theme.palette.error.main, 0.1) : alpha(theme.palette.success.main, 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center', color: isClockedIn ? 'error.main' : 'success.main' }}>
                     {clockActionLoading ? <CircularProgress size={24} color="inherit" /> : (isClockedIn ? <Logout fontSize="large" /> : <Login fontSize="large" />)}
                   </Box>
-                  <Chip label="PONTO" size="small" sx={{ fontWeight: 900, borderRadius: '6px' }} />
+                  <Chip label="PONTO" size="small" sx={{ fontWeight: 400, borderRadius: '6px' }} />
                 </Box>
                 <Box>
-                  <Typography variant="h5" sx={{ fontWeight: 900, mb: 1 }}>{isClockedIn ? 'Fechar Turno' : 'Abrir Turno'}</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 400, mb: 1 }}>{isClockedIn ? 'Fechar Turno' : 'Abrir Turno'}</Typography>
                   <Typography variant="body2" color="text.secondary">Registro de presença</Typography>
                 </Box>
               </GlassActionCard>
@@ -239,10 +239,10 @@ const HomePage: React.FC = () => {
                     <Box sx={{ width: 56, height: 56, borderRadius: '16px', bgcolor: alpha(action.color, 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center', color: action.color }}>
                       {action.icon}
                     </Box>
-                    <Chip label={action.sub} size="small" sx={{ fontWeight: 900, borderRadius: '6px' }} />
+                    <Chip label={action.sub} size="small" sx={{ fontWeight: 400, borderRadius: '6px' }} />
                   </Box>
                   <Box>
-                    <Typography variant="h5" sx={{ fontWeight: 900, mb: 1 }}>{action.label}</Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 400, mb: 1 }}>{action.label}</Typography>
                     <Typography variant="body2" color="text.secondary">{action.desc}</Typography>
                   </Box>
                 </GlassActionCard>
@@ -258,11 +258,11 @@ const HomePage: React.FC = () => {
                   <Box display="flex" alignItems="center" gap={2}>
                     <Avatar sx={{ bgcolor: alpha(theme.palette.warning.main, 0.1), color: 'warning.main' }}><NotificationsActive /></Avatar>
                     <Box>
-                      <Typography variant="h6" sx={{ fontWeight: 900 }}>Ações Prioritárias</Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 400 }}>Ações Prioritárias</Typography>
                       <Typography variant="body2" color="text.secondary">Alertas críticos do sistema</Typography>
                     </Box>
                   </Box>
-                  <Button startIcon={<Bolt />} color="warning" sx={{ fontWeight: 800 }}>Radar Ativo</Button>
+                  <Button startIcon={<Bolt />} color="warning" sx={{ fontWeight: 400 }}>Radar Ativo</Button>
                 </Box>
 
                 <Stack spacing={2}>
@@ -270,7 +270,7 @@ const HomePage: React.FC = () => {
                     <Stack direction="row" spacing={2} alignItems="center">
                       <Box sx={{ color: 'error.main' }}><WarningAmber /></Box>
                       <Box>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>Ruptura de Estoque</Typography>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 400 }}>Ruptura de Estoque</Typography>
                         <Typography variant="caption" color="text.secondary">5 produtos em nível crítico.</Typography>
                       </Box>
                     </Stack>
@@ -281,7 +281,7 @@ const HomePage: React.FC = () => {
                     <Stack direction="row" spacing={2} alignItems="center">
                       <Box sx={{ color: 'info.main' }}><Assessment /></Box>
                       <Box>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>Orçamentos Pendentes</Typography>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 400 }}>Orçamentos Pendentes</Typography>
                         <Typography variant="caption" color="text.secondary">12 OS aguardando aprovação.</Typography>
                       </Box>
                     </Stack>
@@ -312,15 +312,15 @@ const HomePage: React.FC = () => {
                 </Box>
                 
                 <Box sx={{ position: 'relative', zIndex: 1 }}>
-                  <Typography variant="h5" sx={{ fontWeight: 900, mb: 2 }}>Performance</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 400, mb: 2 }}>Performance</Typography>
                   <Typography variant="body2" sx={{ opacity: 0.9, mb: 4, lineHeight: 1.6 }}>
                     Conversão de orçamentos em 85%. Meta do mês próxima!
                   </Typography>
                   
                   <Box sx={{ mb: 4 }}>
                     <Box display="flex" justifyContent="space-between" mb={1}>
-                      <Typography variant="caption" sx={{ fontWeight: 800 }}>VENDAS</Typography>
-                      <Typography variant="caption" sx={{ fontWeight: 800 }}>83% da Meta</Typography>
+                      <Typography variant="caption" sx={{ fontWeight: 400 }}>VENDAS</Typography>
+                      <Typography variant="caption" sx={{ fontWeight: 400 }}>83% da Meta</Typography>
                     </Box>
                     <LinearProgress variant="determinate" value={83} sx={{ height: 8, borderRadius: 4, bgcolor: 'rgba(255,255,255,0.2)', '& .MuiLinearProgress-bar': { bgcolor: '#fff' } }} />
                   </Box>
@@ -329,7 +329,7 @@ const HomePage: React.FC = () => {
                     fullWidth 
                     variant="contained" 
                     onClick={() => navigate('/my-performance')}
-                    sx={{ bgcolor: '#fff', color: 'primary.main', fontWeight: 900, borderRadius: '14px', py: 1.5, '&:hover': { bgcolor: '#f0f0f0' } }}
+                    sx={{ bgcolor: '#fff', color: 'primary.main', fontWeight: 400, borderRadius: '14px', py: 1.5, '&:hover': { bgcolor: '#f0f0f0' } }}
                     startIcon={<Analytics />}
                   >
                     Meu Desempenho
@@ -342,13 +342,13 @@ const HomePage: React.FC = () => {
           {/* Footer de Status com Espaçamento Corrigido */}
           <Box sx={{ mt: 12, pb: 4, display: 'flex', justifyContent: 'center' }}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 2, sm: 6 }} alignItems="center">
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 400 }}>
                 <CheckCircle sx={{ fontSize: 16, color: 'success.main' }} /> SISTEMA OPERACIONAL
               </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 400 }}>
                 <Inventory2Outlined sx={{ fontSize: 16, color: 'primary.main' }} /> UNIDADE: MATRIZ RJ
               </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 400 }}>
                 <HelpOutline sx={{ fontSize: 16, color: 'secondary.main' }} /> CENTRAL DE AJUDA
               </Typography>
             </Stack>
@@ -361,3 +361,4 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
+

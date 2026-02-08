@@ -1,5 +1,3 @@
-
-
 export const activateChip = async (customerData: any, planDetails: any, carrier: string) => {
   console.log(`Simulating chip activation with ${carrier}:`, customerData, planDetails);
   // In a real scenario, this would involve API calls to Vivo, Claro, TIM, etc.

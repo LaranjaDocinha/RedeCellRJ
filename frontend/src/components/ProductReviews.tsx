@@ -32,10 +32,10 @@ export const ProductReviews: React.FC = () => {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Typography variant="h5" fontWeight="bold" gutterBottom>Avaliações dos Clientes</Typography>
+      <Typography variant="h5" fontWeight={400} gutterBottom>Avaliações dos Clientes</Typography>
       <Grid container spacing={4} alignItems="center">
         <Grid item xs={12} md={4} sx={{ textAlign: 'center' }}>
-          <Typography variant="h2" fontWeight="bold">{reviewsData.averageRating.toFixed(1)}</Typography>
+          <Typography variant="h2" fontWeight={400}>{reviewsData.averageRating.toFixed(1)}</Typography>
           <RatingStars value={reviewsData.averageRating} readOnly size="large" />
           <Typography color="text.secondary">Baseado em {reviewsData.totalReviews} avaliações</Typography>
         </Grid>
@@ -48,7 +48,7 @@ export const ProductReviews: React.FC = () => {
         reviewsData.comments.map(comment => (
           <Paper key={comment.id} sx={{ p: 2, mb: 2 }} variant="outlined">
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <Typography fontWeight="bold" sx={{ mr: 1 }}>{comment.author}</Typography>
+              <Typography fontWeight={400} sx={{ mr: 1 }}>{comment.author}</Typography>
               <RatingStars value={comment.rating} readOnly size="small" />
             </Box>
             <Typography>{comment.text}</Typography>

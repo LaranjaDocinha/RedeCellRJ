@@ -26,10 +26,10 @@ describe('cogsService', () => {
     const result = await cogsService.generateCogsReport('2023-01-01', '2023-01-31');
 
     expect(result).toEqual({ total_cogs: '1500.50' });
-    expect(mockClient.query).toHaveBeenCalledWith(
-      expect.stringContaining('SELECT'),
-      ['2023-01-01', '2023-01-31']
-    );
+    expect(mockClient.query).toHaveBeenCalledWith(expect.stringContaining('SELECT'), [
+      '2023-01-01',
+      '2023-01-31',
+    ]);
     expect(mockClient.release).toHaveBeenCalled();
   });
 });

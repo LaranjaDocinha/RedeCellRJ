@@ -8,10 +8,10 @@ let geminiModel: any;
 
 if (GEMINI_API_KEY) {
   generativeAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  geminiModel = generativeAI.getGenerativeModel({ model: "gemini-pro" });
-  logger.info("Gemini-Pro model initialized for sentiment analysis.");
+  geminiModel = generativeAI.getGenerativeModel({ model: 'gemini-pro' });
+  logger.info('Gemini-Pro model initialized for sentiment analysis.');
 } else {
-  logger.warn("GEMINI_API_KEY not set. Sentiment analysis will be mocked.");
+  logger.warn('GEMINI_API_KEY not set. Sentiment analysis will be mocked.');
 }
 
 export const sentimentService = {
@@ -22,12 +22,20 @@ export const sentimentService = {
 
     if (!geminiModel) {
       // Mocked response if API key is missing
-      logger.warn("Mocking sentiment analysis due to missing GEMINI_API_KEY.");
+      logger.warn('Mocking sentiment analysis due to missing GEMINI_API_KEY.');
       const lowerText = text.toLowerCase();
-      if (lowerText.includes('ótimo') || lowerText.includes('excelente') || lowerText.includes('bom')) {
+      if (
+        lowerText.includes('ótimo') ||
+        lowerText.includes('excelente') ||
+        lowerText.includes('bom')
+      ) {
         return { score: 0.9, label: 'Positive' };
       }
-      if (lowerText.includes('ruim') || lowerText.includes('péssimo') || lowerText.includes('decepcionado')) {
+      if (
+        lowerText.includes('ruim') ||
+        lowerText.includes('péssimo') ||
+        lowerText.includes('decepcionado')
+      ) {
         return { score: 0.1, label: 'Negative' };
       }
       return { score: 0.5, label: 'Neutral' };
@@ -48,20 +56,30 @@ export const sentimentService = {
       const sentiment = JSON.parse(jsonText);
 
       // Basic validation
-      if (typeof sentiment.score !== 'number' || !['Positive', 'Negative', 'Neutral'].includes(sentiment.label)) {
+      if (
+        typeof sentiment.score !== 'number' ||
+        !['Positive', 'Negative', 'Neutral'].includes(sentiment.label)
+      ) {
         throw new Error('Invalid LLM response format.');
       }
 
       return sentiment;
-
     } catch (error) {
       logger.error('Error analyzing sentiment with Gemini API:', error);
       // Fallback to a basic rule-based analysis or neutral if API fails
       const lowerText = text.toLowerCase();
-      if (lowerText.includes('ótimo') || lowerText.includes('excelente') || lowerText.includes('bom')) {
+      if (
+        lowerText.includes('ótimo') ||
+        lowerText.includes('excelente') ||
+        lowerText.includes('bom')
+      ) {
         return { score: 0.9, label: 'Positive' };
       }
-      if (lowerText.includes('ruim') || lowerText.includes('péssimo') || lowerText.includes('decepcionado')) {
+      if (
+        lowerText.includes('ruim') ||
+        lowerText.includes('péssimo') ||
+        lowerText.includes('decepcionado')
+      ) {
         return { score: 0.1, label: 'Negative' };
       }
       return { score: 0.5, label: 'Neutral' };

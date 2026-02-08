@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { gdprService } from '../services/gdprService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
-import { AppError } from '../utils/errors.js';
 
 const router = Router();
 

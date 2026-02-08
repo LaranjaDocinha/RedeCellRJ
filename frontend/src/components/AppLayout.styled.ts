@@ -3,15 +3,26 @@ import styled from 'styled-components';
 export const AppContainer = styled.div`
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  width: 100vw;
   background-color: ${({ theme }) => theme.palette.background.default};
+  position: fixed;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 `;
 
 export const ContentArea = styled.div<{ $sidebarOpen: boolean; $isCompact: boolean }>`
-  flex-grow: 1;
+  flex: 1;
   display: flex;
+  flex-direction: column;
   padding-top: 64px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: transparent;
+  margin: 0;
+  height: 100%;
   
   /* Ajuste dinâmico da margem com base na sidebar */
   margin-left: ${({ $sidebarOpen, $isCompact }) => 
@@ -24,10 +35,16 @@ export const ContentArea = styled.div<{ $sidebarOpen: boolean; $isCompact: boole
 `;
 
 export const MainContentArea = styled.main`
-  flex-grow: 1;
-  padding: 5px; // Reduzido para o limite de compactação
-  background-color: ${({ theme }) => theme.palette.background.default};
+  flex: 1;
+  padding: 0;
+  margin: 0;
+  background-color: transparent;
   color: ${({ theme }) => theme.palette.text.primary};
-  min-height: calc(100vh - 72px); 
+  width: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
   overflow-x: hidden;
+  height: 100%;
 `;

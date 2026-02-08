@@ -37,7 +37,7 @@ describe('TwoFactorAuthService', () => {
       });
       expect(pool.query).toHaveBeenCalledWith(
         'UPDATE users SET two_factor_secret = $1 WHERE id = $2',
-        ['SECRET32', '1']
+        ['SECRET32', '1'],
       );
     });
   });
@@ -52,10 +52,12 @@ describe('TwoFactorAuthService', () => {
       const result = await twoFactorAuthService.verifyToken('1', '123456');
 
       expect(result).toBe(true);
-      expect(speakeasy.totp.verify).toHaveBeenCalledWith(expect.objectContaining({
-        secret: 'SECRET',
-        token: '123456',
-      }));
+      expect(speakeasy.totp.verify).toHaveBeenCalledWith(
+        expect.objectContaining({
+          secret: 'SECRET',
+          token: '123456',
+        }),
+      );
     });
 
     it('should throw if 2FA is not configured', async () => {
@@ -63,31 +65,36 @@ describe('TwoFactorAuthService', () => {
         rows: [{}], // No secret
       });
 
-      await expect(twoFactorAuthService.verifyToken('1', '123456'))
-        .rejects.toThrow('2FA not configured for this user.');
+      await expect(twoFactorAuthService.verifyToken('1', '123456')).rejects.toThrow(
+        '2FA not configured for this user.',
+      );
     });
-    
+
     it('should throw if user not found', async () => {
-        (pool.query as any).mockResolvedValue({
-          rows: [],
-        });
-  
-        await expect(twoFactorAuthService.verifyToken('1', '123456'))
-          .rejects.toThrow('2FA not configured for this user.');
+      (pool.query as any).mockResolvedValue({
+        rows: [],
       });
+
+      await expect(twoFactorAuthService.verifyToken('1', '123456')).rejects.toThrow(
+        '2FA not configured for this user.',
+      );
+    });
   });
 
   describe('enable2FA', () => {
     it('should enable 2FA if secret exists', async () => {
-      (pool.query as any).mockResolvedValueOnce({
-        rows: [{ two_factor_secret: 'SECRET' }],
-      }).mockResolvedValueOnce({});
+      (pool.query as any)
+        .mockResolvedValueOnce({
+          rows: [{ two_factor_secret: 'SECRET' }],
+        })
+        .mockResolvedValueOnce({});
 
       await twoFactorAuthService.enable2FA('1');
 
-      expect(pool.query).toHaveBeenNthCalledWith(2, 
+      expect(pool.query).toHaveBeenNthCalledWith(
+        2,
         'UPDATE users SET two_factor_enabled = TRUE WHERE id = $1',
-        ['1']
+        ['1'],
       );
     });
 
@@ -96,8 +103,9 @@ describe('TwoFactorAuthService', () => {
         rows: [{}],
       });
 
-      await expect(twoFactorAuthService.enable2FA('1'))
-        .rejects.toThrow('2FA secret not generated for this user.');
+      await expect(twoFactorAuthService.enable2FA('1')).rejects.toThrow(
+        '2FA secret not generated for this user.',
+      );
     });
   });
 
@@ -107,26 +115,26 @@ describe('TwoFactorAuthService', () => {
       await twoFactorAuthService.disable2FA('1');
       expect(pool.query).toHaveBeenCalledWith(
         'UPDATE users SET two_factor_enabled = FALSE, two_factor_secret = NULL WHERE id = $1',
-        ['1']
+        ['1'],
       );
     });
   });
 
   describe('is2FAEnabled', () => {
     it('should return true if enabled', async () => {
-        (pool.query as any).mockResolvedValue({
-            rows: [{ two_factor_enabled: true }],
-        });
-        const result = await twoFactorAuthService.is2FAEnabled('1');
-        expect(result).toBe(true);
+      (pool.query as any).mockResolvedValue({
+        rows: [{ two_factor_enabled: true }],
+      });
+      const result = await twoFactorAuthService.is2FAEnabled('1');
+      expect(result).toBe(true);
     });
 
     it('should return false if disabled or user not found', async () => {
-        (pool.query as any).mockResolvedValue({
-            rows: [],
-        });
-        const result = await twoFactorAuthService.is2FAEnabled('1');
-        expect(result).toBe(false);
+      (pool.query as any).mockResolvedValue({
+        rows: [],
+      });
+      const result = await twoFactorAuthService.is2FAEnabled('1');
+      expect(result).toBe(false);
     });
   });
 });

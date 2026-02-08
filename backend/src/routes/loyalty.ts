@@ -55,7 +55,7 @@ router.post(
   validate(pointsSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { customerId, points, reason } = req.body; 
+      const { customerId, points, reason } = req.body;
       const newPoints = await loyaltyService.addLoyaltyPoints(customerId, points, reason);
       res.status(200).json({ loyalty_points: newPoints });
     } catch (error) {

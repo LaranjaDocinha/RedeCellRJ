@@ -1,8 +1,7 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import * as shiftReportController from '../controllers/shiftReportController.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { z } from 'zod';
-import { AppError } from '../utils/errors.js';
 
 const shiftReportsRouter = Router();
 
@@ -15,8 +14,6 @@ const getShiftReportSchema = z.object({
     )
     .optional(), // Optional for now, will use user's branch if not provided
 });
-
-
 
 import { validate } from '../middlewares/validationMiddleware.js';
 

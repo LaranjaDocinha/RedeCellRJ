@@ -1,5 +1,4 @@
 import pool from '../db/index.js';
-import { AppError } from '../utils/errors.js';
 
 export const stockPredictionService = {
   /**

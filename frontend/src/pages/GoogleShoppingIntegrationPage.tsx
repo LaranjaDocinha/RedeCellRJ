@@ -67,11 +67,11 @@ const GoogleShoppingIntegrationPage: React.FC = () => {
             <Box sx={{ p: 1, bgcolor: '#4285F4', borderRadius: '10px', color: 'white', display: 'flex' }}>
               <GoogleIcon />
             </Box>
-            <Typography variant="overline" sx={{ fontWeight: 800, color: '#4285F4', letterSpacing: 2 }}>
+            <Typography variant="overline" sx={{ fontWeight: 400, color: '#4285F4', letterSpacing: 2 }}>
               MARKETING MULTICANAL
             </Typography>
           </Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
+          <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px' }}>
             Google Shopping
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
@@ -79,7 +79,7 @@ const GoogleShoppingIntegrationPage: React.FC = () => {
           </Typography>
         </Box>
         <Stack direction="row" spacing={2}>
-          <Button variant="outlined" startIcon={<OpenIcon />} sx={{ borderRadius: '12px', fontWeight: 700 }}>Abrir Merchant Center</Button>
+          <Button variant="outlined" startIcon={<OpenIcon />} sx={{ borderRadius: '12px', fontWeight: 400 }}>Abrir Merchant Center</Button>
         </Stack>
       </Box>
 
@@ -89,27 +89,27 @@ const GoogleShoppingIntegrationPage: React.FC = () => {
           <Stack spacing={3}>
             <Paper sx={{ p: 4, borderRadius: '32px', border: '1px solid', borderColor: 'divider' }}>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-                <Typography variant="h6" fontWeight={800}>Status do Catálogo</Typography>
-                <Chip label="FEED XML ATIVO" color="success" size="small" sx={{ fontWeight: 900, borderRadius: '6px' }} />
+                <Typography variant="h6" fontWeight={400}>Status do Catálogo</Typography>
+                <Chip label="FEED XML ATIVO" color="success" size="small" sx={{ fontWeight: 400, borderRadius: '6px' }} />
               </Box>
               
               <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid item xs={4}>
                   <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'action.hover', borderRadius: '20px' }}>
-                    <Typography variant="h4" fontWeight={900}>154</Typography>
-                    <Typography variant="caption" color="text.secondary" fontWeight={700}>APROVADOS</Typography>
+                    <Typography variant="h4" fontWeight={400}>154</Typography>
+                    <Typography variant="caption" color="text.secondary" fontWeight={400}>APROVADOS</Typography>
                   </Box>
                 </Grid>
                 <Grid item xs={4}>
                   <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'action.hover', borderRadius: '20px' }}>
-                    <Typography variant="h4" fontWeight={900} color="warning.main">12</Typography>
-                    <Typography variant="caption" color="text.secondary" fontWeight={700}>PENDENTES</Typography>
+                    <Typography variant="h4" fontWeight={400} color="warning.main">12</Typography>
+                    <Typography variant="caption" color="text.secondary" fontWeight={400}>PENDENTES</Typography>
                   </Box>
                 </Grid>
                 <Grid item xs={4}>
                   <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'action.hover', borderRadius: '20px' }}>
-                    <Typography variant="h4" fontWeight={900} color="error.main">2</Typography>
-                    <Typography variant="caption" color="text.secondary" fontWeight={700}>REPROVADOS</Typography>
+                    <Typography variant="h4" fontWeight={400} color="error.main">2</Typography>
+                    <Typography variant="caption" color="text.secondary" fontWeight={400}>REPROVADOS</Typography>
                   </Box>
                 </Grid>
               </Grid>
@@ -121,7 +121,7 @@ const GoogleShoppingIntegrationPage: React.FC = () => {
                 startIcon={<SyncIcon />} 
                 onClick={handleSync}
                 disabled={isSyncing}
-                sx={{ borderRadius: '16px', py: 2, fontWeight: 800, bgcolor: '#4285F4', '&:hover': { bgcolor: '#3367d6' } }}
+                sx={{ borderRadius: '16px', py: 2, fontWeight: 400, bgcolor: '#4285F4', '&:hover': { bgcolor: '#3367d6' } }}
               >
                 {isSyncing ? 'SINCRONIZANDO...' : 'ATUALIZAR FEED DE PRODUTOS'}
               </Button>
@@ -129,11 +129,11 @@ const GoogleShoppingIntegrationPage: React.FC = () => {
             </Paper>
 
             <Paper sx={{ p: 4, borderRadius: '32px', border: '1px solid', borderColor: 'divider' }}>
-              <Typography variant="h6" fontWeight={800} mb={3}>Configurações da Conta</Typography>
+              <Typography variant="h6" fontWeight={400} mb={3}>Configurações da Conta</Typography>
               <Stack spacing={3}>
                 <TextField fullWidth label="Google Merchant ID" placeholder="123456789" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
                 <TextField fullWidth label="URL do Feed XML" value="https://api.redercell.com.br/v1/feeds/google-shopping.xml" InputProps={{ readOnly: true, endAdornment: <IconButton size="small"><SyncIcon sx={{ fontSize: 16 }} /></IconButton> }} sx={{ bgcolor: 'action.hover', '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
-                <Button variant="contained" sx={{ borderRadius: '12px', py: 1.5, fontWeight: 800, bgcolor: 'text.primary' }}>Salvar Alterações</Button>
+                <Button variant="contained" sx={{ borderRadius: '12px', py: 1.5, fontWeight: 400, bgcolor: 'text.primary' }}>Salvar Alterações</Button>
               </Stack>
             </Paper>
           </Stack>
@@ -145,7 +145,7 @@ const GoogleShoppingIntegrationPage: React.FC = () => {
             <Paper sx={{ p: 3, borderRadius: '24px', bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider' }}>
               <Box display="flex" alignItems="center" gap={1} mb={2}>
                 <HelpIcon color="primary" fontSize="small" />
-                <Typography variant="subtitle2" fontWeight={800}>Otimização de Conversão</Typography>
+                <Typography variant="subtitle2" fontWeight={400}>Otimização de Conversão</Typography>
               </Box>
               <Typography variant="caption" color="text.secondary" lineHeight={1.5} display="block">
                 Garanta que todos os produtos tenham fotos em alta resolução sobre fundo branco. Isso aumenta em até 30% o clique no Google Shopping.
@@ -155,7 +155,7 @@ const GoogleShoppingIntegrationPage: React.FC = () => {
             <Paper sx={{ p: 3, borderRadius: '24px', bgcolor: '#1e1e1e', color: '#d4d4d4', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
               <Box display="flex" alignItems="center" gap={1} mb={2}>
                 <LogIcon sx={{ color: '#4caf50' }} />
-                <Typography variant="subtitle2" fontWeight={800} sx={{ color: '#fff' }}>Feed Sync Log</Typography>
+                <Typography variant="subtitle2" fontWeight={400} sx={{ color: '#fff' }}>Feed Sync Log</Typography>
               </Box>
               <Box sx={{ flexGrow: 1, overflowY: 'auto', fontFamily: 'monospace', fontSize: '0.8rem' }}>
                 <AnimatePresence>

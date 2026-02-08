@@ -1,11 +1,10 @@
-
 // Mock for the 'redis' library
 export const createClient = () => ({
   connect: async () => Promise.resolve(),
-  on: (event: string, callback: any) => {
+  on: (event: string, _callback: any) => {
     // Simulate connect event immediately if needed, or just ignore
     if (event === 'connect') {
-        // Optional: simulate connection success
+      // Optional: simulate connection success
     }
   },
   get: async () => null,

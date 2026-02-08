@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { logger } from '../utils/logger.js';
-import pool from '../db/index.js'; // Assuming direct DB access for product data
+import { NotFoundError } from '../utils/errors.js';
+import { productRepository } from '../repositories/product.repository.js';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
@@ -9,44 +10,52 @@ let geminiModel: any;
 
 if (GEMINI_API_KEY) {
   generativeAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  geminiModel = generativeAI.getGenerativeModel({ model: "gemini-pro" });
-  logger.info("Gemini-Pro model initialized for price suggestion.");
+  geminiModel = generativeAI.getGenerativeModel({ model: 'gemini-pro' });
+  logger.info('Gemini-Pro model initialized for price suggestion.');
 } else {
-  logger.warn("GEMINI_API_KEY not set. Price suggestion will be mocked.");
+  logger.warn('GEMINI_API_KEY not set. Price suggestion will use rule-based logic.');
 }
 
 export const priceSuggestionService = {
-  async suggestProductPrice(productId: number, competitorPrice?: number, marketData?: any): Promise<{ suggestedPrice: number, reasoning: string }> {
+  async suggestProductPrice(
+    productId: number,
+    competitorPrice?: number,
+    marketData?: any,
+  ): Promise<{ suggestedPrice: number; reasoning: string }> {
+    const product = await productRepository.getProductStats(productId);
+    if (!product) throw new NotFoundError('Product not found for price suggestion.');
+
     if (!geminiModel) {
-      // Mocked response if API key is missing
-      const productRes = await pool.query('SELECT p.name, pv.price, pv.cost_price FROM products p JOIN product_variations pv ON p.id = pv.product_id WHERE p.id = $1 LIMIT 1', [productId]);
-      const product = productRes.rows[0];
-      if (!product) throw new Error('Product not found for price suggestion mock.');
-      
-      const suggestedPrice = competitorPrice ? competitorPrice * 0.95 : product.price * 1.1; // Simple mock
-      return { suggestedPrice: parseFloat(suggestedPrice.toFixed(2)), reasoning: "Mocked suggestion: 95% of competitor or 10% above current. (GEMINI_API_KEY not set)." };
+      // Smart Fallback Logic
+      let suggestedPrice = parseFloat(product.current_price);
+      let reasoning = 'Rule-based suggestion: ';
+
+      if (competitorPrice) {
+        suggestedPrice = competitorPrice * 0.98; // Undercut by 2%
+        reasoning += `Undercutting competitor (R$ ${competitorPrice}) by 2%.`;
+      } else {
+        // Margin based on sales velocity
+        const salesVelocity = parseInt(product.sales_count_90d || '0');
+        const cost = parseFloat(product.cost_price);
+
+        if (salesVelocity > 50) {
+          // High demand
+          suggestedPrice = cost * 1.4; // 40% margin
+          reasoning += 'High demand detected (>50 sales/90d). Target 40% margin.';
+        } else if (salesVelocity < 5) {
+          // Low demand
+          suggestedPrice = cost * 1.2; // 20% margin to clear stock
+          reasoning += 'Low demand detected (<5 sales/90d). Target 20% margin to clear stock.';
+        } else {
+          suggestedPrice = cost * 1.3; // Standard 30% margin
+          reasoning += 'Standard demand. Target 30% margin.';
+        }
+      }
+
+      return { suggestedPrice: parseFloat(suggestedPrice.toFixed(2)), reasoning };
     }
 
     try {
-      // Fetch product details
-      const productDetails = await pool.query(
-        `SELECT
-           p.name AS product_name,
-           pv.price AS current_price,
-           pv.cost_price,
-           pv.storage_capacity,
-           pv.color,
-           (SELECT AVG(si.unit_price) FROM sale_items si JOIN sales s ON si.sale_id = s.id WHERE si.product_id = p.id AND s.sale_date > NOW() - INTERVAL '90 days') AS avg_sales_price_90d,
-           (SELECT COUNT(si.id) FROM sale_items si JOIN sales s ON si.sale_id = s.id WHERE si.product_id = p.id AND s.sale_date > NOW() - INTERVAL '90 days') AS sales_count_90d
-         FROM products p
-         JOIN product_variations pv ON p.id = pv.product_id
-         WHERE p.id = $1 LIMIT 1`,
-        [productId]
-      );
-
-      const product = productDetails.rows[0];
-      if (!product) throw new NotFoundError('Product not found for price suggestion.');
-
       const prompt = `
         Analyze the following product data and suggest a competitive selling price.
         Consider:
@@ -68,21 +77,30 @@ export const priceSuggestionService = {
       const jsonText = response.text().replace(/```json\n|\n```/g, '');
       const suggestion = JSON.parse(jsonText);
 
-      if (typeof suggestion.suggestedPrice !== 'number' || typeof suggestion.reasoning !== 'string') {
+      if (
+        typeof suggestion.suggestedPrice !== 'number' ||
+        typeof suggestion.reasoning !== 'string'
+      ) {
         throw new Error('Invalid LLM response format for price suggestion.');
       }
 
       return suggestion;
-
     } catch (error) {
       logger.error('Error suggesting price with Gemini API:', error);
       // Fallback to basic rule-based suggestion if API fails
-      const productRes = await pool.query('SELECT p.name, pv.price, pv.cost_price FROM products p JOIN product_variations pv ON p.id = pv.product_id WHERE p.id = $1 LIMIT 1', [productId]);
-      const product = productRes.rows[0];
-      if (!product) throw new Error('Product not found for price suggestion fallback.');
-      
-      const suggestedPrice = competitorPrice ? competitorPrice * 0.95 : product.price * 1.05; // Simple mock
-      return { suggestedPrice: parseFloat(suggestedPrice.toFixed(2)), reasoning: `Fallback suggestion. Could not use LLM. (Current price: ${product.price}, Cost: ${product.cost_price}).` };
+      const cost = parseFloat(product.cost_price);
+      const suggestedPrice = cost * 1.3;
+      return {
+        suggestedPrice: parseFloat(suggestedPrice.toFixed(2)),
+        reasoning: `Fallback suggestion (Gemini Error). Applied standard 30% margin on cost.`,
+      };
     }
+  },
+
+  // Method for used products (already existing but good to check)
+  async getSuggestedUsedProductPrice(_productId: number): Promise<number | null> {
+    // Mock logic for used products based on depreciation
+    // Implementation can be added here
+    return null;
   },
 };

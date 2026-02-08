@@ -90,7 +90,7 @@ const ProductPerformanceWidget: React.FC<ProductPerformanceWidgetProps> = React.
         }}
       >
         <FaChartBar style={{ fontSize: '4rem', marginBottom: '1rem' }} />
-        <Typography variant="body1" fontWeight="bold">Nenhum dado de desempenho de produtos disponível.</Typography>
+        <Typography variant="body1" fontWeight={400}>Nenhum dado de desempenho de produtos disponível.</Typography>
         <Typography variant="body2" sx={{ mt: 1 }}>
           Registre vendas para ver o desempenho dos seus produtos.
         </Typography>
@@ -172,3 +172,4 @@ const ProductPerformanceWidget: React.FC<ProductPerformanceWidgetProps> = React.
 });
 
 export default ProductPerformanceWidget;
+

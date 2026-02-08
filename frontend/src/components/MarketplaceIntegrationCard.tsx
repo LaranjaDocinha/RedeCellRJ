@@ -32,7 +32,7 @@ const StatusBadge = styled.span<{ isActive: boolean }>`
   padding: 5px 10px;
   border-radius: 15px;
   font-size: 0.8em;
-  font-weight: bold;
+  font-weight: 400;
 `;
 
 const DetailText = styled.p`
@@ -129,3 +129,4 @@ const MarketplaceIntegrationCard: React.FC<MarketplaceIntegrationCardProps> = ({
 };
 
 export default MarketplaceIntegrationCard;
+

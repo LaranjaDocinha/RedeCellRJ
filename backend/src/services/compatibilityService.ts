@@ -37,18 +37,22 @@ export const compatibilityService = {
     return rows;
   },
 
-  async create(data: Omit<Compatibility, 'id' | 'created_at' | 'updated_at'>): Promise<Compatibility> {
+  async create(
+    data: Omit<Compatibility, 'id' | 'created_at' | 'updated_at'>,
+  ): Promise<Compatibility> {
     const { brand, model, compatible_models, category, notes } = data;
     const { rows } = await pool.query(
       `INSERT INTO product_compatibilities (brand, model, compatible_models, category, notes)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [brand, model, compatible_models, category, notes]
+      [brand, model, compatible_models, category, notes],
     );
     return rows[0];
   },
 
-  async bulkCreate(items: Omit<Compatibility, 'id' | 'created_at' | 'updated_at'>[]): Promise<void> {
+  async bulkCreate(
+    items: Omit<Compatibility, 'id' | 'created_at' | 'updated_at'>[],
+  ): Promise<void> {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -56,7 +60,7 @@ export const compatibilityService = {
         await client.query(
           `INSERT INTO product_compatibilities (brand, model, compatible_models, category, notes)
            VALUES ($1, $2, $3, $4, $5)`,
-          [item.brand, item.model, item.compatible_models, item.category, item.notes]
+          [item.brand, item.model, item.compatible_models, item.category, item.notes],
         );
       }
       await client.query('COMMIT');
@@ -66,5 +70,5 @@ export const compatibilityService = {
     } finally {
       client.release();
     }
-  }
+  },
 };

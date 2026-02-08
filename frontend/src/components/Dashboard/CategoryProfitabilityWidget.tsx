@@ -86,7 +86,7 @@ const CategoryProfitabilityWidget: React.FC<CategoryProfitabilityWidgetProps> = 
           minHeight: 200,
         }}
       >
-        <Typography variant="body1" fontWeight="bold">Nenhum dado de rentabilidade por categoria disponível.</Typography>
+        <Typography variant="body1" fontWeight={400}>Nenhum dado de rentabilidade por categoria disponível.</Typography>
         <Typography variant="body2" sx={{ mt: 1 }}>
           Adicione produtos e registre vendas para ver a análise.
         </Typography>
@@ -140,3 +140,4 @@ const CategoryProfitabilityWidget: React.FC<CategoryProfitabilityWidgetProps> = 
 });
 
 export default CategoryProfitabilityWidget;
+

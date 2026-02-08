@@ -12,7 +12,7 @@ vi.mock('../../src/db/index.js', () => {
     release: mockRelease,
   };
   const mockConnect = vi.fn(() => Promise.resolve(mockClient));
-  
+
   return {
     default: {
       query: mockQuery,
@@ -37,7 +37,7 @@ describe('GdprService', () => {
   describe('deleteUserData', () => {
     it('should delete user data successfully', async () => {
       const userId = '1';
-      
+
       // Mocks para a transação
       const mockClientQuery = vi.fn();
       const mockClientRelease = vi.fn();
@@ -79,7 +79,7 @@ describe('GdprService', () => {
       mockClientQuery.mockRejectedValueOnce(new Error('DB Error')); // Falha na primeira operação
 
       await expect(gdprService.deleteUserData(userId)).rejects.toThrow(AppError);
-      
+
       expect(mockClientQuery).toHaveBeenCalledWith('BEGIN');
       expect(mockClientQuery).toHaveBeenCalledWith('ROLLBACK');
       expect(mockClientRelease).toHaveBeenCalled();
@@ -89,11 +89,15 @@ describe('GdprService', () => {
   describe('exportUserData', () => {
     it('should export user data successfully', async () => {
       const userId = '1';
-      
+
       // Mock user details
-      mockQuery.mockResolvedValueOnce({ rows: [{ id: userId, name: 'Test User', email: 'test@test.com' }] });
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: userId, name: 'Test User', email: 'test@test.com' }],
+      });
       // Mock customer details
-      mockQuery.mockResolvedValueOnce({ rows: [{ id: 10, name: 'Test User', email: 'test@test.com' }] });
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 10, name: 'Test User', email: 'test@test.com' }],
+      });
       // Mock sales
       mockQuery.mockResolvedValueOnce({ rows: [] });
       // Mock store credit

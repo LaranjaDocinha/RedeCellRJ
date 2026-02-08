@@ -19,6 +19,10 @@ const tefPaymentSchema = z.object({
     errorMap: () => ({ message: 'Payment type must be "credit" or "debit"' }),
   }),
 });
-hardwareRouter.post('/tef/process', validate(tefPaymentSchema), hardwareController.processTefPayment);
+hardwareRouter.post(
+  '/tef/process',
+  validate(tefPaymentSchema),
+  hardwareController.processTefPayment,
+);
 
 export default hardwareRouter;

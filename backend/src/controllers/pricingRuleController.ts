@@ -19,21 +19,49 @@ export const pricingRuleController = {
   }),
 
   createRule: catchAsync(async (req: Request, res: Response) => {
-    const { name, condition_type, condition_value, action_type, action_value, is_active, priority } = req.body;
+    const {
+      name,
+      condition_type,
+      condition_value,
+      action_type,
+      action_value,
+      is_active,
+      priority,
+    } = req.body;
     if (!name || !condition_type || !action_type || action_value === undefined) {
       throw new AppError('Missing required fields', 400);
     }
     const newRule = await smartPricingService.createPricingRule({
-      name, condition_type, condition_value, action_type, action_value, is_active, priority
+      name,
+      condition_type,
+      condition_value,
+      action_type,
+      action_value,
+      is_active,
+      priority,
     });
     res.status(201).json(newRule);
   }),
 
   updateRule: catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, condition_type, condition_value, action_type, action_value, is_active, priority } = req.body;
+    const {
+      name,
+      condition_type,
+      condition_value,
+      action_type,
+      action_value,
+      is_active,
+      priority,
+    } = req.body;
     const updatedRule = await smartPricingService.updatePricingRule(Number(id), {
-      name, condition_type, condition_value, action_type, action_value, is_active, priority
+      name,
+      condition_type,
+      condition_value,
+      action_type,
+      action_value,
+      is_active,
+      priority,
     });
     res.json(updatedRule);
   }),

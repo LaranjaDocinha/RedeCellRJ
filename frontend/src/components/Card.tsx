@@ -28,7 +28,7 @@ const Card: React.FC<CardProps> = ({
   ...props
 }) => {
   return (
-    <StyledCard elevation={elevation} interactive={interactive} {...props}>
+    <StyledCard elevation={elevation} interactive={interactive} data-testid="card-element" {...props}>
       {children}
     </StyledCard>
   );

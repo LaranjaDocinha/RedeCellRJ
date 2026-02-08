@@ -147,7 +147,7 @@ const DiscountsPage: React.FC = () => {
 
           {showForm && (
             <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-3">
+              <h2 className="text-xl font-normal mb-3">
                 {editingDiscount ? 'Edit Discount' : 'Add New Discount'}
               </h2>
               <DiscountForm

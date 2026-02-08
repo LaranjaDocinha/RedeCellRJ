@@ -3,7 +3,7 @@
   cursor: pointer;
   border: 0;
   border-radius: 3em;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1;
   font-family: 'Nunito Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -28,3 +28,4 @@
   padding: 12px 24px;
   font-size: 16px;
 }
+

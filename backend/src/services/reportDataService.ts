@@ -51,11 +51,12 @@ export async function getBreakEvenPoint() {
   const fixedCosts = parseFloat(fixedCostsData[0]?.value || '5000'); // Default to 5000 if not set
 
   // Calculate contribution margin ratio
-  const contributionMarginRatio = totalRevenue > 0 ? (totalRevenue - totalVariableCosts) / totalRevenue : 0;
+  const contributionMarginRatio =
+    totalRevenue > 0 ? (totalRevenue - totalVariableCosts) / totalRevenue : 0;
 
   // Calculate break-even point
   const breakEvenPoint = contributionMarginRatio > 0 ? fixedCosts / contributionMarginRatio : 0;
-  
+
   // Calculate current profit
   const currentProfit = totalRevenue - totalVariableCosts - fixedCosts;
 
@@ -69,7 +70,7 @@ export async function getBreakEvenPoint() {
     // For the frontend display, we might also want to send
     // how much revenue has been made this month compared to breakEvenPoint
     revenueTowardsBreakEven: Math.min(totalRevenue, breakEvenPoint),
-    percentageTowardsBreakEven: breakEvenPoint > 0 ? (totalRevenue / breakEvenPoint) * 100 : 0
+    percentageTowardsBreakEven: breakEvenPoint > 0 ? (totalRevenue / breakEvenPoint) * 100 : 0,
   };
 }
 

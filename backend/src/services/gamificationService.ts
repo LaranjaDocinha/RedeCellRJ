@@ -1,6 +1,9 @@
 import { getPool } from '../db/index.js';
 
-export const getLeaderboard = async (metric: 'sales_volume' | 'repairs_completed', period: 'daily' | 'weekly' | 'monthly' | 'all_time' = 'monthly') => {
+export const getLeaderboard = async (
+  metric: 'sales_volume' | 'repairs_completed',
+  period: 'daily' | 'weekly' | 'monthly' | 'all_time' = 'monthly',
+) => {
   const pool = getPool();
   let dateFilter = '';
   switch (period) {
@@ -100,12 +103,9 @@ export const getUserBadges = async (userId: string) => {
 
 export const getUserStats = async (userId: string) => {
   const pool = getPool();
-  const result = await pool.query(
-    'SELECT xp, level, name FROM users WHERE id = $1',
-    [userId]
-  );
+  const result = await pool.query('SELECT xp, level, name FROM users WHERE id = $1', [userId]);
   if (result.rows.length === 0) return null;
-  
+
   const user = result.rows[0];
   // Calcula XP necessário para o próximo nível (exemplo: level * 1000)
   const nextLevelXp = user.level * 1000;
@@ -115,7 +115,7 @@ export const getUserStats = async (userId: string) => {
   return {
     ...user,
     nextLevelXp,
-    progress: Math.min(100, Math.max(0, progress))
+    progress: Math.min(100, Math.max(0, progress)),
   };
 };
 
@@ -127,13 +127,13 @@ export const createChallenge = async (
   targetValue: number,
   rewardXp: number,
   startDate: string, // YYYY-MM-DD
-  endDate: string,   // YYYY-MM-DD
+  endDate: string, // YYYY-MM-DD
   // rewardId?: string, // Futuramente, para itens ou badges
 ) => {
   const pool = getPool();
   const result = await pool.query(
     'INSERT INTO gamification_challenges (title, description, metric, target_value, reward_xp, start_date, end_date) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-    [title, description, metric, targetValue, rewardXp, startDate, endDate]
+    [title, description, metric, targetValue, rewardXp, startDate, endDate],
   );
   return result.rows[0];
 };
@@ -149,7 +149,7 @@ export const getMyChallenges = async (userId: string) => {
      FROM gamification_challenges c
      LEFT JOIN user_challenge_progress ucp ON c.id = ucp.challenge_id AND ucp.user_id = $1
      WHERE c.end_date >= NOW() AND c.start_date <= NOW()`,
-    [userId]
+    [userId],
   );
   return result.rows;
 };
@@ -160,7 +160,7 @@ export const updateChallengeProgress = async (userId: string, metric: string, va
   const challengesRes = await pool.query(
     `SELECT id, target_value, reward_xp FROM gamification_challenges
      WHERE metric = $1 AND start_date <= NOW() AND end_date >= NOW()`,
-    [metric]
+    [metric],
   );
 
   for (const challenge of challengesRes.rows) {
@@ -171,23 +171,26 @@ export const updateChallengeProgress = async (userId: string, metric: string, va
        VALUES ($1, $2, $3)
        ON CONFLICT (user_id, challenge_id)
        DO UPDATE SET current_value = user_challenge_progress.current_value + $3`,
-      [userId, challenge.id, value]
+      [userId, challenge.id, value],
     );
 
     // Check completion
     const progressRes = await pool.query(
       'SELECT current_value, completed FROM user_challenge_progress WHERE user_id = $1 AND challenge_id = $2',
-      [userId, challenge.id]
+      [userId, challenge.id],
     );
     const progress = progressRes.rows[0];
 
-    if (!progress.completed && parseFloat(progress.current_value) >= parseFloat(challenge.target_value)) {
-       await pool.query(
-         'UPDATE user_challenge_progress SET completed = TRUE, completed_at = NOW() WHERE user_id = $1 AND challenge_id = $2',
-         [userId, challenge.id]
-       );
-       // TODO: Award XP to user (Users table update)
-       console.log(`User ${userId} completed challenge ${challenge.id}!`);
+    if (
+      !progress.completed &&
+      parseFloat(progress.current_value) >= parseFloat(challenge.target_value)
+    ) {
+      await pool.query(
+        'UPDATE user_challenge_progress SET completed = TRUE, completed_at = NOW() WHERE user_id = $1 AND challenge_id = $2',
+        [userId, challenge.id],
+      );
+      // TODO: Award XP to user (Users table update)
+      console.log(`User ${userId} completed challenge ${challenge.id}!`);
     }
   }
 };

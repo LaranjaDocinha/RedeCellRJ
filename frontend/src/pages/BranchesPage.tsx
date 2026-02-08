@@ -43,7 +43,7 @@ const StyledPageContainer = styled(motion.div)`
 
 const StyledPageTitle = styled(motion.h1)`
   font-size: 2rem;
-  font-weight: 800;
+  font-weight: 400;
   margin-bottom: 24px;
   letter-spacing: -1px;
 `;
@@ -153,16 +153,16 @@ const BranchesPage: React.FC = () => {
           <Table>
             <TableHead sx={{ bgcolor: 'action.hover' }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 800 }}>NOME DA UNIDADE</TableCell>
-                <TableCell sx={{ fontWeight: 800 }}>CONTATO</TableCell>
-                <TableCell sx={{ fontWeight: 800 }}>ENDEREÇO</TableCell>
-                <TableCell sx={{ fontWeight: 800 }} align="right">AÇÕES</TableCell>
+                <TableCell sx={{ fontWeight: 400 }}>NOME DA UNIDADE</TableCell>
+                <TableCell sx={{ fontWeight: 400 }}>CONTATO</TableCell>
+                <TableCell sx={{ fontWeight: 400 }}>ENDEREÇO</TableCell>
+                <TableCell sx={{ fontWeight: 400 }} align="right">AÇÕES</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {branches.map((branch) => (
                 <TableRow key={branch.id} hover>
-                  <TableCell sx={{ fontWeight: 600 }}>{branch.name}</TableCell>
+                  <TableCell sx={{ fontWeight: 400 }}>{branch.name}</TableCell>
                   <TableCell>
                     <Stack spacing={0.5}>
                         {branch.phone && <Box display="flex" alignItems="center" gap={1}><FaPhone size={10} /> <Typography variant="caption">{branch.phone}</Typography></Box>}
@@ -194,7 +194,7 @@ const BranchesPage: React.FC = () => {
 
       {/* Modal de Cadastro/Edição */}
       <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} PaperProps={{ sx: { borderRadius: '24px', p: 1 } }}>
-        <DialogTitle sx={{ fontWeight: 800 }}>{editingBranch ? 'EDITAR FILIAL' : 'NOVA FILIAL'}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 400 }}>{editingBranch ? 'EDITAR FILIAL' : 'NOVA FILIAL'}</DialogTitle>
         <DialogContent>
             <Stack spacing={2} mt={1} minWidth={400}>
                 <TextField fullWidth label="Nome da Unidade" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} size="small" required />
@@ -213,3 +213,4 @@ const BranchesPage: React.FC = () => {
 };
 
 export default BranchesPage;
+

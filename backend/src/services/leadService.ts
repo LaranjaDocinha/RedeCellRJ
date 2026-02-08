@@ -45,12 +45,14 @@ const mapActivityFromDb = (dbActivity: any): LeadActivity => ({
   createdAt: dbActivity.created_at,
 });
 
-export const createLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'status'>): Promise<Lead> => {
+export const createLead = async (
+  leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'status'>,
+): Promise<Lead> => {
   const pool = getPool();
   const { name, email, phone, source, assignedTo } = leadData;
   const result = await pool.query(
     'INSERT INTO leads (name, email, phone, source, status, assigned_to) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-    [name, email, phone, source, 'new', assignedTo]
+    [name, email, phone, source, 'new', assignedTo],
   );
   return mapLeadFromDb(result.rows[0]);
 };
@@ -74,12 +76,30 @@ export const updateLead = async (id: number, leadData: Partial<Lead>): Promise<L
   const values = [];
   let queryIndex = 1;
 
-  if (name !== undefined) { fields.push(`name = $${queryIndex++}`); values.push(name); }
-  if (email !== undefined) { fields.push(`email = $${queryIndex++}`); values.push(email); }
-  if (phone !== undefined) { fields.push(`phone = $${queryIndex++}`); values.push(phone); }
-  if (source !== undefined) { fields.push(`source = $${queryIndex++}`); values.push(source); }
-  if (status !== undefined) { fields.push(`status = $${queryIndex++}`); values.push(status); }
-  if (assignedTo !== undefined) { fields.push(`assigned_to = $${queryIndex++}`); values.push(assignedTo); }
+  if (name !== undefined) {
+    fields.push(`name = $${queryIndex++}`);
+    values.push(name);
+  }
+  if (email !== undefined) {
+    fields.push(`email = $${queryIndex++}`);
+    values.push(email);
+  }
+  if (phone !== undefined) {
+    fields.push(`phone = $${queryIndex++}`);
+    values.push(phone);
+  }
+  if (source !== undefined) {
+    fields.push(`source = $${queryIndex++}`);
+    values.push(source);
+  }
+  if (status !== undefined) {
+    fields.push(`status = $${queryIndex++}`);
+    values.push(status);
+  }
+  if (assignedTo !== undefined) {
+    fields.push(`assigned_to = $${queryIndex++}`);
+    values.push(assignedTo);
+  }
 
   if (fields.length === 0) {
     return getLeadById(id);
@@ -88,7 +108,7 @@ export const updateLead = async (id: number, leadData: Partial<Lead>): Promise<L
   values.push(id);
   const result = await pool.query(
     `UPDATE leads SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $${queryIndex} RETURNING *`,
-    values
+    values,
   );
   return result.rows[0] ? mapLeadFromDb(result.rows[0]) : null;
 };
@@ -99,12 +119,14 @@ export const deleteLead = async (id: number): Promise<boolean> => {
   return result.rowCount ? result.rowCount > 0 : false;
 };
 
-export const addLeadActivity = async (activityData: Omit<LeadActivity, 'id' | 'createdAt'>): Promise<LeadActivity> => {
+export const addLeadActivity = async (
+  activityData: Omit<LeadActivity, 'id' | 'createdAt'>,
+): Promise<LeadActivity> => {
   const pool = getPool();
   const { leadId, activityType, description, activityDate, userId } = activityData;
   const result = await pool.query(
     'INSERT INTO lead_activities (lead_id, activity_type, description, activity_date, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-    [leadId, activityType, description, activityDate, userId]
+    [leadId, activityType, description, activityDate, userId],
   );
   return mapActivityFromDb(result.rows[0]);
 };
@@ -113,7 +135,7 @@ export const getLeadActivities = async (leadId: number): Promise<LeadActivity[]>
   const pool = getPool();
   const result = await pool.query(
     'SELECT la.*, u.name as user_name FROM lead_activities la JOIN users u ON la.user_id = u.id WHERE lead_id = $1 ORDER BY activity_date DESC',
-    [leadId]
+    [leadId],
   );
   return result.rows.map(mapActivityFromDb);
 };

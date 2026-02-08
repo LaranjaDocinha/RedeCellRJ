@@ -1,7 +1,6 @@
-// frontend/src/contexts/SoundContext.tsx
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 
-type SoundName = 'addToCart' | 'removeFromCart' | 'checkoutSuccess' | 'error' | 'notification' | 'buttonClick' | 'levelUp' | 'achievement'; // Define specific sound names
+type SoundName = 'click' | 'hover' | 'success' | 'error' | 'pop' | 'woosh' | 'select';
 
 interface SoundContextType {
   playSound: (name: SoundName) => void;
@@ -23,49 +22,85 @@ interface SoundProviderProps {
   children: ReactNode;
 }
 
-// Define sound file paths. These should be actual paths to your sound assets.
-const soundFiles: Record<SoundName, string> = {
-  addToCart: '/sounds/add-to-cart.mp3',
-  removeFromCart: '/sounds/remove-from-cart.mp3',
-  checkoutSuccess: '/sounds/checkout-success.mp3',
-  error: '/sounds/error.mp3',
-  notification: '/sounds/notification.mp3',
-  buttonClick: '/sounds/button-click.mp3',
-  levelUp: '/sounds/level-up.mp3',
-  achievement: '/sounds/achievement.mp3',
+// UI Sounds (Short, crisp, non-intrusive) - Base64 encoded to avoid 404s
+const uiSounds: Record<SoundName, string> = {
+  // Soft tick for hover/navigation
+  hover: 'data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...', 
+  // Crisp click
+  click: 'data:audio/wav;base64,UklGRiQtAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YXct...',
+  // Success chime
+  success: 'data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...',
+  // Error thud
+  error: 'data:audio/wav;base64,UklGRiQtAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YXct...',
+  // Pop sound for interactions
+  pop: 'data:audio/wav;base64,UklGRiQtAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YXct...',
+  // Woosh for transitions
+  woosh: 'data:audio/wav;base64,UklGRiQtAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YXct...',
+  // Select sound for OmniSearch
+  select: 'data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...'
 };
 
-// Store Audio objects to prevent re-creation for each play
-const audioPlayers: Partial<Record<SoundName, HTMLAudioElement>> = {};
+// Simple synth fallback if base64 fails or for procedural sounds
+const playSynthSound = (type: SoundName) => {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) return;
+    
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === 'hover' || type === 'select') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(400, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.05);
+      gain.gain.setValueAtTime(0.05, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.05);
+    } else if (type === 'click') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.1);
+    } else if (type === 'success') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(500, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.3);
+    }
+  } catch (e) {
+    console.error('Audio synth failed', e);
+  }
+};
 
 export const SoundProvider: React.FC<SoundProviderProps> = ({ children }) => {
   const [isSoundEnabled, setIsSoundEnabled] = useState(() => {
-    const savedPreference = localStorage.getItem('isSoundEnabled');
-    return savedPreference ? JSON.parse(savedPreference) : true; // Default to true
+    const saved = localStorage.getItem('isSoundEnabled');
+    return saved ? JSON.parse(saved) : true;
   });
 
-  // Load sounds on mount
-  useEffect(() => {
-    for (const name in soundFiles) {
-      if (Object.prototype.hasOwnProperty.call(soundFiles, name)) {
-        audioPlayers[name as SoundName] = new Audio(soundFiles[name as SoundName]);
-      }
-    }
-  }, []); // Run only once on component mount to load all sounds
-
-  // Persist sound preference
-  useEffect(() => {
-    localStorage.setItem('isSoundEnabled', JSON.stringify(isSoundEnabled));
-  }, [isSoundEnabled]);
-
   const playSound = useCallback((name: SoundName) => {
-    if (isSoundEnabled && audioPlayers[name]) {
-      audioPlayers[name]!.play().catch(error => console.error("Error playing sound:", error));
-    }
+    if (!isSoundEnabled) return;
+    
+    // Use synth for now to guarantee sound without large base64 strings in code
+    playSynthSound(name);
   }, [isSoundEnabled]);
 
   const toggleSound = useCallback(() => {
-    setIsSoundEnabled(prev => !prev);
+    setIsSoundEnabled((prev: boolean) => {
+        const newVal = !prev;
+        localStorage.setItem('isSoundEnabled', JSON.stringify(newVal));
+        return newVal;
+    });
   }, []);
 
   return (

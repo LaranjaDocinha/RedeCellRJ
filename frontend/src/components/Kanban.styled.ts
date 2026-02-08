@@ -75,14 +75,14 @@ export const ColumnHeader = styled.div`
 
 export const ColumnTitle = styled.h2`
   font-size: 1.2em;
-  font-weight: bold;
+  font-weight: 400;
   cursor: pointer;
   color: ${({ theme }) => theme.colors.onSurface};
 `;
 
 export const ColumnTitleInput = styled.input`
   font-size: 1.2em;
-  font-weight: bold;
+  font-weight: 400;
   border: 1px solid ${({ theme }) => theme.colors.onSurface}4D;
   border-radius: 4px;
   padding: 4px;
@@ -140,7 +140,7 @@ export const AddCardButton = styled.button`
 
 export const WipLimitMessage = styled.p`
   color: ${({ theme }) => theme.colors.error};
-  font-weight: bold;
+  font-weight: 400;
   text-align: center;
   margin-top: 10px;
 `;
@@ -253,3 +253,4 @@ export const CardPlaceholder = styled.div`
   margin-bottom: 8px;
   transition: all 0.2s ease;
 `;
+

@@ -103,7 +103,7 @@ const FaqPage: React.FC = () => {
           <HelpIcon sx={{ fontSize: 300 }} />
         </Box>
         <Container maxWidth="md">
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px', mb: 2 }}>
+          <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px', mb: 2 }}>
             Como podemos ajudar?
           </Typography>
           <Typography variant="h6" sx={{ opacity: 0.8, mb: 6, fontWeight: 400 }}>
@@ -154,7 +154,7 @@ const FaqPage: React.FC = () => {
                     }}>
                       {cat.icon}
                     </Box>
-                    <Typography variant="h6" fontWeight={800}>{cat.title}</Typography>
+                    <Typography variant="h6" fontWeight={400}>{cat.title}</Typography>
                     <Typography variant="caption" color="text.secondary">{cat.desc}</Typography>
                   </CardActionArea>
                 </Card>
@@ -167,7 +167,7 @@ const FaqPage: React.FC = () => {
         <Box mb={10}>
           {searchTerm && (
             <Box mb={4}>
-              <Typography variant="h5" fontWeight={800}>
+              <Typography variant="h5" fontWeight={400}>
                 {filteredFaqs.length} resultados encontrados para "{searchTerm}"
               </Typography>
               <Button size="small" onClick={() => setSearchTerm('')} sx={{ mt: 1 }}>Limpar busca</Button>
@@ -179,7 +179,7 @@ const FaqPage: React.FC = () => {
               Object.keys(categorizedFaqs).map((category, idx) => (
                 <motion.div key={category} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}>
                   <Box sx={{ mb: 6 }}>
-                    <Typography variant="h6" sx={{ mb: 3, fontWeight: 800, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                    <Typography variant="h6" sx={{ mb: 3, fontWeight: 400, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1.5 }}>
                       {category}
                     </Typography>
                     <Stack spacing={1.5}>
@@ -197,14 +197,14 @@ const FaqPage: React.FC = () => {
                           }}
                         >
                           <AccordionSummary expandIcon={<ExpandIcon color="primary" />}>
-                            <Typography variant="subtitle1" fontWeight={700}>{faq.question}</Typography>
+                            <Typography variant="subtitle1" fontWeight={400}>{faq.question}</Typography>
                           </AccordionSummary>
                           <AccordionDetails sx={{ bgcolor: 'action.hover', p: 3 }}>
                             <Typography variant="body1" color="text.secondary" lineHeight={1.7}>
                               {faq.answer}
                             </Typography>
                             <Box mt={3} display="flex" gap={2}>
-                              <Typography variant="caption" fontWeight={700}>Isso foi útil?</Typography>
+                              <Typography variant="caption" fontWeight={400}>Isso foi útil?</Typography>
                               <MuiLink href="#" variant="caption" underline="hover">Sim</MuiLink>
                               <MuiLink href="#" variant="caption" underline="hover">Não</MuiLink>
                             </Box>
@@ -235,15 +235,15 @@ const FaqPage: React.FC = () => {
           }}
         >
           <SupportIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-          <Typography variant="h4" fontWeight={900} gutterBottom>Ainda precisa de ajuda?</Typography>
+          <Typography variant="h4" fontWeight={400} gutterBottom>Ainda precisa de ajuda?</Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
             Nossos especialistas estão prontos para te atender via chat ou telefone.
           </Typography>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
-            <Button variant="contained" size="large" sx={{ borderRadius: '12px', px: 4, fontWeight: 700 }}>
+            <Button variant="contained" size="large" sx={{ borderRadius: '12px', px: 4, fontWeight: 400 }}>
               Falar com Atendente
             </Button>
-            <Button variant="outlined" size="large" sx={{ borderRadius: '12px', px: 4, fontWeight: 700 }}>
+            <Button variant="outlined" size="large" sx={{ borderRadius: '12px', px: 4, fontWeight: 400 }}>
               Abrir Ticket de Suporte
             </Button>
           </Stack>

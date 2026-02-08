@@ -1,4 +1,4 @@
-import { getPool } from '../db.js';
+import { getPool } from '../db/index.js';
 
 class PnlReportService {
   async generatePnlReport(startDate: string, endDate: string) {

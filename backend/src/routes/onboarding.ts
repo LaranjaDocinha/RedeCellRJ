@@ -8,7 +8,7 @@ router.use(authMiddleware.authenticate);
 
 // For employees to see their own progress and complete items
 router.get('/me', (req, res) => {
-  // @ts-expect-error
+  // @ts-expect-error - onboardingController needs proper typing for request wrapper
   onboardingController.getEmployeeProgress({ params: { userId: req.user.id } }, res);
 });
 router.put('/me/complete-item', onboardingController.completeItem);

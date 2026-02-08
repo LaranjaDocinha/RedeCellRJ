@@ -1,5 +1,7 @@
+import { UserId } from './branded';
+
 export interface User {
-  id: string; // Changed to string to match backend UUID
+  id: UserId; 
   name: string;
   email: string;
   role: string;

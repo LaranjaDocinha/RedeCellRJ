@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getRepairProfitability, getTradeInMargin } from '../../../src/services/extendedReportService';
+import {
+  getRepairProfitability,
+  getTradeInMargin,
+} from '../../../src/services/extendedReportService';
 import * as dbModule from '../../../src/db/index'; // Importa o módulo real para tipagem
 
 // Define os mocks hoisted para serem acessíveis dentro de vi.mock e nos testes

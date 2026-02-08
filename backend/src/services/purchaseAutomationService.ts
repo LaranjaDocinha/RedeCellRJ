@@ -19,6 +19,8 @@ const createPurchaseOrderPartSchema = z.object({
 type CreatePurchaseOrderPayload = z.infer<typeof createPurchaseOrderSchema>;
 type CreatePurchaseOrderPartPayload = z.infer<typeof createPurchaseOrderPartSchema>;
 
+export { createPurchaseOrderSchema, createPurchaseOrderPartSchema };
+
 /**
  * Verifica o estoque de uma peça e retorna a quantidade disponível.
  * @param partId ID da peça

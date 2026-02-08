@@ -67,7 +67,9 @@ describe('PaymentService', () => {
       const amount = 1000;
       const currency = 'usd';
 
-      await expect(paymentService.createPaymentIntent(amount, currency, 'stripe')).rejects.toThrow(stripeError);
+      await expect(paymentService.createPaymentIntent(amount, currency, 'stripe')).rejects.toThrow(
+        stripeError,
+      );
     });
   });
 
@@ -99,7 +101,9 @@ describe('PaymentService', () => {
 
       const paymentIntentId = 'pi_123';
 
-      await expect(paymentService.confirmPayment(paymentIntentId, 'stripe')).rejects.toThrow(stripeError);
+      await expect(paymentService.confirmPayment(paymentIntentId, 'stripe')).rejects.toThrow(
+        stripeError,
+      );
     });
   });
 });

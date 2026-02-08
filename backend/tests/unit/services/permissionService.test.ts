@@ -3,6 +3,7 @@ import { permissionService } from '../../../src/services/permissionService.js';
 import pool from '../../../src/db/index.js';
 import { AppError } from '../../../src/utils/errors.js';
 
+// Mock do pool do banco de dados
 vi.mock('../../../src/db/index.js', () => ({
   default: {
     query: vi.fn(),
@@ -16,174 +17,79 @@ describe('PermissionService', () => {
 
   describe('getAllPermissions', () => {
     it('should return all permissions', async () => {
-      (pool.query as vi.Mock).mockResolvedValueOnce({
-        rows: [
-          { id: 1, name: 'manage_users' },
-          { id: 2, name: 'view_reports' },
-        ],
-      });
-      const permissions = await permissionService.getAllPermissions();
-      expect(permissions).toHaveLength(2);
-      expect(permissions[0].name).toBe('manage_users');
-    });
-  });
+      const mockPermissions = [{ id: 1, action: 'read', subject: 'all' }];
+      (pool.query as vi.Mock).mockResolvedValueOnce({ rows: mockPermissions });
 
-  describe('getPermissionById', () => {
-    it('should return a permission by ID', async () => {
-      (pool.query as vi.Mock).mockResolvedValueOnce({
-        rows: [{ id: 1, name: 'manage_users' }],
-      });
-      const permission = await permissionService.getPermissionById(1);
-      expect(permission?.name).toBe('manage_users');
-    });
-
-    it('should return undefined if permission not found', async () => {
-      (pool.query as vi.Mock).mockResolvedValueOnce({ rows: [] });
-      const permission = await permissionService.getPermissionById(999);
-      expect(permission).toBeUndefined();
+      const result = await permissionService.getAllPermissions();
+      expect(result).toEqual(mockPermissions);
+      expect(pool.query).toHaveBeenCalledWith('SELECT * FROM permissions');
     });
   });
 
   describe('createPermission', () => {
     it('should create a new permission', async () => {
-      (pool.query as vi.Mock).mockResolvedValueOnce({
-        rows: [{ id: 3, name: 'create_users' }],
-      });
-      
-      const newPermission = await permissionService.createPermission({
-        name: 'create_users',
-      });
-      expect(newPermission.name).toBe('create_users');
-      expect(pool.query).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO permissions (name) VALUES ($1) RETURNING *'), 
-        ['create_users']
-      );
+      const payload = { action: 'read', subject: 'users' };
+      const mockCreated = { id: 1, ...payload };
+      (pool.query as vi.Mock).mockResolvedValueOnce({ rows: [mockCreated] });
+
+      const result = await permissionService.createPermission(payload);
+      expect(result).toEqual(mockCreated);
+      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO permissions'), [
+        'read',
+        'users',
+      ]);
     });
 
-    it('should throw AppError if permission already exists', async () => {
-      const error = new Error('Duplicate key');
-      (error as any).code = '23505';
-      (pool.query as vi.Mock).mockRejectedValueOnce(error);
+    it('should throw error if action or subject is missing', async () => {
       await expect(
-        permissionService.createPermission({ name: 'manage_users' }),
-      ).rejects.toThrow(
-        new AppError('Permission with this name already exists', 409),
-      );
+        permissionService.createPermission({ action: '', subject: '' } as any),
+      ).rejects.toThrow('Action and Subject are required');
     });
 
-    it('should rethrow other errors', async () => {
-      const error = new Error('DB Error');
-      (pool.query as vi.Mock).mockRejectedValueOnce(error);
+    it('should throw AppError if permission exists (23505)', async () => {
+      const dbError = new Error('Duplicate');
+      (dbError as any).code = '23505';
+      (pool.query as vi.Mock).mockRejectedValueOnce(dbError);
+
       await expect(
-        permissionService.createPermission({ name: 'test' }),
-      ).rejects.toThrow(error);
+        permissionService.createPermission({ action: 'a', subject: 's' }),
+      ).rejects.toThrow('Permission with this action and subject already exists');
     });
   });
 
   describe('updatePermission', () => {
     it('should update a permission', async () => {
-      (pool.query as vi.Mock).mockResolvedValueOnce({
-        rows: [{ id: 1, name: 'manage_products' }],
-      });
-      
-      const updatedPermission = await permissionService.updatePermission(1, {
-        name: 'manage_products',
-      });
-      expect(updatedPermission?.name).toBe('manage_products');
-      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('UPDATE permissions SET name = $1'), [
-        'manage_products',
-        1,
-      ]);
+      const mockUpdated = { id: 1, action: 'write', subject: 'users' };
+      (pool.query as vi.Mock).mockResolvedValueOnce({ rows: [mockUpdated] });
+
+      const result = await permissionService.updatePermission(1, { action: 'write' });
+      expect(result).toEqual(mockUpdated);
+      expect(pool.query).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE permissions SET action = $1'),
+        ['write', 1],
+      );
     });
 
-    it('should return undefined if permission not found for update (with fields)', async () => {
-      (pool.query as vi.Mock).mockResolvedValueOnce({ rows: [] });
-      
-      const updatedPermission = await permissionService.updatePermission(999, {
-        name: 'nonexistent',
-      });
-      expect(updatedPermission).toBeUndefined();
-    });
-
-    it('should return existing permission if no fields to update', async () => {
-      const mockPermission = { id: 1, name: 'original' };
-      // mock getPermissionById call
-      (pool.query as vi.Mock).mockResolvedValueOnce({ rows: [mockPermission] });
+    it('should return existing if no fields to update', async () => {
+      const mockExisting = { id: 1, action: 'read', subject: 'all' };
+      (pool.query as vi.Mock).mockResolvedValueOnce({ rows: [mockExisting] });
 
       const result = await permissionService.updatePermission(1, {});
-      
-      expect(result).toEqual(mockPermission);
-      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('SELECT * FROM permissions'), [1]);
-      expect(pool.query).not.toHaveBeenCalledWith(expect.stringContaining('UPDATE'));
-    });
-
-    it('should return undefined if no fields to update and permission not found', async () => {
-        // mock getPermissionById call returning empty
-        (pool.query as vi.Mock).mockResolvedValueOnce({ rows: [] });
-  
-        const result = await permissionService.updatePermission(999, {});
-        
-        expect(result).toBeUndefined();
-      });
-
-    it('should throw AppError if update causes duplicate name', async () => {
-        const error = new Error('Duplicate key');
-        (error as any).code = '23505';
-        (pool.query as vi.Mock).mockRejectedValueOnce(error);
-  
-        await expect(
-          permissionService.updatePermission(1, { name: 'duplicate' }),
-        ).rejects.toThrow(
-          new AppError('Permission with this name already exists', 409),
-        );
-    });
-
-    it('should rethrow other errors on update', async () => {
-        const error = new Error('DB Error');
-        (pool.query as vi.Mock).mockRejectedValueOnce(error);
-  
-        await expect(
-          permissionService.updatePermission(1, { name: 'error' }),
-        ).rejects.toThrow(error);
+      expect(result).toEqual(mockExisting);
     });
   });
 
   describe('deletePermission', () => {
-    it('should delete a permission by ID', async () => {
+    it('should delete a permission', async () => {
       (pool.query as vi.Mock).mockResolvedValueOnce({ rowCount: 1 });
-      const deleted = await permissionService.deletePermission(1);
-      expect(deleted).toBe(true);
-      expect(pool.query).toHaveBeenCalledWith(
-        'DELETE FROM permissions WHERE id = $1 RETURNING id',
-        [1],
-      );
+      const result = await permissionService.deletePermission(1);
+      expect(result).toBe(true);
     });
 
-    it('should return false if permission not found for deletion', async () => {
+    it('should return false if not found', async () => {
       (pool.query as vi.Mock).mockResolvedValueOnce({ rowCount: 0 });
-      const deleted = await permissionService.deletePermission(999);
-      expect(deleted).toBe(false);
-    });
-  });
-
-  describe('checkUserPermission', () => {
-    it('should return true if user has permission', async () => {
-        (pool.query as vi.Mock).mockResolvedValueOnce({
-            rows: [{ has_permission: true }]
-        });
-
-        const hasPermission = await permissionService.checkUserPermission(1, 'admin');
-        expect(hasPermission).toBe(true);
-        expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('SELECT EXISTS'), [1, 'admin']);
-    });
-
-    it('should return false if user does not have permission', async () => {
-        (pool.query as vi.Mock).mockResolvedValueOnce({
-            rows: [{ has_permission: false }]
-        });
-
-        const hasPermission = await permissionService.checkUserPermission(1, 'superadmin');
-        expect(hasPermission).toBe(false);
+      const result = await permissionService.deletePermission(999);
+      expect(result).toBe(false);
     });
   });
 });

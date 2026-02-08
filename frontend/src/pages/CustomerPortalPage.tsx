@@ -116,18 +116,18 @@ const CustomerPortalPage: React.FC = () => {
                   {user?.name?.[0] || 'C'}
                 </Avatar>
                 <Box>
-                  <Typography variant="h4" fontWeight={900}>Olá, {user?.name || 'Cliente'}!</Typography>
+                  <Typography variant="h4" fontWeight={400}>Olá, {user?.name || 'Cliente'}!</Typography>
                   <Typography variant="body1" sx={{ opacity: 0.8 }}>ID Cliente: #12948 • Membro desde 2022</Typography>
                   <Stack direction="row" spacing={1} mt={1.5}>
-                    <Chip label="CLIENTE PREMIUM" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: 800 }} />
-                    <Chip icon={<LoyaltyIcon sx={{ fontSize: '14px !important', color: 'gold !important' }} />} label={`${customerHistory?.points} Pontos`} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: 800 }} />
+                    <Chip label="CLIENTE PREMIUM" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: 400 }} />
+                    <Chip icon={<LoyaltyIcon sx={{ fontSize: '14px !important', color: 'gold !important' }} />} label={`${customerHistory?.points} Pontos`} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: 400 }} />
                   </Stack>
                 </Box>
               </Box>
             </Grid>
             <Grid item xs={12} md={6}>
               <Paper sx={{ p: 3, borderRadius: '20px', bgcolor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)', color: 'white' }}>
-                <Typography variant="subtitle2" fontWeight={800} gutterBottom>Próximo Nível: GOLD</Typography>
+                <Typography variant="subtitle2" fontWeight={400} gutterBottom>Próximo Nível: GOLD</Typography>
                 <LinearProgress variant="determinate" value={(customerHistory?.points / customerHistory?.nextTier) * 100} sx={{ height: 10, borderRadius: 5, bgcolor: 'rgba(255,255,255,0.1)', '& .MuiLinearProgress-bar': { bgcolor: 'white' } }} />
                 <Typography variant="caption" sx={{ mt: 1, display: 'block', textAlign: 'right' }}>Faltam 750 pontos</Typography>
               </Paper>
@@ -152,7 +152,7 @@ const CustomerPortalPage: React.FC = () => {
                     <ListItemIcon sx={{ minWidth: 40, color: value === idx ? 'primary.main' : 'inherit' }}>
                       {item.icon}
                     </ListItemIcon>
-                    <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: value === idx ? 800 : 500 }} />
+                    <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: 400 }} />
                   </ListItemButton>
                 ))}
               </List>
@@ -173,38 +173,38 @@ const CustomerPortalPage: React.FC = () => {
                   
                   {value === 0 && (
                     <Box>
-                      <Typography variant="h5" fontWeight={800} gutterBottom>Visão Geral</Typography>
+                      <Typography variant="h5" fontWeight={400} gutterBottom>Visão Geral</Typography>
                       <Grid container spacing={3} mt={1}>
                         <Grid item xs={12} sm={6}>
                           <Card elevation={0} sx={{ borderRadius: '20px', bgcolor: 'action.hover' }}>
                             <CardContent>
-                              <Typography variant="overline" color="text.secondary" fontWeight={700}>Último Pedido</Typography>
-                              <Typography variant="h6" fontWeight={800}>#102 - R$ 3.500,00</Typography>
-                              <Chip label="ENTREGUE" size="small" color="success" sx={{ mt: 1, fontWeight: 800, height: 20, fontSize: '0.65rem' }} />
+                              <Typography variant="overline" color="text.secondary" fontWeight={400}>Último Pedido</Typography>
+                              <Typography variant="h6" fontWeight={400}>#102 - R$ 3.500,00</Typography>
+                              <Chip label="ENTREGUE" size="small" color="success" sx={{ mt: 1, fontWeight: 400, height: 20, fontSize: '0.65rem' }} />
                             </CardContent>
                           </Card>
                         </Grid>
                         <Grid item xs={12} sm={6}>
                           <Card elevation={0} sx={{ borderRadius: '20px', bgcolor: 'action.hover' }}>
                             <CardContent>
-                              <Typography variant="overline" color="text.secondary" fontWeight={700}>Reparo Ativo</Typography>
-                              <Typography variant="h6" fontWeight={800}>Nenhum reparo em andamento</Typography>
-                              <Button size="small" variant="text" sx={{ mt: 1, textTransform: 'none', fontWeight: 700 }}>Solicitar Reparo</Button>
+                              <Typography variant="overline" color="text.secondary" fontWeight={400}>Reparo Ativo</Typography>
+                              <Typography variant="h6" fontWeight={400}>Nenhum reparo em andamento</Typography>
+                              <Button size="small" variant="text" sx={{ mt: 1, textTransform: 'none', fontWeight: 400 }}>Solicitar Reparo</Button>
                             </CardContent>
                           </Card>
                         </Grid>
                       </Grid>
                       
-                      <Typography variant="subtitle1" fontWeight={800} sx={{ mt: 6, mb: 3 }}>Atividades Recentes</Typography>
+                      <Typography variant="subtitle1" fontWeight={400} sx={{ mt: 6, mb: 3 }}>Atividades Recentes</Typography>
                       <Stack spacing={2}>
                         {customerHistory?.purchases.map((p: any) => (
                           <Paper key={p.id} variant="outlined" sx={{ p: 2, borderRadius: '16px', display: 'flex', alignItems: 'center', gap: 2 }}>
                             <Avatar sx={{ bgcolor: 'primary.light' }}><OrderIcon /></Avatar>
                             <Box flexGrow={1}>
-                              <Typography variant="body2" fontWeight={700}>Compra de {p.items.join(', ')}</Typography>
+                              <Typography variant="body2" fontWeight={400}>Compra de {p.items.join(', ')}</Typography>
                               <Typography variant="caption" color="text.secondary">{moment(p.date).format('LL')}</Typography>
                             </Box>
-                            <Typography variant="subtitle2" fontWeight={800}>R$ {p.total.toFixed(2)}</Typography>
+                            <Typography variant="subtitle2" fontWeight={400}>R$ {p.total.toFixed(2)}</Typography>
                           </Paper>
                         ))}
                       </Stack>
@@ -213,7 +213,7 @@ const CustomerPortalPage: React.FC = () => {
 
                   {value === 1 && (
                     <Box>
-                      <Typography variant="h5" fontWeight={800} gutterBottom>Histórico Completo</Typography>
+                      <Typography variant="h5" fontWeight={400} gutterBottom>Histórico Completo</Typography>
                       <List>
                         {customerHistory?.repairs.map((r: any) => (
                           <ListItem key={r.id} sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
@@ -228,17 +228,17 @@ const CustomerPortalPage: React.FC = () => {
 
                   {value === 2 && (
                     <Box>
-                      <Typography variant="h5" fontWeight={800} gutterBottom>Minhas Faturas</Typography>
+                      <Typography variant="h5" fontWeight={400} gutterBottom>Minhas Faturas</Typography>
                       <Stack spacing={2} mt={3}>
                         {customerInvoices.map(inv => (
                           <Paper key={inv.id} variant="outlined" sx={{ p: 3, borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Box>
-                              <Typography fontWeight={800}>Fatura #{inv.id}</Typography>
+                              <Typography fontWeight={400}>Fatura #{inv.id}</Typography>
                               <Typography variant="caption" color="text.secondary">{moment(inv.date).format('LLL')}</Typography>
                             </Box>
                             <Box display="flex" alignItems="center" gap={3}>
-                              <Typography fontWeight={900}>R$ {inv.amount}</Typography>
-                              <Chip label={inv.status} color="success" size="small" sx={{ fontWeight: 800 }} />
+                              <Typography fontWeight={400}>R$ {inv.amount}</Typography>
+                              <Chip label={inv.status} color="success" size="small" sx={{ fontWeight: 400 }} />
                               <IconButton size="small"><DownloadIcon /></IconButton>
                             </Box>
                           </Paper>
@@ -249,15 +249,15 @@ const CustomerPortalPage: React.FC = () => {
 
                   {value === 3 && (
                     <Box>
-                      <Typography variant="h5" fontWeight={800} gutterBottom>Garantias Ativas</Typography>
+                      <Typography variant="h5" fontWeight={400} gutterBottom>Garantias Ativas</Typography>
                       <Grid container spacing={3} mt={1}>
                         {customerWarranties.map((w, idx) => (
                           <Grid item xs={12} sm={6} key={idx}>
                             <Card elevation={0} sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider' }}>
                               <CardContent>
-                                <Typography variant="h6" fontWeight={800}>{w.product}</Typography>
+                                <Typography variant="h6" fontWeight={400}>{w.product}</Typography>
                                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Expira em {moment(w.endDate).format('LL')}</Typography>
-                                <Chip icon={<WarrantyIcon />} label="PROTEGIDO" color="primary" sx={{ fontWeight: 800 }} />
+                                <Chip icon={<WarrantyIcon />} label="PROTEGIDO" color="primary" sx={{ fontWeight: 400 }} />
                               </CardContent>
                             </Card>
                           </Grid>
@@ -269,7 +269,7 @@ const CustomerPortalPage: React.FC = () => {
                   {value === 5 && (
                     <Box>
                       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-                        <Typography variant="h5" fontWeight={800}>Meus Endereços</Typography>
+                        <Typography variant="h5" fontWeight={400}>Meus Endereços</Typography>
                         <Button startIcon={<AddIcon />} variant="contained" sx={{ borderRadius: '10px' }}>Novo Endereço</Button>
                       </Box>
                       <Stack spacing={2}>
@@ -277,7 +277,7 @@ const CustomerPortalPage: React.FC = () => {
                           <Paper key={addr.id} variant="outlined" sx={{ p: 2, borderRadius: '16px', display: 'flex', alignItems: 'center', gap: 2 }}>
                             <Avatar sx={{ bgcolor: 'action.hover', color: 'primary.main' }}><AddressIcon /></Avatar>
                             <Box flexGrow={1}>
-                              <Typography variant="body2" fontWeight={700}>{addr.address_line1}</Typography>
+                              <Typography variant="body2" fontWeight={400}>{addr.address_line1}</Typography>
                               <Typography variant="caption" color="text.secondary">{addr.city}, {addr.state} - {addr.zip_code}</Typography>
                             </Box>
                             {addr.is_default && <Chip label="PADRÃO" size="small" variant="outlined" sx={{ borderRadius: '6px', fontSize: '0.6rem' }} />}

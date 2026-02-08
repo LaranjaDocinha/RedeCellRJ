@@ -11,7 +11,7 @@ export const ErrorMessageContainer = styled.div`
 `;
 
 export const ErrorMessageText = styled.p`
-  font-weight: bold;
+  font-weight: 400;
   margin-bottom: ${({ theme }) => theme.spacing.xxs};
 `;
 
@@ -19,3 +19,4 @@ export const ErrorMessageDetails = styled.p`
   font-size: 0.9em;
   color: ${({ theme }) => theme.colors.error};
 `;
+

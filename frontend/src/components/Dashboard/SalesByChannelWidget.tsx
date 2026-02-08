@@ -88,7 +88,7 @@ const SalesByChannelWidget: React.FC<SalesByChannelWidgetProps> = React.memo(({ 
         }}
       >
         <FaStore style={{ fontSize: '4rem', marginBottom: '1rem' }} />
-        <Typography variant="body1" fontWeight="bold">Nenhum dado de vendas por canal disponível.</Typography>
+        <Typography variant="body1" fontWeight={400}>Nenhum dado de vendas por canal disponível.</Typography>
         <Typography variant="body2" sx={{ mt: 1 }}>
           Registre vendas para ver a distribuição por canal.
         </Typography>
@@ -142,3 +142,4 @@ const SalesByChannelWidget: React.FC<SalesByChannelWidgetProps> = React.memo(({ 
 });
 
 export default SalesByChannelWidget;
+

@@ -65,7 +65,7 @@ const InventoryValuationReport: React.FC = () => {
     chart: { type: 'donut' },
     labels: reportData?.distribution.map((d: any) => d.category) || [],
     colors: [theme.palette.primary.main, theme.palette.secondary.main, '#4caf50', '#ff9800'],
-    legend: { position: 'bottom', fontWeight: 700 },
+    legend: { position: 'bottom', fontWeight: 400 },
     stroke: { show: false },
     dataLabels: { enabled: false },
     plotOptions: {
@@ -78,7 +78,7 @@ const InventoryValuationReport: React.FC = () => {
               show: true,
               label: 'Valor Total',
               formatter: () => 'R$ 458k',
-              style: { fontWeight: 900, fontSize: '20px' }
+              style: { fontWeight: 400, fontSize: '20px' }
             }
           }
         }
@@ -94,11 +94,11 @@ const InventoryValuationReport: React.FC = () => {
             <Box sx={{ p: 1, bgcolor: 'primary.main', borderRadius: '10px', color: 'white', display: 'flex' }}>
               <AssetIcon />
             </Box>
-            <Typography variant="overline" sx={{ fontWeight: 800, color: 'primary.main', letterSpacing: 2 }}>
+            <Typography variant="overline" sx={{ fontWeight: 400, color: 'primary.main', letterSpacing: 2 }}>
               PATRIMÔNIO E ATIVOS
             </Typography>
           </Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
+          <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px' }}>
             Valoração de Estoque
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
@@ -111,7 +111,7 @@ const InventoryValuationReport: React.FC = () => {
           startIcon={<CalcIcon />} 
           onClick={handleCalculate}
           disabled={loading}
-          sx={{ borderRadius: '14px', px: 4, py: 1.5, fontWeight: 800, boxShadow: '0 10px 20px rgba(25, 118, 210, 0.2)' }}
+          sx={{ borderRadius: '14px', px: 4, py: 1.5, fontWeight: 400, boxShadow: '0 10px 20px rgba(25, 118, 210, 0.2)' }}
         >
           {loading ? <CircularProgress size={24} color="inherit" /> : 'Calcular Patrimônio'}
         </Button>
@@ -124,30 +124,30 @@ const InventoryValuationReport: React.FC = () => {
             <Stack spacing={3}>
               <Card sx={{ borderRadius: '24px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
                 <CardContent sx={{ p: 3 }}>
-                  <Typography variant="overline" fontWeight={800} color="text.secondary">Valor Total em Estoque</Typography>
-                  <Typography variant="h3" fontWeight={900} color="primary" sx={{ my: 1 }}>
+                  <Typography variant="overline" fontWeight={400} color="text.secondary">Valor Total em Estoque</Typography>
+                  <Typography variant="h3" fontWeight={400} color="primary" sx={{ my: 1 }}>
                     R$ {reportData.total_inventory_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </Typography>
-                  <Chip label={reportData.valuation_method} size="small" variant="outlined" sx={{ fontWeight: 700 }} />
+                  <Chip label={reportData.valuation_method} size="small" variant="outlined" sx={{ fontWeight: 400 }} />
                 </CardContent>
               </Card>
 
               <Paper sx={{ p: 4, borderRadius: '32px', bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider' }}>
-                <Typography variant="h6" fontWeight={800} mb={3}>Métricas de Inventário</Typography>
+                <Typography variant="h6" fontWeight={400} mb={3}>Métricas de Inventário</Typography>
                 <Stack spacing={2.5}>
                   <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="body2" fontWeight={700}>Total de Itens</Typography>
-                    <Typography variant="body2" fontWeight={800}>{reportData.item_count} un.</Typography>
+                    <Typography variant="body2" fontWeight={400}>Total de Itens</Typography>
+                    <Typography variant="body2" fontWeight={400}>{reportData.item_count} un.</Typography>
                   </Box>
                   <Divider />
                   <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="body2" fontWeight={700}>Ticket Médio (Custo)</Typography>
-                    <Typography variant="body2" fontWeight={800}>R$ {reportData.average_item_value.toFixed(2)}</Typography>
+                    <Typography variant="body2" fontWeight={400}>Ticket Médio (Custo)</Typography>
+                    <Typography variant="body2" fontWeight={400}>R$ {reportData.average_item_value.toFixed(2)}</Typography>
                   </Box>
                   <Divider />
                   <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="body2" fontWeight={700}>Giro de Estoque</Typography>
-                    <Chip label="ALTO" size="small" color="success" sx={{ fontWeight: 900, height: 20, fontSize: '0.6rem' }} />
+                    <Typography variant="body2" fontWeight={400}>Giro de Estoque</Typography>
+                    <Chip label="ALTO" size="small" color="success" sx={{ fontWeight: 400, height: 20, fontSize: '0.6rem' }} />
                   </Box>
                 </Stack>
               </Paper>
@@ -157,7 +157,7 @@ const InventoryValuationReport: React.FC = () => {
           {/* Visualization */}
           <Grid item xs={12} lg={8}>
             <Paper sx={{ p: 4, borderRadius: '32px', border: '1px solid', borderColor: 'divider', height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <Typography variant="h6" fontWeight={800} mb={4}>Distribuição do Capital por Categoria</Typography>
+              <Typography variant="h6" fontWeight={400} mb={4}>Distribuição do Capital por Categoria</Typography>
               <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <ReactApexChart options={chartOptions} series={reportData.distribution.map((d: any) => d.value)} type="donut" width={450} />
               </Box>
@@ -174,7 +174,7 @@ const InventoryValuationReport: React.FC = () => {
         <Box textAlign="center" py={10}>
           <Paper sx={{ p: 10, borderRadius: '40px', border: '2px dashed', borderColor: 'divider', bgcolor: 'transparent' }}>
             <ChartIcon sx={{ fontSize: 80, color: 'divider', mb: 2 }} />
-            <Typography variant="h5" color="text.secondary" fontWeight={700}>Relatório pronto para processamento</Typography>
+            <Typography variant="h5" color="text.secondary" fontWeight={400}>Relatório pronto para processamento</Typography>
             <Typography variant="body2" color="text.disabled" sx={{ mt: 1 }}>Clique em "Calcular Patrimônio" para gerar a valoração atualizada.</Typography>
           </Paper>
         </Box>

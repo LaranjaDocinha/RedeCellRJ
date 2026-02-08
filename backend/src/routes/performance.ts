@@ -1,11 +1,24 @@
 import { Router } from 'express';
-import * as userPerformanceController from '../controllers/userPerformanceController.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
+import { commissionService } from '../services/commissionService.js';
 
-const router = Router();
+const performanceRouter = Router();
 
-router.use(authMiddleware.authenticate);
+performanceRouter.get('/my-performance', authMiddleware.authenticate, async (req, res, next) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const userId = req.user?.id; // Pega o ID do usuário logado
 
-router.get('/me', userPerformanceController.getMyPerformance);
+    const performance = await commissionService.getSalespersonPerformance(
+      userId as string,
+      (startDate as string) || '2025-01-01',
+      (endDate as string) || '2025-12-31',
+    );
 
-export default router;
+    res.json(performance);
+  } catch (error) {
+    next(error);
+  }
+});
+
+export default performanceRouter;

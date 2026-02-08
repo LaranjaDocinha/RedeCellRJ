@@ -65,7 +65,7 @@ const CategoryProfitabilityPage: React.FC = () => {
   const treeMapOptions: ApexCharts.ApexOptions = {
     legend: { show: false },
     chart: { height: 350, type: 'treemap', toolbar: { show: false } },
-    title: { text: 'Lucro Distribuído por Categoria', style: { fontWeight: 800 } },
+    title: { text: 'Lucro Distribuído por Categoria', style: { fontWeight: 400 } },
     colors: [theme.palette.primary.main, theme.palette.secondary.main, '#4caf50', '#ff9800'],
     plotOptions: {
       treemap: {
@@ -97,11 +97,11 @@ const CategoryProfitabilityPage: React.FC = () => {
             <Box sx={{ p: 1, bgcolor: 'secondary.main', borderRadius: '10px', color: 'white', display: 'flex' }}>
               <CategoryIcon />
             </Box>
-            <Typography variant="overline" sx={{ fontWeight: 800, color: 'secondary.main', letterSpacing: 2 }}>
+            <Typography variant="overline" sx={{ fontWeight: 400, color: 'secondary.main', letterSpacing: 2 }}>
               ANÁLISE DE RENTABILIDADE
             </Typography>
           </Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
+          <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px' }}>
             Radar de Categorias
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
@@ -109,7 +109,7 @@ const CategoryProfitabilityPage: React.FC = () => {
           </Typography>
         </Box>
         <Stack direction="row" spacing={2}>
-          <Button variant="outlined" startIcon={<ExportIcon />} sx={{ borderRadius: '12px', fontWeight: 700 }}>Exportar</Button>
+          <Button variant="outlined" startIcon={<ExportIcon />} sx={{ borderRadius: '12px', fontWeight: 400 }}>Exportar</Button>
           <FormControl size="small" sx={{ width: 200 }}>
             <InputLabel>Filial</InputLabel>
             <Select value={selectedBranch} label="Filial" onChange={(e) => setSelectedBranch(e.target.value)} sx={{ borderRadius: '12px', bgcolor: 'background.paper' }}>
@@ -133,12 +133,12 @@ const CategoryProfitabilityPage: React.FC = () => {
           <Stack spacing={3} height="100%">
             <Card sx={{ borderRadius: '24px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
               <CardContent sx={{ p: 3 }}>
-                <Typography variant="overline" fontWeight={800} color="text.secondary">Maior Margem Líquida</Typography>
+                <Typography variant="overline" fontWeight={400} color="text.secondary">Maior Margem Líquida</Typography>
                 <Box display="flex" alignItems="center" gap={2} mt={1}>
                   <Avatar sx={{ bgcolor: 'success.light', borderRadius: '12px' }}><BestIcon /></Avatar>
                   <Box>
-                    <Typography variant="h5" fontWeight={900}>Serviços</Typography>
-                    <Typography variant="caption" color="success.main" fontWeight={800}>66.6% de Rentabilidade</Typography>
+                    <Typography variant="h5" fontWeight={400}>Serviços</Typography>
+                    <Typography variant="caption" color="success.main" fontWeight={400}>66.6% de Rentabilidade</Typography>
                   </Box>
                 </Box>
               </CardContent>
@@ -146,19 +146,19 @@ const CategoryProfitabilityPage: React.FC = () => {
 
             <Card sx={{ borderRadius: '24px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
               <CardContent sx={{ p: 3 }}>
-                <Typography variant="overline" fontWeight={800} color="text.secondary">Maior Volume de Lucro</Typography>
+                <Typography variant="overline" fontWeight={400} color="text.secondary">Maior Volume de Lucro</Typography>
                 <Box display="flex" alignItems="center" gap={2} mt={1}>
                   <Avatar sx={{ bgcolor: 'primary.light', borderRadius: '12px' }}><TrendingUp /></Avatar>
                   <Box>
-                    <Typography variant="h5" fontWeight={900}>Smartphones</Typography>
-                    <Typography variant="caption" color="primary.main" fontWeight={800}>R$ 22.000,00 Gerados</Typography>
+                    <Typography variant="h5" fontWeight={400}>Smartphones</Typography>
+                    <Typography variant="caption" color="primary.main" fontWeight={400}>R$ 22.000,00 Gerados</Typography>
                   </Box>
                 </Box>
               </CardContent>
             </Card>
 
             <Paper sx={{ p: 3, borderRadius: '24px', bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider', flexGrow: 1 }}>
-              <Typography variant="subtitle2" fontWeight={800} mb={2}>Alerta de Performance</Typography>
+              <Typography variant="subtitle2" fontWeight={400} mb={2}>Alerta de Performance</Typography>
               <Stack spacing={2}>
                 <Box display="flex" gap={2}>
                   <LowIcon color="warning" />
@@ -175,25 +175,25 @@ const CategoryProfitabilityPage: React.FC = () => {
         <Grid item xs={12}>
           <Paper sx={{ borderRadius: '32px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
             <Box p={3} borderBottom="1px solid" borderColor="divider">
-              <Typography variant="h6" fontWeight={800}>Detalhamento por Categoria</Typography>
+              <Typography variant="h6" fontWeight={400}>Detalhamento por Categoria</Typography>
             </Box>
             <TableContainer>
               <Table>
                 <TableHead sx={{ bgcolor: 'action.hover' }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 800 }}>CATEGORIA</TableCell>
-                    <TableCell sx={{ fontWeight: 800 }}>RECEITA TOTAL</TableCell>
-                    <TableCell sx={{ fontWeight: 800 }}>LUCRO LÍQUIDO</TableCell>
-                    <TableCell sx={{ fontWeight: 800 }} width="300">MARGEM (%)</TableCell>
-                    <TableCell sx={{ fontWeight: 800 }} align="right">VENDAS</TableCell>
+                    <TableCell sx={{ fontWeight: 400 }}>CATEGORIA</TableCell>
+                    <TableCell sx={{ fontWeight: 400 }}>RECEITA TOTAL</TableCell>
+                    <TableCell sx={{ fontWeight: 400 }}>LUCRO LÍQUIDO</TableCell>
+                    <TableCell sx={{ fontWeight: 400 }} width="300">MARGEM (%)</TableCell>
+                    <TableCell sx={{ fontWeight: 400 }} align="right">VENDAS</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {profitabilityData.map((row) => (
                     <TableRow key={row.id} hover>
-                      <TableCell sx={{ fontWeight: 700 }}>{row.name}</TableCell>
+                      <TableCell sx={{ fontWeight: 400 }}>{row.name}</TableCell>
                       <TableCell>R$ {row.revenue.toLocaleString()}</TableCell>
-                      <TableCell sx={{ color: 'success.main', fontWeight: 700 }}>R$ {row.profit.toLocaleString()}</TableCell>
+                      <TableCell sx={{ color: 'success.main', fontWeight: 400 }}>R$ {row.profit.toLocaleString()}</TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           <LinearProgress 
@@ -202,7 +202,7 @@ const CategoryProfitabilityPage: React.FC = () => {
                             sx={{ flexGrow: 1, height: 6, borderRadius: 3, bgcolor: 'divider' }}
                             color={row.margin > 40 ? 'success' : row.margin > 20 ? 'primary' : 'warning'}
                           />
-                          <Typography variant="caption" fontWeight={800}>{row.margin}%</Typography>
+                          <Typography variant="caption" fontWeight={400}>{row.margin}%</Typography>
                         </Box>
                       </TableCell>
                       <TableCell align="right">{row.items}</TableCell>

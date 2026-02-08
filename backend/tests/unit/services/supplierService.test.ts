@@ -44,7 +44,12 @@ describe('SupplierService', () => {
 
   describe('getSupplierById', () => {
     it('should return a supplier if found', async () => {
-      const mockSupplier = { id: 1, name: 'Supplier A', created_at: new Date(), updated_at: new Date() };
+      const mockSupplier = {
+        id: 1,
+        name: 'Supplier A',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
       mockQuery.mockResolvedValueOnce({ rows: [mockSupplier] });
 
       const result = await supplierService.getSupplierById(1);
@@ -70,7 +75,12 @@ describe('SupplierService', () => {
     };
 
     it('should create a new supplier successfully', async () => {
-      const mockNewSupplier = { id: 3, ...createPayload, created_at: new Date(), updated_at: new Date() };
+      const mockNewSupplier = {
+        id: 3,
+        ...createPayload,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
       mockQuery.mockResolvedValueOnce({ rows: [mockNewSupplier] });
 
       const result = await supplierService.createSupplier(createPayload);
@@ -83,26 +93,30 @@ describe('SupplierService', () => {
     });
 
     it('should throw AppError for duplicate name', async () => {
-      const dbError = new Error('duplicate key value violates unique constraint "suppliers_name_key"');
+      const dbError = new Error(
+        'duplicate key value violates unique constraint "suppliers_name_key"',
+      );
       (dbError as any).code = '23505';
       (dbError as any).detail = 'Key (name)=(Existing Supplier) already exists.';
-      
+
       mockQuery.mockRejectedValueOnce(dbError);
 
       await expect(supplierService.createSupplier(createPayload)).rejects.toThrow(
-        new AppError('Supplier with this name already exists', 409)
+        new AppError('Supplier with this name already exists', 409),
       );
     });
 
     it('should throw AppError for duplicate email', async () => {
-      const dbError = new Error('duplicate key value violates unique constraint "suppliers_email_key"');
+      const dbError = new Error(
+        'duplicate key value violates unique constraint "suppliers_email_key"',
+      );
       (dbError as any).code = '23505';
       (dbError as any).detail = 'Key (email)=(existing@example.com) already exists.';
-      
+
       mockQuery.mockRejectedValueOnce(dbError);
 
       await expect(supplierService.createSupplier(createPayload)).rejects.toThrow(
-        new AppError('Supplier with this email already exists', 409)
+        new AppError('Supplier with this email already exists', 409),
       );
     });
 
@@ -117,7 +131,12 @@ describe('SupplierService', () => {
   describe('updateSupplier', () => {
     const updatePayload = { name: 'Updated Name', phone: '123-456-7890' };
     const supplierId = 1;
-    const mockExistingSupplier = { id: supplierId, name: 'Old Name', created_at: new Date(), updated_at: new Date() };
+    const mockExistingSupplier = {
+      id: supplierId,
+      name: 'Old Name',
+      created_at: new Date(),
+      updated_at: new Date(),
+    };
     const mockUpdatedSupplier = { ...mockExistingSupplier, ...updatePayload };
 
     it('should update fields successfully', async () => {
@@ -134,7 +153,7 @@ describe('SupplierService', () => {
 
     it('should return existing supplier if no fields to update', async () => {
       mockQuery.mockResolvedValueOnce({ rows: [mockExistingSupplier] }); // For getSupplierById call
-      
+
       const result = await supplierService.updateSupplier(supplierId, {});
 
       expect(result).toEqual(mockExistingSupplier);
@@ -144,7 +163,7 @@ describe('SupplierService', () => {
 
     it('should return undefined if supplier not found when no fields to update', async () => {
       mockQuery.mockResolvedValueOnce({ rows: [] }); // For getSupplierById call
-      
+
       const result = await supplierService.updateSupplier(999, {});
 
       expect(result).toBeUndefined();
@@ -153,34 +172,38 @@ describe('SupplierService', () => {
     });
 
     it('should throw AppError for duplicate name on update', async () => {
-      const dbError = new Error('duplicate key value violates unique constraint "suppliers_name_key"');
+      const dbError = new Error(
+        'duplicate key value violates unique constraint "suppliers_name_key"',
+      );
       (dbError as any).code = '23505';
       (dbError as any).detail = 'Key (name)=(Existing Supplier) already exists.';
-      
+
       mockQuery.mockRejectedValueOnce(dbError);
 
-      await expect(supplierService.updateSupplier(supplierId, { name: 'Existing Supplier' })).rejects.toThrow(
-        new AppError('Supplier with this name already exists', 409)
-      );
+      await expect(
+        supplierService.updateSupplier(supplierId, { name: 'Existing Supplier' }),
+      ).rejects.toThrow(new AppError('Supplier with this name already exists', 409));
     });
 
     it('should rethrow other database errors on update', async () => {
       const genericError = new Error('DB Connection Failed');
       mockQuery.mockRejectedValueOnce(genericError);
 
-      await expect(supplierService.updateSupplier(supplierId, updatePayload)).rejects.toThrow(genericError);
+      await expect(supplierService.updateSupplier(supplierId, updatePayload)).rejects.toThrow(
+        genericError,
+      );
     });
 
     it('should return undefined if supplier not found for update (and fields provided)', async () => {
-        mockQuery.mockResolvedValueOnce({ rows: [] }); // Simulating that update returns no rows
-        
-        const result = await supplierService.updateSupplier(999, { name: 'Non Existent' });
+      mockQuery.mockResolvedValueOnce({ rows: [] }); // Simulating that update returns no rows
 
-        expect(result).toBeUndefined();
-        expect(mockQuery).toHaveBeenCalledWith(
-          expect.stringContaining('UPDATE suppliers SET name = $1'),
-          ['Non Existent', 999]
-        );
+      const result = await supplierService.updateSupplier(999, { name: 'Non Existent' });
+
+      expect(result).toBeUndefined();
+      expect(mockQuery).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE suppliers SET name = $1'),
+        ['Non Existent', 999],
+      );
     });
   });
 
@@ -191,7 +214,9 @@ describe('SupplierService', () => {
       const result = await supplierService.deleteSupplier(1);
 
       expect(result).toBe(true);
-      expect(mockQuery).toHaveBeenCalledWith('DELETE FROM suppliers WHERE id = $1 RETURNING id', [1]);
+      expect(mockQuery).toHaveBeenCalledWith('DELETE FROM suppliers WHERE id = $1 RETURNING id', [
+        1,
+      ]);
     });
 
     it('should return false if no supplier deleted', async () => {
@@ -200,7 +225,9 @@ describe('SupplierService', () => {
       const result = await supplierService.deleteSupplier(999);
 
       expect(result).toBe(false);
-      expect(mockQuery).toHaveBeenCalledWith('DELETE FROM suppliers WHERE id = $1 RETURNING id', [999]);
+      expect(mockQuery).toHaveBeenCalledWith('DELETE FROM suppliers WHERE id = $1 RETURNING id', [
+        999,
+      ]);
     });
   });
 });

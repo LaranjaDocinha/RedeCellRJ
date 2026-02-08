@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Contexts
@@ -12,7 +12,8 @@ import { ProjectThemeProvider } from './styles/theme';
 import { SocketProvider } from './contexts/SocketContext';
 import { InactivityTrackerProvider, useInactivityTracker } from './contexts/InactivityTrackerContext';
 import { SoundProvider } from './contexts/SoundContext';
-import { useAuth } from './contexts/AuthContext';
+import { WorkspaceProvider } from './contexts/WorkspaceContext';
+import { useAuth, AuthProvider } from './contexts/AuthContext';
 
 // Components
 import AppLayout from './components/AppLayout';
@@ -20,7 +21,18 @@ import Loading from './components/Loading';
 import PageTransition from './components/PageTransition';
 import SkeletonLoader from './components/SkeletonLoader';
 import LockScreen from './components/LockScreen';
+import GlobalErrorBoundary from './components/ui/GlobalErrorBoundary';
+import { SocketEventHandler } from './components/SocketEventHandler';
+
+// Loaders
 import { customerDetailLoader } from './routerLoaders';
+import { productListLoader, productDetailLoader } from './loaders/productLoader';
+import { posLoader } from './loaders/posLoader';
+import { dashboardLoader } from './loaders/dashboardLoader';
+import { techBenchLoader } from './loaders/techBenchLoader';
+import { customerPortalLoader } from './loaders/customerPortalLoader';
+import { cashFlowLoader, commissionsLoader } from './loaders/financeLoader';
+import { customerLoader } from './loaders/customerLoader';
 
 // Lazy Pages
 const HomePage = lazy(() => import('./pages/HomePage'));
@@ -112,55 +124,68 @@ const TechOrderDetailPage = lazy(() => import('./pages/TechOrderDetailPage'));
 const CustomerDisplayPage = lazy(() => import('./pages/CustomerDisplayPage'));
 const SurveyPage = lazy(() => import('./pages/SurveyPage'));
 const AdminAuditPage = lazy(() => import('./pages/AdminAuditPage'));
+const ExecutiveDashboardPage = lazy(() => import('./pages/ExecutiveDashboardPage'));
+const KioskHomePage = lazy(() => import('./pages/Kiosk/KioskHomePage'));
+const ReconciliationPage = lazy(() => import('./pages/Finance/ReconciliationPage'));
+const PurchaseSuggestionPage = lazy(() => import('./pages/Inventory/PurchaseSuggestionPage'));
+const ABCAnalysisPage = lazy(() => import('./pages/Inventory/ABCAnalysisPage'));
+const PrintQueuePage = lazy(() => import('./pages/Print/PrintQueuePage'));
 const ProductCatalogPage = lazy(() => import('./pages/ProductCatalogPage'));
 const ProductComparisonPage = lazy(() => import('./pages/ProductComparisonPage'));
 const OrdersPage = lazy(() => import('./pages/OrdersPage'));
 const LeadProfilePage = lazy(() => import('./pages/LeadProfilePage'));
+const ReportBuilderPage = lazy(() => import('./pages/ReportBuilderPage'));
+const TechBenchPage = lazy(() => import('./pages/TechBenchPage'));
+const QuoteApprovalPage = lazy(() => import('./pages/QuoteApprovalPage'));
+const KioskDashboardPage = lazy(() => import('./pages/KioskDashboardPage'));
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+
   if (loading) return <Loading />;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) {
+    return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  }
   return <>{children}</>;
 };
 
 const router = createBrowserRouter([
   { path: "/login", element: <LoginScreen /> },
+  { path: "/portal/auth", element: <Suspense fallback={<Loading />}><CustomerPortalAuthPage /></Suspense> },
+  { path: "/portal/:token", element: <Suspense fallback={<Loading />}><CustomerPortalTrackingPage /></Suspense>, loader: customerPortalLoader },
+  { path: "/kiosk", element: <Suspense fallback={<Loading />}><KioskDashboardPage /></Suspense>, loader: dashboardLoader },
+  { path: "/kiosk-mode", element: <Suspense fallback={<Loading />}><KioskHomePage /></Suspense> },
+  { path: "/quote/:token", element: <Suspense fallback={<Loading />}><QuoteApprovalPage /></Suspense> },
   { path: "/forgot-password", element: <ForgotPasswordPage /> },
   { path: "/survey", element: <SurveyPage /> },
   { path: "/customer-display", element: <CustomerDisplayPage /> },
-  { 
-    path: "/portal/auth", 
-    element: <Suspense fallback={<SkeletonLoader width="100%" height="100vh" />}><CustomerPortalAuthPage /></Suspense> 
-  },
-  { 
-    path: "/portal/:token", 
-    element: <Suspense fallback={<SkeletonLoader width="100%" height="100vh" />}><CustomerPortalTrackingPage /></Suspense> 
-  },
   {
     path: "/",
     element: <ProtectedRoute><AppLayout /></ProtectedRoute>,
     errorElement: <NotFoundPage />,
     children: [
       { index: true, element: <PageTransition><HomePage /></PageTransition> },
-      { path: "dashboard", element: <PageTransition><DashboardPage /></PageTransition> },
-      { path: "pos", element: <PageTransition><POSPage /></PageTransition> },
+      { path: "dashboard", element: <PageTransition><DashboardPage /></PageTransition>, loader: dashboardLoader },
+      { path: "pos", element: <PageTransition><POSPage /></PageTransition>, loader: posLoader },
       { path: "pos/sales-history", element: <PageTransition><SalesHistoryPage /></PageTransition> },
-      { path: "tech", element: <PageTransition><TechOrderListPage /></PageTransition> },
-      { path: "tech/:id", element: <PageTransition><TechOrderDetailPage /></PageTransition> },
       { path: "kanban", element: <PageTransition><KanbanPage /></PageTransition> },
       { path: "service-orders", element: <PageTransition><ServiceOrdersPage /></PageTransition> },
       { path: "service-orders/:id", element: <PageTransition><ServiceOrderDetailPage /></PageTransition> },
       { path: "orders", element: <PageTransition><OrdersPage /></PageTransition> },
-      { path: "products", element: <PageTransition><ProductListPage /></PageTransition> },
-      { path: "products/:id", element: <PageTransition><ProductDetailPage /></PageTransition> },
+      { path: "products", element: <PageTransition><ProductListPage /></PageTransition>, loader: productListLoader },
+      { path: "products/:id", element: <PageTransition><ProductDetailPage /></PageTransition>, loader: productDetailLoader },
       { path: "products/:id/edit", element: <PageTransition><ProductEditPage /></PageTransition> },
       { path: "product-catalog", element: <PageTransition><ProductCatalogPage /></PageTransition> },
       { path: "products/compare", element: <PageTransition><ProductComparisonPage /></PageTransition> },
-      { path: "inventory", element: <PageTransition><InventoryPage /></PageTransition> },
       { path: "reports", element: <PageTransition><ReportsPage /></PageTransition> },
+      { path: "reports/builder", element: <PageTransition><ReportBuilderPage /></PageTransition> },
       { path: "pnl-report", element: <PageTransition><PnlReportPage /></PageTransition> },
-      { path: "customers", element: <PageTransition><CustomersPage /></PageTransition> },
+      { path: "inventory", element: <PageTransition><InventoryPage /></PageTransition> },
+      { path: "inventory/purchase-suggestions", element: <PageTransition><PurchaseSuggestionPage /></PageTransition> },
+      { path: "inventory/abc-analysis", element: <PageTransition><ABCAnalysisPage /></PageTransition> },
+      { path: "print/queue", element: <PageTransition><PrintQueuePage /></PageTransition> },
+      { path: "customers", element: <PageTransition><CustomersPage /></PageTransition>, loader: customerLoader },
       { path: "customers/:id", element: <PageTransition><CustomerDetailPage /></PageTransition>, loader: customerDetailLoader },
       { path: "categories", element: <PageTransition><CategoriesPage /></PageTransition> },
       { path: "tags", element: <PageTransition><TagsPage /></PageTransition> },
@@ -169,6 +194,7 @@ const router = createBrowserRouter([
       { path: "permissions", element: <PageTransition><PermissionsPage /></PageTransition> },
       { path: "users", element: <PageTransition><UsersPage /></PageTransition> },
       { path: "audit-logs", element: <PageTransition><AdminAuditPage /></PageTransition> },
+      { path: "executive-dashboard", element: <PageTransition><ExecutiveDashboardPage /></PageTransition> },
       { path: "settings", element: <PageTransition><SettingsPage /></PageTransition> },
       { path: "promotions", element: <PageTransition><PromotionsPage /></PageTransition> },
       { path: "returns", element: <PageTransition><ReturnsAndRefundsPage /></PageTransition> },
@@ -189,7 +215,8 @@ const router = createBrowserRouter([
       { path: "quarantine", element: <PageTransition><QuarantinePage /></PageTransition> },
       { path: "reviews", element: <PageTransition><ReviewsPage /></PageTransition> },
       { path: "rfm-segments", element: <PageTransition><RfmSegmentsPage /></PageTransition> },
-      { path: "cash-flow", element: <PageTransition><CashFlowPage /></PageTransition> },
+      { path: "cash-flow", element: <PageTransition><CashFlowPage /></PageTransition>, loader: cashFlowLoader },
+      { path: "finance/reconciliation", element: <PageTransition><ReconciliationPage /></PageTransition> },
       { path: "what-if-promotion", element: <PageTransition><WhatIfPromotionPage /></PageTransition> },
       { path: "accounting-integration", element: <PageTransition><AccountingIntegrationPage /></PageTransition> },
       { path: "accounts-report", element: <PageTransition><AccountsReportPage /></PageTransition> },
@@ -209,6 +236,9 @@ const router = createBrowserRouter([
       { path: "google-shopping", element: <PageTransition><GoogleShoppingIntegrationPage /></PageTransition> },
       { path: "online-scheduling", element: <PageTransition><OnlineSchedulingPage /></PageTransition> },
       { path: "customer-portal", element: <PageTransition><CustomerPortalPage /></PageTransition> },
+      { path: "tech-bench", element: <PageTransition><TechBenchPage /></PageTransition>, loader: techBenchLoader },
+      { path: "tech", element: <PageTransition><TechOrderListPage /></PageTransition> },
+      { path: "tech/:id", element: <PageTransition><TechOrderDetailPage /></PageTransition> },
       { path: "faq", element: <PageTransition><FaqPage /></PageTransition> },
       { path: "chat-support", element: <PageTransition><ChatSupportPage /></PageTransition> },
       { path: "ar-preview", element: <PageTransition><ARPreviewPage /></PageTransition> },
@@ -222,21 +252,28 @@ const router = createBrowserRouter([
       { path: "microservices", element: <PageTransition><MicroservicesPage /></PageTransition> },
       { path: "stock-keeper", element: <PageTransition><StockKeeperPage /></PageTransition> },
       { path: "serial-history", element: <PageTransition><SerialHistoryPage /></PageTransition> },
-      { path: "my-performance", element: <PageTransition><MyPerformancePage /></PageTransition> },
+      { path: "my-performance", element: <PageTransition><MyPerformancePage /></PageTransition>, loader: commissionsLoader },
     ],
-  },
+  }
 ]);
 
 const queryClient = new QueryClient();
 
+// AQUI ESTÁ A CORREÇÃO CRÍTICA DA ORDEM DOS PROVIDERS
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <SoundProvider>
-        <InactivityTrackerProvider>
-          <AppContent />
-        </InactivityTrackerProvider>
-      </SoundProvider>
+      <AuthProvider>
+        <SocketProvider> 
+          <SoundProvider>
+            <InactivityTrackerProvider>
+              <WorkspaceProvider>
+                <AppContent />
+              </WorkspaceProvider>
+            </InactivityTrackerProvider>
+          </SoundProvider>
+        </SocketProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
@@ -245,24 +282,25 @@ const AppContent: React.FC = () => {
   const { isLocked } = useInactivityTracker();
 
   return (
-    <BrandingProvider>
-      <ProjectThemeProvider>
-        <AnimationPreferenceProvider>
-          <CartAnimationProvider>
-            <CartProvider>
-              <Suspense fallback={<SkeletonLoader width="100%" height="100vh" />}>
+    <GlobalErrorBoundary>
+      <BrandingProvider>
+        <ProjectThemeProvider>
+          <AnimationPreferenceProvider>
+            <CartAnimationProvider>
+              <CartProvider>
                 <NotificationProvider>
-                  <SocketProvider>
+                  <Suspense fallback={<SkeletonLoader width="100%" height="100vh" />}>
                     <RouterProvider router={router} />
-                  </SocketProvider>
+                  </Suspense>
                 </NotificationProvider>
-              </Suspense>
-            </CartProvider>
-          </CartAnimationProvider>
-        </AnimationPreferenceProvider>
-        {isLocked && <LockScreen />}
-      </ProjectThemeProvider>
-    </BrandingProvider>
+              </CartProvider>
+            </CartAnimationProvider>
+          </AnimationPreferenceProvider>
+          {isLocked && <LockScreen />}
+          <SocketEventHandler />
+        </ProjectThemeProvider>
+      </BrandingProvider>
+    </GlobalErrorBoundary>
   );
 };
 

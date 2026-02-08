@@ -1,61 +1,73 @@
 import { logger } from '../utils/logger.js';
 import { whatsappService } from './whatsappService.js';
-import pool from '../db/index.js'; // Added import
-// import { emailService } from './emailService.js'; // Future integration
-// import { pushNotificationService } from './pushNotificationService.js'; // Future integration
+import { notificationRepository } from '../repositories/notification.repository.js';
+import { io } from '../app.js';
 
 interface NotificationPayload {
-  recipientId: number; // User or Customer ID
+  recipientId: string | number; // User ID (UUID) or Customer ID (Serial)
   recipientType: 'user' | 'customer';
-  type: string; // Ex: 'os_status_update', 'new_sale_alert', 'low_stock'
-  templateName?: string; // For WhatsApp/Email templates
-  variables?: Record<string, string | number>; // For template replacement
-  message?: string; // For direct messages (e.g., push notification body)
-  channels: ('whatsapp' | 'email' | 'push')[]; // Preferred channels
+  type: string;
+  templateName?: string;
+  variables?: Record<string, string | number>;
+  message?: string;
+  title?: string;
+  link?: string;
+  channels: ('whatsapp' | 'email' | 'push' | 'in_app')[];
 }
 
 export const notificationService = {
+  /**
+   * Envia uma notificação multicanal.
+   */
   async sendNotification(payload: NotificationPayload) {
-    logger.info(`Sending notification for ${payload.type} to ${payload.recipientType} ${payload.recipientId} via channels: ${payload.channels.join(', ')}`);
+    logger.info(
+      `Sending notification for ${payload.type} to ${payload.recipientType} ${payload.recipientId} via channels: ${payload.channels.join(', ')}`,
+    );
+
+    // 1. Persistência In-App (Apenas para usuários)
+    let dbNotification = null;
+    if (payload.channels.includes('in_app') && payload.recipientType === 'user') {
+      dbNotification = await notificationRepository.create({
+        user_id: String(payload.recipientId),
+        title: payload.title || 'Notificação do Sistema',
+        message: payload.message || '',
+        type: payload.type,
+        link: payload.link,
+        metadata: payload.variables,
+      });
+
+      // Emitir via Socket.io para tempo real
+      io.emit(`notification:${payload.recipientId}`, dbNotification);
+    }
 
     for (const channel of payload.channels) {
       try {
         switch (channel) {
+          case 'in_app':
+            // Processado separadamente para garantir o Socket.io
+            break;
           case 'whatsapp':
             if (payload.templateName && payload.variables) {
-              // Get recipient's phone number
-              const phoneNumber = await this.getRecipientPhoneNumber(payload.recipientId, payload.recipientType);
+              const phoneNumber = await this.getRecipientPhoneNumber(
+                Number(payload.recipientId),
+                payload.recipientType,
+              );
               if (phoneNumber) {
                 await whatsappService.sendTemplateMessage({
-                  customerId: payload.recipientType === 'customer' ? payload.recipientId : undefined,
+                  customerId:
+                    payload.recipientType === 'customer' ? Number(payload.recipientId) : undefined,
                   phone: phoneNumber,
                   templateName: payload.templateName,
                   variables: payload.variables,
                 });
                 logger.info(`WhatsApp notification sent for ${payload.type}`);
-              } else {
-                logger.warn(`Could not find phone number for ${payload.recipientType} ${payload.recipientId} to send WhatsApp notification.`);
               }
-            } else if (payload.message) {
-                 // Future: Send direct message via whatsappService.deliverMessage if it becomes public
             }
             break;
           case 'email':
-            // Future: Integrate with emailService
-            // if (payload.templateName && payload.variables) {
-            //   const emailAddress = await this.getRecipientEmail(payload.recipientId, payload.recipientType);
-            //   if (emailAddress) {
-            //     await emailService.sendTemplateEmail({
-            //       to: emailAddress,
-            //       templateName: payload.templateName,
-            //       variables: payload.variables,
-            //     });
-            //   }
-            // }
             logger.warn('Email channel not implemented yet.');
             break;
           case 'push':
-            // Future: Integrate with pushNotificationService
             logger.warn('Push channel not implemented yet.');
             break;
           default:
@@ -68,26 +80,32 @@ export const notificationService = {
   },
 
   async getRecipientPhoneNumber(id: number, type: 'user' | 'customer'): Promise<string | null> {
-    // This is a simplified lookup. In a real app, this would query the DB.
     if (type === 'customer') {
-        const customerRes = await pool.query('SELECT phone FROM customers WHERE id = $1', [id]);
-        return customerRes.rows[0]?.phone || null;
+      return notificationRepository.getCustomerPhone(id);
     } else if (type === 'user') {
-        const userRes = await pool.query('SELECT phone FROM users WHERE id = $1', [id]);
-        return userRes.rows[0]?.phone || null;
+      return notificationRepository.getUserPhone(id);
     }
     return null;
   },
 
   async getRecipientEmail(id: number, type: 'user' | 'customer'): Promise<string | null> {
-    // This is a simplified lookup. In a real app, this would query the DB.
     if (type === 'customer') {
-        const customerRes = await pool.query('SELECT email FROM customers WHERE id = $1', [id]);
-        return customerRes.rows[0]?.email || null;
+      return notificationRepository.getCustomerEmail(id);
     } else if (type === 'user') {
-        const userRes = await pool.query('SELECT email FROM users WHERE id = $1', [id]);
-        return userRes.rows[0]?.email || null;
+      return notificationRepository.getUserEmail(id);
     }
     return null;
-  }
+  },
+
+  async listUserNotifications(userId: string) {
+    return notificationRepository.listByUser(userId);
+  },
+
+  async markAsRead(id: number, userId: string) {
+    return notificationRepository.markAsRead(id, userId);
+  },
+
+  async markAllAsRead(userId: string) {
+    return notificationRepository.markAllAsRead(userId);
+  },
 };

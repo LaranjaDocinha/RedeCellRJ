@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLoaderData, useNavigation } from 'react-router-dom';
 import { 
   Box, 
   Typography, 
@@ -26,7 +26,6 @@ import {
   InputAdornment,
   Menu,
   MenuItem,
-  LinearProgress,
   CircularProgress
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -45,25 +44,31 @@ import {
   FaRegHeart, 
   FaSearch, 
   FaBox, 
-  FaFilter 
+  FaFilter,
+  FaCalculator 
 } from 'react-icons/fa';
 
 import ErrorBoundary from '../components/ErrorBoundary';
 import { ProductCard } from '../components/ProductCard';
-import ProductCardSkeleton from '../components/ProductCardSkeleton';
 import { Button } from '../components/Button';
 import LabelPrintModal from '../components/ProductCatalog/LabelPrintModal';
 import ShelfLabelModal from '../components/ProductCatalog/ShelfLabelModal';
 import ProductForm from '../components/Products/ProductForm';
+import PageHeader from '../components/Shared/PageHeader';
 
-import { useProducts } from '../hooks/useProducts';
 import { useWishlist } from '../hooks/useWishlist';
 import { Product } from '../types/product';
+
+import { ProductBulkEditModal } from '../components/Products/ProductBulkEditModal';
 
 const ProductListPage: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { isInWishlist } = useWishlist();
+  const navigation = useNavigation();
+  
+  // Data from loader
+  const { products: initialProducts, totalCount } = useLoaderData() as { products: Product[], totalCount: number };
   
   // Estados de Filtro e Busca
   const [page, setPage] = useState(1);
@@ -76,10 +81,21 @@ const ProductListPage: React.FC = () => {
   const [orderBy, setOrderBy] = useState<string>('name');
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
+  const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
 
-  const { products, isLoading, isFetching, error, totalCount, refetch } = useProducts(filters.search, filters.category, page);
+  // Sync URL with filters for loader (Optional but recommended for Deep Linking)
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (filters.search) params.set('search', filters.search);
+    if (filters.category) params.set('category', filters.category);
+    if (page > 1) params.set('page', page.toString());
+    
+    // navigate({ search: params.toString() }, { replace: true });
+    // Note: To avoid infinite loop or flickering, we only navigate if something changed.
+    // For this simple refactor, we'll keep local state and the loader will run on initial mount.
+  }, [filters, page]);
+
   const totalPages = Math.ceil((totalCount || 0) / 10);
-
   const categories = ["Todos", "Smartphones", "Carregadores", "Cabos", "Áudio", "Películas", "Acessórios"];
 
   // Debounce para a busca
@@ -97,8 +113,8 @@ const ProductListPage: React.FC = () => {
   };
 
   const sortedProducts = useMemo(() => {
-    if (!products) return [];
-    let filtered = [...products];
+    if (!initialProducts) return [];
+    let filtered = [...initialProducts];
     if (showFavoritesOnly) {
       filtered = filtered.filter(p => isInWishlist(p.id));
     }
@@ -116,59 +132,64 @@ const ProductListPage: React.FC = () => {
       if (bValue > aValue) return order === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [products, order, orderBy, showFavoritesOnly, isInWishlist]);
+  }, [initialProducts, order, orderBy, showFavoritesOnly, isInWishlist]);
 
   const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
   const [isShelfLabelModalOpen, setIsShelfLabelModalOpen] = useState(false);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
 
   const isDarkMode = theme.palette.mode === 'dark';
+  const isNavigating = navigation.state === "loading";
 
   return (
     <ErrorBoundary>
       <Box sx={{ p: 3 }}>
-        {/* Header Superior */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Typography variant="h4" sx={{ fontWeight: 400 }}>Produtos</Typography>
-            <Paper variant="outlined" sx={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', bgcolor: theme.palette.background.paper }}>
-                <IconButton 
-                    size="small" 
-                    onClick={() => setViewMode('card')}
-                    sx={{ borderRadius: 0, bgcolor: viewMode === 'card' ? alpha(theme.palette.primary.main, 0.1) : 'transparent', color: viewMode === 'card' ? theme.palette.primary.main : 'inherit' }}
-                >
-                    <FaThLarge size={14} />
-                </IconButton>
-                <Divider orientation="vertical" flexItem />
-                <IconButton 
-                    size="small" 
-                    onClick={() => setViewMode('list')}
-                    sx={{ borderRadius: 0, bgcolor: viewMode === 'list' ? alpha(theme.palette.primary.main, 0.1) : 'transparent', color: viewMode === 'list' ? theme.palette.primary.main : 'inherit' }}
-                >
-                    <FaList size={14} />
-                </IconButton>
-            </Paper>
-          </Stack>
+        <PageHeader 
+          title="Produtos"
+          subtitle={`${totalCount || 0} itens cadastrados`}
+          breadcrumbs={[{ label: 'Home', to: '/' }, { label: 'Catálogo', to: '/products' }, { label: 'Produtos' }]}
+          actions={[
+            { label: 'Gôndola', onClick: () => setIsShelfLabelModalOpen(true), variant: 'outlined' },
+            { label: 'Etiquetas', onClick: () => setIsLabelModalOpen(true), variant: 'outlined' },
+            { label: 'Edição Expressa', onClick: () => setIsBulkEditOpen(true), variant: 'outlined', color: 'secondary', icon: <FaCalculator /> },
+            { label: 'Novo Produto', onClick: () => setIsProductModalOpen(true), icon: <FaPlus /> }
+          ]}
+        />
 
-          <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-             <Tooltip title={showFavoritesOnly ? "Ver Todos" : "Ver Favoritos"}>
-                <IconButton 
-                    onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                    sx={{ 
-                        border: `1px solid ${theme.palette.divider}`, 
-                        borderRadius: '10px',
-                        color: showFavoritesOnly ? '#ff4d4f' : theme.palette.text.secondary,
-                        bgcolor: showFavoritesOnly ? alpha('#ff4d4f', 0.05) : theme.palette.background.paper,
-                        width: 40, height: 40
-                    }}
-                >
-                    {showFavoritesOnly ? <FaHeart size={16} /> : <FaRegHeart size={16} />}
-                </IconButton>
-             </Tooltip>
-             <Button variant="outlined" color="primary" onClick={() => setIsShelfLabelModalOpen(true)} label="Imprimir Gôndola" />
-             <Button variant="outlined" color="primary" onClick={() => setIsLabelModalOpen(true)} label="Imprimir Etiquetas" />
-             <Button variant="contained" onClick={() => setIsProductModalOpen(true)} label="Novo Produto" startIcon={<FaPlus />} />
-          </Stack>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+             <Stack direction="row" spacing={1.5} alignItems="center">
+                <Paper variant="outlined" sx={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', bgcolor: theme.palette.background.paper }}>
+                    <IconButton 
+                        size="small" 
+                        onClick={() => setViewMode('card')}
+                        sx={{ borderRadius: 0, bgcolor: viewMode === 'card' ? alpha(theme.palette.primary.main, 0.1) : 'transparent', color: viewMode === 'card' ? theme.palette.primary.main : 'inherit' }}
+                    >
+                        <FaThLarge size={14} />
+                    </IconButton>
+                    <Divider orientation="vertical" flexItem />
+                    <IconButton 
+                        size="small" 
+                        onClick={() => setViewMode('list')}
+                        sx={{ borderRadius: 0, bgcolor: viewMode === 'list' ? alpha(theme.palette.primary.main, 0.1) : 'transparent', color: viewMode === 'list' ? theme.palette.primary.main : 'inherit' }}
+                    >
+                        <FaList size={14} />
+                    </IconButton>
+                </Paper>
+                <Tooltip title={showFavoritesOnly ? "Ver Todos" : "Ver Favoritos"}>
+                    <IconButton 
+                        onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                        sx={{ 
+                            border: `1px solid ${theme.palette.divider}`, 
+                            borderRadius: '10px',
+                            color: showFavoritesOnly ? '#ff4d4f' : theme.palette.text.secondary,
+                            bgcolor: showFavoritesOnly ? alpha('#ff4d4f', 0.05) : theme.palette.background.paper,
+                            width: 40, height: 40
+                        }}
+                    >
+                        {showFavoritesOnly ? <FaHeart size={16} /> : <FaRegHeart size={16} />}
+                    </IconButton>
+                </Tooltip>
+             </Stack>
         </Box>
 
         {/* Filtros e Busca */}
@@ -215,7 +236,7 @@ const ProductListPage: React.FC = () => {
                         <Typography variant="caption" sx={{ fontWeight: 400 }}>{totalCount || 0} Itens</Typography>
                         <Divider orientation="vertical" flexItem />
                         <Typography variant="caption" sx={{ fontWeight: 400, color: theme.palette.error.main }}>
-                            {products?.filter((p: any) => (p.variations?.[0]?.stock_quantity || 0) <= 5).length || 0} Baixo estoque
+                            {initialProducts?.filter((p: any) => (p.variations?.[0]?.stock_quantity || 0) <= 5).length || 0} Baixo estoque
                         </Typography>
                     </Box>
                 </Grid>
@@ -225,7 +246,7 @@ const ProductListPage: React.FC = () => {
         {/* Área de Resultados */}
         <Box sx={{ position: 'relative', minHeight: '400px' }}>
             <AnimatePresence>
-                {isFetching && (
+                {isNavigating && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -252,22 +273,8 @@ const ProductListPage: React.FC = () => {
                 )}
             </AnimatePresence>
 
-            {isFetching && !isLoading && (
-                <LinearProgress sx={{ position: 'absolute', top: -8, left: 0, right: 0, height: 2, borderRadius: 1 }} />
-            )}
-
-            <Box sx={{ opacity: isFetching ? 0.5 : 1, transition: 'opacity 0.3s ease' }}>
-                {isLoading ? (
-                    <Grid container spacing={3}>
-                        {Array.from(new Array(8)).map((_, index) => (
-                            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={index} sx={{ display: 'flex', justifyContent: 'center' }}>
-                                <ProductCardSkeleton />
-                            </Grid>
-                        ))}
-                    </Grid>
-                ) : error ? (
-                    <Typography color="error" sx={{ fontWeight: 400 }}>Erro ao carregar produtos.</Typography>
-                ) : sortedProducts.length === 0 ? (
+            <Box sx={{ opacity: isNavigating ? 0.5 : 1, transition: 'opacity 0.3s ease' }}>
+                {sortedProducts.length === 0 && !isNavigating ? (
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 10, bgcolor: isDarkMode ? 'rgba(255,255,255,0.02)' : '#fcfcfc', borderRadius: '16px', border: `1px dashed ${theme.palette.divider}`, textAlign: 'center' }}>
                         <FaBox size={40} style={{ opacity: 0.2, marginBottom: 16 }} />
                         <Typography variant="h6" sx={{ fontWeight: 400 }}>Nenhum produto encontrado</Typography>
@@ -351,12 +358,13 @@ const ProductListPage: React.FC = () => {
             <IconButton onClick={() => setIsProductModalOpen(false)} size="small"><FaTimes /></IconButton>
           </DialogTitle>
           <DialogContent sx={{ p: 3, pt: 0 }}>
-            <ProductForm onSuccess={() => { setIsProductModalOpen(false); refetch(); }} onCancel={() => setIsProductModalOpen(false)} />
+            <ProductForm onSuccess={() => { setIsProductModalOpen(false); /* loader logic handles refresh on navigation */ }} onCancel={() => setIsProductModalOpen(false)} />
           </DialogContent>
         </Dialog>
 
-        <LabelPrintModal open={isLabelModalOpen} onClose={() => setIsLabelModalOpen(false)} products={(products as any) || []} />
-        <ShelfLabelModal open={isShelfLabelModalOpen} onClose={() => setIsShelfLabelModalOpen(false)} products={(products as any) || []} />
+        <LabelPrintModal open={isLabelModalOpen} onClose={() => setIsLabelModalOpen(false)} products={(initialProducts as any) || []} />
+        <ShelfLabelModal open={isShelfLabelModalOpen} onClose={() => setIsShelfLabelModalOpen(false)} products={(initialProducts as any) || []} />
+        <ProductBulkEditModal open={isBulkEditOpen} onClose={() => setIsBulkEditOpen(false)} products={initialProducts || []} onSuccess={() => {}} />
       </Box>
     </ErrorBoundary>
   );

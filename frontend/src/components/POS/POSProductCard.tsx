@@ -50,7 +50,7 @@ const CardContent = styled.div`
 
 const ProductName = styled.h3`
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 400;
   margin: 0 0 0.25rem;
   white-space: nowrap;
   overflow: hidden;
@@ -65,7 +65,7 @@ const ProductColor = styled.p`
 
 const ProductPrice = styled.p`
   font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: 400;
   color: ${({ theme }) => theme.colors.primary};
   margin: 0;
   margin-top: auto;
@@ -97,3 +97,4 @@ const POSProductCard: React.FC<POSProductCardProps> = ({ product, onAddToCart })
 };
 
 export default POSProductCard;
+

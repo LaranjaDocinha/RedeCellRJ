@@ -1,32 +1,32 @@
 import { Request, Response } from 'express';
-import { getPool } from '../db';
+import { whatsappService } from '../services/whatsappService.js';
+import { pixService } from '../services/pixService.js';
+import pool from '../db/index.js';
 
 export const healthController = {
-  async check(req: Request, res: Response) {
+  getServicesHealth: async (req: Request, res: Response) => {
+    let dbStatus = 'healthy';
     try {
-      const pool = getPool();
-      // Verifica DB
       await pool.query('SELECT 1');
-      
-      const healthcheck = {
-        uptime: process.uptime(),
-        message: 'OK',
-        timestamp: Date.now(),
-        services: {
-          database: 'connected',
-        }
-      };
-      res.send(healthcheck);
     } catch (error) {
-      healthcheck: {
-        const healthcheck = {
-            uptime: process.uptime(),
-            message: 'ERROR',
-            timestamp: Date.now(),
-            error: error
-        };
-        res.status(503).send(healthcheck);
-      }
+      dbStatus = 'unhealthy';
+      console.error('Health check failed for DB:', error);
     }
-  }
+
+    const services = [
+      { name: 'whatsapp', ...whatsappService.getBreakerStatus() },
+      { name: 'pix', ...pixService.getBreakerStatus() },
+      { name: 'database', status: dbStatus },
+    ];
+
+    const isHealthy =
+      dbStatus === 'healthy' &&
+      services.every((s) => s.status === 'healthy' || (s as any).opened === false);
+
+    res.status(isHealthy ? 200 : 503).json({
+      status: isHealthy ? 'healthy' : 'degraded',
+      timestamp: new Date().toISOString(),
+      services,
+    });
+  },
 };

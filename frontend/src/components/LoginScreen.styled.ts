@@ -12,14 +12,18 @@ export const LoginScreenContainer = styled(motion.div)`
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  width: 100vw;
   background: linear-gradient(
     -45deg, 
     #ee7752, #e73c7e, #23a6d5, #23d5ab
   );
   background-size: 400% 400%;
   animation: ${gradientAnimation} 15s ease infinite;
-  padding: ${({ theme }) => theme.spacing.md};
-  position: relative;
+  padding: 0;
+  margin: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
   overflow: hidden;
 
   &::after {
@@ -33,7 +37,7 @@ export const LoginScreenContainer = styled(motion.div)`
 `;
 
 export const LoginCard = styled(motion.div)`
-  background: ${({ theme }) => theme.mode === 'dark' ? 'rgba(30, 30, 30, 0.85)' : 'rgba(255, 255, 255, 0.9)'};
+  background: ${({ theme }) => theme.themeName === 'dark' ? 'rgba(30, 30, 30, 0.85)' : 'rgba(255, 255, 255, 0.9)'};
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   padding: 3.5rem 2.2rem;
@@ -41,13 +45,14 @@ export const LoginCard = styled(motion.div)`
   box-shadow: 
     0 25px 50px -12px rgba(0, 0, 0, 0.4),
     0 10px 20px rgba(0, 0, 0, 0.1);
-  border: 1px solid ${({ theme }) => theme.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.4)'};
+  border: 1px solid ${({ theme }) => theme.themeName === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.4)'};
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
   max-width: 380px;
   z-index: 1;
+  transition: background 0.5s ease, border 0.5s ease, box-shadow 0.5s ease;
 
   @media (max-width: 480px) {
     padding: 2.5rem 1.8rem;
@@ -63,7 +68,7 @@ export const LogoContainer = styled.div`
 
 export const StyledLoginTitle = styled.h1`
   font-size: 2.5rem;
-  font-weight: 800;
+  font-weight: 400;
   background: linear-gradient(
     -45deg, 
     #ee7752, #e73c7e, #23a6d5, #23d5ab
@@ -79,7 +84,7 @@ export const StyledLoginTitle = styled.h1`
 
 export const StyledLoginSubtitle = styled.p`
   font-size: 1rem;
-  color: ${({ theme }) => theme.mode === 'dark' ? '#aaa' : '#666'};
+  color: ${({ theme }) => theme.themeName === 'dark' ? '#aaa' : '#666'};
   margin-bottom: 2rem;
   font-weight: 400;
 `;

@@ -57,15 +57,11 @@ class CouponService {
   async createCoupon(payload: CreateCouponPayload): Promise<Coupon> {
     const { code, type, value, start_date, end_date, min_purchase_amount, max_uses, is_active } =
       payload;
-    try {
-      const result = await pool.query(
-        'INSERT INTO coupons (code, type, value, start_date, end_date, min_purchase_amount, max_uses, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-        [code, type, value, start_date, end_date, min_purchase_amount, max_uses, is_active],
-      );
-      return result.rows[0];
-    } catch (error) {
-      throw error;
-    }
+    const result = await pool.query(
+      'INSERT INTO coupons (code, type, value, start_date, end_date, min_purchase_amount, max_uses, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+      [code, type, value, start_date, end_date, min_purchase_amount, max_uses, is_active],
+    );
+    return result.rows[0];
   }
 
   async updateCoupon(code: string, payload: UpdateCouponPayload): Promise<Coupon | undefined> {
@@ -114,12 +110,8 @@ class CouponService {
     values.push(code); // Add code for WHERE clause
     const query = `UPDATE coupons SET ${fields.join(', ')}, updated_at = current_timestamp WHERE code = $${paramIndex} RETURNING *`;
 
-    try {
-      const result = await pool.query(query, values);
-      return result.rows[0];
-    } catch (error) {
-      throw error;
-    }
+    const result = await pool.query(query, values);
+    return result.rows[0];
   }
 
   async deleteCoupon(id: number): Promise<boolean> {

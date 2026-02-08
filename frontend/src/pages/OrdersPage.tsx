@@ -109,11 +109,11 @@ const OrdersPage: React.FC = () => {
             <Box sx={{ p: 1, bgcolor: 'primary.main', borderRadius: '10px', color: 'white', display: 'flex' }}>
               <OrderIcon />
             </Box>
-            <Typography variant="overline" sx={{ fontWeight: 800, color: 'primary.main', letterSpacing: 2 }}>
+            <Typography variant="overline" sx={{ fontWeight: 400, color: 'primary.main', letterSpacing: 2 }}>
               GERENCIAMENTO OPERACIONAL
             </Typography>
           </Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
+          <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px' }}>
             Pedidos e OS
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
@@ -121,11 +121,11 @@ const OrdersPage: React.FC = () => {
           </Typography>
         </Box>
         <Stack direction="row" spacing={2}>
-          <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchOrders} sx={{ borderRadius: '12px', fontWeight: 700 }}>Atualizar</Button>
+          <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchOrders} sx={{ borderRadius: '12px', fontWeight: 400 }}>Atualizar</Button>
           <Button 
             variant="contained" 
             startIcon={<AddIcon />} 
-            sx={{ borderRadius: '12px', px: 3, py: 1.5, fontWeight: 800, boxShadow: '0 10px 20px rgba(25, 118, 210, 0.2)' }}
+            sx={{ borderRadius: '12px', px: 3, py: 1.5, fontWeight: 400, boxShadow: '0 10px 20px rgba(25, 118, 210, 0.2)' }}
           >
             Nova Ordem
           </Button>
@@ -147,8 +147,8 @@ const OrdersPage: React.FC = () => {
                   {stat.icon}
                 </Avatar>
                 <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight={700}>{stat.label}</Typography>
-                  <Typography variant="h4" fontWeight={900}>{stat.value}</Typography>
+                  <Typography variant="caption" color="text.secondary" fontWeight={400}>{stat.label}</Typography>
+                  <Typography variant="h4" fontWeight={400}>{stat.value}</Typography>
                 </Box>
               </CardContent>
             </Card>
@@ -161,7 +161,7 @@ const OrdersPage: React.FC = () => {
         <Box p={3} borderBottom="1px solid" borderColor="divider">
           <Grid container spacing={2} alignItems="center">
             <Grid size={{ xs: 12, md: 4 }}>
-              <Typography variant="h6" fontWeight={800}>Lista de Ordens</Typography>
+              <Typography variant="h6" fontWeight={400}>Lista de Ordens</Typography>
             </Grid>
             <Grid size={{ xs: 12, md: 8 }}>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="flex-end">

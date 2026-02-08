@@ -22,8 +22,13 @@ describe('AssetService', () => {
       // 1000 initial, 10 years life, 5 years passed = 500
       const acquisitionDate = new Date();
       acquisitionDate.setFullYear(acquisitionDate.getFullYear() - 5);
-      
-      const val = assetService.calculateCurrentValue(1000, acquisitionDate.toISOString(), 'straight_line', 10);
+
+      const val = assetService.calculateCurrentValue(
+        1000,
+        acquisitionDate.toISOString(),
+        'straight_line',
+        10,
+      );
       expect(val).toBeCloseTo(500, -1); // Allow small diff due to leap years
     });
 
@@ -31,7 +36,12 @@ describe('AssetService', () => {
       const acquisitionDate = new Date();
       acquisitionDate.setFullYear(acquisitionDate.getFullYear() - 11);
 
-      const val = assetService.calculateCurrentValue(1000, acquisitionDate.toISOString(), 'straight_line', 10);
+      const val = assetService.calculateCurrentValue(
+        1000,
+        acquisitionDate.toISOString(),
+        'straight_line',
+        10,
+      );
       expect(val).toBe(0);
     });
   });
@@ -53,7 +63,7 @@ describe('AssetService', () => {
 
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO assets'),
-        expect.any(Array)
+        expect.any(Array),
       );
       expect(result).toEqual(mockAsset);
     });
@@ -79,15 +89,22 @@ describe('AssetService', () => {
 
   describe('updateAsset', () => {
     it('should update asset', async () => {
-      const mockAsset = { id: 1, initial_value: 1000, acquisition_date: new Date().toISOString(), depreciation_method: 'straight_line', useful_life_years: 5 };
+      const mockAsset = {
+        id: 1,
+        initial_value: 1000,
+        acquisition_date: new Date().toISOString(),
+        depreciation_method: 'straight_line',
+        useful_life_years: 5,
+      };
       mockQuery.mockResolvedValueOnce({ rows: [mockAsset] }); // getById
       mockQuery.mockResolvedValueOnce({ rows: [{ ...mockAsset, name: 'New Name' }] }); // update
 
       const result = await assetService.updateAsset(1, { name: 'New Name' });
 
-      expect(mockQuery).toHaveBeenNthCalledWith(2, 
+      expect(mockQuery).toHaveBeenNthCalledWith(
+        2,
         expect.stringContaining('UPDATE assets SET name = $1'),
-        expect.any(Array)
+        expect.any(Array),
       );
       expect(result).toEqual({ ...mockAsset, name: 'New Name' });
     });

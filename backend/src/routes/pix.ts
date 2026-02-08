@@ -1,5 +1,9 @@
 import { Router } from 'express';
-import { generatePixQrCode, handlePixWebhook, checkPixPaymentStatus } from '../controllers/pixController.js';
+import {
+  generatePixQrCode,
+  handlePixWebhook,
+  checkPixPaymentStatus,
+} from '../controllers/pixController.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const pixRouter = Router();

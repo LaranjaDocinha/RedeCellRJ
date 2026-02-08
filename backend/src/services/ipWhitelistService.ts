@@ -29,7 +29,9 @@ export const ipWhitelistService = {
   },
 
   async getEntryByIp(ipAddress: string): Promise<IpWhitelistEntry | undefined> {
-    const result = await pool.query('SELECT * FROM ip_whitelist WHERE ip_address = $1', [ipAddress]);
+    const result = await pool.query('SELECT * FROM ip_whitelist WHERE ip_address = $1', [
+      ipAddress,
+    ]);
     return result.rows[0];
   },
 
@@ -42,7 +44,8 @@ export const ipWhitelistService = {
       );
       return result.rows[0];
     } catch (error: any) {
-      if (error.code === '23505') { // Unique violation
+      if (error.code === '23505') {
+        // Unique violation
         throw new AppError(`IP address ${ip_address} already exists in whitelist.`, 409);
       }
       throw new AppError('Failed to create IP whitelist entry.', 500);
@@ -95,6 +98,6 @@ export const ipWhitelistService = {
 
   async getActiveWhitelistedIps(): Promise<string[]> {
     const result = await pool.query('SELECT ip_address FROM ip_whitelist WHERE is_active = TRUE');
-    return result.rows.map(row => row.ip_address);
-  }
+    return result.rows.map((row) => row.ip_address);
+  },
 };

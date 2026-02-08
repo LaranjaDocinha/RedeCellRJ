@@ -89,7 +89,7 @@ const ReturnMetricsWidget: React.FC<ReturnMetricsWidgetProps> = React.memo(({ se
         }}
       >
         <FaUndo style={{ fontSize: '4rem', marginBottom: '1rem' }} />
-        <Typography variant="body1" fontWeight="bold">Nenhum dado de devolução disponível.</Typography>
+        <Typography variant="body1" fontWeight={400}>Nenhum dado de devolução disponível.</Typography>
         <Typography variant="body2" sx={{ mt: 1 }}>
           Monitore suas devoluções aqui.
         </Typography>
@@ -112,7 +112,7 @@ const ReturnMetricsWidget: React.FC<ReturnMetricsWidgetProps> = React.memo(({ se
         textAlign: 'center',
       }}
     >
-      <Typography variant="h3" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
+      <Typography variant="h3" component="div" sx={{ fontWeight: 400, mb: 1 }}>
         {data.totalReturns} Devoluções
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
@@ -126,3 +126,5 @@ const ReturnMetricsWidget: React.FC<ReturnMetricsWidgetProps> = React.memo(({ se
 });
 
 export default ReturnMetricsWidget;
+
+

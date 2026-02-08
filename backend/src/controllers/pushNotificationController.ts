@@ -38,7 +38,7 @@ export const pushNotificationController = {
     try {
       const userId = (req as any).user.id; // User ID from auth middleware
       const subscription = pushSubscriptionSchema.parse(req.body);
-      
+
       await pushNotificationService.subscribeUser(userId, subscription);
       res.status(201).json({ message: 'Subscription successful.' });
     } catch (error: any) {
@@ -70,9 +70,15 @@ export const pushNotificationController = {
     try {
       const userId = (req as any).user.id; // User ID from auth middleware
       const payload = notificationPayloadSchema.parse(req.body);
-      
+
       // For testing, send to current user. For real use, it would be another endpoint
-      await pushNotificationService.sendNotificationToUser(userId, payload.title, payload.body, payload.icon, payload.url);
+      await pushNotificationService.sendNotificationToUser(
+        userId,
+        payload.title,
+        payload.body,
+        payload.icon,
+        payload.url,
+      );
       res.status(200).json({ message: 'Notification sent (to current user).' });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -86,7 +92,12 @@ export const pushNotificationController = {
     try {
       // Requires admin/broadcast permission
       const payload = notificationPayloadSchema.parse(req.body);
-      await pushNotificationService.sendNotificationToAll(payload.title, payload.body, payload.icon, payload.url);
+      await pushNotificationService.sendNotificationToAll(
+        payload.title,
+        payload.body,
+        payload.icon,
+        payload.url,
+      );
       res.status(200).json({ message: 'Broadcast notification sent.' });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -94,5 +105,5 @@ export const pushNotificationController = {
       }
       res.status(500).json({ message: error.message });
     }
-  }
+  },
 };

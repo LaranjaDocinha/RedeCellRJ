@@ -40,7 +40,7 @@ const PurchaseSuggestionsWidget: React.FC<PurchaseSuggestionsWidgetProps> = ({ d
                   <ShoppingCart fontSize="small" color="primary" />
                 </ListItemIcon>
                 <ListItemText
-                  primary={<Typography variant="body2" sx={{ fontWeight: 600 }}>{item.productName}</Typography>}
+                  primary={<Typography variant="body2" sx={{ fontWeight: 400 }}>{item.productName}</Typography>}
                   secondary={`Sugerido: ${item.suggestedQuantity} un. | ${item.reason}`}
                 />
               </ListItem>

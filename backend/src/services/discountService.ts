@@ -171,7 +171,10 @@ class DiscountService {
     }
   }
 
-  async findBestDiscount(currentAmount: number, dbClient?: PoolClient): Promise<{ discount: Discount, finalAmount: number, savings: number } | null> {
+  async findBestDiscount(
+    currentAmount: number,
+    dbClient?: PoolClient,
+  ): Promise<{ discount: Discount; finalAmount: number; savings: number } | null> {
     const client = await this.getClient(dbClient);
     try {
       const result = await client.query(
@@ -181,9 +184,9 @@ class DiscountService {
          AND (end_date IS NULL OR end_date >= NOW())
          AND (min_purchase_amount IS NULL OR min_purchase_amount <= $1)
          AND (max_uses IS NULL OR uses_count < max_uses)`,
-        [currentAmount]
+        [currentAmount],
       );
-      
+
       const discounts = result.rows;
       if (discounts.length === 0) return null;
 
@@ -197,13 +200,13 @@ class DiscountService {
         } else {
           savings = Number(discount.value);
         }
-        
+
         if (savings > maxSavings) {
           maxSavings = savings;
           bestOption = {
             discount,
             finalAmount: Math.max(0, currentAmount - savings),
-            savings: savings
+            savings: savings,
           };
         }
       }

@@ -11,17 +11,17 @@ const redisClient = createClient({
         return false; // Para de tentar reconectar
       }
       return 1000;
-    }
-  }
+    },
+  },
 });
 
 redisClient.on('connect', () => logger.info('Connected to Redis!'));
-redisClient.on('error', (err) => {
+redisClient.on('error', (_err) => {
   // Apenas loga o erro, não deixa crashar a aplicação
-  if (err.code === 'ECONNREFUSED') {
+  if (_err.code === 'ECONNREFUSED') {
     logger.warn('Redis não disponível. Continuando sem suporte a cache/filas.');
   } else {
-    logger.error('Redis Client Error', err);
+    logger.error('Redis Client Error', _err);
   }
 });
 
@@ -29,7 +29,7 @@ if (process.env.NODE_ENV !== 'test') {
   (async () => {
     try {
       await redisClient.connect();
-    } catch (err) {
+    } catch (_err) {
       // Falha silenciosa no startup
       logger.warn('Aviso: Backend rodando sem Redis.');
     }

@@ -60,7 +60,7 @@ const BuybackCalculator: React.FC = () => {
           {result ? (
             <Box textAlign="center">
               <Typography color="textSecondary">Oferta Sugerida</Typography>
-              <Typography variant="h2" color="primary" sx={{ fontWeight: 'bold' }}>
+              <Typography variant="h2" color="primary" sx={{ fontWeight: 400 }}>
                 R$ <AnimatedCounter value={result.finalPrice} />
               </Typography>
               <Typography variant="overline" display="block" sx={{ mt: 1, fontSize: '1.2rem', color: result.rating === 'Excelente' ? 'green' : 'orange' }}>
@@ -77,3 +77,4 @@ const BuybackCalculator: React.FC = () => {
 };
 
 export default BuybackCalculator;
+

@@ -11,8 +11,12 @@ router.use(authMiddleware.authenticate); // All subsequent routes require authen
 router.post('/subscribe', pushNotificationController.subscribe);
 router.post('/unsubscribe', pushNotificationController.unsubscribe);
 // Test route for sending a notification to the current user
-router.post('/send-test', pushNotificationController.sendNotification); 
+router.post('/send-test', pushNotificationController.sendNotification);
 // Admin route for broadcast notifications
-router.post('/broadcast', authMiddleware.authorize('create', 'Notification'), pushNotificationController.sendBroadcastNotification);
+router.post(
+  '/broadcast',
+  authMiddleware.authorize('create', 'Notification'),
+  pushNotificationController.sendBroadcastNotification,
+);
 
 export default router;

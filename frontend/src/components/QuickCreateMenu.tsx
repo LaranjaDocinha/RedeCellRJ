@@ -111,7 +111,7 @@ const ActionItem = styled(motion.div)<{ $color: string }>`
     flex: 1;
     .title {
       font-size: 0.85rem;
-      font-weight: 700;
+      font-weight: 400;
       display: block;
     }
     .description {
@@ -122,7 +122,7 @@ const ActionItem = styled(motion.div)<{ $color: string }>`
 
   .shortcut {
     font-size: 0.6rem;
-    font-weight: 900;
+    font-weight: 400;
     padding: 3px 6px;
     border-radius: 6px;
     background: ${({ theme }) => theme.palette.action.selected};

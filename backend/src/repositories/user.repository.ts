@@ -1,7 +1,7 @@
 import { Pool } from 'pg';
-import { IRepository } from './base.repository';
-import { getPool } from '../db';
-import { logger } from '../utils/logger';
+import { IRepository } from './base.repository.js';
+import { getPool } from '../db/index.js';
+import { logger } from '../utils/logger.js';
 
 export interface User {
   id: string;
@@ -28,65 +28,110 @@ export class UserRepository implements IRepository<User> {
     return getPool();
   }
 
-  async findById(id: string): Promise<User | null> {
-    const result = await this.db.query('SELECT * FROM users WHERE id = $1', [id]);
+  private sanitizeUser(user: any) {
+    if (!user) return null;
+    const { password_hash: _password_hash, ...sanitized } = user;
+    return sanitized;
+  }
+
+  async findById(id: string): Promise<Partial<User> | null> {
+    const result = await this.db.query('SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL', [
+      id,
+    ]);
+    return this.sanitizeUser(result.rows[0]);
+  }
+
+  async findByEmail(email: string): Promise<Partial<User> | null> {
+    const result = await this.db.query(
+      'SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL',
+      [email],
+    );
+    return this.sanitizeUser(result.rows[0]);
+  }
+
+  /**
+   * Método especial para auth que precisa do hash da senha.
+   */
+  async findWithPasswordByEmail(email: string): Promise<User | null> {
+    const result = await this.db.query(
+      'SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL',
+      [email],
+    );
     return result.rows[0] || null;
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    const result = await this.db.query('SELECT * FROM users WHERE email = $1', [email]);
-    return result.rows[0] || null;
-  }
-
-  async findAll(filter?: Partial<User>): Promise<User[]> {
-    const result = await this.db.query('SELECT * FROM users');
+  async findAll(_filter?: Partial<User>): Promise<any[]> {
+    const result = await this.db.query(`
+      SELECT u.id, u.name, u.email, u.theme_preference, u.xp, u.level, u.failed_login_attempts, u.last_login, u.created_at, u.updated_at, r.name as role 
+      FROM users u 
+      LEFT JOIN user_roles ur ON u.id = ur.user_id 
+      LEFT JOIN roles r ON ur.role_id = r.id
+      WHERE u.deleted_at IS NULL
+      ORDER BY u.name ASC
+    `);
     return result.rows;
   }
 
   async create(data: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<User> {
     const result = await this.db.query(
       'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING *',
-      [data.name, data.email, data.password_hash]
+      [data.name, data.email, data.password_hash],
     );
     logger.info(`User created with ID: ${result.rows[0].id}`);
     return result.rows[0];
   }
 
-  async update(id: string, data: Partial<User>): Promise<User> {
-    // Construção dinâmica de query simplificada
+  async update(
+    id: string,
+    data: Partial<
+      User & { failed_login_attempts?: number; last_login?: Date; deleted_at?: Date | null }
+    >,
+  ): Promise<User> {
     const fields: string[] = [];
     const values: any[] = [];
     let idx = 1;
 
-    if (data.name) { fields.push(`name = $${idx++}`); values.push(data.name); }
-    if (data.email) { fields.push(`email = $${idx++}`); values.push(data.email); }
-    if (data.password_hash) { fields.push(`password_hash = $${idx++}`); values.push(data.password_hash); }
-    if (data.theme_preference) { fields.push(`theme_preference = $${idx++}`); values.push(data.theme_preference); }
-    if (data.reset_password_token !== undefined) { // Pode ser null
-       fields.push(`reset_password_token = $${idx++}`); values.push(data.reset_password_token); 
-    }
-    if (data.reset_password_expires !== undefined) { 
-       fields.push(`reset_password_expires = $${idx++}`); values.push(data.reset_password_expires); 
+    const allowedFields = [
+      'name',
+      'email',
+      'password_hash',
+      'theme_preference',
+      'reset_password_token',
+      'reset_password_expires',
+      'two_factor_secret',
+      'two_factor_enabled',
+      'failed_login_attempts',
+      'last_login',
+      'deleted_at',
+    ];
+
+    for (const field of allowedFields) {
+      if (data[field as keyof typeof data] !== undefined) {
+        fields.push(`${field} = $${idx++}`);
+        values.push(data[field as keyof typeof data]);
+      }
     }
 
     if (fields.length === 0) return this.findById(id) as Promise<User>;
 
     values.push(id);
-    const query = `UPDATE users SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`;
-    
+    const query = `UPDATE users SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $${idx} RETURNING *`;
+
     const result = await this.db.query(query, values);
+    if (result.rows.length === 0) throw new Error('User not found');
     return result.rows[0];
   }
 
   async delete(id: string): Promise<boolean> {
-    const result = await this.db.query('DELETE FROM users WHERE id = $1', [id]);
+    // Implementação de Soft Delete
+    const result = await this.db.query('UPDATE users SET deleted_at = NOW() WHERE id = $1', [id]);
     return (result.rowCount || 0) > 0;
   }
 
   async findUserValidForReset(hashedToken: string): Promise<User | null> {
     const result = await this.db.query(
       'SELECT * FROM users WHERE reset_password_token = $1 AND reset_password_expires > $2',
-      [hashedToken, new Date()]
+      [hashedToken, new Date()],
     );
     return result.rows[0] || null;
   }
@@ -107,7 +152,7 @@ export class UserRepository implements IRepository<User> {
   async getUserRole(userId: string): Promise<string> {
     const result = await this.db.query(
       `SELECT r.name FROM roles r JOIN user_roles ur ON r.id = ur.role_id WHERE ur.user_id = $1`,
-      [userId]
+      [userId],
     );
     return result.rows[0]?.name || 'user';
   }

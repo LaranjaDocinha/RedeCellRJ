@@ -1,5 +1,3 @@
-
-
 export const getCompatibleProducts = async (deviceId: number) => {
   console.log(`Simulating fetching compatible products for device ${deviceId}`);
   // In a real scenario, this would query products compatible with the device for AR preview.

@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getPool } from '../../src/db/index.js';
 import { logActivityService } from '../../src/services/logActivityService.js';
+import { getPool } from '../../src/db/index.js';
 
-// Mock the database pool
+// Mock do pool do banco de dados
 vi.mock('../../src/db/index.js', () => ({
   getPool: vi.fn(),
 }));
@@ -11,16 +11,12 @@ describe('LogActivityService', () => {
   let mockQuery: vi.Mock;
 
   beforeEach(() => {
-    mockQuery = vi.fn();
-    (getPool as vi.Mock).mockReturnValue({
-      query: mockQuery,
-    });
     vi.clearAllMocks();
+    mockQuery = vi.fn().mockResolvedValue({});
+    (getPool as vi.Mock).mockReturnValue({ query: mockQuery });
   });
 
   it('should successfully log an activity with all parameters', async () => {
-    mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 1 });
-
     const options = {
       userId: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
       action: 'User Updated Profile',
@@ -33,64 +29,38 @@ describe('LogActivityService', () => {
 
     await logActivityService.logActivity(options);
 
-    expect(mockQuery).toHaveBeenCalledTimes(1);
-    expect(mockQuery).toHaveBeenCalledWith(
-      `INSERT INTO audit_logs (user_id, action, details)
-         VALUES ($1, $2, $3)`,
-      [
-        options.userId,
-        options.action,
-        JSON.stringify({
-          resourceType: options.resourceType,
-          resourceId: options.resourceId,
-          oldValue: options.oldValue,
-          newValue: options.newValue,
-          ipAddress: options.ipAddress,
-        }),
-      ],
-    );
+    expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO audit_logs'), [
+      options.userId,
+      options.action,
+      options.resourceType,
+      options.resourceId,
+      expect.stringContaining('"diff":{"name":{"from":"Old Name","to":"New Name"}}'),
+      options.ipAddress,
+    ]);
   });
 
   it('should successfully log an activity with minimal parameters', async () => {
-    mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 1 });
-
-    const options = {
-      action: 'Application Started',
-    };
+    const options = { action: 'Application Started' };
 
     await logActivityService.logActivity(options);
 
-    expect(mockQuery).toHaveBeenCalledTimes(1);
-    expect(mockQuery).toHaveBeenCalledWith(
-      `INSERT INTO audit_logs (user_id, action, details)
-         VALUES ($1, $2, $3)`,
-      [
-        undefined, // userId is optional
-        options.action,
-        JSON.stringify({
-          resourceType: undefined,
-          resourceId: undefined,
-          oldValue: undefined,
-          newValue: undefined,
-          ipAddress: undefined,
-        }),
-      ],
-    );
+    expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO audit_logs'), [
+      undefined,
+      options.action,
+      undefined,
+      null,
+      expect.any(String),
+      undefined,
+    ]);
   });
 
   it('should log an error if the database query fails', async () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    mockQuery.mockRejectedValueOnce(new Error('DB connection failed'));
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockQuery.mockRejectedValueOnce(new Error('DB Error'));
 
-    const options = {
-      userId: 'some-user-id',
-      action: 'Failed Action',
-    };
+    await logActivityService.logActivity({ action: 'TEST' });
 
-    await logActivityService.logActivity(options);
-
-    expect(mockQuery).toHaveBeenCalledTimes(1);
-    expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to log activity:', expect.any(Error));
-    consoleErrorSpy.mockRestore();
+    expect(consoleSpy).toHaveBeenCalledWith('Failed to log activity:', expect.any(Error));
+    consoleSpy.mockRestore();
   });
 });

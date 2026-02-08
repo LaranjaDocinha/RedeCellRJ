@@ -149,7 +149,7 @@ const CouponsPage: React.FC = () => {
 
           {showForm && (
             <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-3">
+              <h2 className="text-xl font-normal mb-3">
                 {editingCoupon ? 'Edit Coupon' : 'Add New Coupon'}
               </h2>
               <CouponForm

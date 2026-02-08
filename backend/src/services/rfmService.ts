@@ -43,27 +43,34 @@ class RfmService {
       }
 
       // 2. Update the customers table in a batch
-      // Note: Using simple concatenation for bulk update. For huge datasets, consider temp table.
       const values = scoredData
         .map(
-          (d) => `('${d.customer_id}', ${d.r_score}, ${d.f_score}, ${d.m_score}, '${this.getSegmentName(d.r_score, d.f_score)}')`,
+          (d) =>
+            `(${d.customer_id}, ${d.r_score}, ${d.f_score}, ${d.m_score}, '${this.getSegmentName(d.r_score, d.f_score)}', ${d.recency_days > 60})`,
         )
         .join(',');
-        
+
       if (values) {
-          const updateQuery = `
+        const updateQuery = `
             UPDATE customers SET
               rfm_recency = temp.rfm_recency,
               rfm_frequency = temp.rfm_frequency,
               rfm_monetary = temp.rfm_monetary,
               rfm_segment = temp.rfm_segment,
+              churn_risk = temp.churn_risk,
+              health_score = CASE 
+                WHEN temp.rfm_segment = 'Champions' THEN 100
+                WHEN temp.rfm_segment = 'At Risk' THEN 30
+                WHEN temp.rfm_segment = 'Lost' THEN 0
+                ELSE 70
+              END,
               rfm_last_calculated = NOW()
             FROM (VALUES
               ${values}
-            ) AS temp(customer_id, rfm_recency, rfm_frequency, rfm_monetary, rfm_segment)
-            WHERE customers.id = temp.customer_id::uuid; 
+            ) AS temp(customer_id, rfm_recency, rfm_frequency, rfm_monetary, rfm_segment, churn_risk)
+            WHERE customers.id = temp.customer_id; 
           `;
-          await client.query(updateQuery);
+        await client.query(updateQuery);
       }
 
       await client.query('COMMIT');

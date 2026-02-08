@@ -85,7 +85,7 @@ const AnnualSalesComparisonWidget: React.FC<AnnualSalesComparisonWidgetProps> = 
           minHeight: 200,
         }}
       >
-        <Typography variant="body1" fontWeight="bold">Nenhum dado de vendas anuais disponível.</Typography>
+        <Typography variant="body1" fontWeight={400}>Nenhum dado de vendas anuais disponível.</Typography>
         <Typography variant="body2" sx={{ mt: 1 }}>
           Registre vendas ao longo dos anos para ver a comparação.
         </Typography>
@@ -149,3 +149,4 @@ const AnnualSalesComparisonWidget: React.FC<AnnualSalesComparisonWidgetProps> = 
 });
 
 export default AnnualSalesComparisonWidget;
+

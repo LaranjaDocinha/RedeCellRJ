@@ -1,5 +1,4 @@
 import { getPool } from '../db/index.js';
-import { AppError } from '../utils/errors.js';
 
 interface LogActivityOptions {
   userId?: string;
@@ -12,30 +11,63 @@ interface LogActivityOptions {
 }
 
 class LogActivityService {
+  /**
+   * Calcula a diferença entre dois objetos para auditoria.
+   */
+  private calculateDiff(oldObj: any, newObj: any) {
+    if (!oldObj) return { added: newObj };
+    if (!newObj) return { removed: oldObj };
+
+    const diff: any = {};
+    const allKeys = new Set([...Object.keys(oldObj), ...Object.keys(newObj)]);
+
+    for (const key of allKeys) {
+      if (['updated_at', 'created_at', 'password_hash'].includes(key)) continue;
+
+      if (oldObj[key] !== newObj[key]) {
+        diff[key] = {
+          from: oldObj[key],
+          to: newObj[key],
+        };
+      }
+    }
+    return Object.keys(diff).length > 0 ? diff : null;
+  }
+
   async logActivity(options: LogActivityOptions): Promise<void> {
     const { userId, action, resourceType, resourceId, oldValue, newValue, ipAddress } = options;
     const pool = getPool();
 
+    const diff = this.calculateDiff(oldValue, newValue);
+
+    // Se não houve mudança real e o objetivo era auditar mudança de estado, podemos pular ou logar apenas a ação
+    if (oldValue && newValue && !diff) {
+      return;
+    }
+
     const details = {
-      resourceType,
-      resourceId,
-      oldValue,
-      newValue,
-      ipAddress,
+      diff,
+      // Guardamos os valores completos apenas se necessário, o diff é mais eficiente para o Log 2.0
+      ...(oldValue && !newValue ? { removedData: oldValue } : {}),
+      ...(newValue && !oldValue ? { addedData: newValue } : {}),
     };
 
     try {
-      // Table audit_logs does not exist in master schema yet.
       await pool.query(
-        `INSERT INTO audit_logs (user_id, action, details)
-         VALUES ($1, $2, $3)`,
-        [userId, action, JSON.stringify(details)],
+        `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, details, ip_address)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          userId,
+          action,
+          resourceType,
+          // Tentamos converter para UUID se possível, senão guardamos no JSON
+          resourceId && resourceId.length === 36 ? resourceId : null,
+          JSON.stringify(details),
+          ipAddress,
+        ],
       );
-      console.log(`[Audit Log] ${action} by ${userId}`, details);
     } catch (error) {
       console.error('Failed to log activity:', error);
-      // Depending on the criticality, you might want to throw an error or just log it.
-      // For audit logs, it's often better to just log the failure and not block the main operation.
     }
   }
 }

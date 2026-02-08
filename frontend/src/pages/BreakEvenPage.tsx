@@ -5,203 +5,119 @@ import {
   Paper, 
   Grid, 
   CircularProgress, 
-  TextField, 
-  Button, 
-  Select, 
-  MenuItem, 
-  FormControl, 
-  InputLabel,
-  Card,
-  CardContent,
-  Avatar,
-  Stack,
-  Divider,
-  useTheme,
+  Stack, 
+  Divider, 
+  useTheme, 
   Chip,
-  LinearProgress
+  alpha
 } from '@mui/material';
 import { 
-  Balance as BalanceIcon, 
-  TrendingUp, 
-  AttachMoney, 
-  Store as StoreIcon, 
-  CalendarMonth as CalendarIcon,
-  ShowChart as ChartIcon,
-  InfoOutlined as InfoIcon,
-  CheckCircle as SafeIcon,
-  Warning as DangerIcon,
-  AccountBalance as BankIcon
-} from '@mui/icons-material';
-import { useAuth } from '../contexts/AuthContext';
+  FaBalanceScale, FaArrowUp, FaStore
+} from 'react-icons/fa';
 import ReactApexChart from 'react-apexcharts';
-import moment from 'moment';
-import { motion } from 'framer-motion';
 
 const BreakEvenPage: React.FC = () => {
   const theme = useTheme();
-  const { token } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [branches, setBranches] = useState<any[]>([]);
-  const [selectedBranch, setSelectedBranch] = useState<string>('1');
-  const [startDate, setStartDate] = useState(moment().startOf('month').format('YYYY-MM-DD'));
-  const [endDate, setEndDate] = useState(moment().endOf('month').format('YYYY-MM-DD'));
-  const [breakEvenData, setBreakEvenData] = useState<any>(null);
 
   useEffect(() => {
-    // Simulated initial load
-    setTimeout(() => {
-      setBreakEvenData({
-        totalFixedCosts: 45000,
-        totalVariableCosts: 62000,
-        totalRevenue: 125000,
-        breakEvenRevenue: 85000,
-        breakEvenUnits: 42,
-        currentProgress: 74, // % of the month passed
-        profitMargin: 14.4
-      });
-      setLoading(false);
-    }, 1000);
-  }, [selectedBranch]);
+    setTimeout(() => setLoading(false), 800);
+  }, []);
 
-  const chartOptions: ApexCharts.ApexOptions = {
-    chart: { 
-      type: 'line', 
-      toolbar: { show: false },
-      zoom: { enabled: false }
-    },
-    stroke: { curve: 'straight', width: [3, 3, 2] },
-    colors: [theme.palette.success.main, theme.palette.error.main, theme.palette.warning.main],
-    xaxis: { 
-      categories: ['0%', '25%', '50%', '75%', '100%'],
-      title: { text: 'Progresso do Período (%)', style: { fontWeight: 700 } }
-    },
-    yaxis: {
-      labels: { formatter: (val) => `R$ ${val.toLocaleString()}` }
-    },
-    markers: { size: 5 },
-    tooltip: { y: { formatter: (val) => `R$ ${val.toLocaleString()}` } },
-    legend: { position: 'top', fontWeight: 700 }
+  const donutOptions: any = {
+    labels: ['Produtos', 'Peças', 'Serviços'],
+    colors: [theme.palette.primary.main, theme.palette.secondary.main, theme.palette.success.main],
+    legend: { position: 'bottom' },
+    plotOptions: { pie: { donut: { size: '70%' } } }
   };
 
-  const chartSeries = breakEvenData ? [
-    { name: 'Receita Real', data: [0, 30000, 65000, 95000, 125000] },
-    { name: 'Custos Totais', data: [45000, 60000, 75000, 90000, 107000] },
-    { name: 'Ponto de Equilíbrio', data: [85000, 85000, 85000, 85000, 85000] }
-  ] : [];
+  const lineOptions: any = {
+    chart: { toolbar: { show: false } },
+    stroke: { curve: 'smooth', width: 3 },
+    colors: [theme.palette.success.main, theme.palette.error.main],
+    xaxis: { categories: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'] },
+    tooltip: { y: { formatter: (v: number) => `R$ ${v.toLocaleString()}` } }
+  };
 
-  if (loading) return (
-    <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
-      <CircularProgress thickness={5} size={60} />
-    </Box>
-  );
+  if (loading) return <Box display="flex" justifyContent="center" py={10}><CircularProgress /></Box>;
 
   return (
-    <Box p={4} sx={{ maxWidth: 1400, margin: '0 auto', bgcolor: 'background.default' }}>
-      <Box mb={6} display="flex" justifyContent="space-between" alignItems="flex-end">
+    <Box sx={{ p: 4, bgcolor: 'background.default', minHeight: '100vh' }}>
+      
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
         <Box>
-          <Box display="flex" alignItems="center" gap={1.5} mb={1}>
-            <Box sx={{ p: 1, bgcolor: 'success.main', borderRadius: '10px', color: 'white', display: 'flex' }}>
-              <BalanceIcon />
-            </Box>
-            <Typography variant="overline" sx={{ fontWeight: 800, color: 'success.main', letterSpacing: 2 }}>
-              SAÚDE FINANCEIRA
+            <Typography variant="h4" fontWeight={400} sx={{ letterSpacing: '-1.5px', display: 'flex', alignItems: 'center', gap: 2 }}>
+                <FaBalanceScale color={theme.palette.primary.main} /> Rentabilidade Enterprise
             </Typography>
-          </Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
-            Ponto de Equilíbrio
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-            Saiba exatamente quanto você precisa vender para cobrir seus custos e começar a lucrar.
-          </Typography>
+            <Typography variant="body2" color="text.secondary">DRE Consolidado e Análise de Margem Real</Typography>
         </Box>
-        <Stack direction="row" spacing={2}>
-          <FormControl size="small" sx={{ width: 200 }}>
-            <InputLabel>Filial</InputLabel>
-            <Select value={selectedBranch} label="Filial" onChange={(e) => setSelectedBranch(e.target.value)} sx={{ borderRadius: '12px', bgcolor: 'background.paper' }}>
-              <MenuItem value="1">Filial Matriz</MenuItem>
-              <MenuItem value="2">Filial Barra</MenuItem>
-            </Select>
-          </FormControl>
-        </Stack>
-      </Box>
+        <Chip icon={<FaStore />} label="Filial Matriz" variant="outlined" sx={{ fontWeight: 400 }} />
+      </Stack>
 
-      <Grid container spacing={4}>
-        {/* Key Metrics */}
+      <Grid container spacing={3}>
+        
+        {/* Cards de Topo */}
         <Grid item xs={12} md={4}>
-          <Stack spacing={3}>
-            <Card sx={{ borderRadius: '24px', border: '1px solid', borderColor: 'divider', boxShadow: 'none', bgcolor: 'background.paper' }}>
-              <CardContent sx={{ p: 3 }}>
-                <Typography variant="overline" fontWeight={800} color="text.secondary">Receita de Equilíbrio</Typography>
-                <Typography variant="h4" fontWeight={900} sx={{ mt: 1, mb: 1 }}>
-                  R$ {breakEvenData.breakEvenRevenue.toLocaleString()}
-                </Typography>
-                <Box display="flex" alignItems="center" gap={1}>
-                  <SafeIcon color="success" sx={{ fontSize: 16 }} />
-                  <Typography variant="caption" fontWeight={700} color="success.main">VOCÊ ATINGIU ESTA META!</Typography>
+            <Paper sx={{ p: 3, borderRadius: '24px', borderLeft: `6px solid ${theme.palette.success.main}` }}>
+                <Typography variant="overline" color="text.secondary" fontWeight={400}>RECEITA BRUTA</Typography>
+                <Typography variant="h4" fontWeight={400}>R$ 142.500,00</Typography>
+                <Box display="flex" alignItems="center" gap={1} color="success.main" mt={1}>
+                    <FaArrowUp size={12} /> <Typography variant="caption" fontWeight={400}>+12% vs mês anterior</Typography>
                 </Box>
-              </CardContent>
-            </Card>
-
-            <Paper sx={{ p: 4, borderRadius: '32px', bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider' }}>
-              <Typography variant="h6" fontWeight={800} mb={3}>Resumo de Custos</Typography>
-              <Stack spacing={2.5}>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Box display="flex" alignItems="center" gap={1.5}>
-                    <Avatar sx={{ width: 32, height: 32, bgcolor: 'error.light' }}><BankIcon sx={{ fontSize: 16 }} /></Avatar>
-                    <Typography variant="body2" fontWeight={700}>Custos Fixos</Typography>
-                  </Box>
-                  <Typography variant="body2" fontWeight={800}>R$ {breakEvenData.totalFixedCosts.toLocaleString()}</Typography>
-                </Box>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Box display="flex" alignItems="center" gap={1.5}>
-                    <Avatar sx={{ width: 32, height: 32, bgcolor: 'warning.light' }}><TrendingUp sx={{ fontSize: 16 }} /></Avatar>
-                    <Typography variant="body2" fontWeight={700}>Custos Variáveis</Typography>
-                  </Box>
-                  <Typography variant="body2" fontWeight={800}>R$ {breakEvenData.totalVariableCosts.toLocaleString()}</Typography>
-                </Box>
-                <Divider />
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="subtitle1" fontWeight={900}>Total Geral</Typography>
-                  <Typography variant="subtitle1" fontWeight={900} color="error.main">R$ {(breakEvenData.totalFixedCosts + breakEvenData.totalVariableCosts).toLocaleString()}</Typography>
-                </Box>
-              </Stack>
             </Paper>
-
-            <Card sx={{ borderRadius: '24px', bgcolor: 'primary.main', color: 'white' }}>
-              <CardContent sx={{ p: 3 }}>
-                <Typography variant="overline" sx={{ opacity: 0.8, fontWeight: 800 }}>Margem de Segurança</Typography>
-                <Typography variant="h4" fontWeight={900}>+{breakEvenData.profitMargin}%</Typography>
-                <Typography variant="caption" sx={{ opacity: 0.9 }}>Receita acima do ponto de equilíbrio.</Typography>
-              </CardContent>
-            </Card>
-          </Stack>
+        </Grid>
+        <Grid item xs={12} md={4}>
+            <Paper sx={{ p: 3, borderRadius: '24px', borderLeft: `6px solid ${theme.palette.error.main}` }}>
+                <Typography variant="overline" color="text.secondary" fontWeight={400}>DEDUÇÕES E CUSTOS (CMV)</Typography>
+                <Typography variant="h4" fontWeight={400}>R$ 88.200,00</Typography>
+                <Box display="flex" alignItems="center" gap={1} color="error.main" mt={1}>
+                    <FaArrowUp size={12} /> <Typography variant="caption" fontWeight={400}>Taxas: R$ 4.250,00</Typography>
+                </Box>
+            </Paper>
+        </Grid>
+        <Grid item xs={12} md={4}>
+            <Paper sx={{ p: 3, borderRadius: '24px', bgcolor: theme.palette.primary.main, color: 'white' }}>
+                <Typography variant="overline" sx={{ opacity: 0.8 }} fontWeight={400}>LUCRO LÍQUIDO REAL</Typography>
+                <Typography variant="h4" fontWeight={400}>R$ 54.300,00</Typography>
+                <Typography variant="caption" sx={{ opacity: 0.8 }}>Margem Líquida: 38.1%</Typography>
+            </Paper>
         </Grid>
 
-        {/* Chart Area */}
-        <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 4, borderRadius: '32px', border: '1px solid', borderColor: 'divider', height: '100%' }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-              <Box>
-                <Typography variant="h6" fontWeight={800}>Gráfico de Intersecção</Typography>
-                <Typography variant="caption" color="text.secondary">Acompanhamento do lucro acumulado vs. custos operacionais</Typography>
-              </Box>
-              <Chip icon={<ChartIcon />} label="LIVE DATA" size="small" variant="outlined" sx={{ fontWeight: 800 }} />
-            </Box>
-            
-            <Box sx={{ minHeight: 400 }}>
-              <ReactApexChart options={chartOptions} series={chartSeries} type="line" height={400} />
-            </Box>
-
-            <Box mt={4} sx={{ p: 2, bgcolor: 'action.hover', borderRadius: '16px' }}>
-              <Typography variant="subtitle2" fontWeight={800} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <InfoIcon fontSize="small" color="primary" /> Insight de Operação
-              </Typography>
-              <Typography variant="caption" color="text.secondary" lineHeight={1.5}>
-                O Ponto de Equilíbrio foi atingido no dia <strong>18 deste mês</strong>. Todas as vendas a partir desta data contribuem diretamente para o lucro líquido da filial.
-              </Typography>
-            </Box>
-          </Paper>
+        {/* Gráficos */}
+        <Grid item xs={12} lg={8}>
+            <Paper sx={{ p: 3, borderRadius: '24px', height: '100%' }}>
+                <Typography variant="h6" fontWeight={400} mb={3}>Fluxo de Receita vs Despesa (Semanal)</Typography>
+                <ReactApexChart 
+                    options={lineOptions} 
+                    series={[
+                        { name: 'Entradas', data: [35000, 42000, 38000, 27500] },
+                        { name: 'Saídas', data: [22000, 25000, 21000, 20200] }
+                    ]} 
+                    type="line" 
+                    height={350} 
+                />
+            </Paper>
         </Grid>
+
+        <Grid item xs={12} lg={4}>
+            <Paper sx={{ p: 3, borderRadius: '24px', height: '100%' }}>
+                <Typography variant="h6" fontWeight={400} mb={3}>Mix de Margem</Typography>
+                <ReactApexChart 
+                    options={donutOptions} 
+                    series={[45, 30, 25]} 
+                    type="donut" 
+                    height={300} 
+                />
+                <Box mt={4}>
+                    <Typography variant="subtitle2" fontWeight={400} gutterBottom>Insights de Lucratividade</Typography>
+                    <Divider sx={{ my: 1 }} />
+                    <Typography variant="body2" color="text.secondary">
+                        Serviços representam 25% do faturamento mas <strong>65% do lucro líquido</strong> devido ao baixo custo variável.
+                    </Typography>
+                </Box>
+            </Paper>
+        </Grid>
+
       </Grid>
     </Box>
   );

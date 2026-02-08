@@ -8,9 +8,9 @@ export const uploadOfx = async (req: Request, res: Response) => {
     }
 
     const transactions = await ofxService.parseOfxFile(req.file.path);
-    
+
     // Para cada transação, buscar sugestões de conciliação
-    const results = await Promise.all(transactions.map(tx => ofxService.findMatches(tx)));
+    const results = await Promise.all(transactions.map((tx) => ofxService.findMatches(tx)));
 
     res.json(results);
   } catch (error: any) {

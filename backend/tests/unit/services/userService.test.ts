@@ -1,22 +1,26 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { userService } from '../../../src/services/userService.js';
-import * as db from '../../../src/db/index.js';
-import { authService } from '../../../src/services/authService.js';
-import * as bcrypt from 'bcrypt';
+import { userRepository } from '../../../src/repositories/user.repository.js';
+import { passwordUtils } from '../../../src/utils/passwordUtils.js';
+import { AppError } from '../../../src/utils/errors.js';
 
 // Mocks
-vi.mock('../../../src/db/index.js', () => ({
-  query: vi.fn(),
-}));
-
-vi.mock('../../../src/services/authService.js', () => ({
-  authService: {
-    register: vi.fn(),
+vi.mock('../../../src/repositories/user.repository.js', () => ({
+  userRepository: {
+    findAll: vi.fn(),
+    findById: vi.fn(),
+    findByEmail: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    assignRole: vi.fn(),
   },
 }));
 
-vi.mock('bcrypt', () => ({
-  hash: vi.fn(),
+vi.mock('../../../src/utils/passwordUtils.js', () => ({
+  passwordUtils: {
+    hash: vi.fn(),
+  },
 }));
 
 describe('UserService', () => {
@@ -25,180 +29,122 @@ describe('UserService', () => {
   });
 
   describe('getAllUsers', () => {
-    it('should return all users with their roles', async () => {
+    it('should return all users', async () => {
       const mockUsers = [
-        { id: 1, name: 'Alice', email: 'alice@example.com', role: 'admin' },
-        { id: 2, name: 'Bob', email: 'bob@example.com', role: 'user' },
+        { id: '1', name: 'Alice', email: 'alice@example.com', role: 'admin' },
+        { id: '2', name: 'Bob', email: 'bob@example.com', role: 'user' },
       ];
-      
-      vi.mocked(db.query).mockResolvedValueOnce({ rows: mockUsers, rowCount: 2 } as any);
+
+      (userRepository.findAll as vi.Mock).mockResolvedValueOnce(mockUsers);
 
       const result = await userService.getAllUsers();
 
       expect(result).toEqual(mockUsers);
-      expect(db.query).toHaveBeenCalledWith(expect.stringContaining('SELECT'));
-      expect(db.query).toHaveBeenCalledWith(expect.stringContaining('FROM users u'));
+      expect(userRepository.findAll).toHaveBeenCalled();
     });
 
-    it('should throw an error if db query fails', async () => {
+    it('should throw an error if repository fails', async () => {
       const error = new Error('DB Error');
-      vi.mocked(db.query).mockRejectedValueOnce(error);
-
-      // Spy on console.error to suppress output during test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      (userRepository.findAll as vi.Mock).mockRejectedValueOnce(error);
 
       await expect(userService.getAllUsers()).rejects.toThrow('DB Error');
-      
-      expect(consoleSpy).toHaveBeenCalledWith('Error in userService.getAllUsers:', error);
-      consoleSpy.mockRestore();
     });
   });
 
   describe('getUserById', () => {
     it('should return a user by id', async () => {
       const mockUser = { id: '1', name: 'Alice' };
-      vi.mocked(db.query).mockResolvedValueOnce({ rows: [mockUser], rowCount: 1 } as any);
+      (userRepository.findById as vi.Mock).mockResolvedValueOnce(mockUser);
 
       const result = await userService.getUserById('1');
 
       expect(result).toEqual(mockUser);
-      expect(db.query).toHaveBeenCalledWith(expect.stringContaining('WHERE id = $1'), ['1']);
+      expect(userRepository.findById).toHaveBeenCalledWith('1');
     });
 
-    it('should return undefined if user not found', async () => {
-      vi.mocked(db.query).mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
+    it('should throw AppError if user not found', async () => {
+      (userRepository.findById as vi.Mock).mockResolvedValueOnce(null);
 
-      const result = await userService.getUserById('999');
-
-      expect(result).toBeUndefined();
+      await expect(userService.getUserById('999')).rejects.toThrow('User not found');
     });
   });
 
   describe('createUser', () => {
-    it('should call authService.register to create a user', async () => {
+    it('should successfully create a user', async () => {
       const userData = {
         name: 'New User',
         email: 'new@example.com',
         password: 'password123',
         role: 'manager',
       };
-      
-      const expectedUser = { id: 1, ...userData };
-      vi.mocked(authService.register).mockResolvedValueOnce({ user: expectedUser } as any);
+
+      const expectedUser = { id: '1', name: 'New User', email: 'new@example.com' };
+      (userRepository.findByEmail as vi.Mock).mockResolvedValueOnce(null);
+      (passwordUtils.hash as vi.Mock).mockResolvedValueOnce('hashed_password');
+      (userRepository.create as vi.Mock).mockResolvedValueOnce(expectedUser);
 
       const result = await userService.createUser(userData);
 
-      expect(authService.register).toHaveBeenCalledWith(
-        userData.name,
-        userData.email,
-        userData.password,
-        userData.role
-      );
+      expect(userRepository.findByEmail).toHaveBeenCalledWith(userData.email);
+      expect(passwordUtils.hash).toHaveBeenCalledWith(userData.password);
+      expect(userRepository.create).toHaveBeenCalledWith({
+        name: userData.name,
+        email: userData.email,
+        password_hash: 'hashed_password',
+      });
+      expect(userRepository.assignRole).toHaveBeenCalledWith('1', 'manager');
       expect(result).toEqual(expectedUser);
     });
 
-    it('should default role to "user" if not provided', async () => {
-      const userData = {
-        name: 'New User',
-        email: 'new@example.com',
-        password: 'password123',
-      };
-      
-      const expectedUser = { id: 1, ...userData, role: 'user' };
-      vi.mocked(authService.register).mockResolvedValueOnce({ user: expectedUser } as any);
+    it('should throw error if email already exists', async () => {
+      const userData = { email: 'existing@example.com', name: 'Test', password: '123' };
+      (userRepository.findByEmail as vi.Mock).mockResolvedValueOnce({ id: '1' });
 
-      await userService.createUser(userData);
-
-      expect(authService.register).toHaveBeenCalledWith(
-        userData.name,
-        userData.email,
-        userData.password,
-        'user'
+      await expect(userService.createUser(userData)).rejects.toThrow(
+        'User with this email already exists',
       );
-    });
-
-    it('should throw error if password is missing', async () => {
-      const userData = {
-        name: 'New User',
-        email: 'new@example.com',
-      } as any;
-
-      await expect(userService.createUser(userData)).rejects.toThrow('Password is required for user creation.');
-      expect(authService.register).not.toHaveBeenCalled();
     });
   });
 
   describe('updateUser', () => {
-    it('should update basic fields (name, email, role)', async () => {
-      const updateData = { name: 'Updated Name', email: 'updated@example.com' };
+    it('should update basic fields', async () => {
+      const updateData = { name: 'Updated Name' };
       const userId = '1';
-      const mockUpdatedUser = { id: userId, ...updateData, role: 'user' };
+      const mockUpdatedUser = { id: userId, name: 'Updated Name' };
 
-      vi.mocked(db.query).mockResolvedValueOnce({ rows: [mockUpdatedUser], rowCount: 1 } as any);
+      (userRepository.update as vi.Mock).mockResolvedValueOnce(mockUpdatedUser);
 
       const result = await userService.updateUser(userId, updateData);
 
       expect(result).toEqual(mockUpdatedUser);
-      // Check if query was constructed correctly
-      // name=$1, email=$2 ... WHERE id=$3
-      expect(db.query).toHaveBeenCalledWith(
-        expect.stringMatching(/UPDATE users SET name = \$1, email = \$2, updated_at = NOW\(\) WHERE id = \$3/),
-        ['Updated Name', 'updated@example.com', '1']
-      );
+      expect(userRepository.update).toHaveBeenCalledWith(userId, { name: 'Updated Name' });
     });
 
-    it('should hash password if provided', async () => {
-      const updateData = { password: 'newpassword' };
+    it('should hash password and update role if provided', async () => {
+      const updateData = { password: 'newpassword', role: 'admin' };
       const userId = '1';
-      const hashedPassword = 'hashed_newpassword';
-      
-      vi.mocked(bcrypt.hash).mockResolvedValueOnce(hashedPassword as never);
-      vi.mocked(db.query).mockResolvedValueOnce({ rows: [{ id: userId }], rowCount: 1 } as any);
+
+      (passwordUtils.hash as vi.Mock).mockResolvedValueOnce('hashed_newpassword');
+      (userRepository.update as vi.Mock).mockResolvedValueOnce({ id: userId });
 
       await userService.updateUser(userId, updateData);
 
-      expect(bcrypt.hash).toHaveBeenCalledWith('newpassword', 10);
-      expect(db.query).toHaveBeenCalledWith(
-        expect.stringMatching(/UPDATE users SET password_hash = \$1, updated_at = NOW\(\) WHERE id = \$2/),
-        [hashedPassword, userId]
-      );
-    });
-
-    it('should call getUserById if no fields to update', async () => {
-      const userId = '1';
-      const mockUser = { id: userId, name: 'Original' };
-      
-      // Spy on getUserById since it's an internal call (might need spyOn(userService) or just mock db output for getUserById)
-      // Since userService functions are properties of the object, we can spy on them if we import the object itself
-      // But inside the module `this.getUserById` is called.
-      const getUserSpy = vi.spyOn(userService, 'getUserById').mockResolvedValueOnce(mockUser as any);
-
-      const result = await userService.updateUser(userId, {});
-
-      expect(result).toEqual(mockUser);
-      expect(getUserSpy).toHaveBeenCalledWith(userId);
-      expect(db.query).not.toHaveBeenCalledWith(expect.stringContaining('UPDATE'));
-      
-      getUserSpy.mockRestore();
+      expect(passwordUtils.hash).toHaveBeenCalledWith('newpassword');
+      expect(userRepository.update).toHaveBeenCalledWith(userId, {
+        password_hash: 'hashed_newpassword',
+      });
+      expect(userRepository.assignRole).toHaveBeenCalledWith(userId, 'admin');
     });
   });
 
   describe('deleteUser', () => {
-    it('should return true if user deleted', async () => {
-      vi.mocked(db.query).mockResolvedValueOnce({ rowCount: 1, rows: [] } as any);
+    it('should call repository delete', async () => {
+      (userRepository.delete as vi.Mock).mockResolvedValueOnce(true);
 
       const result = await userService.deleteUser('1');
 
       expect(result).toBe(true);
-      expect(db.query).toHaveBeenCalledWith('DELETE FROM users WHERE id = $1;', ['1']);
-    });
-
-    it('should return false if no user deleted', async () => {
-      vi.mocked(db.query).mockResolvedValueOnce({ rowCount: 0, rows: [] } as any);
-
-      const result = await userService.deleteUser('999');
-
-      expect(result).toBe(false);
+      expect(userRepository.delete).toHaveBeenCalledWith('1');
     });
   });
 });

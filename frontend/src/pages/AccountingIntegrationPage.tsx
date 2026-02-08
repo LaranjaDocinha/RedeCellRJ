@@ -78,18 +78,18 @@ const AccountingIntegrationPage: React.FC = () => {
             <Box sx={{ p: 1, bgcolor: 'primary.main', borderRadius: '10px', color: 'white', display: 'flex' }}>
               <AccountingIcon />
             </Box>
-            <Typography variant="overline" sx={{ fontWeight: 800, color: 'primary.main', letterSpacing: 2 }}>
+            <Typography variant="overline" sx={{ fontWeight: 400, color: 'primary.main', letterSpacing: 2 }}>
               RECONCILIAÇÃO FISCAL
             </Typography>
           </Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
+          <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px' }}>
             Integração Contábil
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
             Sincronize vendas, despesas e impostos com seu escritório de contabilidade em tempo real.
           </Typography>
         </Box>
-        <Chip icon={<CloudIcon />} label="CLOUD SYNC ACTIVE" color="primary" sx={{ fontWeight: 900, borderRadius: '8px', px: 1 }} />
+        <Chip icon={<CloudIcon />} label="CLOUD SYNC ACTIVE" color="primary" sx={{ fontWeight: 400, borderRadius: '8px', px: 1 }} />
       </Box>
 
       <Grid container spacing={4}>
@@ -97,7 +97,7 @@ const AccountingIntegrationPage: React.FC = () => {
         <Grid size={{ xs: 12, lg: 7 }}>
           <Stack spacing={3}>
             <Paper sx={{ p: 4, borderRadius: '32px', border: '1px solid', borderColor: 'divider' }}>
-              <Typography variant="h6" fontWeight={800} mb={4}>Ações de Sincronização</Typography>
+              <Typography variant="h6" fontWeight={400} mb={4}>Ações de Sincronização</Typography>
               
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12, sm: 6 }}>
@@ -107,7 +107,7 @@ const AccountingIntegrationPage: React.FC = () => {
                         <Avatar sx={{ bgcolor: 'white', color: 'primary.main', border: '1px solid', borderColor: 'divider' }}>
                           <InvoiceIcon />
                         </Avatar>
-                        <Typography variant="subtitle2" fontWeight={800}>Vendas & Receitas</Typography>
+                        <Typography variant="subtitle2" fontWeight={400}>Vendas & Receitas</Typography>
                       </Box>
                       <Typography variant="body2" color="text.secondary" mb={3}>124 NFs prontas para envio.</Typography>
                       <Button 
@@ -115,7 +115,7 @@ const AccountingIntegrationPage: React.FC = () => {
                         variant="contained" 
                         onClick={() => handleSync('vendas')}
                         disabled={isSyncing}
-                        sx={{ borderRadius: '12px', fontWeight: 700 }}
+                        sx={{ borderRadius: '12px', fontWeight: 400 }}
                       >
                         Enviar p/ Contábil
                       </Button>
@@ -129,7 +129,7 @@ const AccountingIntegrationPage: React.FC = () => {
                         <Avatar sx={{ bgcolor: 'white', color: 'secondary.main', border: '1px solid', borderColor: 'divider' }}>
                           <AutoIcon />
                         </Avatar>
-                        <Typography variant="subtitle2" fontWeight={800}>Despesas & Pagos</Typography>
+                        <Typography variant="subtitle2" fontWeight={400}>Despesas & Pagos</Typography>
                       </Box>
                       <Typography variant="body2" color="text.secondary" mb={3}>Fluxo de caixa consolidado.</Typography>
                       <Button 
@@ -137,7 +137,7 @@ const AccountingIntegrationPage: React.FC = () => {
                         variant="outlined" 
                         onClick={() => handleSync('despesas')}
                         disabled={isSyncing}
-                        sx={{ borderRadius: '12px', fontWeight: 700 }}
+                        sx={{ borderRadius: '12px', fontWeight: 400 }}
                       >
                         Sincronizar Gastos
                       </Button>
@@ -149,8 +149,8 @@ const AccountingIntegrationPage: React.FC = () => {
               {isSyncing && (
                 <Box mt={4}>
                   <Box display="flex" justifyContent="space-between" mb={1}>
-                    <Typography variant="caption" fontWeight={800}>PROCESSANDO TRANSMISSÃO...</Typography>
-                    <Typography variant="caption" fontWeight={800}>{syncProgress}%</Typography>
+                    <Typography variant="caption" fontWeight={400}>PROCESSANDO TRANSMISSÃO...</Typography>
+                    <Typography variant="caption" fontWeight={400}>{syncProgress}%</Typography>
                   </Box>
                   <LinearProgress variant="determinate" value={syncProgress} sx={{ height: 10, borderRadius: 5 }} />
                 </Box>
@@ -158,7 +158,7 @@ const AccountingIntegrationPage: React.FC = () => {
             </Paper>
 
             <Paper sx={{ p: 4, borderRadius: '32px', border: '1px solid', borderColor: 'divider' }}>
-              <Typography variant="h6" fontWeight={800} mb={3}>Configuração do Endpoint</Typography>
+              <Typography variant="h6" fontWeight={400} mb={3}>Configuração do Endpoint</Typography>
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12, sm: 8 }}>
                   <TextField fullWidth label="URL do Gateway Contábil" value="https://api.omie.com.br/v1/accounting" variant="outlined" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
@@ -168,8 +168,8 @@ const AccountingIntegrationPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 12 }}>
                   <Stack direction="row" spacing={2}>
-                    <Button variant="text" startIcon={<SettingsIcon />} sx={{ fontWeight: 700 }}>Configurações Avançadas</Button>
-                    <Button variant="text" startIcon={<ExportIcon />} sx={{ fontWeight: 700 }}>Download Mapas Fiscais</Button>
+                    <Button variant="text" startIcon={<SettingsIcon />} sx={{ fontWeight: 400 }}>Configurações Avançadas</Button>
+                    <Button variant="text" startIcon={<ExportIcon />} sx={{ fontWeight: 400 }}>Download Mapas Fiscais</Button>
                   </Stack>
                 </Grid>
               </Grid>
@@ -181,11 +181,11 @@ const AccountingIntegrationPage: React.FC = () => {
         <Grid size={{ xs: 12, lg: 5 }}>
           <Stack spacing={3} height="100%">
             <Paper sx={{ p: 3, borderRadius: '24px', bgcolor: 'primary.main', color: 'white', boxShadow: '0 10px 30px rgba(25, 118, 210, 0.2)' }}>
-              <Typography variant="subtitle2" fontWeight={800} gutterBottom>Sistema de Destino</Typography>
+              <Typography variant="subtitle2" fontWeight={400} gutterBottom>Sistema de Destino</Typography>
               <Box display="flex" alignItems="center" gap={2} mt={2}>
                 <CheckCircle sx={{ fontSize: 40 }} />
                 <Box>
-                  <Typography variant="h5" fontWeight={900}>{integrationStatus.software}</Typography>
+                  <Typography variant="h5" fontWeight={400}>{integrationStatus.software}</Typography>
                   <Typography variant="caption" sx={{ opacity: 0.8 }}>Conexão estabelecida via OAuth 2.0</Typography>
                 </Box>
               </Box>
@@ -195,7 +195,7 @@ const AccountingIntegrationPage: React.FC = () => {
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                 <Box display="flex" alignItems="center" gap={1}>
                   <LogIcon sx={{ color: '#4caf50' }} />
-                  <Typography variant="subtitle2" fontWeight={800} sx={{ color: '#fff' }}>Accounting Data Stream</Typography>
+                  <Typography variant="subtitle2" fontWeight={400} sx={{ color: '#fff' }}>Accounting Data Stream</Typography>
                 </Box>
                 <IconButton size="small" onClick={() => setSyncLogs([])} sx={{ color: 'inherit', opacity: 0.5 }}><HistoryIcon fontSize="small" /></IconButton>
               </Box>

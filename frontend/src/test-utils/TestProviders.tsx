@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SoundProvider } from '../contexts/SoundContext';
-import { NotificationProvider } from '../contexts/NotificationContext';
 import { AuthProvider } from '../contexts/AuthContext';
-import { ProjectThemeProvider, GlobalStyle } from '../styles/theme'; // Import ProjectThemeProvider and GlobalStyle
+import { WorkspaceProvider } from '../contexts/WorkspaceContext';
+import { SoundProvider } from '../contexts/SoundContext';
+import { BrandingProvider } from '../contexts/BrandingContext';
+import { AnimationPreferenceProvider } from '../contexts/AnimationPreferenceContext';
+import { InactivityTrackerProvider } from '../contexts/InactivityTrackerContext';
+import { AnimationProvider as CartAnimationProvider } from '../contexts/CartAnimationContext';
+import { ProjectThemeProvider } from '../styles/theme';
+import { MemoryRouter } from 'react-router-dom';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -13,23 +18,28 @@ const queryClient = new QueryClient({
   },
 });
 
-interface TestProvidersProps {
-  children: React.ReactNode;
-}
-
-export const TestProviders: React.FC<TestProvidersProps> = ({ children }) => {
+export const TestProviders: React.FC<{ children: ReactNode }> = ({ children }) => {
   return (
     <QueryClientProvider client={queryClient}>
-      <ProjectThemeProvider> {/* This provides the theme for styled-components and MUI */}
-        <GlobalStyle /> {/* Apply global styles */}
-        <SoundProvider>
-          <NotificationProvider>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
-          </NotificationProvider>
-        </SoundProvider>
-      </ProjectThemeProvider>
+      <MemoryRouter>
+        <AuthProvider>
+          <BrandingProvider>
+            <AnimationPreferenceProvider>
+              <SoundProvider>
+                <InactivityTrackerProvider>
+                  <WorkspaceProvider>
+                    <CartAnimationProvider>
+                      <ProjectThemeProvider>
+                        {children}
+                      </ProjectThemeProvider>
+                    </CartAnimationProvider>
+                  </WorkspaceProvider>
+                </InactivityTrackerProvider>
+              </SoundProvider>
+            </AnimationPreferenceProvider>
+          </BrandingProvider>
+        </AuthProvider>
+      </MemoryRouter>
     </QueryClientProvider>
   );
 };

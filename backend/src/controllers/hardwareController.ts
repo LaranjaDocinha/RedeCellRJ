@@ -1,15 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import * as hardwareService from '../services/hardwareService.js';
-import { z } from 'zod';
-import { validate } from '../middlewares/validationMiddleware.js'; // Assuming validationMiddleware exists
-import { AppError } from '../utils/errors.js'; // Assuming AppError exists
-
-const tefSchema = z.object({
-  amount: z.number().positive('Amount must be a positive number'),
-  paymentType: z.enum(['credit', 'debit'], {
-    errorMap: () => ({ message: 'Payment type must be "credit" or "debit"' }),
-  }),
-});
 
 export const getScaleReading = async (req: Request, res: Response, next: NextFunction) => {
   try {

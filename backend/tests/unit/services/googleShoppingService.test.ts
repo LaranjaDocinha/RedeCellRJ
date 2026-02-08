@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { syncProductFeed, getGoogleShoppingStatus } from '../../../src/services/googleShoppingService';
+import {
+  syncProductFeed,
+  getGoogleShoppingStatus,
+} from '../../../src/services/googleShoppingService';
 import * as dbModule from '../../../src/db/index'; // Importa o módulo real para tipagem
 
 // Define os mocks diretamente na factory function do vi.mock para db
@@ -46,7 +49,11 @@ describe('GoogleShoppingService', () => {
 
     mockClientQuery.mockResolvedValue({ rows: [], rowCount: 0 }); // Default mock
     mockClientConnect.mockResolvedValue({ query: mockClientQuery, release: vi.fn() }); // Mocka a conexão
-    mockGetPool.mockReturnValue({ query: mockClientQuery, connect: mockClientConnect, end: vi.fn() }); // Garante que getPool retorne nossa instância mockada
+    mockGetPool.mockReturnValue({
+      query: mockClientQuery,
+      connect: mockClientConnect,
+      end: vi.fn(),
+    }); // Garante que getPool retorne nossa instância mockada
     mockDefaultQuery.mockResolvedValue({ rows: [], rowCount: 0 }); // Default mock para o default pool.query
   });
 

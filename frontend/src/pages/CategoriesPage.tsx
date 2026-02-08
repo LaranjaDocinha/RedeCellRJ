@@ -83,15 +83,14 @@ interface Category {
   total_valuation?: number;
 }
 
+import { CategoryTreeView } from '../components/CategoryTreeView';
+import { ViewList, ViewHeadline } from '@mui/icons-material';
+
 const CategoriesPage: React.FC = () => {
   const theme = useTheme();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | undefined>(undefined);
+  const [viewMode, setViewMode] = useState<'grid' | 'tree'>('grid');
+  // ... rest of state
 
   const { token } = useAuth();
   const { addNotification } = useNotification();
@@ -272,6 +271,10 @@ const CategoriesPage: React.FC = () => {
           </Typography>
         </Box>
         <Stack direction="row" spacing={2}>
+          <Box sx={{ display: 'flex', bgcolor: 'background.paper', p: 0.5, borderRadius: '16px', border: '1px solid ' + theme.palette.divider }}>
+            <Tooltip title="Visualização em Grade"><IconButton size="small" color={viewMode === 'grid' ? 'primary' : 'default'} onClick={() => setViewMode('grid')}><ViewList /></IconButton></Tooltip>
+            <Tooltip title="Visualização em Árvore"><IconButton size="small" color={viewMode === 'tree' ? 'primary' : 'default'} onClick={() => setViewMode('tree')}><ViewHeadline /></IconButton></Tooltip>
+          </Box>
           <Button variant="outlined" startIcon={<Sync />} onClick={fetchCategories} sx={{ borderRadius: '16px', height: 48 }}>Sincronizar</Button>
           <Button variant="contained" startIcon={<Add />} onClick={() => { setEditingCategory(undefined); setIsModalOpen(true); }} sx={{ borderRadius: '16px', px: 4, height: 48, boxShadow: '0 10px 20px ' + alpha(theme.palette.primary.main, 0.2) }}>Nova Categoria</Button>
         </Stack>
@@ -315,30 +318,43 @@ const CategoriesPage: React.FC = () => {
         </Stack>
       </GlassCard>
 
-      {/* Tabela DataGrid High-Performance */}
-      <Box sx={{ height: 600, width: '100%', bgcolor: 'background.paper', borderRadius: '32px', overflow: 'hidden', border: '1px solid ' + alpha(theme.palette.divider, 0.1) }}>
-        <DataGrid
-          rows={filteredCategories}
-          columns={columns}
-          loading={loading}
-          disableRowSelectionOnClick
-          sx={{
-            border: 'none',
-            '& .MuiDataGrid-columnHeader': { bgcolor: alpha(theme.palette.primary.main, 0.02), py: 2 },
-            '& .MuiDataGrid-cell': { borderBottom: '1px solid ' + alpha(theme.palette.divider, 0.05) },
-            '& .MuiDataGrid-row:hover': { bgcolor: alpha(theme.palette.primary.main, 0.02) }
-          }}
-          slots={{
-            toolbar: () => (
-              <GridToolbarContainer sx={{ p: 2, borderBottom: '1px solid ' + alpha(theme.palette.divider, 0.1) }}>
-                <GridToolbarColumnsButton />
-                <GridToolbarFilterButton />
-                <GridToolbarExport />
-              </GridToolbarContainer>
-            )
-          }}
-        />
-      </Box>
+      {/* Conteúdo Dinâmico */}
+      <AnimatePresence mode="wait">
+        {viewMode === 'grid' ? (
+            <Box key="grid" component={motion.div} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} sx={{ height: 600, width: '100%', bgcolor: 'background.paper', borderRadius: '32px', overflow: 'hidden', border: '1px solid ' + alpha(theme.palette.divider, 0.1), boxShadow: '0 20px 60px rgba(0,0,0,0.05)' }}>
+                <DataGrid
+                rows={filteredCategories}
+                columns={columns}
+                loading={loading}
+                disableRowSelectionOnClick
+                sx={{
+                    border: 'none',
+                    '& .MuiDataGrid-columnHeader': { bgcolor: alpha(theme.palette.primary.main, 0.02), py: 2 },
+                    '& .MuiDataGrid-cell': { borderBottom: '1px solid ' + alpha(theme.palette.divider, 0.05) },
+                    '& .MuiDataGrid-row:hover': { bgcolor: alpha(theme.palette.primary.main, 0.02) }
+                }}
+                slots={{
+                    toolbar: () => (
+                    <GridToolbarContainer sx={{ p: 2, borderBottom: '1px solid ' + alpha(theme.palette.divider, 0.1) }}>
+                        <GridToolbarColumnsButton />
+                        <GridToolbarFilterButton />
+                        <GridToolbarExport />
+                    </GridToolbarContainer>
+                    )
+                }}
+                />
+            </Box>
+        ) : (
+            <Box key="tree" component={motion.div} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} sx={{ maxWidth: '800px', mx: 'auto' }}>
+                <CategoryTreeView 
+                    categories={filteredCategories}
+                    onReorder={(newList) => setCategories(newList)}
+                    onEdit={(cat) => { setEditingCategory(cat as any); setIsModalOpen(true); }}
+                    onDelete={handleDelete}
+                />
+            </Box>
+        )}
+      </AnimatePresence>
 
       {/* Modal de Formulário (Edição/Criação) */}
       <Dialog 

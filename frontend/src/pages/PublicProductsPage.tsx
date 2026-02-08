@@ -72,8 +72,8 @@ const PublicProductsPage: React.FC = () => {
       <Box sx={{ bgcolor: 'primary.main', color: 'white', pt: 8, pb: 12, position: 'relative', overflow: 'hidden' }}>
         <Box sx={{ position: 'absolute', right: -50, top: -50, opacity: 0.1 }}><StoreIcon sx={{ fontSize: 300 }} /></Box>
         <Container maxWidth="lg">
-          <Typography variant="overline" sx={{ fontWeight: 800, letterSpacing: 3, opacity: 0.8 }}>SHOWROOM OFICIAL</Typography>
-          <Typography variant="h2" sx={{ fontWeight: 900, letterSpacing: '-2px', mb: 2 }}>Explore nosso Catálogo</Typography>
+          <Typography variant="overline" sx={{ fontWeight: 400, letterSpacing: 3, opacity: 0.8 }}>SHOWROOM OFICIAL</Typography>
+          <Typography variant="h2" sx={{ fontWeight: 400, letterSpacing: '-2px', mb: 2 }}>Explore nosso Catálogo</Typography>
           <Typography variant="h6" sx={{ opacity: 0.9, maxWidth: 600, fontWeight: 400, mb: 6 }}>
             Os melhores dispositivos e acessórios com garantia Redecell e suporte especializado.
           </Typography>
@@ -92,7 +92,7 @@ const PublicProductsPage: React.FC = () => {
                 }
               }}
             />
-            <Button variant="contained" sx={{ height: 56, px: 6, borderRadius: '16px', fontWeight: 900 }}>BUSCAR</Button>
+            <Button variant="contained" sx={{ height: 56, px: 6, borderRadius: '16px', fontWeight: 400 }}>BUSCAR</Button>
           </Paper>
         </Container>
       </Box>
@@ -100,14 +100,14 @@ const PublicProductsPage: React.FC = () => {
       <Container maxWidth="lg" sx={{ mt: -6, mb: 10 }}>
         <Paper sx={{ p: 2, mb: 6, borderRadius: '24px', border: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
           <Stack direction="row" spacing={2}>
-            <Chip icon={<FilterIcon />} label="Filtros" onClick={() => {}} variant="outlined" sx={{ fontWeight: 700, borderRadius: '8px' }} />
-            <Chip icon={<TagIcon />} label="Categorias" onClick={() => {}} variant="outlined" sx={{ fontWeight: 700, borderRadius: '8px' }} />
+            <Chip icon={<FilterIcon />} label="Filtros" onClick={() => {}} variant="outlined" sx={{ fontWeight: 400, borderRadius: '8px' }} />
+            <Chip icon={<TagIcon />} label="Categorias" onClick={() => {}} variant="outlined" sx={{ fontWeight: 400, borderRadius: '8px' }} />
           </Stack>
           
           <Stack direction="row" spacing={3} alignItems="center">
             <Box display="flex" alignItems="center" gap={1}>
-              <Typography variant="caption" fontWeight={800} color="text.secondary">ORDENAR POR:</Typography>
-              <Select value={sortBy} size="small" onChange={(e) => setSortBy(e.target.value)} sx={{ minWidth: 150, borderRadius: '10px', fontSize: '0.8rem', fontWeight: 700 }}>
+              <Typography variant="caption" fontWeight={400} color="text.secondary">ORDENAR POR:</Typography>
+              <Select value={sortBy} size="small" onChange={(e) => setSortBy(e.target.value)} sx={{ minWidth: 150, borderRadius: '10px', fontSize: '0.8rem', fontWeight: 400 }}>
                 <MenuItem value="name">Nome (A-Z)</MenuItem>
                 <MenuItem value="price">Menor Preço</MenuItem>
                 <MenuItem value="newest">Novidades</MenuItem>
@@ -149,7 +149,7 @@ const PublicProductsPage: React.FC = () => {
             onChange={(_, v) => setPage(v)}
             color="primary"
             size="large"
-            sx={{ '& .MuiPaginationItem-root': { fontWeight: 800, borderRadius: '12px' } }}
+            sx={{ '& .MuiPaginationItem-root': { fontWeight: 400, borderRadius: '12px' } }}
           />
         </Box>
       </Container>
@@ -158,3 +158,4 @@ const PublicProductsPage: React.FC = () => {
 };
 
 export default PublicProductsPage;
+

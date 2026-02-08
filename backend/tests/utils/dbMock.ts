@@ -3,7 +3,7 @@ import { vi } from 'vitest';
 export const createDbMock = () => {
   const mockQuery = vi.fn();
   const mockRelease = vi.fn();
-  
+
   // O mockClient deve ter a estrutura de um PoolClient do pg
   const mockClient = {
     query: mockQuery,

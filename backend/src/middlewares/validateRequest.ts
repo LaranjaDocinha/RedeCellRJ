@@ -3,9 +3,9 @@ import { ZodSchema, ZodError } from 'zod';
 import { AppError } from '../utils/errors';
 
 interface ValidationSchemas {
-  body?: ZodSchema<any>;
-  query?: ZodSchema<any>;
-  params?: ZodSchema<any>;
+  body?: ZodSchema;
+  query?: ZodSchema;
+  params?: ZodSchema;
 }
 
 export const validateRequest = (schemas: ValidationSchemas) => {

@@ -7,12 +7,20 @@ import { z } from 'zod';
 
 // Zod Schema for node ID validation (for path params)
 export const nodeIdSchema = z.object({
-  nodeId: z.coerce.number().int().positive('Invalid node ID format').or(z.string().regex(/^\d+$/, 'Invalid node ID format')), // Allow number or string of digits
+  nodeId: z.coerce
+    .number()
+    .int()
+    .positive('Invalid node ID format')
+    .or(z.string().regex(/^\d+$/, 'Invalid node ID format')), // Allow number or string of digits
 });
 
 // Zod Schema for submitFeedback (request body)
 export const submitFeedbackSchema = z.object({
-  nodeId: z.coerce.number().int().positive('Invalid node ID format').or(z.string().regex(/^\d+$/, 'Invalid node ID format')),
+  nodeId: z.coerce
+    .number()
+    .int()
+    .positive('Invalid node ID format')
+    .or(z.string().regex(/^\d+$/, 'Invalid node ID format')),
   isHelpful: z.boolean(),
   comments: z.string().optional(),
 });
@@ -20,8 +28,17 @@ export const submitFeedbackSchema = z.object({
 // Zod Schema for recordHistory (request body)
 export const recordHistorySchema = z.object({
   sessionId: z.string().uuid('Invalid session ID format'), // Session ID is still UUID
-  nodeId: z.coerce.number().int().positive('Invalid node ID format').or(z.string().regex(/^\d+$/, 'Invalid node ID format')),
-  selectedOptionId: z.coerce.number().int().positive('Invalid option ID format').or(z.string().regex(/^\d+$/, 'Invalid option ID format')).optional(),
+  nodeId: z.coerce
+    .number()
+    .int()
+    .positive('Invalid node ID format')
+    .or(z.string().regex(/^\d+$/, 'Invalid node ID format')),
+  selectedOptionId: z.coerce
+    .number()
+    .int()
+    .positive('Invalid option ID format')
+    .or(z.string().regex(/^\d+$/, 'Invalid option ID format'))
+    .optional(),
 });
 
 // Validation Middleware

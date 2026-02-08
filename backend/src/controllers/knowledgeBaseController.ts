@@ -25,8 +25,6 @@ const createAttachmentSchema = z.object({
   description: z.string().optional().nullable(),
 });
 
-
-
 export const createArticle = async (req: Request, res: Response) => {
   try {
     const validatedData = createArticleSchema.parse(req.body);

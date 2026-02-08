@@ -1,4 +1,21 @@
+import { z } from 'zod';
+
+const productLabelSchema = z.object({
+  productName: z.string().min(1).max(50),
+  price: z.number().nonnegative(),
+  sku: z.string().min(1).max(20),
+});
+
+const osLabelSchema = z.object({
+  osId: z.number().int().positive(),
+  customerName: z.string().min(1).max(50),
+  device: z.string().min(1).max(50),
+});
+
 export const generateProductLabelZPL = (productName: string, price: number, sku: string) => {
+  // Validação de entrada
+  productLabelSchema.parse({ productName, price, sku });
+
   // ZPL Simples para etiqueta 50x30mm
   // ^XA = Início, ^FO = Posição, ^ADN = Fonte, ^BC = Código de Barras 128
   return `
@@ -12,6 +29,9 @@ export const generateProductLabelZPL = (productName: string, price: number, sku:
 };
 
 export const generateOSLabelZPL = (osId: number, customerName: string, device: string) => {
+  // Validação de entrada
+  osLabelSchema.parse({ osId, customerName, device });
+
   return `
 ^XA
 ^FO10,10^GB380,280,4^FS

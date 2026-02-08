@@ -1,5 +1,3 @@
-import { getPool } from '../db/index.js';
-
 export const syncProductsToEcommerce = async (productsData: any) => {
   console.log('Simulating product synchronization to e-commerce platform:', productsData);
   // In a real scenario, this would involve API calls to Shopify, WooCommerce, etc.

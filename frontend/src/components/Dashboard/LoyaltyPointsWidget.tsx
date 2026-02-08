@@ -19,7 +19,7 @@ const LoyaltyPointsWidget: React.FC<LoyaltyPointsWidgetProps> = ({ data }) => {
       
       <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
         <Star sx={{ fontSize: 40, color: 'warning.main' }} />
-        <Typography variant="h3" sx={{ fontWeight: 700, color: 'primary.main' }}>
+        <Typography variant="h3" sx={{ fontWeight: 400, color: 'primary.main' }}>
           {points}
         </Typography>
       </Box>
@@ -32,3 +32,4 @@ const LoyaltyPointsWidget: React.FC<LoyaltyPointsWidgetProps> = ({ data }) => {
 };
 
 export default LoyaltyPointsWidget;
+

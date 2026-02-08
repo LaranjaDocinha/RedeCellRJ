@@ -25,15 +25,22 @@ describe('EmailService', () => {
 
     // Resetar mocks específicos
     (global.fetch as ReturnType<typeof vi.fn>).mockReset();
-    (customerServiceModule.customerService.getCustomerByEmail as ReturnType<typeof vi.fn>).mockReset();
-    (customerCommunicationServiceModule.customerCommunicationService.recordCommunication as ReturnType<typeof vi.fn>).mockReset();
+    (
+      customerServiceModule.customerService.getCustomerByEmail as ReturnType<typeof vi.fn>
+    ).mockReset();
+    (
+      customerCommunicationServiceModule.customerCommunicationService
+        .recordCommunication as ReturnType<typeof vi.fn>
+    ).mockReset();
 
     // Default mocks
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ message: 'Email sent' }),
     });
-    (customerServiceModule.customerService.getCustomerByEmail as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+    (
+      customerServiceModule.customerService.getCustomerByEmail as ReturnType<typeof vi.fn>
+    ).mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -43,7 +50,9 @@ describe('EmailService', () => {
   describe('sendEmail', () => {
     it('should send email and record communication if customer found', async () => {
       const mockCustomer = { id: 1, email: 'test@example.com' };
-      (customerServiceModule.customerService.getCustomerByEmail as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockCustomer);
+      (
+        customerServiceModule.customerService.getCustomerByEmail as ReturnType<typeof vi.fn>
+      ).mockResolvedValueOnce(mockCustomer);
 
       await emailService.sendEmail('test@example.com', 'Subject', 'Body');
 
@@ -52,10 +61,14 @@ describe('EmailService', () => {
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ to: 'test@example.com', subject: 'Subject', text: 'Body' }),
-        })
+        }),
       );
-      expect(customerServiceModule.customerService.getCustomerByEmail).toHaveBeenCalledWith('test@example.com');
-      expect(customerCommunicationServiceModule.customerCommunicationService.recordCommunication).toHaveBeenCalledWith({
+      expect(customerServiceModule.customerService.getCustomerByEmail).toHaveBeenCalledWith(
+        'test@example.com',
+      );
+      expect(
+        customerCommunicationServiceModule.customerCommunicationService.recordCommunication,
+      ).toHaveBeenCalledWith({
         customer_id: mockCustomer.id,
         channel: 'email',
         direction: 'outbound',
@@ -67,8 +80,12 @@ describe('EmailService', () => {
       await emailService.sendEmail('noexist@example.com', 'Subject', 'Body');
 
       expect(global.fetch).toHaveBeenCalledOnce();
-      expect(customerServiceModule.customerService.getCustomerByEmail).toHaveBeenCalledWith('noexist@example.com');
-      expect(customerCommunicationServiceModule.customerCommunicationService.recordCommunication).not.toHaveBeenCalled();
+      expect(customerServiceModule.customerService.getCustomerByEmail).toHaveBeenCalledWith(
+        'noexist@example.com',
+      );
+      expect(
+        customerCommunicationServiceModule.customerCommunicationService.recordCommunication,
+      ).not.toHaveBeenCalled();
     });
 
     it('should throw error if fetch fails', async () => {
@@ -77,12 +94,16 @@ describe('EmailService', () => {
         json: () => Promise.resolve({ message: 'Failed by microservice' }),
       });
 
-      await expect(emailService.sendEmail('test@example.com', 'Sub', 'Body')).rejects.toThrow('Failed to send email');
+      await expect(emailService.sendEmail('test@example.com', 'Sub', 'Body')).rejects.toThrow(
+        'Failed to send email',
+      );
     });
 
     it('should handle generic fetch error', async () => {
       (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'));
-      await expect(emailService.sendEmail('test@example.com', 'Sub', 'Body')).rejects.toThrow('Failed to send email');
+      await expect(emailService.sendEmail('test@example.com', 'Sub', 'Body')).rejects.toThrow(
+        'Failed to send email',
+      );
     });
   });
 });

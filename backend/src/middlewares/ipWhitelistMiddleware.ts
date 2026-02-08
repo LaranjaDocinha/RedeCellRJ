@@ -4,7 +4,7 @@ import { AppError } from '../utils/errors.js';
 
 export const ipWhitelistMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   const clientIp = req.ip; // Express adds 'ip' to request object if behind proxy or directly connected.
-                            // Consider 'req.headers['x-forwarded-for']' for production behind load balancers.
+  // Consider 'req.headers['x-forwarded-for']' for production behind load balancers.
 
   // Bypass if IP whitelist is empty or not active
   const activeWhitelistedIps = await ipWhitelistService.getActiveWhitelistedIps();
@@ -15,6 +15,11 @@ export const ipWhitelistMiddleware = async (req: Request, res: Response, next: N
   if (clientIp && activeWhitelistedIps.includes(clientIp)) {
     return next();
   } else {
-    return next(new AppError(`Access denied. Your IP (${clientIp}) is not whitelisted for this resource.`, 403));
+    return next(
+      new AppError(
+        `Access denied. Your IP (${clientIp}) is not whitelisted for this resource.`,
+        403,
+      ),
+    );
   }
 };

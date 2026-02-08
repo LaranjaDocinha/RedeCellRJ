@@ -33,7 +33,7 @@ const AccessibilityGlobalStyles = createGlobalStyle<{ highContrast: boolean; fon
         background-color: #000 !important;
         color: #fff !important;
         border: 2px solid #fff !important;
-        font-weight: bold !important;
+        font-weight: 400 !important;
       }
     `}
   }
@@ -75,10 +75,10 @@ export const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({ open, onCl
       <AccessibilityGlobalStyles highContrast={preferences.highContrast} fontSize={preferences.fontSize} />
       
       <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '20px' } }}>
-        <DialogTitle sx={{ fontWeight: 800 }}>Acessibilidade</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 400 }}>Acessibilidade</DialogTitle>
         <DialogContent>
           <Box mb={3} mt={1}>
-            <Typography variant="body2" fontWeight={700} gutterBottom>Tamanho da Fonte ({preferences.fontSize}px)</Typography>
+            <Typography variant="body2" fontWeight={400} gutterBottom>Tamanho da Fonte ({preferences.fontSize}px)</Typography>
             <Slider
               value={preferences.fontSize}
               min={12}
@@ -96,7 +96,7 @@ export const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({ open, onCl
                 onChange={(e) => setPreferences(prev => ({ ...prev, highContrast: e.target.checked }))}
               />
             }
-            label={<Typography variant="body2" fontWeight={700}>Alto Contraste</Typography>}
+            label={<Typography variant="body2" fontWeight={400}>Alto Contraste</Typography>}
             sx={{ mb: 2, display: 'block' }}
           />
 
@@ -107,7 +107,7 @@ export const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({ open, onCl
                 onChange={(e) => setPreferences(prev => ({ ...prev, reduceMotion: e.target.checked }))}
               />
             }
-            label={<Typography variant="body2" fontWeight={700}>Reduzir Animações</Typography>}
+            label={<Typography variant="body2" fontWeight={400}>Reduzir Animações</Typography>}
           />
         </DialogContent>
       </Dialog>

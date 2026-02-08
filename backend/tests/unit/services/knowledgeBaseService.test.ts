@@ -40,7 +40,13 @@ describe('knowledgeBaseService', () => {
       expect(mockedPool.query).toHaveBeenCalledTimes(1);
       expect(mockedPool.query).toHaveBeenCalledWith(
         'INSERT INTO knowledge_base_articles (title, content, author_id, tags, category) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [articleData.title, articleData.content, articleData.author_id, JSON.stringify(articleData.tags), articleData.category],
+        [
+          articleData.title,
+          articleData.content,
+          articleData.author_id,
+          JSON.stringify(articleData.tags),
+          articleData.category,
+        ],
       );
     });
 
@@ -80,9 +86,7 @@ describe('knowledgeBaseService', () => {
   describe('findArticles', () => {
     it('should return articles matching the search text', async () => {
       const searchText = 'test';
-      const mockArticles = [
-        { id: 1, title: 'Test Article', content: '...', tags: ['test'] },
-      ];
+      const mockArticles = [{ id: 1, title: 'Test Article', content: '...', tags: ['test'] }];
       mockedPool.query.mockResolvedValueOnce({ rows: mockArticles });
 
       const result = await knowledgeBaseService.findArticles(searchText);
@@ -125,7 +129,10 @@ describe('knowledgeBaseService', () => {
 
       expect(result).toEqual(mockArticle);
       expect(mockedPool.query).toHaveBeenCalledTimes(1);
-      expect(mockedPool.query).toHaveBeenCalledWith('SELECT * FROM knowledge_base_articles WHERE id = $1', [id]);
+      expect(mockedPool.query).toHaveBeenCalledWith(
+        'SELECT * FROM knowledge_base_articles WHERE id = $1',
+        [id],
+      );
     });
 
     it('should return undefined if article not found', async () => {
@@ -150,14 +157,19 @@ describe('knowledgeBaseService', () => {
   // Testes para getAllArticles
   describe('getAllArticles', () => {
     it('should return all articles ordered by creation date', async () => {
-      const mockArticles = [{ id: 1, title: 'Old Article', created_at: '2023-01-01' }, { id: 2, title: 'New Article', created_at: '2023-01-02' }];
+      const mockArticles = [
+        { id: 1, title: 'Old Article', created_at: '2023-01-01' },
+        { id: 2, title: 'New Article', created_at: '2023-01-02' },
+      ];
       mockedPool.query.mockResolvedValueOnce({ rows: mockArticles });
 
       const result = await knowledgeBaseService.getAllArticles();
 
       expect(result).toEqual(mockArticles);
       expect(mockedPool.query).toHaveBeenCalledTimes(1);
-      expect(mockedPool.query).toHaveBeenCalledWith('SELECT * FROM knowledge_base_articles ORDER BY created_at DESC');
+      expect(mockedPool.query).toHaveBeenCalledWith(
+        'SELECT * FROM knowledge_base_articles ORDER BY created_at DESC',
+      );
     });
 
     it('should return an empty array if no articles exist', async () => {
@@ -191,7 +203,9 @@ describe('knowledgeBaseService', () => {
       expect(mockedPool.query).toHaveBeenCalledTimes(1);
       // Regex para verificar a query UPDATE, pois a ordem dos campos pode variar
       expect(mockedPool.query).toHaveBeenCalledWith(
-        expect.stringMatching(/^UPDATE knowledge_base_articles SET "title" = \$2, "category" = \$3, updated_at = current_timestamp WHERE id = \$1 RETURNING \*$/),
+        expect.stringMatching(
+          /^UPDATE knowledge_base_articles SET "title" = \$2, "category" = \$3, updated_at = current_timestamp WHERE id = \$1 RETURNING \*$/,
+        ),
         [id, updateData.title, updateData.category],
       );
     });
@@ -227,7 +241,9 @@ describe('knowledgeBaseService', () => {
       expect(result).toEqual(expectedArticle);
       expect(mockedPool.query).toHaveBeenCalledTimes(1);
       expect(mockedPool.query).toHaveBeenCalledWith(
-        expect.stringMatching(/^UPDATE knowledge_base_articles SET "tags" = \$2, updated_at = current_timestamp WHERE id = \$1 RETURNING \*$/),
+        expect.stringMatching(
+          /^UPDATE knowledge_base_articles SET "tags" = \$2, updated_at = current_timestamp WHERE id = \$1 RETURNING \*$/,
+        ),
         [id, updateData.tags],
       );
     });
@@ -243,7 +259,10 @@ describe('knowledgeBaseService', () => {
 
       expect(result).toBe(true);
       expect(mockedPool.query).toHaveBeenCalledTimes(1);
-      expect(mockedPool.query).toHaveBeenCalledWith('DELETE FROM knowledge_base_articles WHERE id = $1 RETURNING id', [id]);
+      expect(mockedPool.query).toHaveBeenCalledWith(
+        'DELETE FROM knowledge_base_articles WHERE id = $1 RETURNING id',
+        [id],
+      );
     });
 
     it('should return false if article not found for deletion', async () => {
@@ -283,7 +302,12 @@ describe('knowledgeBaseService', () => {
       expect(mockedPool.query).toHaveBeenCalledTimes(1);
       expect(mockedPool.query).toHaveBeenCalledWith(
         'INSERT INTO knowledge_base_attachments (article_id, file_url, file_type, description) VALUES ($1, $2, $3, $4) RETURNING *',
-        [attachmentData.article_id, attachmentData.file_url, attachmentData.file_type, attachmentData.description],
+        [
+          attachmentData.article_id,
+          attachmentData.file_url,
+          attachmentData.file_type,
+          attachmentData.description,
+        ],
       );
     });
 
@@ -332,7 +356,9 @@ describe('knowledgeBaseService', () => {
       const dbError = new Error('DB error');
       mockedPool.query.mockRejectedValueOnce(dbError);
 
-      await expect(knowledgeBaseService.getAttachmentsByArticleId(articleId)).rejects.toThrow(dbError);
+      await expect(knowledgeBaseService.getAttachmentsByArticleId(articleId)).rejects.toThrow(
+        dbError,
+      );
     });
   });
 
@@ -347,7 +373,10 @@ describe('knowledgeBaseService', () => {
 
       expect(result).toEqual(mockAttachment);
       expect(mockedPool.query).toHaveBeenCalledTimes(1);
-      expect(mockedPool.query).toHaveBeenCalledWith('SELECT * FROM knowledge_base_attachments WHERE id = $1', [id]);
+      expect(mockedPool.query).toHaveBeenCalledWith(
+        'SELECT * FROM knowledge_base_attachments WHERE id = $1',
+        [id],
+      );
     });
 
     it('should return undefined if attachment not found', async () => {
@@ -382,7 +411,9 @@ describe('knowledgeBaseService', () => {
       expect(result).toEqual(expectedAttachment);
       expect(mockedPool.query).toHaveBeenCalledTimes(1);
       expect(mockedPool.query).toHaveBeenCalledWith(
-        expect.stringMatching(/^UPDATE knowledge_base_attachments SET "file_url" = \$2, "description" = \$3, updated_at = current_timestamp WHERE id = \$1 RETURNING \*$/),
+        expect.stringMatching(
+          /^UPDATE knowledge_base_attachments SET "file_url" = \$2, "description" = \$3, updated_at = current_timestamp WHERE id = \$1 RETURNING \*$/,
+        ),
         [id, updateData.file_url, updateData.description],
       );
     });
@@ -418,7 +449,10 @@ describe('knowledgeBaseService', () => {
 
       expect(result).toBe(true);
       expect(mockedPool.query).toHaveBeenCalledTimes(1);
-      expect(mockedPool.query).toHaveBeenCalledWith('DELETE FROM knowledge_base_attachments WHERE id = $1 RETURNING id', [id]);
+      expect(mockedPool.query).toHaveBeenCalledWith(
+        'DELETE FROM knowledge_base_attachments WHERE id = $1 RETURNING id',
+        [id],
+      );
     });
 
     it('should return false if attachment not found for deletion', async () => {

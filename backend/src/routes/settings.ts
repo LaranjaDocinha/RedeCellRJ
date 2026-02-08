@@ -1,29 +1,16 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { settingsService } from '../services/settingsService.js';
+import { featureFlagService } from '../services/featureFlagService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
-
 import { ValidationError, AppError } from '../utils/errors.js';
 
 const settingsRouter = Router();
 
-// Zod Schemas
-const createSettingSchema = z.object({
-  key: z.string().trim().nonempty('Setting key is required'),
-  value: z.string().nonempty('Setting value is required'),
-  description: z.string().trim().optional(),
-});
-
-const updateSettingSchema = z
-  .object({
-    value: z.string().nonempty('Setting value is required').optional(),
-    description: z.string().trim().optional(),
-  })
-  .partial();
-
-// Validation Middleware
+// Validation Middleware - Defined BEFORE usage
 const validate =
-  (schema: z.ZodObject<any, any, any>) => (req: Request, res: Response, next: NextFunction) => {
+  (schema: z.ZodObject<any, any, any> | z.ZodEffects<any, any, any>) =>
+  (req: Request, res: Response, next: NextFunction) => {
     try {
       schema.parse(req.body);
       next();
@@ -40,8 +27,46 @@ const validate =
     }
   };
 
+// Zod Schemas
+const createSettingSchema = z.object({
+  key: z.string().min(1),
+  value: z.any(),
+  group: z.string().optional(),
+});
+
+const updateSettingSchema = z.object({
+  value: z.any(),
+  group: z.string().optional(),
+});
+
 settingsRouter.use(authMiddleware.authenticate);
-settingsRouter.use(authMiddleware.authorize('manage', 'Settings')); // Only users with manage:Settings permission can access these routes
+
+// Get all feature flags
+settingsRouter.get('/flags', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const flags = await featureFlagService.getAllFlags();
+    res.status(200).json(flags);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Toggle feature flag
+settingsRouter.post(
+  '/flags/:name/toggle',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { name } = req.params;
+      const { isEnabled } = req.body;
+      await featureFlagService.toggleFlag(name, isEnabled);
+      res.status(200).json({ message: `Flag ${name} updated to ${isEnabled}` });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+settingsRouter.use(authMiddleware.authorize('manage', 'Settings'));
 
 // Get all settings
 settingsRouter.get('/', async (req: Request, res: Response, next: NextFunction) => {

@@ -1,27 +1,26 @@
 import React from 'react';
 import styled from 'styled-components';
-import { motion } from 'framer-motion'; // Import Framer Motion
+import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { PlayArrow, Pause } from '@mui/icons-material';
 
-// Usar motion.div para animar o container
-const CardContainer = styled(motion.div)`
+const CardContainer = styled(motion.div)<{ color: string }>`
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   padding: 15px;
-  margin-bottom: 15px;
   border-left: 5px solid ${(props) => {
     switch (props.color) {
       case 'urgent':
-        return '#DC3545'; // Red
+        return '#DC3545';
       case 'high':
-        return '#FFC107'; // Yellow
+        return '#FFC107';
       case 'normal':
-        return '#007BFF'; // Blue
+        return '#007BFF';
       default:
         return '#6C757D';
     }
   }};
-  cursor: pointer; /* Indica que é clicável */
+  cursor: pointer;
 `;
 
 const Header = styled.div`
@@ -42,16 +41,16 @@ const StatusBadge = styled.span<{ status: string }>`
     switch (props.status) {
       case 'open':
       case 'analysis':
-        return '#FFC107'; // Amarelo
+        return '#FFC107';
       case 'in_progress':
       case 'waiting_approval':
-        return '#007BFF'; // Azul
+        return '#007BFF';
       case 'finished':
-        return '#28A745'; // Verde
+        return '#28A745';
       case 'delivered':
-        return '#6C757D'; // Cinza
+        return '#6C757D';
       case 'cancelled':
-        return '#DC3545'; // Vermelho
+        return '#DC3545';
       default:
         return '#6C757D';
     }
@@ -60,7 +59,7 @@ const StatusBadge = styled.span<{ status: string }>`
   padding: 5px 8px;
   border-radius: 15px;
   font-size: 0.75em;
-  font-weight: bold;
+  font-weight: 400;
   text-transform: capitalize;
 `;
 
@@ -84,35 +83,53 @@ interface TechOrderCardProps {
 }
 
 const TechOrderCard: React.FC<TechOrderCardProps> = ({ order, onClick }) => {
-  const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit', year: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+  const x = useMotionValue(0);
+  const background = useTransform(
+    x,
+    [-100, 0, 100],
+    ["#e74c3c", "#ffffff", "#2ecc71"]
+  );
+  const opacityStart = useTransform(x, [50, 100], [0, 1]);
+  const opacityPause = useTransform(x, [-100, -50], [1, 0]);
+
+  const handleDragEnd = (_event: any, info: any) => {
+    if (info.offset.x > 100) {
+      alert(`Iniciando OS #${order.id}`);
+    } else if (info.offset.x < -100) {
+      alert(`Pausando OS #${order.id}`);
+    }
   };
 
-  // Variantes de animação
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
   return (
-    <CardContainer 
-      color={order.priority} 
-      onClick={() => onClick && onClick(order.id)}
-      variants={cardVariants}
-      initial="hidden"
-      animate="visible"
-      whileHover={{ scale: 1.02, boxShadow: "0 6px 16px rgba(0,0,0,0.15)" }} // Efeito de hover
-      transition={{ type: "spring", stiffness: 300, damping: 20 }} // Transição suave
-    >
-      <Header>
-        <OSTitle>OS #{order.id} - {order.device_name}</OSTitle>
-        <StatusBadge status={order.status}>{order.status.replace('_', ' ')}</StatusBadge>
-      </Header>
-      <DetailText>Cliente: {order.customer_name}</DetailText>
-      <DetailText>Problema: {order.problem_description.substring(0, 50)}...</DetailText>
-      <DetailText>Entrada: {formatDate(order.entry_date)}</DetailText>
-    </CardContainer>
+    <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '8px', marginBottom: '15px' }}>
+        <motion.div style={{ position: 'absolute', left: 20, top: '50%', y: '-50%', opacity: opacityStart, color: 'white', display: 'flex', alignItems: 'center', gap: 10, zIndex: 0 }}>
+            <PlayArrow /> Iniciar
+        </motion.div>
+        <motion.div style={{ position: 'absolute', right: 20, top: '50%', y: '-50%', opacity: opacityPause, color: 'white', display: 'flex', alignItems: 'center', gap: 10, zIndex: 0 }}>
+            <Pause /> Pausar
+        </motion.div>
+
+        <CardContainer 
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          style={{ x, background, position: 'relative', zIndex: 1 }}
+          onDragEnd={handleDragEnd}
+          color={order.priority} 
+          onClick={() => onClick && onClick(order.id)}
+        >
+          <Header>
+            <OSTitle>OS #{order.id} - {order.device_name}</OSTitle>
+            <StatusBadge status={order.status}>{order.status.replace('_', ' ')}</StatusBadge>
+          </Header>
+          <DetailText>Cliente: {order.customer_name}</DetailText>
+          <DetailText>Problema: {order.problem_description.substring(0, 50)}...</DetailText>
+          <DetailText>Entrada: {formatDate(order.entry_date)}</DetailText>
+        </CardContainer>
+    </div>
   );
 };
 

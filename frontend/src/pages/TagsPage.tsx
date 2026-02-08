@@ -40,7 +40,7 @@ const StyledPageContainer = styled(motion.div)`
 
 const StyledPageTitle = styled(motion.h1)`
   font-size: 2.2rem;
-  font-weight: 800;
+  font-weight: 400;
   margin-bottom: 8px;
   letter-spacing: -1px;
   background: linear-gradient(45deg, #1976d2, #9c27b0);
@@ -171,7 +171,7 @@ const TagsPage: React.FC = () => {
                 variant="contained" 
                 startIcon={<FaPlus />} 
                 onClick={() => handleOpenModal()}
-                sx={{ borderRadius: '12px', px: 3, py: 1.2, fontWeight: 700 }}
+                sx={{ borderRadius: '12px', px: 3, py: 1.2, fontWeight: 400 }}
             >
                 Nova Etiqueta
             </Button>
@@ -194,7 +194,7 @@ const TagsPage: React.FC = () => {
           <Divider orientation="vertical" flexItem />
           <Box display="flex" gap={1} alignItems="center">
               <FaFilter size={12} color={theme.palette.text.disabled} />
-              <Typography variant="caption" fontWeight={700} color="text.secondary">TOTAL: {tags.length}</Typography>
+              <Typography variant="caption" fontWeight={400} color="text.secondary">TOTAL: {tags.length}</Typography>
           </Box>
       </Paper>
 
@@ -217,7 +217,7 @@ const TagsPage: React.FC = () => {
         disableRestoreFocus
         PaperProps={{ sx: { borderRadius: '24px', p: 1 } }}
       >
-        <DialogTitle sx={{ fontWeight: 800, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <DialogTitle sx={{ fontWeight: 400, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box display="flex" alignItems="center" gap={1.5}>
                 <Box sx={{ width: 40, height: 40, borderRadius: '12px', bgcolor: 'primary.50', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <FaTags color={theme.palette.primary.main} size={20} />
@@ -239,3 +239,4 @@ const TagsPage: React.FC = () => {
 };
 
 export default TagsPage;
+

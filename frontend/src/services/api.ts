@@ -1,36 +1,24 @@
 import axios from 'axios';
+import axiosRetry from 'axios-retry';
+import { setupInterceptors } from './apiInterceptors';
 
 const api = axios.create({
   baseURL: '/',
 });
 
-// Interceptor para injetar o token em todas as requisições
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Configurar Retry com Backoff Exponencial
+axiosRetry(api, {
+  retries: 3,
+  retryDelay: axiosRetry.exponentialDelay,
+  retryCondition: (error) => {
+    return axiosRetry.isNetworkOrIdempotentRequestError(error) || (error.response?.status ? error.response.status >= 500 : false);
+  },
+  onRetry: (retryCount, error, requestConfig) => {
+      console.warn(`Tentativa de retry #${retryCount} para ${requestConfig.url} devido a erro:`, error.message);
   }
-  return config;
 });
 
-// Interceptor para tratar erros globais (como 401)
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      console.warn('Sessão expirada. Limpando dados e redirecionando...');
-      
-      // Limpeza completa
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      // Redireciona para o login se já não estiver lá
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login?expired=true';
-      }
-    }
-    return Promise.reject(error);
-  }
-);
+// Configurar Interceptores (Auth, Idempotency, 401)
+setupInterceptors(api);
 
 export default api;

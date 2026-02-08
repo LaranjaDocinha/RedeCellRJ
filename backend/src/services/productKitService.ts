@@ -241,7 +241,7 @@ class ProductKitService {
     }
   }
 
-  async dekitProducts(kitId: number, quantity: number, userId: string, branchId: number) {
+  async dekitProducts(kitId: number, quantity: number, userId: string, _branchId: number) {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');

@@ -47,18 +47,22 @@ describe('ApiKeyService', () => {
 
       expect(crypto.randomBytes).toHaveBeenCalledWith(32);
       expect(crypto.createHash).toHaveBeenCalledWith('sha256');
-      expect(pool.query).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO api_keys'),
-        ['hashed_key_hex', 'user1', 'Test Key', {}, undefined]
-      );
+      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO api_keys'), [
+        'hashed_key_hex',
+        'user1',
+        'Test Key',
+        {},
+        undefined,
+      ]);
       expect(result).toEqual({ rawKey: 'raw_key_hex', apiKey: mockApiKey });
     });
 
     it('should throw AppError if insert fails', async () => {
       (pool.query as any).mockRejectedValue(new Error('DB Error'));
 
-      await expect(apiKeyService.generateApiKey({ user_id: '1', name: 'k', permissions: {} }))
-        .rejects.toThrow(AppError);
+      await expect(
+        apiKeyService.generateApiKey({ user_id: '1', name: 'k', permissions: {} }),
+      ).rejects.toThrow(AppError);
     });
   });
 
@@ -82,7 +86,7 @@ describe('ApiKeyService', () => {
       expect(crypto.createHash).toHaveBeenCalledWith('sha256');
       expect(pool.query).toHaveBeenCalledWith(
         expect.stringContaining('SELECT * FROM api_keys WHERE key = $1'),
-        ['hashed_key_hex']
+        ['hashed_key_hex'],
       );
     });
   });
@@ -106,7 +110,7 @@ describe('ApiKeyService', () => {
 
       expect(pool.query).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE api_keys SET name = $1'),
-        ['New Name', 1]
+        ['New Name', 1],
       );
       expect(result).toEqual(mockKey);
     });
@@ -114,8 +118,9 @@ describe('ApiKeyService', () => {
     it('should throw NotFoundError if update affects no rows', async () => {
       (pool.query as any).mockResolvedValue({ rows: [] });
 
-      await expect(apiKeyService.updateApiKey(1, { name: 'New Name' }))
-        .rejects.toThrow(NotFoundError);
+      await expect(apiKeyService.updateApiKey(1, { name: 'New Name' })).rejects.toThrow(
+        NotFoundError,
+      );
     });
 
     it('should return existing key if no fields to update', async () => {
@@ -124,11 +129,13 @@ describe('ApiKeyService', () => {
       (pool.query as any).mockResolvedValueOnce({ rows: [mockKey] });
 
       const result = await apiKeyService.updateApiKey(1, {});
-      
+
       expect(result).toEqual(mockKey);
       // Verifica se o update NÃO foi chamado (somente o select do getById)
-      expect(pool.query).toHaveBeenCalledTimes(1); 
-      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('SELECT * FROM api_keys'), [1]);
+      expect(pool.query).toHaveBeenCalledTimes(1);
+      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('SELECT * FROM api_keys'), [
+        1,
+      ]);
     });
   });
 

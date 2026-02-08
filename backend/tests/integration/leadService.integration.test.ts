@@ -1,6 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { createLead, getLeadById, updateLead, deleteLead, addLeadActivity, getLeadActivities } from '../../src/services/leadService.js';
-import { connect, query, closePool } from '../../src/db/index.js'; // Assuming closePool is exported
+import {
+  createLead,
+  getLeadById,
+  updateLead,
+  deleteLead,
+  addLeadActivity,
+  getLeadActivities,
+} from '../../src/services/leadService.js';
+import { query } from '../../src/db/index.js'; // Assuming closePool is exported
 import { v4 as uuidv4 } from 'uuid'; // For generating a dummy user ID if needed
 
 describe('Lead Service Integration Tests', () => {
@@ -11,8 +18,10 @@ describe('Lead Service Integration Tests', () => {
     // Ensure the test DB is clean and necessary tables exist
     // This is handled by global setup or migrations run before tests
     // Create a dummy user for 'assignedTo' and 'userId' in activities
-    const userRes = await query('INSERT INTO users (id, name, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING id',
-      [uuidv4(), 'Test Lead User', `testuser-${Date.now()}@example.com`, 'hashedpassword']);
+    const userRes = await query(
+      'INSERT INTO users (id, name, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING id',
+      [uuidv4(), 'Test Lead User', `testuser-${Date.now()}@example.com`, 'hashedpassword'],
+    );
     testUserId = userRes.rows[0].id;
   });
 

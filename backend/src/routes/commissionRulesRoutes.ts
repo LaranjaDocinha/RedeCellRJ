@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { CommissionRulesController } from '../controllers/CommissionRulesController.js';
-import { CommissionRulesService } from '../services/CommissionRulesService.js';
+import { CommissionRulesController } from '../controllers/commissionRulesController.js';
+import { CommissionRulesService } from '../services/commissionRulesService.js';
 
 const router = Router();
 

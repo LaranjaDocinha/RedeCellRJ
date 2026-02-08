@@ -6,7 +6,8 @@ export const StyledTopbar = styled.header`
   align-items: center;
   padding: 0 24px;
   height: 64px;
-  background-color: ${({ theme }) => theme.palette.background.paper};
+  background-color: ${({ theme }) => (theme as any).glass?.background || theme.palette.background.paper};
+  backdrop-filter: ${({ theme }) => (theme as any).glass?.blur || 'none'};
   color: ${({ theme }) => theme.palette.text.primary};
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
   position: fixed;
@@ -14,7 +15,7 @@ export const StyledTopbar = styled.header`
   left: 0;
   right: 0;
   z-index: 1200;
-  border-bottom: 1px solid ${({ theme }) => theme.palette.divider};
+  border-bottom: ${({ theme }) => (theme as any).glass?.border || `1px solid ${theme.palette.divider}`};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.values.sm}px) {
     height: 56px;

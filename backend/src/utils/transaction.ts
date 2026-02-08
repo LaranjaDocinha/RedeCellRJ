@@ -8,9 +8,7 @@ import { getPool } from '../db/index.js';
  * @param callback A function that receives a database client and returns a promise.
  * @returns The result of the callback.
  */
-export async function withTransaction<T>(
-  callback: (client: PoolClient) => Promise<T>
-): Promise<T> {
+export async function withTransaction<T>(callback: (client: PoolClient) => Promise<T>): Promise<T> {
   const pool = getPool();
   const client = await pool.connect();
 

@@ -10,7 +10,8 @@ router.get('/export/sales', async (req, res) => {
     res.header('Content-Type', 'text/csv');
     res.attachment(`sales-export-${Date.now()}.csv`);
     res.send(csvData);
-  } catch (error: any) { // Explicitly type error
+  } catch (error: any) {
+    // Explicitly type error
     res.status(500).json({ message: error.message || 'Error exporting sales data' });
   }
 });

@@ -1,13 +1,14 @@
 import appEvents from '../events/appEvents.js';
 import { notificationService } from '../services/notificationService.js';
 import { logger } from '../utils/logger.js';
-import { ServiceOrder } from '../types/serviceOrder.js'; // Assuming ServiceOrder type
 
 export const initNotificationEventListener = () => {
   // Listener para atualizações de status de Ordem de Serviço
-  appEvents.on('os.status.updated', async ({ serviceOrder, oldStatus, newStatus, changedBy }) => {
-    logger.info(`[NotificationEventListener] OS Status Updated Event: OS #${serviceOrder.id} changed from ${oldStatus} to ${newStatus}`);
-    
+  appEvents.on('os.status.updated', async ({ serviceOrder, oldStatus, newStatus }) => {
+    logger.info(
+      `[NotificationEventListener] OS Status Updated Event: OS #${serviceOrder.id} changed from ${oldStatus} to ${newStatus}`,
+    );
+
     // Supondo que queremos notificar o cliente via WhatsApp
     // e o usuário (técnico/admin) via push/email (se implementados)
     try {
@@ -27,7 +28,8 @@ export const initNotificationEventListener = () => {
       });
 
       // Notificar o usuário interno (ex: técnico responsável)
-      if (serviceOrder.user_id) { // Se a OS tiver um técnico atribuído
+      if (serviceOrder.user_id) {
+        // Se a OS tiver um técnico atribuído
         await notificationService.sendNotification({
           recipientId: serviceOrder.user_id, // User ID
           recipientType: 'user',
@@ -36,7 +38,6 @@ export const initNotificationEventListener = () => {
           channels: ['push'], // Ex: Notificação push para o técnico
         });
       }
-
     } catch (error) {
       logger.error(`[NotificationEventListener] Error processing os.status.updated event:`, error);
     }
@@ -44,8 +45,10 @@ export const initNotificationEventListener = () => {
 
   // Exemplo de outro listener: Novo Lead criado
   appEvents.on('lead.created', async ({ lead }) => {
-    logger.info(`[NotificationEventListener] New Lead Created Event: Lead #${lead.id} - ${lead.name}`);
-    
+    logger.info(
+      `[NotificationEventListener] New Lead Created Event: Lead #${lead.id} - ${lead.name}`,
+    );
+
     // Notificar o usuário atribuído ao lead ou um time de vendas
     if (lead.assignedTo) {
       await notificationService.sendNotification({
@@ -56,8 +59,8 @@ export const initNotificationEventListener = () => {
         channels: ['email', 'push'], // Canais preferenciais para notificar o usuário
       });
     } else {
-        // Notificar um grupo padrão ou admin sobre o novo lead não atribuído
-        // Ex: buscar id do admin ou de um role 'sales_manager'
+      // Notificar um grupo padrão ou admin sobre o novo lead não atribuído
+      // Ex: buscar id do admin ou de um role 'sales_manager'
     }
   });
 

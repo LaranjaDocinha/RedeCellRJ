@@ -10,11 +10,11 @@ const PORT = process.env.PORT || 3000; // Padronizado para 3000
 
 if (process.env.NODE_ENV !== 'test') {
   initTelemetry();
-  
+
   httpServer.listen(PORT, () => {
     console.log(`🚀 Server is running on http://localhost:${PORT}`);
     console.log(`📄 API documentation available at http://localhost:${PORT}/api-docs`);
-    
+
     // Iniciar agendamentos de forma assíncrona para não travar o boot
     console.log('Initializing background jobs...');
     setTimeout(() => {

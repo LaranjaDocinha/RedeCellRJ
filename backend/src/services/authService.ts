@@ -1,118 +1,191 @@
 import { AppError } from '../utils/errors.js';
-import bcrypt from 'bcrypt';
 import pkg from 'jsonwebtoken';
 const { sign } = pkg;
 import { emailService } from './emailService.js';
 import { logActivityService } from './logActivityService.js';
 import crypto from 'crypto';
 import { userRepository, Permission } from '../repositories/user.repository.js';
+import { refreshTokenRepository } from '../repositories/refreshToken.repository.js';
 import { logger } from '../utils/logger.js';
+import { passwordUtils } from '../utils/passwordUtils.js';
 
 interface JwtPayload {
   id: string;
   email: string;
   role: string;
   permissions: Permission[];
+  ip?: string;
+  ua?: string; // User-Agent
 }
 
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey';
+
 export const authService = {
-  async register(name: string, email: string, password: string, roleName: string = 'user') {
-    const existingUser = await userRepository.findByEmail(email);
-    if (existingUser) {
-      throw new AppError('User with this email already exists', 409);
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    try {
-      // 1. Create User
-      const user = await userRepository.create({
-        name,
-        email,
-        password_hash: hashedPassword,
-      });
-
-      // 2. Assign Role
-      try {
-        await userRepository.assignRole(user.id, roleName);
-      } catch (roleError) {
-        throw new AppError(`Role '${roleName}' not found`, 400);
-      }
-
-      // 3. Get Permissions & Role Name (Confirmação)
-      const permissions = await userRepository.getUserPermissions(user.id);
-      
-      const payload: JwtPayload = {
-        id: user.id,
-        email: user.email,
-        role: roleName,
-        permissions,
-      };
-      
-      const token = sign(payload, process.env.JWT_SECRET || 'supersecretjwtkey', {
-        expiresIn: '1h',
-      });
-
-      // Log activity
-      await logActivityService.logActivity({
-        userId: user.id,
-        action: 'User Registered',
-        resourceType: 'User',
-        resourceId: user.id,
-        newValue: { name: user.name, email: user.email, role: roleName },
-      });
-
-      return {
-        user: { id: user.id, name: user.name, email: user.email, role: roleName, permissions },
-        token,
-      };
-    } catch (error: unknown) {
-      if (error instanceof AppError) throw error;
-      throw error;
-    }
+  generateAccessToken(payload: JwtPayload) {
+    return sign(payload, JWT_SECRET, { expiresIn: '15m' }); // Curto tempo de vida para o Access Token
   },
 
-  async login(email: string, password: string) {
-    logger.info(`Login attempt for: ${email}`);
-    
-    const user = await userRepository.findByEmail(email);
-    logger.info(`User lookup result for ${email}: ${user ? 'Found' : 'Not Found'}`);
+  async generateRefreshToken(userId: string) {
+    const token = crypto.randomBytes(40).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 dias
 
-    if (!user || !user.password_hash) {
-      logger.warn(`Login failed for ${email}: User not found or no password hash.`);
+    await refreshTokenRepository.create(userId, token, expiresAt);
+    return token;
+  },
+
+  async register(name: string, email: string, password: string, roleName: string = 'employee') {
+    const existingUser = await userRepository.findByEmail(email);
+    if (existingUser) {
+      throw new AppError('User with this email already exists', 400);
+    }
+
+    const hashedPassword = await passwordUtils.hash(password);
+
+    // Create user
+    const newUser = await userRepository.create({
+      name,
+      email,
+      password_hash: hashedPassword,
+    });
+
+    // Assign role
+    try {
+      await userRepository.assignRole(newUser.id, roleName);
+    } catch (_error) {
+      // Rollback user creation if role assignment fails (manual rollback as this service doesn't manage its own transaction here)
+      // In a better design, this would be wrapped in a transaction
+      await userRepository.delete(newUser.id);
+      throw new AppError(`Role '${roleName}' not found or could not be assigned.`, 400);
+    }
+
+    const permissions = await userRepository.getUserPermissions(newUser.id);
+    const payload: JwtPayload = {
+      id: newUser.id,
+      email: newUser.email,
+      role: roleName,
+      permissions,
+    };
+
+    const accessToken = this.generateAccessToken(payload);
+    const refreshToken = await this.generateRefreshToken(newUser.id);
+
+    return {
+      user: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: roleName,
+        permissions,
+      },
+      accessToken,
+      refreshToken,
+    };
+  },
+
+  async login(email: string, password: string, ip?: string, userAgent?: string) {
+    logger.info({ email, ip }, `Login attempt`);
+
+    // Usamos o método especial que traz o password_hash
+    const user = await userRepository.findWithPasswordByEmail(email);
+
+    if (!user) {
+      logger.warn(`Login failed: User ${email} not found.`);
       throw new AppError('Invalid credentials', 401);
     }
 
-    const passwordMatch = await bcrypt.compare(password, user.password_hash);
-    logger.info(`Password comparison result for ${email}: ${passwordMatch ? 'Match' : 'No Match'}`);
+    if (!user.password_hash) {
+      logger.error(`Login failed: User ${email} has no password hash set.`);
+      throw new AppError('Invalid credentials', 401);
+    }
+
+    // Modernização de segurança: Brute Force Protection
+    if (
+      user.failed_login_attempts >= 5 &&
+      user.last_login &&
+      new Date().getTime() - new Date(user.last_login).getTime() < 15 * 60 * 1000
+    ) {
+      throw new AppError('Account temporarily locked. Please try again in 15 minutes.', 403);
+    }
+
+    const passwordMatch = await passwordUtils.verify(password, user.password_hash);
 
     if (!passwordMatch) {
+      await userRepository.update(user.id, {
+        failed_login_attempts: user.failed_login_attempts + 1,
+        last_login: new Date(),
+      });
       logger.warn(`Login failed for ${email}: Incorrect password.`);
       throw new AppError('Invalid credentials', 401);
     }
 
+    // Reset failed attempts on success
+    await userRepository.update(user.id, {
+      failed_login_attempts: 0,
+      last_login: new Date(),
+    });
+
+    // Modernização de segurança: Re-hash se necessário (migração transparente para Argon2id)
+    if (passwordUtils.needsRehash(user.password_hash)) {
+      const newHash = await passwordUtils.hash(password);
+      await userRepository.update(user.id, { password_hash: newHash });
+      logger.info(`Password hash updated to Argon2id for user: ${email}`);
+    }
+
     const permissions = await userRepository.getUserPermissions(user.id);
-    logger.info(`Permissions retrieved for ${email}.`);
     const userRoleName = await userRepository.getUserRole(user.id);
-    logger.info(`Role retrieved for ${email}.`);
 
-    const payload: JwtPayload = { id: user.id, email: user.email, role: userRoleName, permissions };
-    const token = sign(payload, process.env.JWT_SECRET || 'supersecretjwtkey', { expiresIn: '1h' });
-    logger.info(`JWT token generated for ${email}.`);
+    // Sugestão Sênior #9: Session Hijacking Protection (IP & UA Binding)
+    const payload: JwtPayload = {
+      id: user.id,
+      email: user.email,
+      role: userRoleName,
+      permissions,
+      ip,
+      ua: userAgent,
+    };
 
-    // Log activity
+    const accessToken = this.generateAccessToken(payload);
+    const refreshToken = await this.generateRefreshToken(user.id);
+
+    // Log activity with fingerprint
     await logActivityService.logActivity({
       userId: user.id,
       action: 'User Logged In',
       resourceType: 'User',
       resourceId: user.id,
+      details: { ip, device: userAgent },
     });
-    logger.info(`Login activity logged for ${email}.`);
 
     return {
       user: { id: user.id, name: user.name, email: user.email, role: userRoleName, permissions },
-      token,
+      accessToken,
+      refreshToken,
     };
+  },
+
+  async refreshAccessToken(refreshToken: string) {
+    const savedToken = await refreshTokenRepository.findByToken(refreshToken);
+
+    if (!savedToken || new Date() > new Date(savedToken.expires_at)) {
+      if (savedToken) await refreshTokenRepository.deleteByToken(refreshToken);
+      throw new AppError('Refresh token expired or invalid', 401);
+    }
+
+    const user = await userRepository.findById(savedToken.user_id);
+    if (!user) throw new AppError('User not found', 401);
+
+    const permissions = await userRepository.getUserPermissions(user.id);
+    const userRoleName = await userRepository.getUserRole(user.id);
+
+    const payload: JwtPayload = { id: user.id, email: user.email, role: userRoleName, permissions };
+    const accessToken = this.generateAccessToken(payload);
+
+    return { accessToken };
+  },
+
+  async logout(refreshToken: string) {
+    await refreshTokenRepository.deleteByToken(refreshToken);
   },
 
   async requestPasswordReset(email: string) {
@@ -129,7 +202,7 @@ export const authService = {
 
     await userRepository.update(user.id, {
       reset_password_token: hashedToken,
-      reset_password_expires: passwordResetExpires
+      reset_password_expires: passwordResetExpires,
     });
 
     // TODO: Use environment variable for frontend URL
@@ -139,10 +212,10 @@ export const authService = {
 
     try {
       await emailService.sendEmail(email, 'Your password reset token (valid for 10 min)', message);
-    } catch (err) {
+    } catch (_err) {
       await userRepository.update(user.id, {
         reset_password_token: null, // any works here as null implies clear
-        reset_password_expires: null as any 
+        reset_password_expires: null as any,
       });
       throw new AppError('There was an error sending the email. Try again later!', 500);
     }
@@ -150,19 +223,19 @@ export const authService = {
 
   async resetPassword(token: string, newPassword: string) {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-    
+
     const user = await userRepository.findUserValidForReset(hashedToken);
 
     if (!user) {
       throw new AppError('Token is invalid or has expired', 400);
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await passwordUtils.hash(newPassword);
 
     await userRepository.update(user.id, {
       password_hash: hashedPassword,
       reset_password_token: null, // Limpa o token
-      reset_password_expires: null as any // Limpa a data
+      reset_password_expires: null as any, // Limpa a data
     });
 
     // Auto login

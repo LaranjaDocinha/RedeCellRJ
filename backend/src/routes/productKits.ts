@@ -54,27 +54,35 @@ const validate =
 productKitsRouter.use(authMiddleware.authenticate);
 
 // Get all product kits (read)
-productKitsRouter.get('/', authMiddleware.authorize('read', 'ProductKit'), async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const kits = await productKitService.getAllProductKits();
-    res.status(200).json(kits);
-  } catch (error) {
-    next(error);
-  }
-});
+productKitsRouter.get(
+  '/',
+  authMiddleware.authorize('read', 'ProductKit'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const kits = await productKitService.getAllProductKits();
+      res.status(200).json(kits);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 // Get product kit by ID (read)
-productKitsRouter.get('/:id', authMiddleware.authorize('read', 'ProductKit'), async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const kit = await productKitService.getProductKitById(parseInt(req.params.id));
-    if (!kit) {
-      throw new AppError('Product kit not found', 404);
+productKitsRouter.get(
+  '/:id',
+  authMiddleware.authorize('read', 'ProductKit'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const kit = await productKitService.getProductKitById(parseInt(req.params.id));
+      if (!kit) {
+        throw new AppError('Product kit not found', 404);
+      }
+      res.status(200).json(kit);
+    } catch (error) {
+      next(error);
     }
-    res.status(200).json(kit);
-  } catch (error) {
-    next(error);
-  }
-});
+  },
+);
 
 // Create a new product kit (manage)
 productKitsRouter.post(
@@ -113,40 +121,62 @@ productKitsRouter.put(
 );
 
 // Delete a product kit by ID (manage)
-productKitsRouter.delete('/:id', authMiddleware.authorize('manage', 'ProductKit'), async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const deleted = await productKitService.deleteProductKit(parseInt(req.params.id));
-    if (!deleted) {
-      throw new AppError('Product kit not found', 404);
+productKitsRouter.delete(
+  '/:id',
+  authMiddleware.authorize('manage', 'ProductKit'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const deleted = await productKitService.deleteProductKit(parseInt(req.params.id));
+      if (!deleted) {
+        throw new AppError('Product kit not found', 404);
+      }
+      res.status(204).send();
+    } catch (error) {
+      next(error);
     }
-    res.status(204).send();
-  } catch (error) {
-    next(error);
-  }
-});
+  },
+);
 
 // Kit (Assemble) products (manage)
-productKitsRouter.post('/:id/kit', authMiddleware.authorize('manage', 'ProductKit'), async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { quantity, branchId } = req.body;
-    const userId = (req as any).user?.id;
-    const result = await productKitService.kitProducts(parseInt(req.params.id), quantity, userId, branchId);
-    res.status(200).json(result);
-  } catch (error) {
-    next(error);
-  }
-});
+productKitsRouter.post(
+  '/:id/kit',
+  authMiddleware.authorize('manage', 'ProductKit'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { quantity, branchId } = req.body;
+      const userId = (req as any).user?.id;
+      const result = await productKitService.kitProducts(
+        parseInt(req.params.id),
+        quantity,
+        userId,
+        branchId,
+      );
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 // Dekit (Disassemble) products (manage)
-productKitsRouter.post('/:id/dekit', authMiddleware.authorize('manage', 'ProductKit'), async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { quantity, branchId } = req.body;
-    const userId = (req as any).user?.id;
-    const result = await productKitService.dekitProducts(parseInt(req.params.id), quantity, userId, branchId);
-    res.status(200).json(result);
-  } catch (error) {
-    next(error);
-  }
-});
+productKitsRouter.post(
+  '/:id/dekit',
+  authMiddleware.authorize('manage', 'ProductKit'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { quantity, branchId } = req.body;
+      const userId = (req as any).user?.id;
+      const result = await productKitService.dekitProducts(
+        parseInt(req.params.id),
+        quantity,
+        userId,
+        branchId,
+      );
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 export default productKitsRouter;

@@ -1,5 +1,4 @@
 import { getPool } from '../db/index.js';
-import { AppError } from '../utils/errors.js';
 
 interface AddPhotoParams {
   serviceOrderId: number;
@@ -27,7 +26,7 @@ export const techAppService = {
          CASE WHEN so.user_id = $2 THEN 0 ELSE 1 END, -- Minhas primeiro
          CASE WHEN so.priority = 'urgent' THEN 0 ELSE 1 END, -- Urgentes depois
          so.entry_date ASC`,
-      [branchId, userId]
+      [branchId, userId],
     );
     return res.rows;
   },
@@ -37,12 +36,12 @@ export const techAppService = {
    */
   async addServicePhoto({ serviceOrderId, url, type, userId }: AddPhotoParams) {
     const pool = getPool();
-    
+
     const result = await pool.query(
       `INSERT INTO service_order_photos (service_order_id, url, type, uploaded_by)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [serviceOrderId, url, type, userId]
+      [serviceOrderId, url, type, userId],
     );
     return result.rows[0];
   },
@@ -52,37 +51,37 @@ export const techAppService = {
    */
   async getChecklistTemplate(type: 'pre-repair' | 'post-repair' = 'pre-repair') {
     const pool = getPool();
-    
+
     // Busca o template mais recente desse tipo
     const templateRes = await pool.query(
       'SELECT id, name FROM checklist_templates WHERE type = $1 ORDER BY created_at DESC LIMIT 1',
-      [type]
+      [type],
     );
 
     if (templateRes.rows.length === 0) {
-        // Retorna um default se não houver no banco
-        return {
-            id: 0,
-            name: 'Checklist Padrão',
-            items: [
-                { item_name: 'Tela intacta?' },
-                { item_name: 'Liga/Desliga?' },
-                { item_name: 'Carrega?' },
-                { item_name: 'Wi-Fi conecta?' },
-                { item_name: 'Câmeras funcionam?' }
-            ]
-        };
+      // Retorna um default se não houver no banco
+      return {
+        id: 0,
+        name: 'Checklist Padrão',
+        items: [
+          { item_name: 'Tela intacta?' },
+          { item_name: 'Liga/Desliga?' },
+          { item_name: 'Carrega?' },
+          { item_name: 'Wi-Fi conecta?' },
+          { item_name: 'Câmeras funcionam?' },
+        ],
+      };
     }
 
     const templateId = templateRes.rows[0].id;
     const itemsRes = await pool.query(
       'SELECT item_name FROM checklist_template_items WHERE template_id = $1 ORDER BY position ASC',
-      [templateId]
+      [templateId],
     );
 
     return {
-        ...templateRes.rows[0],
-        items: itemsRes.rows
+      ...templateRes.rows[0],
+      items: itemsRes.rows,
     };
   },
 
@@ -91,15 +90,18 @@ export const techAppService = {
    */
   async submitChecklist(serviceOrderId: number, checklistData: any, userId: string) {
     const pool = getPool();
-    
+
     await pool.query(
       `UPDATE service_orders 
        SET inspection_checklist = $1, 
            updated_at = NOW()
        WHERE id = $2`,
-      [JSON.stringify({ ...checklistData, submitted_by: userId, submitted_at: new Date() }), serviceOrderId]
+      [
+        JSON.stringify({ ...checklistData, submitted_by: userId, submitted_at: new Date() }),
+        serviceOrderId,
+      ],
     );
 
     return { success: true };
-  }
+  },
 };

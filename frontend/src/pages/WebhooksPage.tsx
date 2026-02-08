@@ -153,7 +153,7 @@ const WebhooksPage: React.FC = () => {
     <Box p={4} sx={{ maxWidth: 1400, margin: '0 auto' }}>
       <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
         <Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
+          <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px' }}>
             Webhooks
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -164,7 +164,7 @@ const WebhooksPage: React.FC = () => {
           variant="contained" 
           startIcon={<AddIcon />} 
           onClick={() => setIsModalOpen(true)}
-          sx={{ borderRadius: '12px', px: 3, py: 1.5, fontWeight: 700 }}
+          sx={{ borderRadius: '12px', px: 3, py: 1.5, fontWeight: 400 }}
         >
           Novo Webhook
         </Button>
@@ -190,7 +190,7 @@ const WebhooksPage: React.FC = () => {
                           <WebhookIcon />
                         </Box>
                         <Box>
-                          <Typography variant="h6" fontWeight={800}>{webhook.event_type}</Typography>
+                          <Typography variant="h6" fontWeight={400}>{webhook.event_type}</Typography>
                           <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                             <LinkIcon sx={{ fontSize: 14 }} /> {webhook.callback_url}
                           </Typography>
@@ -226,7 +226,7 @@ const WebhooksPage: React.FC = () => {
                         size="small" 
                         startIcon={<PlayIcon />} 
                         onClick={() => handleSimulateTrigger(webhook.event_type)}
-                        sx={{ fontWeight: 700 }}
+                        sx={{ fontWeight: 400 }}
                       >
                         Testar Payload
                       </Button>
@@ -242,11 +242,11 @@ const WebhooksPage: React.FC = () => {
         <Grid item xs={12} md={4}>
           <Box display="flex" flexDirection="column" gap={3}>
             <Paper sx={{ p: 3, borderRadius: '24px', bgcolor: 'primary.main', color: 'white' }}>
-              <Typography variant="h6" fontWeight={800} gutterBottom>Status de Entrega</Typography>
+              <Typography variant="h6" fontWeight={400} gutterBottom>Status de Entrega</Typography>
               <Box display="flex" alignItems="center" gap={2} mt={3}>
                 <CheckCircle sx={{ fontSize: 40 }} />
                 <Box>
-                  <Typography variant="h4" fontWeight={900}>98.4%</Typography>
+                  <Typography variant="h4" fontWeight={400}>98.4%</Typography>
                   <Typography variant="body2" sx={{ opacity: 0.8 }}>Taxa de Sucesso (24h)</Typography>
                 </Box>
               </Box>
@@ -255,7 +255,7 @@ const WebhooksPage: React.FC = () => {
             <Paper sx={{ p: 3, borderRadius: '24px' }}>
               <Box display="flex" alignItems="center" gap={1} mb={3}>
                 <TimelineIcon color="action" />
-                <Typography variant="h6" fontWeight={800}>Logs Recentes</Typography>
+                <Typography variant="h6" fontWeight={400}>Logs Recentes</Typography>
               </Box>
               <List sx={{ p: 0 }}>
                 {[1, 2, 3].map((i) => (
@@ -264,14 +264,14 @@ const WebhooksPage: React.FC = () => {
                       {i === 3 ? <ErrorIcon color="error" /> : <CheckCircle color="success" />}
                     </ListItemIcon>
                     <ListItemText 
-                      primary={<Typography variant="body2" fontWeight={700}>POST /sale.finalized</Typography>}
+                      primary={<Typography variant="body2" fontWeight={400}>POST /sale.finalized</Typography>}
                       secondary={i === 3 ? "Erro 500: Timeout do host" : "Sucesso 200 - 45ms"}
                     />
                     <Typography variant="caption" color="text.secondary">Há {i*2}m</Typography>
                   </ListItem>
                 ))}
               </List>
-              <Button fullWidth variant="outlined" sx={{ mt: 2, borderRadius: '12px', textTransform: 'none', fontWeight: 700 }}>
+              <Button fullWidth variant="outlined" sx={{ mt: 2, borderRadius: '12px', textTransform: 'none', fontWeight: 400 }}>
                 Ver Todos os Logs
               </Button>
             </Paper>
@@ -279,7 +279,7 @@ const WebhooksPage: React.FC = () => {
             <Paper sx={{ p: 3, borderRadius: '24px', bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider' }}>
               <Box display="flex" alignItems="center" gap={1} mb={1}>
                 <InfoIcon fontSize="small" color="primary" />
-                <Typography variant="subtitle2" fontWeight={800}>Documentação</Typography>
+                <Typography variant="subtitle2" fontWeight={400}>Documentação</Typography>
               </Box>
               <Typography variant="caption" color="text.secondary" lineHeight={1.4} display="block">
                 Webhooks permitem que seu sistema receba notificações automáticas. 
@@ -296,7 +296,7 @@ const WebhooksPage: React.FC = () => {
           position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', 
           width: 550, bgcolor: 'background.paper', borderRadius: '24px', boxShadow: 24, p: 4 
         }}>
-          <Typography variant="h5" sx={{ fontWeight: 900, mb: 1 }}>Registrar Webhook</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 400, mb: 1 }}>Registrar Webhook</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>Escolha o evento e forneça a URL para onde enviaremos os dados.</Typography>
           
           <FormControl fullWidth sx={{ mb: 3 }}>
@@ -310,7 +310,7 @@ const WebhooksPage: React.FC = () => {
               {availableEventTypes.map((ev) => (
                 <MenuItem key={ev.type} value={ev.type}>
                   <Box>
-                    <Typography variant="body2" fontWeight={700}>{ev.type}</Typography>
+                    <Typography variant="body2" fontWeight={400}>{ev.type}</Typography>
                     <Typography variant="caption" color="text.secondary">{ev.desc}</Typography>
                   </Box>
                 </MenuItem>
@@ -338,8 +338,8 @@ const WebhooksPage: React.FC = () => {
           />
 
           <Box mt={4} display="flex" gap={2}>
-            <Button fullWidth onClick={() => setIsModalOpen(false)} sx={{ borderRadius: '12px', fontWeight: 700 }}>Cancelar</Button>
-            <Button fullWidth variant="contained" onClick={handleCreateWebhook} sx={{ borderRadius: '12px', fontWeight: 700 }}>Salvar Configuração</Button>
+            <Button fullWidth onClick={() => setIsModalOpen(false)} sx={{ borderRadius: '12px', fontWeight: 400 }}>Cancelar</Button>
+            <Button fullWidth variant="contained" onClick={handleCreateWebhook} sx={{ borderRadius: '12px', fontWeight: 400 }}>Salvar Configuração</Button>
           </Box>
         </Box>
       </Modal>

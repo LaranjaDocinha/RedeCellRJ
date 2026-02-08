@@ -44,16 +44,33 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
     }
   };
 
+  const getColumnColor = () => {
+      const title = column.title.toLowerCase();
+      if (title.includes('aguardando') || title.includes('peça')) return theme.palette.warning.main;
+      if (title.includes('reparo') || title.includes('andamento')) return theme.palette.info.main;
+      if (title.includes('finalizado') || title.includes('pronto')) return theme.palette.success.main;
+      if (title.includes('entregue')) return theme.palette.text.disabled;
+      return theme.palette.primary.main;
+  };
+
+  const columnColor = getColumnColor();
+
   return (
     <ColumnContainer 
       ref={setNodeRef}
       $isOverLimit={isOverLimit}
+      $color={columnColor}
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
+      style={{
+          background: isOverLimit 
+            ? undefined 
+            : `linear-gradient(180deg, ${alpha(columnColor, 0.08)} 0%, ${alpha(columnColor, 0.02)} 100%)`
+      }}
     >
       <ColumnHeader>
         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1.5}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 900, letterSpacing: 1, color: isOverLimit ? 'error.main' : 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 400, letterSpacing: 1, color: isOverLimit ? 'error.main' : 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}>
                 <FaLayerGroup size={12} /> {column.title.toUpperCase()}
             </Typography>
             <IconButton size="small"><FaEllipsisV size={12} /></IconButton>
@@ -63,7 +80,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
             <Chip 
                 label={`${column.cards.length} tarefas`} 
                 size="small" 
-                sx={{ fontWeight: 900, height: 20, fontSize: '0.6rem', bgcolor: alpha(theme.palette.text.primary, 0.05) }} 
+                sx={{ fontWeight: 400, height: 20, fontSize: '0.6rem', bgcolor: alpha(theme.palette.text.primary, 0.05) }} 
             />
             {column.wip_limit !== -1 && (
                 <Chip 
@@ -71,36 +88,43 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
                     size="small" 
                     variant="outlined"
                     color={isOverLimit ? "error" : "default"}
-                    sx={{ fontWeight: 900, height: 20, fontSize: '0.6rem' }} 
+                    sx={{ fontWeight: 400, height: 20, fontSize: '0.6rem' }} 
                 />
             )}
         </Stack>
       </ColumnHeader>
 
+import { StaggeredContainer, StaggeredItem } from '../ui/StaggeredList';
+
+// ... (existing imports)
+
       <CardsContainer>
         <SortableContext items={column.cards.map(card => card.id)} strategy={verticalListSortingStrategy}>
-          <AnimatePresence>
-            {column.cards.map(card => (
-              <KanbanCard 
-                key={card.id} 
-                card={card} 
-                onDelete={onDeleteCard} 
-                onEdit={onEditCard} 
-                availableAssignees={availableAssignees}
-                isSelected={selectedCards.includes(card.id)}
-                onToggleSelect={onToggleSelect}
-              />
-            ))}
-          </AnimatePresence>
+          <StaggeredContainer delay={0.03}>
+            <AnimatePresence>
+                {column.cards.map(card => (
+                <StaggeredItem key={card.id}>
+                    <KanbanCard 
+                        card={card} 
+                        onDelete={onDeleteCard} 
+                        onEdit={onEditCard} 
+                        availableAssignees={availableAssignees}
+                        isSelected={selectedCards.includes(card.id)}
+                        onToggleSelect={onToggleSelect}
+                    />
+                </StaggeredItem>
+                ))}
+            </AnimatePresence>
+          </StaggeredContainer>
         </SortableContext>
       </CardsContainer>
 
       {/* #21 Valor de Retenção por Coluna */}
       <ColumnFooterValue>
-          <Typography variant="caption" sx={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Typography variant="caption" sx={{ fontWeight: 400, display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <FaCoins size={10} /> RETENÇÃO:
           </Typography>
-          <Typography variant="caption" sx={{ fontWeight: 900, color: 'success.main' }}>
+          <Typography variant="caption" sx={{ fontWeight: 400, color: 'success.main' }}>
               R$ {totalValue.toLocaleString()}
           </Typography>
       </ColumnFooterValue>
@@ -119,3 +143,4 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
 };
 
 export default KanbanColumn;
+

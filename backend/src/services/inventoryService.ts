@@ -1,27 +1,16 @@
 import { AppError } from '../utils/errors.js';
-import pool, { getPool } from '../db/index.js';
+import pool from '../db/index.js';
 import { PoolClient } from 'pg';
 import { demandPredictionService } from './demandPredictionService.js';
+import { inventoryRepository } from '../repositories/inventory.repository.js';
+import { auditService } from './auditService.js';
 
 const NOTIFICATIONS_MICROSERVICE_URL =
   process.env.NOTIFICATIONS_MICROSERVICE_URL || 'http://localhost:3002';
 
 export const inventoryService = {
   async getLowStockProducts(threshold: number = 10) {
-    const { rows } = await pool.query(
-      `SELECT
-        p.id AS product_id,
-        p.name,
-        ps.quantity AS stock_quantity,
-        pv.low_stock_threshold
-       FROM product_stock ps
-       JOIN product_variations pv ON ps.product_variation_id = pv.id
-       JOIN products p ON pv.product_id = p.id
-       WHERE ps.quantity <= $1 OR ps.quantity <= pv.low_stock_threshold
-       ORDER BY ps.quantity ASC`,
-      [threshold],
-    );
-    return rows;
+    return inventoryRepository.findLowStockProducts(threshold);
   },
 
   async adjustStock(
@@ -39,14 +28,11 @@ export const inventoryService = {
     try {
       if (shouldManageTransaction) await client.query('BEGIN');
 
-      const {
-        rows: [stockInfo],
-      } = await client.query(
-        `SELECT ps.quantity as stock_quantity, pv.low_stock_threshold, pv.product_id
-         FROM product_stock ps
-         JOIN product_variations pv ON ps.product_variation_id = pv.id
-         WHERE ps.product_variation_id = $1 AND ps.branch_id = $2 FOR UPDATE`,
-        [variationId, branchId || 1],
+      // Use repository to lock row
+      const stockInfo = await inventoryRepository.findStockForUpdate(
+        variationId,
+        branchId || 1,
+        client,
       );
 
       if (!stockInfo) {
@@ -60,48 +46,57 @@ export const inventoryService = {
 
       if (quantityChange > 0 && unitCost === undefined) {
         if (reason === 'stock_received' && unitCost === undefined) {
-            throw new AppError('Unit cost is required when receiving stock.', 400);
+          throw new AppError('Unit cost is required when receiving stock.', 400);
         }
       }
 
-      const {
-        rows: [updatedStock],
-      } = await client.query(
-        'UPDATE product_stock SET quantity = $1 WHERE product_variation_id = $2 AND branch_id = $3 RETURNING *',
-        [newStock, variationId, branchId || 1],
+      // Update stock quantity
+      const updatedStock = await inventoryRepository.updateStockQuantity(
+        variationId,
+        branchId || 1,
+        newStock,
+        client,
       );
 
-      await client.query(
-        'INSERT INTO inventory_movements (product_variation_id, branch_id, quantity_change, reason, user_id, unit_cost, quantity_remaining) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-        [
-          variationId,
-          branchId || 1,
-          quantityChange,
+      // Sugestão Sênior #8: Auditoria Temporal
+      await auditService.logStockChange({
+        productVariationId: variationId,
+        branchId: branchId || 1,
+        oldQuantity: stockInfo.stock_quantity,
+        newQuantity: newStock,
+        reason,
+        client,
+      });
+
+      // Create movement record
+      await inventoryRepository.createMovement(
+        {
+          product_variation_id: variationId,
+          branch_id: branchId || 1,
+          quantity_change: quantityChange,
           reason,
-          userId,
-          unitCost,
-          quantityChange > 0 ? quantityChange : null,
-        ],
+          user_id: userId,
+          unit_cost: unitCost,
+          quantity_remaining: quantityChange > 0 ? quantityChange : null,
+        },
+        client,
       );
 
       if (quantityChange < 0) {
         let stockToRemove = Math.abs(quantityChange);
-        const purchaseLayers = await client.query(
-          `SELECT id, quantity_remaining
-           FROM inventory_movements
-           WHERE product_variation_id = $1 AND quantity_change > 0 AND quantity_remaining > 0 AND branch_id = $2
-           ORDER BY created_at ASC`,
-          [variationId, branchId || 1],
+        const purchaseLayers = await inventoryRepository.findPurchaseLayers(
+          variationId,
+          branchId || 1,
+          client,
         );
 
-        for (const layer of purchaseLayers.rows) {
+        for (const layer of purchaseLayers) {
           if (stockToRemove <= 0) break;
           const available = layer.quantity_remaining;
           const toRemoveFromLayer = Math.min(stockToRemove, available);
-          await client.query(
-            'UPDATE inventory_movements SET quantity_remaining = quantity_remaining - $1 WHERE id = $2',
-            [toRemoveFromLayer, layer.id],
-          );
+
+          await inventoryRepository.decrementMovementRemaining(layer.id, toRemoveFromLayer, client);
+
           stockToRemove -= toRemoveFromLayer;
         }
 
@@ -135,65 +130,37 @@ export const inventoryService = {
     }
   },
 
-  async receiveStock(variationId: number, quantity: number, unitCost: number, userId?: string, dbClient?: PoolClient) {
+  async receiveStock(
+    variationId: number,
+    quantity: number,
+    unitCost: number,
+    userId?: string,
+    dbClient?: PoolClient,
+  ) {
     return this.adjustStock(variationId, quantity, 'stock_received', userId, dbClient, unitCost);
   },
 
-  async dispatchStock(variationId: number, quantity: number, userId?: string, dbClient?: PoolClient) {
+  async dispatchStock(
+    variationId: number,
+    quantity: number,
+    userId?: string,
+    dbClient?: PoolClient,
+  ) {
     return this.adjustStock(variationId, -quantity, 'stock_dispatched', userId, dbClient);
   },
 
   async getInventoryDiscrepancies(branchId: number): Promise<any[]> {
-    const pool = getPool();
-    const result = await pool.query(
-      `WITH StockMovements AS (
-          SELECT
-              im.product_variation_id,
-              SUM(CASE WHEN im.quantity_change > 0 THEN im.quantity_change ELSE 0 END) AS total_received,
-              SUM(CASE WHEN im.quantity_change < 0 THEN im.quantity_change ELSE 0 END) AS total_dispatched
-          FROM inventory_movements im
-          WHERE im.branch_id = $1
-          GROUP BY im.product_variation_id
-      )
-      SELECT
-          p.name AS product_name,
-          pv.color AS variation_color,
-          ps.quantity AS actual_stock,
-          (COALESCE(sm.total_received, 0) + COALESCE(sm.total_dispatched, 0)) AS theoretical_stock,
-          ps.quantity - (COALESCE(sm.total_received, 0) + COALESCE(sm.total_dispatched, 0)) AS discrepancy
-      FROM product_stock ps
-      JOIN product_variations pv ON ps.product_variation_id = pv.id
-      JOIN products p ON pv.product_id = p.id
-      LEFT JOIN StockMovements sm ON ps.product_variation_id = sm.product_variation_id
-      WHERE ps.branch_id = $1 AND (ps.quantity - (COALESCE(sm.total_received, 0) + COALESCE(sm.total_dispatched, 0))) <> 0;`,
-      [branchId]
-    );
-    return result.rows;
+    return inventoryRepository.findDiscrepancies(branchId);
   },
 
   async suggestPurchaseOrders(branchId: number): Promise<any[]> {
-    const { rows: products } = await pool.query(`
-      SELECT
-        p.id AS product_id,
-        p.name AS product_name,
-        pv.id AS variation_id,
-        pv.color AS variation_color,
-        ps.quantity AS current_stock,
-        pv.low_stock_threshold,
-        pv.reorder_point,
-        pv.lead_time_days
-      FROM product_stock ps
-      JOIN product_variations pv ON ps.product_variation_id = pv.id
-      JOIN products p ON pv.product_id = p.id
-      WHERE ps.branch_id = $1 AND ps.quantity <= pv.low_stock_threshold
-      ORDER BY p.name, pv.color;
-    `, [branchId]);
+    const products = await inventoryRepository.findProductsBelowThreshold(branchId);
 
     const suggestions: any[] = [];
     for (const product of products) {
       const predictedDemand = await demandPredictionService.predictDemand(product.product_id, 3);
       const leadTimeDemand = predictedDemand * ((product.lead_time_days || 7) / 30);
-      let suggestedQuantity = Math.ceil(predictedDemand + leadTimeDemand - product.current_stock);
+      const suggestedQuantity = Math.ceil(predictedDemand + leadTimeDemand - product.current_stock);
 
       if (suggestedQuantity > 0) {
         suggestions.push({

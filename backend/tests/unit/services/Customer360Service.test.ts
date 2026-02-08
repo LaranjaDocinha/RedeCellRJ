@@ -1,72 +1,81 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createDbMock } from '../../utils/dbMock.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock do pool do PostgreSQL
-vi.mock('../../../src/db/index.js', () => {
-  const { mockPool, mockQuery, mockConnect, mockClient } = createDbMock();
+const { mockPool, mockConnect, mockClient, mockClientQuery } = vi.hoisted(() => {
+  const mClientQuery = vi.fn();
+  const mRelease = vi.fn();
+  const mClient = { query: mClientQuery, release: mRelease };
+  const mConnect = vi.fn().mockResolvedValue(mClient);
+  const mPool = { connect: mConnect, query: vi.fn() };
   return {
-    default: mockPool,
-    connect: mockConnect,
-    query: mockQuery,
-    getPool: () => mockPool,
-    _mockQuery: mockQuery,
-    _mockConnect: mockConnect,
-    _mockClient: mockClient,
-    _mockPool: mockPool,
+    mockPool: mPool,
+    mockConnect: mConnect,
+    mockClient: mClient,
+    mockClientQuery: mClientQuery,
   };
 });
 
-import { Customer360Service } from '../../../src/services/Customer360Service.js';
+vi.mock('../../../src/db/index.js', () => ({
+  default: mockPool,
+  getPool: () => mockPool,
+}));
+
+import { customer360Service } from '../../../src/services/Customer360Service.js';
 
 describe('Customer360Service', () => {
-  let mockQuery: any;
-  let service: Customer360Service;
-
-  beforeEach(async () => {
-    const dbModule = await import('../../../src/db/index.js');
-    mockQuery = (dbModule as any)._mockQuery;
+  beforeEach(() => {
     vi.clearAllMocks();
-    service = new Customer360Service();
+    mockClientQuery.mockResolvedValue({ rows: [], rowCount: 0 });
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
+  describe('getTimeline', () => {
+    it('should return sorted timeline events from all sources', async () => {
+      mockClientQuery
+        .mockResolvedValueOnce({ rows: [{ id: 1, sale_date: '2023-01-01', total_amount: 100 }] }) // Sales
+        .mockResolvedValueOnce({ rows: [{ id: 10, created_at: '2023-01-02', product_description: 'OS1', status: 'OK' }] }) // OS
+        .mockResolvedValueOnce({ rows: [{ name: 'John' }] }) // Customer check for prints
+        .mockResolvedValueOnce({ rows: [{ id: 100, created_at: '2023-01-03', description: 'Print1', quantity: 5 }] }); // Prints
+
+      const timeline = await customer360Service.getTimeline(1);
+
+      expect(timeline).toHaveLength(3);
+      // Sorted by date desc
+      expect(timeline[0].type).toBe('print');
+      expect(timeline[1].type).toBe('os');
+      expect(timeline[2].type).toBe('sale');
+    });
+
+    it('should handle missing customer when fetching prints', async () => {
+      mockClientQuery
+        .mockResolvedValueOnce({ rows: [] }) // Sales
+        .mockResolvedValueOnce({ rows: [] }) // OS
+        .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // Customer check fails
+
+      const timeline = await customer360Service.getTimeline(1);
+      expect(timeline).toHaveLength(0);
+    });
   });
 
   describe('getCustomer360View', () => {
     it('should return null if customer not found', async () => {
-      mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 }); // Customer query
-
-      const result = await service.getCustomer360View('999');
-      expect(result).toBeNull();
-      expect(mockQuery).toHaveBeenCalledWith('SELECT * FROM customers WHERE id = $1', ['999']);
+      mockClientQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+      const res = await customer360Service.getCustomer360View(999);
+      expect(res).toBeNull();
     });
 
     it('should return full 360 view if customer exists', async () => {
-      const mockCustomer = { id: 1, name: 'John Doe' };
-      const mockSales = [{ id: 101, total: 100 }];
-      const mockServiceOrders = [{ id: 201, status: 'open' }];
-      const mockLoyalty = [{ id: 301, points: 10 }];
-      const mockComms = [{ id: 401, type: 'email' }];
+      mockClientQuery
+        .mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test', loyalty_points: 50 }] }) // View check
+        .mockResolvedValueOnce({ rows: [] }) // Timeline Sales
+        .mockResolvedValueOnce({ rows: [] }) // Timeline OS
+        .mockResolvedValueOnce({ rows: [{ name: 'Test' }] }) // Timeline Customer Check
+        .mockResolvedValueOnce({ rows: [] }); // Timeline Prints
 
-      mockQuery
-        .mockResolvedValueOnce({ rows: [mockCustomer], rowCount: 1 }) // Customer
-        .mockResolvedValueOnce({ rows: mockSales, rowCount: 1 }) // Sales
-        .mockResolvedValueOnce({ rows: mockServiceOrders, rowCount: 1 }) // Service Orders
-        .mockResolvedValueOnce({ rows: mockLoyalty, rowCount: 1 }) // Loyalty
-        .mockResolvedValueOnce({ rows: mockComms, rowCount: 1 }); // Comms
+      const res = await customer360Service.getCustomer360View(1);
 
-      const result = await service.getCustomer360View('1');
-
-      expect(result).toEqual({
-        customer: mockCustomer,
-        sales: mockSales,
-        serviceOrders: mockServiceOrders,
-        loyaltyTransactions: mockLoyalty,
-        communications: mockComms,
-      });
-
-      expect(mockQuery).toHaveBeenCalledTimes(5);
+      expect(res).toBeDefined();
+      expect(res?.profile.name).toBe('Test');
+      expect(res?.loyalty.points).toBe(50);
+      expect(res?.timeline).toBeInstanceOf(Array);
     });
   });
 });

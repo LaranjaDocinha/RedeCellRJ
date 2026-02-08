@@ -4,25 +4,20 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    globalSetup: './tests/vitest.globalSetup.ts',
+    globalSetup: './vitest.global-setup.ts',
     setupFiles: ['./tests/setupVitestEnv.ts'],
     include: ['tests/unit/**/*.test.ts', 'tests/integration/**/*.test.ts'],
-    deps: {
-      optimizer: {
-        ssr: {
-          include: ['express-validator'],
-        },
+    
+    // Force sequential execution in a single process to eliminate DB conflicts
+    fileParallelism: false,
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true,
       },
     },
-    transformMode: {
-      ssr: ['express-validator'],
-      web: ['express-validator'],
-    },
+
     hookTimeout: 300000,
-    // You might need to add resolve.alias or other options here later for path mapping
-    // if you use TypeScript path aliases in your project.
-  },
-  optimizeDeps: {
-    include: ['express-validator'],
+    testTimeout: 60000,
   },
 });

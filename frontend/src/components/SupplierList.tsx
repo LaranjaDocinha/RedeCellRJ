@@ -21,13 +21,13 @@ export const SupplierList: React.FC<SupplierListProps> = ({ suppliers, onEdit, o
       <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
         <thead className="bg-gray-800 text-white">
           <tr>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">ID</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Name</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Contact Person</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Email</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Phone</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Address</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Actions</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">ID</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Name</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Contact Person</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Email</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Phone</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Address</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Actions</th>
           </tr>
         </thead>
         <tbody className="text-gray-700">
@@ -49,13 +49,13 @@ export const SupplierList: React.FC<SupplierListProps> = ({ suppliers, onEdit, o
                 <td className="py-3 px-4">
                   <button
                     onClick={() => onEdit(supplier.id)}
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs mr-2"
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-normal py-1 px-2 rounded text-xs mr-2"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => onDelete(supplier.id)}
-                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-xs"
+                    className="bg-red-500 hover:bg-red-700 text-white font-normal py-1 px-2 rounded text-xs"
                   >
                     Delete
                   </button>
@@ -68,3 +68,4 @@ export const SupplierList: React.FC<SupplierListProps> = ({ suppliers, onEdit, o
     </div>
   );
 };
+

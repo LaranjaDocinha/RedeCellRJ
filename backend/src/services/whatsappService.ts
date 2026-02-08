@@ -3,8 +3,9 @@ import { logger } from '../utils/logger.js';
 import { AppError } from '../utils/errors.js';
 import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
-import type { Message } from 'whatsapp-web.js';
-import qrcode from 'qrcode-terminal'; // Para exibir o QR Code no terminal
+import qrcode from 'qrcode-terminal';
+import { createCircuitBreaker } from '../utils/circuitBreaker.js';
+import { whatsappQueue, addJob } from '../jobs/queue.js';
 
 interface SendMessageOptions {
   customerId?: number;
@@ -14,8 +15,20 @@ interface SendMessageOptions {
 }
 
 export class WhatsappService {
-  private client: Client | null = null; // Cliente do WhatsApp
-  private isReady: boolean = false; // Flag para indicar se o cliente está pronto
+  private client: Client | null = null;
+  private isReady: boolean = false;
+  private breaker: any;
+
+  constructor() {
+    // Inicializa o Circuit Breaker para o método de entrega
+    this.breaker = createCircuitBreaker(this.deliverMessage.bind(this), 'WhatsApp-Delivery');
+
+    // Fallback caso o circuito esteja aberto
+    this.breaker.fallback(() => {
+      logger.warn('WhatsApp Circuit is OPEN. Message skipped or queued for later.');
+      throw new AppError('WhatsApp service is currently unavailable (Circuit Open)', 503);
+    });
+  }
 
   /**
    * Inicializa o cliente WhatsApp. Deve ser chamado uma vez no início da aplicação.
@@ -27,10 +40,9 @@ export class WhatsappService {
     }
     logger.info('Initializing WhatsApp Client...');
     this.client = new Client({
-      authStrategy: new LocalAuth({ clientId: 'pdv-backend' }), // Armazena a sessão localmente com um ID
+      authStrategy: new LocalAuth({ clientId: 'pdv-backend' }),
       puppeteer: {
-        args: ['--no-sandbox', '--disable-setuid-sandbox'], // Args para compatibilidade em alguns ambientes
-        // headless: false, // Opcional: para ver o navegador Chromium
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
       },
     });
 
@@ -39,9 +51,8 @@ export class WhatsappService {
       qrcode.generate(qr, { small: true });
     });
 
-    this.client.on('authenticated', (session) => {
+    this.client.on('authenticated', () => {
       logger.info('WhatsApp Client AUTHENTICATED!');
-      // session saved
     });
 
     this.client.on('auth_failure', (msg) => {
@@ -54,78 +65,95 @@ export class WhatsappService {
       this.isReady = true;
     });
 
+    this.client.on('message', async (msg) => {
+      try {
+        const text = msg.body.toLowerCase();
+        if (text.includes('agendar')) {
+          const { appointmentService } = await import('./appointmentService.js');
+          const contact = await msg.getContact();
+          const appointment = await appointmentService.bookAppointment(
+            msg.from.replace('@c.us', ''),
+            contact.pushname || 'Cliente',
+            'Aparelho a definir',
+          );
+
+          await msg.reply(
+            `Tudo certo! Agendamos seu atendimento para o dia ${appointment.date.toLocaleDateString('pt-BR')} às ${appointment.date.toLocaleTimeString('pt-BR')}. Sua pré-OS é a #${appointment.orderId}. Te esperamos! 📱🚀`,
+          );
+        }
+      } catch (e) {
+        logger.error('Error handling incoming message:', e);
+      }
+    });
+
     this.client.on('disconnected', (reason) => {
       logger.warn('WHATSAPP CLIENT DISCONNECTED:', reason);
       this.isReady = false;
-      // Implementar lógica de reconexão ou notificação
-      // Ex: this.client?.initialize();
     });
 
-    this.client.on('message', (message: Message) => {
-        // Exemplo de como lidar com mensagens recebidas (futuro)
-        // if (message.body === '!ping') {
-        //     message.reply('pong');
-        // }
-    });
-
-    await this.client.initialize().catch(err => {
+    await this.client.initialize().catch((err) => {
       logger.error('Failed to initialize WhatsApp Client:', err);
       this.isReady = false;
     });
   }
 
   /**
-   * Envia uma mensagem baseada em template para um cliente.
+   * Envia uma mensagem baseada em template (enfileira para background).
    */
-  async sendTemplateMessage({ customerId, phone, templateName, variables }: SendMessageOptions): Promise<void> {
+  async queueTemplateMessage(options: SendMessageOptions): Promise<void> {
+    await addJob(whatsappQueue, 'sendTemplate', options);
+  }
+
+  /**
+   * Envia uma mensagem baseada em template para um cliente (processamento imediato).
+   */
+  async sendTemplateMessage({
+    customerId,
+    phone,
+    templateName,
+    variables,
+  }: SendMessageOptions): Promise<void> {
     const pool = getPool();
     const client = await pool.connect();
-    let messageContent = `Template Error: ${templateName}`; // Conteúdo padrão em caso de falha
+    let messageContent = `Template Error: ${templateName}`;
 
     try {
-      // 1. Buscar o template
       const templateRes = await client.query(
         'SELECT content FROM whatsapp_templates WHERE name = $1 AND is_active = TRUE',
-        [templateName]
+        [templateName],
       );
 
       if (templateRes.rowCount === 0) {
-        logger.warn(`Whatsapp template '${templateName}' not found or inactive. Using default content.`);
-        // Fallback content or throw specific error
+        logger.warn(
+          `Whatsapp template '${templateName}' not found or inactive. Using default content.`,
+        );
         messageContent = `[FALLBACK] Olá, sua notificação sobre ${templateName} está pronta!`;
       } else {
         messageContent = templateRes.rows[0].content;
-        // 2. Substituir variáveis (Ex: {{name}} -> 'João')
         for (const [key, value] of Object.entries(variables)) {
           const regex = new RegExp(`{{${key}}}`, 'g');
           messageContent = messageContent.replace(regex, String(value));
         }
       }
 
-      // 3. Enviar mensagem via WhatsApp-Web.js
-      await this.deliverMessage(phone, messageContent);
+      // Envia via Circuit Breaker
+      await this.breaker.fire(phone, messageContent);
 
-      // 4. Logar no banco com status 'sent'
       await client.query(
         `INSERT INTO whatsapp_logs (customer_id, phone, content, status, sent_at)
          VALUES ($1, $2, $3, 'sent', NOW())`,
-        [customerId, phone, messageContent]
+        [customerId, phone, messageContent],
       );
 
       logger.info(`Whatsapp message sent to ${phone} using template '${templateName}'`);
-
     } catch (error) {
       logger.error(`Failed to send whatsapp message to ${phone}:`, error);
-      
-      // Logar erro no banco com status 'failed'
+
       await client.query(
         `INSERT INTO whatsapp_logs (customer_id, phone, content, status, error_message)
          VALUES ($1, $2, $3, 'failed', $4)`,
-        [customerId, phone, messageContent, (error as Error).message] // Usa messageContent que foi formatado
+        [customerId, phone, messageContent, (error as Error).message],
       );
-      
-      // Não relançamos o erro para não quebrar o fluxo principal (ex: venda),
-      // mas podemos logar um AppError interno para ser tratado, se necessário.
     } finally {
       client.release();
     }
@@ -141,46 +169,48 @@ export class WhatsappService {
     }
 
     try {
-      // O whatsapp-web.js requer que o número inclua o código do país (ex: 5511999999999)
-      // Ajuste para garantir que o telefone esteja no formato correto (apenas números + código do país)
-      // Ex: Remover caracteres não numéricos e adicionar 55 se não tiver
       const cleanPhone = phone.replace(/\D/g, '');
-      const formattedPhone = cleanPhone.startsWith('55') ? `${cleanPhone}@c.us` : `55${cleanPhone}@c.us`; // Assumindo Brasil
+      const formattedPhone = cleanPhone.startsWith('55')
+        ? `${cleanPhone}@c.us`
+        : `55${cleanPhone}@c.us`;
 
       await this.client.sendMessage(formattedPhone, content);
       logger.info(`[WHATSAPP_PROVIDER] Message sent to ${formattedPhone}: "${content}"`);
     } catch (error) {
       logger.error(`[WHATSAPP_PROVIDER] Error sending message to ${phone}:`, error);
-      throw error; // Re-lança para ser capturado pelo bloco catch principal
+      throw error;
     }
   }
 
-  /**
-   * Cria ou atualiza um template.
-   */
   async upsertTemplate(name: string, content: string): Promise<void> {
     const pool = getPool();
     await pool.query(
       `INSERT INTO whatsapp_templates (name, content, is_active) 
        VALUES ($1, $2, TRUE)
        ON CONFLICT (name) DO UPDATE SET content = EXCLUDED.content, is_active = EXCLUDED.is_active, updated_at = NOW()`,
-      [name, content]
+      [name, content],
     );
   }
 
-  /**
-   * Busca o histórico de mensagens de um cliente.
-   */
   async getLogsByCustomer(customerId: number) {
     const pool = getPool();
     const res = await pool.query(
       'SELECT * FROM whatsapp_logs WHERE customer_id = $1 ORDER BY created_at DESC',
-      [customerId]
+      [customerId],
     );
     return res.rows;
+  }
+
+  getBreakerStatus() {
+    return {
+      name: 'WhatsApp Delivery',
+      opened: this.breaker.opened,
+      halfOpen: this.breaker.halfOpen,
+      closed: this.breaker.closed,
+      stats: this.breaker.stats,
+    };
   }
 }
 
 export const whatsappService = new WhatsappService();
-// Exportar a função de inicialização para ser chamada no app.ts
 export const initWhatsapp = () => whatsappService.initWhatsappClient();

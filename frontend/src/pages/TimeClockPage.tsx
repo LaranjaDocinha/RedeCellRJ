@@ -95,11 +95,26 @@ const TimeClockPage: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
+  const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
+
   // 3. Handle Clock In/Out
   const handleClockAction = async () => {
     setActionLoading(true);
-    const endpoint = isClockedIn ? '/api/time-clock/clock-out' : '/api/time-clock/clock-in';
-    const payload = isClockedIn ? {} : { branchId: 1 }; // Matriz default
+    
+    // Captura Localização
+    let currentCoords = null;
+    try {
+        const pos: any = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
+        currentCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setLocation(currentCoords);
+    } catch (e) {
+        addNotification('Acesso à localização negado. O ponto será registrado com alerta.', 'warning');
+    }
+
+    const endpoint = isClockedIn ? '/api/v1/time-clock/clock-out' : '/api/v1/time-clock/clock-in';
+    const payload = isClockedIn ? { location: currentCoords } : { branchId: 1, location: currentCoords }; 
 
     try {
       const res = await fetch(endpoint, {

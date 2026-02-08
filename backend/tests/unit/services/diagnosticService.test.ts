@@ -8,7 +8,8 @@ const mockPoolQuery = vi.fn(); // Mock da função query do pool
 // Mock do módulo db/index.js
 vi.mock('../../../src/db/index.js', () => {
   return {
-    getPool: vi.fn(() => ({ // Mock da função getPool para retornar um objeto com o mockPoolQuery
+    getPool: vi.fn(() => ({
+      // Mock da função getPool para retornar um objeto com o mockPoolQuery
       query: mockPoolQuery,
     })),
   };
@@ -47,7 +48,10 @@ describe('diagnosticService', () => {
     it('should throw AppError if database query fails', async () => {
       mockPoolQuery.mockRejectedValueOnce(new Error('DB Error'));
       await expect(diagnosticService.getRootNodes()).rejects.toThrow(AppError);
-      await expect(diagnosticService.getRootNodes()).rejects.toHaveProperty('message', 'Failed to fetch root diagnostic nodes');
+      await expect(diagnosticService.getRootNodes()).rejects.toHaveProperty(
+        'message',
+        'Failed to fetch root diagnostic nodes',
+      );
     });
   });
 
@@ -76,7 +80,10 @@ describe('diagnosticService', () => {
     it('should throw AppError if database query fails', async () => {
       mockPoolQuery.mockRejectedValueOnce(new Error('DB Error'));
       await expect(diagnosticService.getChildNodes(nodeId)).rejects.toThrow(AppError);
-      await expect(diagnosticService.getChildNodes(nodeId)).rejects.toHaveProperty('message', 'Failed to fetch child diagnostic nodes');
+      await expect(diagnosticService.getChildNodes(nodeId)).rejects.toHaveProperty(
+        'message',
+        'Failed to fetch child diagnostic nodes',
+      );
     });
   });
 
@@ -105,7 +112,10 @@ describe('diagnosticService', () => {
     it('should throw AppError if database query fails', async () => {
       mockPoolQuery.mockRejectedValueOnce(new Error('DB Error'));
       await expect(diagnosticService.getNodeOptions(nodeId)).rejects.toThrow(AppError);
-      await expect(diagnosticService.getNodeOptions(nodeId)).rejects.toHaveProperty('message', 'Failed to fetch diagnostic node options');
+      await expect(diagnosticService.getNodeOptions(nodeId)).rejects.toHaveProperty(
+        'message',
+        'Failed to fetch diagnostic node options',
+      );
     });
   });
 
@@ -127,12 +137,21 @@ describe('diagnosticService', () => {
       expect(mockPoolQuery).toHaveBeenCalledTimes(1);
       const calledQuery = mockPoolQuery.mock.calls[0][0];
       expect(normalizeSql(calledQuery)).toBe(expectedQuery);
-      expect(mockPoolQuery).toHaveBeenCalledWith(expect.anything(), [nodeId, userId, isHelpful, comments]);
+      expect(mockPoolQuery).toHaveBeenCalledWith(expect.anything(), [
+        nodeId,
+        userId,
+        isHelpful,
+        comments,
+      ]);
     });
 
     it('should throw AppError if database query fails', async () => {
-      mockPoolQuery.mockImplementationOnce(() => { throw new Error('DB Error from mock'); });
-      await expect(diagnosticService.submitFeedback(nodeId, userId, isHelpful, comments)).rejects.toThrow(AppError);
+      mockPoolQuery.mockImplementationOnce(() => {
+        throw new Error('DB Error from mock');
+      });
+      await expect(
+        diagnosticService.submitFeedback(nodeId, userId, isHelpful, comments),
+      ).rejects.toThrow(AppError);
       // Removed .toHaveProperty('message', ...) due to persistent "promise resolved undefined" issues.
     });
   });
@@ -155,7 +174,12 @@ describe('diagnosticService', () => {
       expect(mockPoolQuery).toHaveBeenCalledTimes(1);
       const calledQuery = mockPoolQuery.mock.calls[0][0];
       expect(normalizeSql(calledQuery)).toBe(expectedQuery);
-      expect(mockPoolQuery).toHaveBeenCalledWith(expect.anything(), [userId, sessionId, nodeId, selectedOptionId]);
+      expect(mockPoolQuery).toHaveBeenCalledWith(expect.anything(), [
+        userId,
+        sessionId,
+        nodeId,
+        selectedOptionId,
+      ]);
     });
 
     it('should handle undefined selectedOptionId', async () => {
@@ -166,14 +190,22 @@ describe('diagnosticService', () => {
       const calledQuery = mockPoolQuery.mock.calls[0][0];
       expect(normalizeSql(calledQuery)).toBe(expectedQuery);
       // Aqui, o undefined é passado diretamente, então esperamos undefined no array de parâmetros
-      expect(mockPoolQuery).toHaveBeenCalledWith(expect.anything(), [userId, sessionId, nodeId, undefined]); 
+      expect(mockPoolQuery).toHaveBeenCalledWith(expect.anything(), [
+        userId,
+        sessionId,
+        nodeId,
+        undefined,
+      ]);
     });
 
     it('should throw AppError if database query fails', async () => {
-      mockPoolQuery.mockImplementationOnce(() => { throw new Error('DB Error from mock'); });
-      await expect(diagnosticService.recordHistory(userId, sessionId, nodeId, selectedOptionId)).rejects.toThrow(AppError);
+      mockPoolQuery.mockImplementationOnce(() => {
+        throw new Error('DB Error from mock');
+      });
+      await expect(
+        diagnosticService.recordHistory(userId, sessionId, nodeId, selectedOptionId),
+      ).rejects.toThrow(AppError);
       // Removed .toHaveProperty('message', ...) due to persistent "promise resolved undefined" issues.
     });
   });
 });
-

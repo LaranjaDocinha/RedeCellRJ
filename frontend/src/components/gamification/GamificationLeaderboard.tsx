@@ -93,7 +93,7 @@ const GamificationLeaderboard: React.FC = () => {
                 color: index < 3 ? 'white' : 'black',
                 px: 1,
                 borderBottomRightRadius: 8,
-                fontWeight: 'bold'
+                fontWeight: 400
               }}>
                 #{index + 1}
               </Box>

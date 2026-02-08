@@ -11,7 +11,7 @@ const ReportCard: React.FC<{ title: string; info?: string; children: React.React
   <Card sx={{ height: '100%', borderRadius: '16px', boxShadow: 'none', border: '1px solid', borderColor: 'divider' }}>
     <CardContent>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6" fontWeight={700}>{title}</Typography>
+        <Typography variant="h6" fontWeight={400}>{title}</Typography>
         {info && (
             <Tooltip title={info}>
                 <Box component="span" sx={{ color: 'text.secondary', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><FaInfoCircle size={14} /></Box>
@@ -112,7 +112,7 @@ const FinanceReports: React.FC = () => {
             </Box>
           ) : (
             <Box sx={{ py: 4, textAlign: 'center' }}>
-              <Typography variant="h3" fontWeight={900} color="primary">
+              <Typography variant="h3" fontWeight={400} color="primary">
                 R$ {breakEvenPointData?.totalRevenue ? breakEvenPointData.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00'}
               </Typography>
               <Typography variant="body2" color="text.secondary" mb={3}>
@@ -124,7 +124,7 @@ const FinanceReports: React.FC = () => {
                   sx={{ height: 12, borderRadius: 6, mb: 2, bgcolor: theme.palette.action.hover }} 
               />
               <Stack direction="row" justifyContent="space-between">
-                  <Typography variant="caption" fontWeight={700}>
+                  <Typography variant="caption" fontWeight={400}>
                     {breakEvenPointData?.percentageTowardsBreakEven ? Math.min(100, breakEvenPointData.percentageTowardsBreakEven).toFixed(0) : '0'}% CONCLUÍDO
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
@@ -176,7 +176,7 @@ const FinanceReports: React.FC = () => {
             </Box>
           ) : (
             <Box sx={{ py: 4, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300 }}>
-               <Typography variant="h1" fontWeight={900} color="secondary">
+               <Typography variant="h1" fontWeight={400} color="secondary">
                  R$ {cacValue.toFixed(2)}
                </Typography>
                <Typography variant="subtitle1" color="text.secondary">
@@ -192,3 +192,4 @@ const FinanceReports: React.FC = () => {
 };
 
 export default FinanceReports;
+

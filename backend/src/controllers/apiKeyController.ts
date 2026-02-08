@@ -9,17 +9,22 @@ export const createApiKeySchema = z.object({
   expires_at: z.string().datetime().optional(),
 });
 
-export const updateApiKeySchema = z.object({
-  name: z.string().min(1, 'Name is required').optional(),
-  status: z.enum(['active', 'revoked']).optional(),
-}).partial();
+export const updateApiKeySchema = z
+  .object({
+    name: z.string().min(1, 'Name is required').optional(),
+    status: z.enum(['active', 'revoked']).optional(),
+  })
+  .partial();
 
 export const apiKeyController = {
   async generateApiKey(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = (req as any).user.id;
       const validatedData = createApiKeySchema.parse(req.body);
-      const { rawKey, apiKey } = await apiKeyService.generateApiKey({ ...validatedData, user_id: userId });
+      const { rawKey, apiKey } = await apiKeyService.generateApiKey({
+        ...validatedData,
+        user_id: userId,
+      });
       res.status(201).json({ rawKey, apiKey }); // Return raw key ONLY ONCE
     } catch (error) {
       next(error);

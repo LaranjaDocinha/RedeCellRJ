@@ -1,8 +1,9 @@
 // frontend/src/types/product.ts
+import { ProductId, BranchId, CategoryId, VariationId } from './branded';
 
 export interface ProductVariation {
-  id?: number;
-  product_id?: number;
+  id?: VariationId;
+  product_id?: ProductId;
   name?: string;
   sku: string;
   color?: string;
@@ -15,7 +16,7 @@ export interface ProductVariation {
 }
 
 export interface ProductSupplier {
-  supplier_id: number;
+  supplier_id: number; // TODO: Criar SupplierId
   supplier_name?: string;
   cost: number;
   lead_time_days?: number | null;
@@ -23,11 +24,11 @@ export interface ProductSupplier {
 }
 
 export interface Product {
-  id: number;
+  id: ProductId;
   name: string;
   sku: string | null;
-  branch_id: number;
-  category_id?: number | null;
+  branch_id: BranchId;
+  category_id?: CategoryId | null;
   description?: string;
   product_type?: string;
   is_serialized?: boolean;

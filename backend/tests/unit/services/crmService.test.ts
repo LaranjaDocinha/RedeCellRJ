@@ -45,7 +45,9 @@ describe('CrmService', () => {
 
   describe('calculateRfmScores', () => {
     it('should execute RFM query', async () => {
-      const mockResult = [{ name: 'John', email: 'john@example.com', r_score: 5, f_score: 5, m_score: 5 }];
+      const mockResult = [
+        { name: 'John', email: 'john@example.com', r_score: 5, f_score: 5, m_score: 5 },
+      ];
       mockDefaultQuery.mockResolvedValueOnce({ rows: mockResult });
 
       const result = await calculateRfmScores();

@@ -1,27 +1,35 @@
-// frontend/src/db.ts
 import Dexie, { Table } from 'dexie';
 
-export interface OfflineRequest {
-  id?: number;
-  url: string;
-  method: string;
-  headers?: any;
-  body?: any;
-  timestamp: number;
-  synced: number; // 0 for false, 1 for true
+export interface LocalProduct {
+  id: number;
+  name: string;
+  sku: string;
+  price: number;
+  stock_quantity: number;
+  category: string;
 }
 
-export class AppDB extends Dexie {
-  offlineSales!: Table<OfflineRequest>;
-  offlineServiceOrders!: Table<OfflineRequest>;
+export interface OfflineSale {
+  id?: number;
+  items: any[];
+  total: number;
+  paymentMethod: string;
+  customerId?: string;
+  timestamp: Date;
+  synced: boolean;
+}
+
+export class RedecellLocalDB extends Dexie {
+  products!: Table<LocalProduct>;
+  offlineSales!: Table<OfflineSale>;
 
   constructor() {
-    super('RedecellPWA');
-    this.version(3).stores({ // Incremented version for schema change
-      offlineSales: '++id, timestamp, synced',
-      offlineServiceOrders: '++id, timestamp, synced',
+    super('RedecellLocalDB');
+    this.version(1).stores({
+      products: 'id, name, sku, category',
+      offlineSales: '++id, synced, timestamp'
     });
   }
 }
 
-export const db = new AppDB();
+export const db = new RedecellLocalDB();

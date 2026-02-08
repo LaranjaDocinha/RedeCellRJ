@@ -34,7 +34,7 @@ export const deleteBadge = async (id: number) => {
 
 export const checkAndAwardBadges = async () => {
   const pool = getPool();
-  
+
   // Award 'sales_volume' badges
   await pool.query(`
     INSERT INTO user_badges (user_id, badge_id)
@@ -67,6 +67,6 @@ export const checkAndAwardBadges = async () => {
       AND r.total_repairs >= b.threshold
     ON CONFLICT (user_id, badge_id) DO NOTHING;
   `);
-  
+
   console.log('Badges awarded successfully.');
 };

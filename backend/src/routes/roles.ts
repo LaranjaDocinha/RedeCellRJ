@@ -4,6 +4,7 @@ import { roleService } from '../services/roleService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 import { ValidationError, AppError } from '../utils/errors.js';
+import { sendSuccess } from '../utils/responseHelper.js';
 
 const rolesRouter = Router();
 
@@ -50,7 +51,7 @@ rolesRouter.use(authMiddleware.authorize('manage', 'Roles')); // Only users with
 rolesRouter.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const roles = await roleService.getAllRoles();
-    res.status(200).json(roles);
+    sendSuccess(res, roles);
   } catch (error) {
     next(error);
   }
@@ -63,7 +64,7 @@ rolesRouter.get('/:id', async (req: Request, res: Response, next: NextFunction) 
     if (!role) {
       throw new AppError('Role not found', 404);
     }
-    res.status(200).json(role);
+    sendSuccess(res, role);
   } catch (error) {
     next(error);
   }
@@ -76,7 +77,7 @@ rolesRouter.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const newRole = await roleService.createRole(req.body);
-      res.status(201).json(newRole);
+      sendSuccess(res, { ...newRole, message: 'Role created successfully' }, 201);
     } catch (error) {
       next(error);
     }
@@ -93,7 +94,7 @@ rolesRouter.put(
       if (!updatedRole) {
         throw new AppError('Role not found', 404);
       }
-      res.status(200).json(updatedRole);
+      sendSuccess(res, { ...updatedRole, message: 'Role updated successfully' });
     } catch (error) {
       next(error);
     }
@@ -122,7 +123,7 @@ rolesRouter.post(
       const roleId = parseInt(req.params.roleId);
       const { permissionId } = req.body;
       await roleService.assignPermissionToRole(roleId, permissionId);
-      res.status(200).json({ message: 'Permission assigned successfully' });
+      sendSuccess(res, { message: 'Permission assigned successfully' });
     } catch (error) {
       next(error);
     }
@@ -137,7 +138,7 @@ rolesRouter.delete(
       const roleId = parseInt(req.params.roleId);
       const permissionId = parseInt(req.params.permissionId);
       await roleService.removePermissionFromRole(roleId, permissionId);
-      res.status(200).json({ message: 'Permission removed successfully' });
+      sendSuccess(res, { message: 'Permission removed successfully' });
     } catch (error) {
       next(error);
     }

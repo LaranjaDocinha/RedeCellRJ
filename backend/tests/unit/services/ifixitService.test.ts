@@ -23,7 +23,7 @@ describe('iFixitService', () => {
 
       expect(axios.get).toHaveBeenCalledWith(
         expect.stringContaining('/search/iPhone'),
-        expect.any(Object)
+        expect.any(Object),
       );
       expect(result).toEqual(mockResults.results);
     });
@@ -45,7 +45,7 @@ describe('iFixitService', () => {
 
       expect(axios.get).toHaveBeenCalledWith(
         expect.stringContaining('/guides/1'),
-        expect.any(Object)
+        expect.any(Object),
       );
       expect(result).toEqual(mockDetails);
     });
@@ -53,7 +53,9 @@ describe('iFixitService', () => {
     it('should throw error if details fetch fails', async () => {
       (axios.get as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network Error'));
 
-      await expect(getGuideDetails(1)).rejects.toThrow('Failed to fetch guide details from iFixit for ID 1');
+      await expect(getGuideDetails(1)).rejects.toThrow(
+        'Failed to fetch guide details from iFixit for ID 1',
+      );
     });
   });
 });

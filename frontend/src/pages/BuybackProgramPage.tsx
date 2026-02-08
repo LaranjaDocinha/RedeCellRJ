@@ -102,7 +102,7 @@ const BuybackProgramPage: React.FC = () => {
                   <CardActionArea onClick={() => setSelectedDevice(device)} sx={{ p: 1 }}>
                     <CardMedia component="img" height="200" image={device.image} sx={{ borderRadius: '12px', objectFit: 'contain' }} />
                     <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography variant="subtitle1" fontWeight={800}>{device.name}</Typography>
+                      <Typography variant="subtitle1" fontWeight={400}>{device.name}</Typography>
                     </CardContent>
                   </CardActionArea>
                 </Card>
@@ -119,7 +119,7 @@ const BuybackProgramPage: React.FC = () => {
       case 1:
         return (
           <Box sx={{ maxWidth: 600, mx: 'auto' }}>
-            <Typography variant="h6" fontWeight={800} gutterBottom textAlign="center">Como está o estado visual do aparelho?</Typography>
+            <Typography variant="h6" fontWeight={400} gutterBottom textAlign="center">Como está o estado visual do aparelho?</Typography>
             <RadioGroup value={condition} onChange={(e) => setCondition(e.target.value)}>
               {[
                 { val: 'excelente', label: 'Excelente', desc: 'Sem riscos ou marcas de uso. Parece novo.' },
@@ -130,7 +130,7 @@ const BuybackProgramPage: React.FC = () => {
                   <FormControlLabel 
                     value={item.val} 
                     control={<Radio />} 
-                    label={<Box sx={{ ml: 1 }}><Typography fontWeight={700}>{item.label}</Typography><Typography variant="caption" color="text.secondary">{item.desc}</Typography></Box>} 
+                    label={<Box sx={{ ml: 1 }}><Typography fontWeight={400}>{item.label}</Typography><Typography variant="caption" color="text.secondary">{item.desc}</Typography></Box>} 
                     sx={{ width: '100%', m: 0 }}
                   />
                 </Paper>
@@ -141,7 +141,7 @@ const BuybackProgramPage: React.FC = () => {
       case 2:
         return (
           <Box sx={{ maxWidth: 600, mx: 'auto' }}>
-            <Typography variant="h6" fontWeight={800} gutterBottom textAlign="center">Tudo funciona perfeitamente?</Typography>
+            <Typography variant="h6" fontWeight={400} gutterBottom textAlign="center">Tudo funciona perfeitamente?</Typography>
             <RadioGroup value={functionalStatus} onChange={(e) => setFunctionalStatus(e.target.value)}>
               {[
                 { val: 'full', label: 'Totalmente Funcional', desc: 'FaceID, Câmeras, Botões e WiFi funcionam 100%.' },
@@ -152,7 +152,7 @@ const BuybackProgramPage: React.FC = () => {
                   <FormControlLabel 
                     value={item.val} 
                     control={<Radio />} 
-                    label={<Box sx={{ ml: 1 }}><Typography fontWeight={700}>{item.label}</Typography><Typography variant="caption" color="text.secondary">{item.desc}</Typography></Box>} 
+                    label={<Box sx={{ ml: 1 }}><Typography fontWeight={400}>{item.label}</Typography><Typography variant="caption" color="text.secondary">{item.desc}</Typography></Box>} 
                     sx={{ width: '100%', m: 0 }}
                   />
                 </Paper>
@@ -171,18 +171,18 @@ const BuybackProgramPage: React.FC = () => {
             ) : (
               <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
                 <VerifiedIcon color="success" sx={{ fontSize: 80, mb: 2 }} />
-                <Typography variant="h4" fontWeight={900}>OFERTA REDECELL</Typography>
-                <Typography variant="h2" color="primary" sx={{ fontWeight: 900, my: 3 }}>
+                <Typography variant="h4" fontWeight={400}>OFERTA REDECELL</Typography>
+                <Typography variant="h2" color="primary" sx={{ fontWeight: 400, my: 3 }}>
                   R$ {buybackValue?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </Typography>
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 500, mx: 'auto' }}>
                   Este valor pode ser usado como crédito imediato para a compra de um novo aparelho ou pago via Pix após validação técnica em loja.
                 </Typography>
                 <Stack direction="row" spacing={2} justifyContent="center">
-                  <Button variant="contained" size="large" sx={{ borderRadius: '12px', px: 4, fontWeight: 700 }}>
+                  <Button variant="contained" size="large" sx={{ borderRadius: '12px', px: 4, fontWeight: 400 }}>
                     Aceitar Oferta e Agendar
                   </Button>
-                  <Button variant="outlined" size="large" onClick={() => setActiveStep(0)} sx={{ borderRadius: '12px', fontWeight: 700 }}>
+                  <Button variant="outlined" size="large" onClick={() => setActiveStep(0)} sx={{ borderRadius: '12px', fontWeight: 400 }}>
                     Nova Avaliação
                   </Button>
                 </Stack>
@@ -199,7 +199,7 @@ const BuybackProgramPage: React.FC = () => {
     <Container maxWidth="lg" sx={{ py: 6 }}>
       <Box mb={6} display="flex" justifyContent="space-between" alignItems="center">
         <Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
+          <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px' }}>
             Buyback Program
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -235,7 +235,7 @@ const BuybackProgramPage: React.FC = () => {
             <Button
               disabled={activeStep === 0}
               onClick={handleBack}
-              sx={{ fontWeight: 700 }}
+              sx={{ fontWeight: 400 }}
             >
               Voltar
             </Button>
@@ -243,7 +243,7 @@ const BuybackProgramPage: React.FC = () => {
               variant="contained"
               onClick={handleNext}
               disabled={activeStep === 0 && !selectedDevice}
-              sx={{ borderRadius: '12px', px: 4, fontWeight: 700 }}
+              sx={{ borderRadius: '12px', px: 4, fontWeight: 400 }}
               endIcon={<ArrowIcon />}
             >
               {activeStep === steps.length - 2 ? 'Ver Resultado' : 'Próximo'}
@@ -258,7 +258,7 @@ const BuybackProgramPage: React.FC = () => {
           <Box display="flex" gap={2}>
             <Avatar sx={{ bgcolor: 'success.light' }}><CheckIcon /></Avatar>
             <Box>
-              <Typography fontWeight={800}>Avaliação na Hora</Typography>
+              <Typography fontWeight={400}>Avaliação na Hora</Typography>
               <Typography variant="caption" color="text.secondary">Nossa IA calcula o valor de mercado atualizado instantaneamente.</Typography>
             </Box>
           </Box>
@@ -267,7 +267,7 @@ const BuybackProgramPage: React.FC = () => {
           <Box display="flex" gap={2}>
             <Avatar sx={{ bgcolor: 'primary.light' }}><VerifiedIcon /></Avatar>
             <Box>
-              <Typography fontWeight={800}>Segurança Total</Typography>
+              <Typography fontWeight={400}>Segurança Total</Typography>
               <Typography variant="caption" color="text.secondary">Apagamos seus dados seguindo protocolos internacionais de segurança.</Typography>
             </Box>
           </Box>
@@ -276,7 +276,7 @@ const BuybackProgramPage: React.FC = () => {
           <Box display="flex" gap={2}>
             <Avatar sx={{ bgcolor: 'warning.light' }}><CalcIcon /></Avatar>
             <Box>
-              <Typography fontWeight={800}>Crédito ou Dinheiro</Typography>
+              <Typography fontWeight={400}>Crédito ou Dinheiro</Typography>
               <Typography variant="caption" color="text.secondary">Escolha entre desconto em um novo ou Pix na conta.</Typography>
             </Box>
           </Box>

@@ -1,9 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
-import httpStatus from 'http-status';
+import { Request, Response } from 'express';
 import { tefService } from '../services/tefService.js';
 import { catchAsync } from '../utils/catchAsync.js';
-import { AppError } from '../utils/errors.js';
 import { z } from 'zod';
+import { sendSuccess } from '../utils/responseHelper.js';
 
 // Zod Schemas
 export const processTefTransactionSchema = z.object({
@@ -21,17 +20,14 @@ export const getTefStatusSchema = z.object({
   transactionId: z.string().uuid('Invalid transaction ID format'),
 });
 
-
-
-
 export const processTefTransaction = catchAsync(async (req: Request, res: Response) => {
   const transactionData = req.body; // Already validated by middleware
   const result = await tefService.processTefTransaction(transactionData);
-  res.status(httpStatus.OK).send(result);
+  sendSuccess(res, result);
 });
 
 export const getTefTransactionStatus = catchAsync(async (req: Request, res: Response) => {
   const { transactionId } = req.params; // Already validated by schema
   const status = await tefService.getTefTransactionStatus(transactionId);
-  res.status(httpStatus.OK).send({ status });
+  sendSuccess(res, { status });
 });

@@ -2,6 +2,7 @@ import request from 'supertest';
 import nock from 'nock';
 import { app } from '../../src/app.js';
 import { getAdminAuthToken } from '../utils/auth.js';
+import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 
 const REPORTS_MICROSERVICE_URL = 'http://localhost:5001';
 
@@ -32,7 +33,7 @@ describe('P&L Report API', () => {
       .reply(200, mockPnlData);
 
     const response = await request(app)
-      .get('/api/pnl-report')
+      .get('/api/reports/pnl') // Corrected route
       .set('Authorization', `Bearer ${token}`)
       .query({ startDate: '2025-10-01', endDate: '2025-11-30' });
 
@@ -48,7 +49,7 @@ describe('P&L Report API', () => {
       .reply(500, { message: 'Internal Server Error from microservice' });
 
     const response = await request(app)
-      .get('/api/pnl-report')
+      .get('/api/reports/pnl') // Corrected route
       .set('Authorization', `Bearer ${token}`)
       .query({ startDate: '2025-10-01', endDate: '2025-11-30' });
 

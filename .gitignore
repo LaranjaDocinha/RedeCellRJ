@@ -63,6 +63,8 @@ tmp/
 .stylelintcache
 .prettierignore-sync
 tsconfig.tsbuildinfo
+*.tmp
+*.temp
 
 # --- Local Automation & Scratch Scripts ---
 # Ignores local fix/maintenance scripts often created in root
@@ -100,3 +102,23 @@ docker-compose.override.yml
 
 # --- Tooling ---
 .husky/_/
+
+# Arquivos temporários adicionais
+*.tmp
+*.temp
+Thumbs.db
+
+# Saídas de ferramentas específicas
+cypress/screenshots/
+cypress/videos/
+
+# Arquivos de cache
+.cache/
+**/.cache/
+
+# Saídas de compiladores/transpiladores
+*.tsbuildinfo
+
+# Arquivos de configuração locais
+*.local.json
+*.local.yaml

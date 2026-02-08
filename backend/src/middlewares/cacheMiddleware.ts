@@ -1,54 +1,85 @@
 import { Request, Response, NextFunction } from 'express';
 import redisClient from '../utils/redisClient.js';
-import { logger } from '../utils/logger.js'; // Assuming logger is available
-import { UserPayload } from '../types/express.js'; // Importar UserPayload
+import { logger } from '../utils/logger.js';
 
-const DEFAULT_CACHE_DURATION_SECONDS = 300; // 5 minutes
+type CacheOptions = {
+  duration?: number; // Duration in seconds. Default: 60
+  keyPrefix?: string; // Prefix for cache keys. Default: 'cache'
+};
 
-export const cacheMiddleware = (durationSeconds: number = DEFAULT_CACHE_DURATION_SECONDS) => {
+/**
+ * Middleware de Cache usando Redis.
+ * Armazena a resposta GET no Redis e a serve se disponível.
+ */
+export const cacheMiddleware = (options: CacheOptions = {}) => {
+  const duration = options.duration || 60;
+  const prefix = options.keyPrefix || 'cache';
+
   return async (req: Request, res: Response, next: NextFunction) => {
-    // Para rotas autenticadas, incluir o userId na cacheKey para caches personalizados
-    let cacheKey = req.originalUrl;
-    if (req.user && (req.user as UserPayload).id) {
-        cacheKey = `${(req.user as UserPayload).id}:${req.originalUrl}`;
+    // Apenas cacheia requisições GET
+    if (req.method !== 'GET') {
+      return next();
     }
 
+    // Se o Redis não estiver conectado, passa direto
+    if (!redisClient.isOpen) {
+      return next();
+    }
+
+    const key = `${prefix}:${req.originalUrl || req.url}`;
+
     try {
-      const cachedResponse = await redisClient.get(cacheKey);
+      const cachedResponse = await redisClient.get(key);
 
       if (cachedResponse) {
-        logger.info(`Cache HIT for ${cacheKey}`);
-        return res.send(JSON.parse(cachedResponse));
+        // Cache Hit
+        logger.debug(`[Cache] HIT for ${key}`);
+        res.setHeader('X-Cache', 'HIT');
+        return res.json(JSON.parse(cachedResponse));
       }
 
-      logger.info(`Cache MISS for ${cacheKey}`);
+      // Cache Miss - Intercepta o res.json para salvar no cache
+      logger.debug(`[Cache] MISS for ${key}`);
+      res.setHeader('X-Cache', 'MISS');
 
-      // Monkey patch res.send to intercept the response and cache it
-      const originalSend = res.send;
-      res.send = (body: any) => {
-        redisClient.setEx(cacheKey, durationSeconds, JSON.stringify(body))
-          .catch(err => logger.error(`Error setting cache for ${cacheKey}`, err));
-        originalSend.call(res, body);
-        return res;
+      const originalJson = res.json;
+
+      res.json = (body: any): Response => {
+        // Restaura a função original
+        res.json = originalJson;
+
+        // Salva no Redis de forma assíncrona (não bloqueia a resposta)
+        if (res.statusCode === 200) {
+          redisClient
+            .setEx(key, duration, JSON.stringify(body))
+            .catch((err) => logger.error(`[Cache] Set Error: ${err.message}`));
+        }
+
+        // Envia a resposta
+        return res.json(body);
       };
+
       next();
     } catch (error) {
-      logger.error('Error in cache middleware:', error);
-      next(); // Continue to route even if cache fails
+      logger.error(`[Cache] Middleware Error: ${error}`);
+      next(); // Em caso de erro, segue sem cache
     }
   };
 };
 
-export const clearCache = async (cacheKey?: string) => {
+/**
+ * Utilitário para invalidar cache por padrão (ex: 'cache:/api/v1/portal/orders/*')
+ */
+export const invalidateCache = async (pattern: string) => {
+  if (!redisClient.isOpen) return;
+
   try {
-    if (cacheKey) {
-      await redisClient.del(cacheKey);
-      logger.info(`Cache cleared for key: ${cacheKey}`);
-    } else {
-      await redisClient.flushAll(); // DANGER: Clears ALL keys in Redis
-      logger.warn('ALL Redis cache has been flushed!');
+    const keys = await redisClient.keys(pattern);
+    if (keys.length > 0) {
+      await redisClient.del(keys);
+      logger.info(`[Cache] Invalidated ${keys.length} keys for pattern ${pattern}`);
     }
   } catch (error) {
-    logger.error('Error clearing cache:', error);
+    logger.error(`[Cache] Invalidation Error: ${error}`);
   }
 };

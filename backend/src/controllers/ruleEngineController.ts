@@ -1,30 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ruleEngineService } from '../services/ruleEngineService.js';
-import { z } from 'zod';
-import { validate } from '../middlewares/validationMiddleware.js';
 import { AppError } from '../utils/errors.js';
-
-// Zod schemas for validation
-const conditionSchema = z.object({
-  fact: z.string().min(1, 'Fact is required'),
-  operator: z.enum(['equal', 'notEqual', 'greaterThan', 'lessThan', 'greaterThanInclusive', 'lessThanInclusive', 'contains', 'notContains']),
-  value: z.any(),
-});
-
-const actionSchema = z.object({
-  type: z.string().min(1, 'Action type is required'),
-  params: z.record(z.any()),
-});
-
-const ruleSchema = z.object({
-  id: z.string().min(1, 'Rule ID is required'),
-  name: z.string().min(1, 'Rule name is required'),
-  description: z.string().optional(),
-  eventType: z.string().min(1, 'Event type is required'),
-  conditions: z.array(conditionSchema),
-  actions: z.array(actionSchema),
-  isActive: z.boolean(),
-});
 
 export const getRules = async (req: Request, res: Response, next: NextFunction) => {
   try {

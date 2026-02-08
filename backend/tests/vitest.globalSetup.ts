@@ -21,14 +21,17 @@ export async function setup() {
   // We store the path in a temporary config file that setupFiles can read
   const configPath = path.resolve(__dirname, '../temp/vitest-global-config.json');
   const configDir = path.dirname(configPath);
-  
+
   try {
     await fs.mkdir(configDir, { recursive: true });
-    await fs.writeFile(configPath, JSON.stringify({
-      adminUser,
-      databaseUrl: process.env.DATABASE_URL,
-      adminUserFilePath: tempAdminUserFilePath
-    }));
+    await fs.writeFile(
+      configPath,
+      JSON.stringify({
+        adminUser,
+        databaseUrl: process.env.DATABASE_URL,
+        adminUserFilePath: tempAdminUserFilePath,
+      }),
+    );
   } catch (err) {
     console.error('Failed to write global config:', err);
   }
@@ -47,7 +50,7 @@ export async function setup() {
       const configPath = path.resolve(__dirname, '../temp/vitest-global-config.json');
       await fs.unlink(configPath);
     } catch (e) {}
-    
+
     await dbTeardown();
     console.log('Global Teardown: Finished.');
   };

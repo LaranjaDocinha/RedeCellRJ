@@ -67,7 +67,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onToggleSta
             variant="body1"
             sx={{
               textDecoration: isCompleted ? 'line-through' : 'none',
-              fontWeight: 600,
+              fontWeight: 400,
               color: isCompleted ? 'text.secondary' : 'text.primary',
             }}
           >
@@ -114,3 +114,4 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onToggleSta
 };
 
 export default TaskCard;
+

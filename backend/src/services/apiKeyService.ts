@@ -29,10 +29,10 @@ interface UpdateApiKeyPayload {
 }
 
 export const apiKeyService = {
-  async generateApiKey(payload: CreateApiKeyPayload): Promise<{ rawKey: string, apiKey: ApiKey }> {
+  async generateApiKey(payload: CreateApiKeyPayload): Promise<{ rawKey: string; apiKey: ApiKey }> {
     const rawKey = crypto.randomBytes(32).toString('hex'); // Generate a random 64-char hex key
     const hashedKey = crypto.createHash('sha256').update(rawKey).digest('hex'); // Hash it for storage
-    
+
     const { user_id, name, permissions, expires_at } = payload;
     try {
       const result = await pool.query(
@@ -40,7 +40,7 @@ export const apiKeyService = {
         [hashedKey, user_id, name, permissions, expires_at],
       );
       return { rawKey, apiKey: result.rows[0] };
-    } catch (error: any) {
+    } catch (_error: any) {
       throw new AppError('Failed to generate API Key.', 500);
     }
   },
@@ -52,12 +52,18 @@ export const apiKeyService = {
 
   async getApiKeyByRawKey(rawKey: string): Promise<ApiKey | undefined> {
     const hashedKey = crypto.createHash('sha256').update(rawKey).digest('hex');
-    const result = await pool.query('SELECT * FROM api_keys WHERE key = $1 AND is_active = TRUE AND (expires_at IS NULL OR expires_at > NOW())', [hashedKey]);
+    const result = await pool.query(
+      'SELECT * FROM api_keys WHERE key = $1 AND is_active = TRUE AND (expires_at IS NULL OR expires_at > NOW())',
+      [hashedKey],
+    );
     return result.rows[0];
   },
 
   async getUserApiKeys(userId: string): Promise<ApiKey[]> {
-    const result = await pool.query('SELECT * FROM api_keys WHERE user_id = $1 ORDER BY created_at DESC', [userId]);
+    const result = await pool.query(
+      'SELECT * FROM api_keys WHERE user_id = $1 ORDER BY created_at DESC',
+      [userId],
+    );
     return result.rows;
   },
 

@@ -11,7 +11,16 @@ rulesRouter.use(authMiddleware.authenticate); // All rule routes require authent
 // Schemas for validation (copied from controller for explicit route validation)
 const conditionSchema = z.object({
   fact: z.string().min(1, 'Fact is required'),
-  operator: z.enum(['equal', 'notEqual', 'greaterThan', 'lessThan', 'greaterThanInclusive', 'lessThanInclusive', 'contains', 'notContains']),
+  operator: z.enum([
+    'equal',
+    'notEqual',
+    'greaterThan',
+    'lessThan',
+    'greaterThanInclusive',
+    'lessThanInclusive',
+    'contains',
+    'notContains',
+  ]),
   value: z.any(),
 });
 
@@ -32,15 +41,34 @@ const ruleSchema = z.object({
 
 // Rule Management
 rulesRouter.get('/', authMiddleware.authorize('read', 'Rule'), ruleEngineController.getRules);
-rulesRouter.post('/', authMiddleware.authorize('create', 'Rule'), validate(ruleSchema), ruleEngineController.createOrUpdateRule);
-rulesRouter.put('/:id', authMiddleware.authorize('update', 'Rule'), validate(ruleSchema), ruleEngineController.createOrUpdateRule); // Reusing createOrUpdate for PUT
-rulesRouter.delete('/:id', authMiddleware.authorize('delete', 'Rule'), ruleEngineController.deleteRule);
+rulesRouter.post(
+  '/',
+  authMiddleware.authorize('create', 'Rule'),
+  validate(ruleSchema),
+  ruleEngineController.createOrUpdateRule,
+);
+rulesRouter.put(
+  '/:id',
+  authMiddleware.authorize('update', 'Rule'),
+  validate(ruleSchema),
+  ruleEngineController.createOrUpdateRule,
+); // Reusing createOrUpdate for PUT
+rulesRouter.delete(
+  '/:id',
+  authMiddleware.authorize('delete', 'Rule'),
+  ruleEngineController.deleteRule,
+);
 
 // Rule Evaluation
 const evaluateSchema = z.object({
   eventType: z.string().min(1, 'Event type is required'),
   facts: z.record(z.any()),
 });
-rulesRouter.post('/evaluate', authMiddleware.authorize('execute', 'Rule'), validate(evaluateSchema), ruleEngineController.evaluateRules);
+rulesRouter.post(
+  '/evaluate',
+  authMiddleware.authorize('execute', 'Rule'),
+  validate(evaluateSchema),
+  ruleEngineController.evaluateRules,
+);
 
 export default rulesRouter;

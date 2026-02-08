@@ -1,31 +1,36 @@
 import { Request, Response } from 'express';
-import * as serviceOrderService from '../services/serviceOrderService.js';
+import { serviceOrderService } from '../services/serviceOrderService.js';
 import { ServiceOrderStatus } from '../types/serviceOrder.js';
+import { sendSuccess, sendError } from '../utils/responseHelper.js';
 
 export const createServiceOrder = async (req: Request, res: Response) => {
   try {
-    // Assuming user ID is available in req.user from an auth middleware
     const userId = (req as any).user?.id;
     if (!userId) {
-      return res.status(401).json({ message: 'User not authenticated' });
+      return sendError(res, 'User not authenticated', 'UNAUTHENTICATED', 401);
     }
     const orderData = { ...req.body, user_id: userId };
     const order = await serviceOrderService.createServiceOrder(orderData);
-    res.status(201).json(order);
+    return sendSuccess(res, order, 201);
   } catch (error: any) {
     console.error('Controller createServiceOrder error:', error.message);
-    res.status(500).json({ message: error.message || 'Error creating service order' });
+    return sendError(
+      res,
+      error.message || 'Error creating service order',
+      error.code || 'INTERNAL_ERROR',
+      error.statusCode || 500,
+    );
   }
 };
 
 export const getAllServiceOrders = async (req: Request, res: Response) => {
   try {
-    const filters = req.query; // e.g., /api/service-orders?status=Em Reparo
+    const filters = req.query;
     const orders = await serviceOrderService.getAllServiceOrders(filters);
-    res.status(200).json(orders);
-  } catch (error) {
+    return sendSuccess(res, orders);
+  } catch (error: any) {
     console.error(error);
-    res.status(500).json({ message: 'Error fetching service orders' });
+    return sendError(res, 'Error fetching service orders', 'INTERNAL_ERROR', 500);
   }
 };
 
@@ -34,13 +39,13 @@ export const getServiceOrderById = async (req: Request, res: Response) => {
     const id = parseInt(req.params.id, 10);
     const order = await serviceOrderService.getServiceOrderById(id);
     if (order) {
-      res.status(200).json(order);
+      return sendSuccess(res, order);
     } else {
-      res.status(404).json({ message: 'Service order not found' });
+      return sendError(res, 'Service order not found', 'NOT_FOUND', 404);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    res.status(500).json({ message: 'Error fetching service order' });
+    return sendError(res, 'Error fetching service order', 'INTERNAL_ERROR', 500);
   }
 };
 
@@ -48,10 +53,10 @@ export const addOrderItem = async (req: Request, res: Response) => {
   try {
     const serviceOrderId = parseInt(req.params.id, 10);
     const newItem = await serviceOrderService.addOrderItem(serviceOrderId, req.body);
-    res.status(201).json(newItem);
-  } catch (error) {
+    return sendSuccess(res, newItem, 201);
+  } catch (error: any) {
     console.error(error);
-    res.status(500).json({ message: 'Error adding item to service order' });
+    return sendError(res, 'Error adding item to service order', 'INTERNAL_ERROR', 500);
   }
 };
 
@@ -60,13 +65,13 @@ export const updateServiceOrder = async (req: Request, res: Response) => {
     const id = parseInt(req.params.id, 10);
     const updatedOrder = await serviceOrderService.updateServiceOrder(id, req.body);
     if (updatedOrder) {
-      res.status(200).json(updatedOrder);
+      return sendSuccess(res, updatedOrder);
     } else {
-      res.status(404).json({ message: 'Service order not found' });
+      return sendError(res, 'Service order not found', 'NOT_FOUND', 404);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    res.status(500).json({ message: 'Error updating service order' });
+    return sendError(res, 'Error updating service order', 'INTERNAL_ERROR', 500);
   }
 };
 
@@ -74,14 +79,13 @@ export const changeOrderStatus = async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id, 10);
     const { newStatus } = req.body;
-    // Assuming user ID is available in req.user from an auth middleware
     const userId = (req as any).user?.id;
     if (!userId) {
-      return res.status(401).json({ message: 'User not authenticated' });
+      return sendError(res, 'User not authenticated', 'UNAUTHENTICATED', 401);
     }
 
     if (!newStatus) {
-      return res.status(400).json({ message: 'newStatus is required' });
+      return sendError(res, 'newStatus is required', 'VALIDATION_ERROR', 400);
     }
 
     const updatedOrder = await serviceOrderService.changeOrderStatus(
@@ -90,13 +94,13 @@ export const changeOrderStatus = async (req: Request, res: Response) => {
       userId,
     );
     if (updatedOrder) {
-      res.status(200).json(updatedOrder);
+      return sendSuccess(res, updatedOrder);
     } else {
-      res.status(404).json({ message: 'Service order not found' });
+      return sendError(res, 'Service order not found', 'NOT_FOUND', 404);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    res.status(500).json({ message: 'Error changing service order status' });
+    return sendError(res, 'Error changing service order status', 'INTERNAL_ERROR', 500);
   }
 };
 
@@ -104,10 +108,10 @@ export const suggestTechnician = async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id, 10);
     const suggestions = await serviceOrderService.suggestTechnician(id);
-    res.json(suggestions);
-  } catch (error) {
+    return sendSuccess(res, suggestions);
+  } catch (error: any) {
     console.error(error);
-    res.status(500).json({ message: 'Error suggesting technician' });
+    return sendError(res, 'Error suggesting technician', 'INTERNAL_ERROR', 500);
   }
 };
 
@@ -116,14 +120,14 @@ export const addComment = async (req: Request, res: Response) => {
     const serviceOrderId = parseInt(req.params.id, 10);
     const userId = (req as any).user?.id;
     if (!userId) {
-      return res.status(401).json({ message: 'User not authenticated' });
+      return sendError(res, 'User not authenticated', 'UNAUTHENTICATED', 401);
     }
     const { comment_text } = req.body;
     const comment = await serviceOrderService.addComment(serviceOrderId, userId, comment_text);
-    res.status(201).json(comment);
-  } catch (error) {
+    return sendSuccess(res, comment, 201);
+  } catch (error: any) {
     console.error(error);
-    res.status(500).json({ message: 'Error adding comment' });
+    return sendError(res, 'Error adding comment', 'INTERNAL_ERROR', 500);
   }
 };
 
@@ -131,10 +135,10 @@ export const getComments = async (req: Request, res: Response) => {
   try {
     const serviceOrderId = parseInt(req.params.id, 10);
     const comments = await serviceOrderService.getComments(serviceOrderId);
-    res.json(comments);
-  } catch (error) {
+    return sendSuccess(res, comments);
+  } catch (error: any) {
     console.error(error);
-    res.status(500).json({ message: 'Error fetching comments' });
+    return sendError(res, 'Error fetching comments', 'INTERNAL_ERROR', 500);
   }
 };
 
@@ -142,17 +146,17 @@ export const addServiceOrderVideoAttachment = async (req: Request, res: Response
   try {
     const serviceOrderId = parseInt(req.params.id, 10);
     if (isNaN(serviceOrderId)) {
-      return res.status(400).json({ message: 'ID de Ordem de Serviço inválido.' });
+      return sendError(res, 'ID de Ordem de Serviço inválido.', 'VALIDATION_ERROR', 400);
     }
-    const { filePath, fileType, description } = req.body; // filePath virá do upload, fileType e description do body
+    const { filePath, fileType, description } = req.body;
     const userId = (req as any).user?.id;
 
     if (!userId) {
-      return res.status(401).json({ message: 'User not authenticated' });
+      return sendError(res, 'User not authenticated', 'UNAUTHENTICATED', 401);
     }
 
     if (!filePath || !fileType) {
-      return res.status(400).json({ message: 'filePath e fileType são obrigatórios.' });
+      return sendError(res, 'filePath e fileType são obrigatórios.', 'VALIDATION_ERROR', 400);
     }
 
     const attachment = await serviceOrderService.addServiceOrderAttachment(
@@ -162,9 +166,9 @@ export const addServiceOrderVideoAttachment = async (req: Request, res: Response
       description,
       userId,
     );
-    res.status(201).json(attachment);
-  } catch (error) {
+    return sendSuccess(res, attachment, 201);
+  } catch (error: any) {
     console.error(error);
-    res.status(500).json({ message: 'Error adding video attachment to service order' });
+    return sendError(res, 'Error adding video attachment to service order', 'INTERNAL_ERROR', 500);
   }
 };

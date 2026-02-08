@@ -22,7 +22,7 @@ describe('mobileAppService', () => {
   it('getOfflineData should return simulated data', async () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const result = await mobileAppService.getOfflineData('user-1');
-    
+
     expect(result.success).toBe(true);
     expect(result.message).toBe('Offline data fetched (simulated).');
     expect(result.data).toEqual({ products: [], customers: [], serviceOrders: [] });
@@ -33,16 +33,18 @@ describe('mobileAppService', () => {
   it('syncMobileData should return simulated success', async () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const result = await mobileAppService.syncMobileData({ some: 'data' });
-    
+
     expect(result.success).toBe(true);
     expect(result.message).toBe('Mobile data synchronized (simulated).');
-    expect(consoleSpy).toHaveBeenCalledWith('Simulating mobile data synchronization:', { some: 'data' });
+    expect(consoleSpy).toHaveBeenCalledWith('Simulating mobile data synchronization:', {
+      some: 'data',
+    });
     consoleSpy.mockRestore();
   });
 
   it('getMobileAppStatus should return simulated status', async () => {
     const result = await mobileAppService.getMobileAppStatus();
-    
+
     expect(result.status).toBe('Online');
     expect(result.appVersion).toBe('1.0.0');
     expect(result.lastSync).toBeDefined();

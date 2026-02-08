@@ -5,6 +5,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     setupFiles: ['./tests/setupUnit.ts'],
+    globalSetup: [], // Disable global setup for unit tests
     include: ['tests/unit/**/*.test.ts'], // Only unit tests
     coverage: {
       provider: 'v8',

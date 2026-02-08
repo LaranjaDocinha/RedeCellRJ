@@ -34,8 +34,8 @@ class TagService {
     const { name, color = '#1976d2' } = payload;
     try {
       const result = await pool.query(
-        'INSERT INTO tags (name, color) VALUES ($1, $2) RETURNING *', 
-        [name, color]
+        'INSERT INTO tags (name, color) VALUES ($1, $2) RETURNING *',
+        [name, color],
       );
       return result.rows[0];
     } catch (error: unknown) {

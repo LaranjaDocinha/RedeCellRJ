@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { useParams } from 'react-router-dom'; // Assumindo react-router-dom
+import { useParams } from 'react-router-dom';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PhotoUploadComponent from '../components/PhotoUploadComponent';
 import ChecklistFormComponent from '../components/ChecklistFormComponent';
-import OrderTrackingCard from '../components/OrderTrackingCard'; // Reutilizar o card para exibição de detalhes
+import OrderTrackingCard from '../components/OrderTrackingCard';
+import WebcamCapture from '../components/WebcamCapture';
 import { AppError } from '../../../backend/src/utils/errors';
+import { useVoiceCommands } from '../hooks/useVoiceCommands';
+import { Mic } from '@mui/icons-material';
 
 const PageContainer = styled.div`
   padding: 20px;
@@ -44,6 +47,31 @@ const GalleryImage = styled.img`
   border: 1px solid #ddd;
 `;
 
+const FloatingMic = styled.button<{ listening: boolean }>`
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: ${props => props.listening ? '#e74c3c' : '#3498db'};
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: ${props => props.listening ? 'pulse 1.5s infinite' : 'none'};
+
+  @keyframes pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+    70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+  }
+`;
+
 interface OrderDetails {
   id: number;
   device_name: string;
@@ -58,7 +86,7 @@ interface OrderDetails {
   notes?: string;
   items: { description: string; unit_price: number; quantity: number }[];
   photos: { url: string; type: string }[];
-  inspection_checklist?: any; // Para armazenar o checklist preenchido
+  inspection_checklist?: any;
 }
 
 interface TechOrderDetailPageProps {
@@ -75,16 +103,52 @@ const TechOrderDetailPage: React.FC<TechOrderDetailPageProps> = ({ apiBaseUrl = 
   const [isChecklistSubmitted, setIsChecklistSubmitted] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
+  const handleWebcamCapture = async (blob: Blob) => {
+    const formData = new FormData();
+    formData.append('photo', blob, `bench-snapshot-${Date.now()}.jpg`);
+    formData.append('type', 'internal');
+    formData.append('description', 'Snapshot Automático de Bancada');
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/tech/orders/${orderId}/photos`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (response.ok) {
+        const photo = await response.json();
+        if (order) {
+            setOrder({ ...order, photos: [...order.photos, { url: photo.url, type: 'internal' }] });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to upload bench snapshot:', err);
+    }
+  };
+
+  // Voice Commands
+  const { isListening, startListening, supported, speak } = useVoiceCommands([
+    {
+      command: 'status',
+      action: () => speak(`O status atual é ${order?.status || 'desconhecido'}`),
+      feedback: 'Verificando status'
+    },
+    {
+      command: 'cliente',
+      action: () => speak(`O cliente é ${order?.customer_name}`),
+    },
+    {
+      command: 'problema',
+      action: () => speak(`Relato: ${order?.problem_description}`),
+    }
+  ]);
+
   useEffect(() => {
     const fetchOrderDetails = async () => {
       setIsLoading(true);
       setError(null);
       try {
         const response = await fetch(`${apiBaseUrl}/portal/orders/${orderId}`, {
-          // No backend, a rota para o tech usa /api/tech/orders, mas o controller do public portal já retorna os detalhes completos.
-          // Para simplificar, vou usar a rota do portal para obter os detalhes completos da OS, mas o ideal seria ter um endpoint específico no /api/tech
           headers: {
-            // 'Authorization': `Bearer ${yourAuthToken}`, // Exemplo para rota tech autenticada
             'Content-Type': 'application/json',
           },
         });
@@ -95,13 +159,14 @@ const TechOrderDetailPage: React.FC<TechOrderDetailPageProps> = ({ apiBaseUrl = 
         }
         setOrder(data);
 
-        // Fetch checklist template
-        const checklistResponse = await fetch(`${apiBaseUrl}/tech/checklists?type=pre-repair`); // Fetch pre-repair checklist
+        const checklistResponse = await fetch(`${apiBaseUrl}/tech/checklists?type=pre-repair`);
         const checklistData = await checklistResponse.json();
         if (!checklistResponse.ok) {
-          throw new Error(checklistData.message || 'Não foi possível carregar o template do checklist.');
+          // Fail gracefully if checklist template is missing (maybe seed data issue in some environments)
+           console.warn('Checklist template not found');
+        } else {
+            setChecklistTemplate(checklistData);
         }
-        setChecklistTemplate(checklistData);
 
       } catch (err: any) {
         setError(err.message);
@@ -123,13 +188,12 @@ const TechOrderDetailPage: React.FC<TechOrderDetailPageProps> = ({ apiBaseUrl = 
   };
 
   const handleChecklistSubmit = async (checklistData: any) => {
-    setIsChecklistSubmitted(false); // Reset status
+    setIsChecklistSubmitted(false);
     try {
       const response = await fetch(`${apiBaseUrl}/tech/orders/${orderId}/checklist`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // 'Authorization': `Bearer ${yourAuthToken}`,
         },
         body: JSON.stringify(checklistData),
       });
@@ -177,7 +241,12 @@ const TechOrderDetailPage: React.FC<TechOrderDetailPageProps> = ({ apiBaseUrl = 
     <PageContainer>
       <Title>Detalhes da OS #{order.id}</Title>
 
-      <OrderTrackingCard order={order} /> {/* Reutilizando o componente de detalhes */}
+      <OrderTrackingCard order={order} />
+
+      <SectionContainer>
+        <h3>Monitoramento de Bancada (Live)</h3>
+        <WebcamCapture onCapture={handleWebcamCapture} />
+      </SectionContainer>
 
       <SectionContainer>
         <h3>Fotos da Ordem de Serviço</h3>
@@ -206,6 +275,12 @@ const TechOrderDetailPage: React.FC<TechOrderDetailPageProps> = ({ apiBaseUrl = 
             isSubmitted={isChecklistSubmitted}
           />
         </SectionContainer>
+      )}
+
+      {supported && (
+        <FloatingMic onClick={startListening} listening={isListening} title="Comando de Voz">
+            <Mic />
+        </FloatingMic>
       )}
     </PageContainer>
   );

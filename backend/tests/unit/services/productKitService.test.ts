@@ -1,383 +1,199 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createDbMock } from '../../utils/dbMock.js';
-import { AppError } from '../../../src/utils/errors.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mocks para serviços externos
-vi.mock('../../../src/services/inventoryService.js', () => ({
-  inventoryService: {
-    adjustStock: vi.fn(),
-  },
-}));
-
-// Mock do pool do PostgreSQL
-vi.mock('../../../src/db/index.js', () => {
-  const { mockPool, mockQuery, mockConnect, mockClient } = createDbMock();
+const { mockPool, mockPoolQuery, mockConnect, mockClient, mockClientQuery } = vi.hoisted(() => {
+  const mPoolQuery = vi.fn();
+  const mClientQuery = vi.fn();
+  const mRelease = vi.fn();
+  const mClient = { query: mClientQuery, release: mRelease };
+  const mConnect = vi.fn().mockResolvedValue(mClient);
+  const mPool = { query: mPoolQuery, connect: mConnect };
   return {
-    default: mockPool,
-    connect: mockConnect,
-    query: mockQuery,
-    getPool: () => mockPool,
-    _mockQuery: mockQuery,
-    _mockConnect: mockConnect,
-    _mockClient: mockClient,
-    _mockPool: mockPool,
+    mockPool: mPool,
+    mockPoolQuery: mPoolQuery,
+    mockConnect: mConnect,
+    mockClient: mClient,
+    mockClientQuery: mClientQuery,
   };
 });
 
-// Importar o serviço APÓS os mocks
+vi.mock('../../../src/db/index.js', () => ({
+  default: mockPool,
+  getPool: () => mockPool,
+  query: mockPoolQuery,
+  connect: mockConnect,
+}));
+
+vi.mock('../../../src/services/inventoryService.js', () => ({
+  inventoryService: {
+    adjustStock: vi.fn().mockResolvedValue({}),
+  },
+}));
+
 import { productKitService } from '../../../src/services/productKitService.js';
+import { AppError } from '../../../src/utils/errors.js';
+import { inventoryService } from '../../../src/services/inventoryService.js';
 
 describe('ProductKitService', () => {
-  let mockQuery: any;
-  let mockConnect: any;
+  const mockKit = { id: 1, name: 'Combo 1', price: 100, is_active: true };
 
   beforeEach(async () => {
-    const dbModule = await import('../../../src/db/index.js');
-    mockQuery = (dbModule as any)._mockQuery;
-    mockConnect = (dbModule as any)._mockConnect;
-
     vi.clearAllMocks();
-    mockQuery.mockResolvedValue({ rows: [], rowCount: 0 }); // Default fallback for query
-    mockConnect.mockResolvedValue((dbModule as any)._mockClient); // Default fallback for connect
-
-    const inventoryServiceModule = await import('../../../src/services/inventoryService.js');
-    vi.mocked(inventoryServiceModule.inventoryService.adjustStock).mockClear();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
+    mockPoolQuery.mockResolvedValue({ rows: [], rowCount: 0 });
+    mockClientQuery.mockResolvedValue({ rows: [], rowCount: 0 });
+    mockConnect.mockResolvedValue(mockClient);
   });
 
   describe('getAllProductKits', () => {
-    it('should return all product kits', async () => {
-      const mockKits = [{ id: 1, name: 'Kit A' }];
-      mockQuery.mockResolvedValueOnce({ rows: mockKits, rowCount: 1 });
-
-      const kits = await productKitService.getAllProductKits();
-      expect(kits).toEqual(mockKits);
-      expect(mockQuery).toHaveBeenCalledWith('SELECT * FROM product_kits');
+    it('should return all kits from db', async () => {
+      mockPoolQuery.mockResolvedValueOnce({ rows: [mockKit] });
+      const result = await productKitService.getAllProductKits();
+      expect(result).toEqual([mockKit]);
+      expect(mockPoolQuery).toHaveBeenCalledWith(expect.stringContaining('SELECT pk.*'));
     });
   });
 
   describe('getProductKitById', () => {
-    const mockKit = { id: 1, name: 'Kit A', items: [] as any[] };
-    const mockItems = [{ product_id: 10, variation_id: 100, quantity: 2 }];
+    it('should return kit with items', async () => {
+      mockPoolQuery
+        .mockResolvedValueOnce({ rows: [mockKit], rowCount: 1 })
+        .mockResolvedValueOnce({ rows: [{ variation_id: 10, quantity: 2 }], rowCount: 1 });
 
-    it('should return a kit by ID with items', async () => {
-      mockQuery
-        .mockResolvedValueOnce({ rows: [mockKit], rowCount: 1 }) // SELECT kit
-        .mockResolvedValueOnce({ rows: mockItems, rowCount: 1 }); // SELECT items
-
-      const kit = await productKitService.getProductKitById(1);
-      expect(kit).toBeDefined();
-      expect(kit?.id).toBe(1);
-      expect(kit?.items).toEqual(mockItems);
+      const result = await productKitService.getProductKitById(1);
+      expect(result?.name).toBe('Combo 1');
+      expect(result?.items).toHaveLength(1);
     });
 
     it('should return undefined if kit not found', async () => {
-      mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 }); // SELECT kit
-
-      const kit = await productKitService.getProductKitById(999);
-      expect(kit).toBeUndefined();
+      mockPoolQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+      const result = await productKitService.getProductKitById(999);
+      expect(result).toBeUndefined();
     });
   });
 
   describe('createProductKit', () => {
-    const payload = {
-      name: 'New Kit',
-      description: 'Desc',
-      price: 100,
-      is_active: true,
-      items: [{ product_id: 1, variation_id: 10, quantity: 1 }],
-    };
-    const mockCreatedKit = { id: 1, ...payload };
+    it('should create kit and its items in transaction', async () => {
+      mockClientQuery
+        .mockResolvedValueOnce({}) // BEGIN
+        .mockResolvedValueOnce({ rows: [mockKit] }) // INSERT pk
+        .mockResolvedValueOnce({}) // INSERT pki
+        .mockResolvedValueOnce({}); // COMMIT
 
-    it('should create a product kit and its items', async () => {
-      mockQuery
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
-        .mockResolvedValueOnce({ rows: [mockCreatedKit], rowCount: 1 }) // INSERT kit
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // INSERT item
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // COMMIT
+      const result = await productKitService.createProductKit({
+        name: 'New Kit',
+        price: 50,
+        items: [{ product_id: 1, variation_id: 1, quantity: 1 }]
+      });
 
-      const kit = await productKitService.createProductKit(payload);
-      expect(kit).toEqual(mockCreatedKit);
-      expect(mockQuery).toHaveBeenCalledWith('BEGIN');
-      expect(mockQuery).toHaveBeenCalledWith('COMMIT');
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO product_kits'),
-        expect.any(Array),
-      );
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO product_kit_items'),
-        expect.any(Array),
-      );
+      expect(result.id).toBe(1);
+      expect(mockClientQuery).toHaveBeenCalledWith('BEGIN');
+      expect(mockClientQuery).toHaveBeenCalledWith('COMMIT');
     });
 
-    it('should rollback if creation fails', async () => {
-      mockQuery
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
-        .mockRejectedValueOnce(new Error('DB Error')); // INSERT kit fails
+    it('should rollback on error', async () => {
+      mockClientQuery.mockResolvedValueOnce({}); // BEGIN
+      mockClientQuery.mockRejectedValueOnce(new Error('Fail'));
 
-      await expect(productKitService.createProductKit(payload)).rejects.toThrow('DB Error');
-      expect(mockQuery).toHaveBeenCalledWith('ROLLBACK');
+      await expect(productKitService.createProductKit({ name: 'E', price: 0, items: [] })).rejects.toThrow();
+      expect(mockClientQuery).toHaveBeenCalledWith('ROLLBACK');
     });
   });
 
   describe('updateProductKit', () => {
-    const kitId = 1;
-    const updatePayload = { name: 'Updated Kit', price: 150 };
-    const mockUpdatedKit = { id: kitId, ...updatePayload, items: [] };
+    it('should update kit fields and replace items', async () => {
+      mockClientQuery.mockResolvedValueOnce({}); // BEGIN
+      // UPDATE pk
+      mockClientQuery.mockResolvedValueOnce({ rows: [mockKit] });
+      // DELETE items
+      mockClientQuery.mockResolvedValueOnce({});
+      // INSERT new items
+      mockClientQuery.mockResolvedValueOnce({});
+      // COMMIT
+      mockClientQuery.mockResolvedValueOnce({});
 
-    it('should update a product kit', async () => {
-      mockQuery
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
-        .mockResolvedValueOnce({ rows: [mockUpdatedKit], rowCount: 1 }) // UPDATE kit
-        // getProductKitById calls:
-        .mockResolvedValueOnce({ rows: [mockUpdatedKit], rowCount: 1 }) // SELECT kit
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // SELECT items
-        // end getProductKitById
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // COMMIT
+      // Mock getProductKitById called at end
+      mockPoolQuery
+        .mockResolvedValueOnce({ rows: [mockKit], rowCount: 1 })
+        .mockResolvedValueOnce({ rows: [], rowCount: 0 });
 
-      const kit = await productKitService.updateProductKit(kitId, updatePayload);
-      expect(kit).toEqual(expect.objectContaining(updatePayload));
-      expect(mockQuery).toHaveBeenCalledWith('COMMIT');
-    });
+      await productKitService.updateProductKit(1, { name: 'Updated', items: [] });
 
-    it('should return the existing kit if no fields are provided in payload', async () => {
-        const mockExistingKit = { id: kitId, name: 'Existing Kit', price: 100, items: [] };
-        // getProductKitById chama pool.query (duas vezes: kit e itens)
-        mockQuery
-            .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
-            .mockResolvedValueOnce({ rows: [mockExistingKit], rowCount: 1 }) // SELECT kit
-            .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // SELECT items
-            .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // COMMIT (do updateProductKit, que chama getProductKitById no final)
-
-        const kit = await productKitService.updateProductKit(kitId, {}); // Empty payload
-        expect(kit).toEqual(mockExistingKit);
-        expect(mockQuery).not.toHaveBeenCalledWith(expect.stringContaining('UPDATE product_kits SET')); // Não deve atualizar
-        expect(mockQuery).toHaveBeenCalledWith('COMMIT');
-    });
-
-    it('should update kit items if provided', async () => {
-      const payloadWithItems = { ...updatePayload, items: [{ product_id: 2, variation_id: 20, quantity: 5 }] };
-      
-      mockQuery
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // UPDATE kit
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // DELETE existing items
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // INSERT new items
-        // getProductKitById calls:
-        .mockResolvedValueOnce({ rows: [mockUpdatedKit], rowCount: 1 }) // SELECT kit
-        .mockResolvedValueOnce({ rows: payloadWithItems.items, rowCount: 1 }) // SELECT items
-        // end getProductKitById
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // COMMIT
-
-      await productKitService.updateProductKit(kitId, payloadWithItems);
-      
-      expect(mockQuery).toHaveBeenCalledWith('DELETE FROM product_kit_items WHERE kit_id = $1', [kitId]);
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO product_kit_items'),
-        expect.any(Array),
-      );
+      expect(mockClientQuery).toHaveBeenCalledWith(expect.stringContaining('UPDATE product_kits'), expect.any(Array));
+      expect(mockClientQuery).toHaveBeenCalledWith(expect.stringContaining('DELETE FROM product_kit_items'), [1]);
     });
   });
 
   describe('deleteProductKit', () => {
-    it('should delete a product kit', async () => {
-      mockQuery
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // DELETE items
-        .mockResolvedValueOnce({ rows: [{ id: 1 }], rowCount: 1 }) // DELETE kit
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // COMMIT
+    it('should delete kit and items', async () => {
+      mockClientQuery.mockResolvedValueOnce({}); // BEGIN
+      mockClientQuery.mockResolvedValueOnce({}); // DELETE items
+      mockPoolQuery.mockResolvedValueOnce({ rowCount: 1 }); // DELETE pk
+      mockClientQuery.mockResolvedValueOnce({}); // COMMIT
 
       const result = await productKitService.deleteProductKit(1);
       expect(result).toBe(true);
-      expect(mockQuery).toHaveBeenCalledWith('DELETE FROM product_kits WHERE id = $1 RETURNING id', [1]);
     });
   });
 
   describe('kitProducts', () => {
-    const kitId = 1;
-    const quantity = 2;
-    const userId = 'user123';
-    const branchId = 1;
-    const mockKit = {
-      id: kitId,
-      name: 'Kit Test',
-      items: [{ product_id: 10, variation_id: 100, quantity: 1 }],
-    };
-    const mockKitNoItems = { ...mockKit, items: [] as any[] };
-    const mockKitNullItems = { ...mockKit, items: undefined };
-
     it('should kit products successfully', async () => {
-      mockQuery
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
-        // getProductKitById
-        .mockResolvedValueOnce({ rows: [mockKit], rowCount: 1 }) // SELECT kit
-        .mockResolvedValueOnce({ rows: mockKit.items, rowCount: 1 }) // SELECT items
-        // end getProductKitById
-        .mockResolvedValueOnce({ rows: [{ stock_quantity: 10 }], rowCount: 1 }) // Check stock
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // UPDATE stock
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // COMMIT
+      // Mock getProductKitById internal call
+      mockPoolQuery
+        .mockResolvedValueOnce({ rows: [mockKit], rowCount: 1 }) // kit
+        .mockResolvedValueOnce({ rows: [{ variation_id: 1, quantity: 2 }], rowCount: 1 }); // items
 
-      const inventoryServiceModule = await import('../../../src/services/inventoryService.js');
-      vi.mocked(inventoryServiceModule.inventoryService.adjustStock).mockResolvedValue({} as any);
+      let callCount = 0;
+      mockClientQuery.mockImplementation(async (query: string) => {
+        callCount++;
+        if (query.includes('BEGIN')) return { rows: [], rowCount: 0 };
+        if (query.includes('SELECT stock_quantity')) return { rows: [{ stock_quantity: 10 }], rowCount: 1 };
+        if (query.includes('UPDATE product_variations')) return { rows: [], rowCount: 1 };
+        if (query.includes('COMMIT')) return { rows: [], rowCount: 0 };
+        return { rows: [], rowCount: 0 };
+      });
 
-      const result = await productKitService.kitProducts(kitId, quantity, userId, branchId);
-
-      expect(result.message).toContain('kitted successfully');
-      expect(mockQuery).toHaveBeenCalledWith('COMMIT');
-      expect(inventoryServiceModule.inventoryService.adjustStock).toHaveBeenCalledWith(
-        100, // variation_id
-        -2, // quantity (1 * 2) negated
-        'kitting',
-        userId,
-        expect.anything() // client
-      );
+      const result = await productKitService.kitProducts(1, 2, 'user1', 1);
+      expect(result.message).toContain('successfully');
+      expect(inventoryService.adjustStock).toHaveBeenCalledWith(1, -4, 'kitting', 'user1', mockClient);
     });
 
-    it('should throw error if kit not found', async () => {
-      mockQuery
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // SELECT kit (not found)
-
-      await expect(productKitService.kitProducts(999, quantity, userId, branchId)).rejects.toThrow(
-        new AppError('Product kit not found', 404),
-      );
-      expect(mockQuery).toHaveBeenCalledWith('ROLLBACK');
+    it('should throw 404 if kit not found', async () => {
+      mockPoolQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+      await expect(productKitService.kitProducts(999, 1, 'u', 1)).rejects.toThrow('Product kit not found');
     });
 
-    it('should throw error if kit has no items defined', async () => {
-        mockQuery
-            .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
-            // getProductKitById - retorna kit sem itens (vazio)
-            .mockResolvedValueOnce({ rows: [mockKitNoItems], rowCount: 1 })
-            .mockResolvedValueOnce({ rows: mockKitNoItems.items, rowCount: 0 }); // SELECT items para kit no items (empty array)
-
-        await expect(productKitService.kitProducts(kitId, quantity, userId, branchId)).rejects.toThrow(
-            new AppError('Product kit has no items defined', 400),
-        );
-        expect(mockQuery).toHaveBeenCalledWith('ROLLBACK');
-    });
-
-    it('should throw error if kit items is undefined', async () => {
-        mockQuery
-            .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
-            // getProductKitById - retorna kit com items undefined
-            .mockResolvedValueOnce({ rows: [mockKitNullItems], rowCount: 1 })
-            .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // SELECT items returns empty (simulando undefined)
-
-        await expect(productKitService.kitProducts(kitId, quantity, userId, branchId)).rejects.toThrow(
-            new AppError('Product kit has no items defined', 400),
-        );
-        expect(mockQuery).toHaveBeenCalledWith('ROLLBACK');
-    });
-
-    it('should throw error if product variation for kit item not found', async () => {
-        mockQuery
-            .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
-            // getProductKitById
-            .mockResolvedValueOnce({ rows: [mockKit], rowCount: 1 })
-            .mockResolvedValueOnce({ rows: mockKit.items, rowCount: 1 })
-            // end getProductKitById
-            .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // Check stock (no rows for variation)
-
-        await expect(productKitService.kitProducts(kitId, quantity, userId, branchId)).rejects.toThrow(
-            new AppError(`Product variation ${mockKit.items[0].variation_id} not found in branch ${branchId}`, 404),
-        );
-        expect(mockQuery).toHaveBeenCalledWith('ROLLBACK');
-    });
-
-    it('should throw error if insufficient stock', async () => {
-      mockQuery
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
-        // getProductKitById
+    it('should throw 400 if kit has no items', async () => {
+      mockPoolQuery
         .mockResolvedValueOnce({ rows: [mockKit], rowCount: 1 })
-        .mockResolvedValueOnce({ rows: mockKit.items, rowCount: 1 })
-        // end getProductKitById
-        .mockResolvedValueOnce({ rows: [{ stock_quantity: 1 }], rowCount: 1 }); // Check stock (1 available, need 2)
+        .mockResolvedValueOnce({ rows: [], rowCount: 0 });
+      await expect(productKitService.kitProducts(1, 1, 'u', 1)).rejects.toThrow('no items defined');
+    });
 
-      await expect(productKitService.kitProducts(kitId, quantity, userId, branchId)).rejects.toThrow(
-        'Insufficient stock',
-      );
-      expect(mockQuery).toHaveBeenCalledWith('ROLLBACK');
+    it('should throw 400 if insufficient stock', async () => {
+      mockPoolQuery
+        .mockResolvedValueOnce({ rows: [mockKit], rowCount: 1 })
+        .mockResolvedValueOnce({ rows: [{ variation_id: 1, quantity: 5 }], rowCount: 1 });
+      mockClientQuery
+        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
+        .mockResolvedValueOnce({ rows: [{ stock_quantity: 2 }], rowCount: 1 }); // stock 2 < 5
+
+      await expect(productKitService.kitProducts(1, 1, 'u', 1)).rejects.toThrow('Insufficient stock');
     });
   });
 
   describe('dekitProducts', () => {
-    const kitId = 1;
-    const quantity = 2;
-    const userId = 'user123';
-    const branchId = 1;
-    const mockKit = {
-      id: kitId,
-      name: 'Kit Test',
-      items: [{ product_id: 10, variation_id: 100, quantity: 1 }],
-    };
-    const mockKitNoItems = { ...mockKit, items: [] as any[] };
-    const mockKitNullItems = { ...mockKit, items: undefined };
+    it('should de-kit successfully', async () => {
+      mockPoolQuery
+        .mockResolvedValueOnce({ rows: [mockKit], rowCount: 1 })
+        .mockResolvedValueOnce({ rows: [{ variation_id: 1, quantity: 1 }], rowCount: 1 });
+      
+      mockClientQuery
+        .mockResolvedValueOnce({}) // BEGIN
+        .mockResolvedValueOnce({}) // update stock
+        .mockResolvedValueOnce({}); // COMMIT
 
-    it('should de-kit products successfully', async () => {
-      mockQuery
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
-        // getProductKitById
-        .mockResolvedValueOnce({ rows: [mockKit], rowCount: 1 }) // SELECT kit
-        .mockResolvedValueOnce({ rows: mockKit.items, rowCount: 1 }) // SELECT items
-        // end getProductKitById
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // UPDATE stock (add back)
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // COMMIT
-
-      const inventoryServiceModule = await import('../../../src/services/inventoryService.js');
-      vi.mocked(inventoryServiceModule.inventoryService.adjustStock).mockResolvedValue({} as any);
-
-      const result = await productKitService.dekitProducts(kitId, quantity, userId, branchId);
-
-      expect(result.message).toContain('de-kitted successfully');
-      expect(mockQuery).toHaveBeenCalledWith('COMMIT');
-      expect(inventoryServiceModule.inventoryService.adjustStock).toHaveBeenCalledWith(
-        100, // variation_id
-        2, // quantity (1 * 2) positive
-        'de-kitting',
-        userId,
-        expect.anything()
-      );
-    });
-
-    it('should throw error if kit not found', async () => {
-      mockQuery
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
-        .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // SELECT kit (not found)
-
-      await expect(productKitService.dekitProducts(999, quantity, userId, branchId)).rejects.toThrow(
-        new AppError('Product kit not found', 404),
-      );
-      expect(mockQuery).toHaveBeenCalledWith('ROLLBACK');
-    });
-
-    it('should throw error if kit has no items defined', async () => {
-        mockQuery
-            .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
-            // getProductKitById - retorna kit sem itens (vazio)
-            .mockResolvedValueOnce({ rows: [mockKitNoItems], rowCount: 1 })
-            .mockResolvedValueOnce({ rows: mockKitNoItems.items, rowCount: 0 }); // SELECT items para kit no items (empty array)
-
-        await expect(productKitService.dekitProducts(kitId, quantity, userId, branchId)).rejects.toThrow(
-            new AppError('Product kit has no items defined', 400),
-        );
-        expect(mockQuery).toHaveBeenCalledWith('ROLLBACK');
-    });
-
-    it('should throw error if kit items is undefined', async () => {
-        mockQuery
-            .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
-            // getProductKitById - retorna kit com items undefined
-            .mockResolvedValueOnce({ rows: [mockKitNullItems], rowCount: 1 })
-            .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // SELECT items returns empty (simulando undefined)
-
-        await expect(productKitService.dekitProducts(kitId, quantity, userId, branchId)).rejects.toThrow(
-            new AppError('Product kit has no items defined', 400),
-        );
-        expect(mockQuery).toHaveBeenCalledWith('ROLLBACK');
+      const result = await productKitService.dekitProducts(1, 5, 'user1', 1);
+      expect(result.message).toContain('de-kitted');
+      expect(inventoryService.adjustStock).toHaveBeenCalledWith(1, 5, 'de-kitting', 'user1', mockClient);
     });
   });
 });

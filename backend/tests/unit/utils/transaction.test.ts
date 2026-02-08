@@ -19,7 +19,7 @@ describe('Transaction Utils', () => {
 
   it('should execute callback within transaction and commit', async () => {
     const callback = vi.fn().mockResolvedValue('success');
-    
+
     const result = await withTransaction(callback);
 
     expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
@@ -37,6 +37,15 @@ describe('Transaction Utils', () => {
 
     expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
     expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
+    expect(mockClient.release).toHaveBeenCalled();
+  });
+
+  it('should always release client even if commit fails', async () => {
+    mockClient.query.mockRejectedValueOnce(undefined); // BEGIN
+    mockClient.query.mockRejectedValueOnce(new Error('Commit failed')); // COMMIT fails
+    const callback = vi.fn().mockResolvedValue('success');
+
+    await expect(withTransaction(callback)).rejects.toThrow();
     expect(mockClient.release).toHaveBeenCalled();
   });
 });

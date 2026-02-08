@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import { authService } from '../services/authService.js';
+import { authController } from '../controllers/authController.js';
 import { ValidationError } from '../utils/errors.js';
 
 const router = Router();
@@ -26,7 +26,10 @@ const requestResetSchema = z.object({
 
 const resetPasswordSchema = z.object({
   token: z.string().nonempty('Token é obrigatório'),
-  newPassword: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres').nonempty('Nova senha é obrigatória'),
+  newPassword: z
+    .string()
+    .min(6, 'A senha deve ter no mínimo 6 caracteres')
+    .nonempty('Nova senha é obrigatória'),
 });
 
 // Validation Middleware
@@ -48,42 +51,15 @@ const validate =
     }
   };
 
-router.post('/register', validate(registerSchema), async (req, res, next) => {
-  const { name, email, password } = req.body;
-  try {
-    const { user, token } = await authService.register(name, email, password, 'user');
-    res.status(201).json({ user, token });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.post('/login', validate(loginSchema), async (req, res, next) => {
-  const { email, password } = req.body;
-  try {
-    const { user, token } = await authService.login(email, password);
-    res.status(200).json({ user, token });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.post('/request-password-reset', validate(requestResetSchema), async (req, res, next) => {
-  try {
-    await authService.requestPasswordReset(req.body.email);
-    res.status(200).json({ message: 'If an account with that email exists, a password reset link has been sent.' });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.post('/reset-password', validate(resetPasswordSchema), async (req, res, next) => {
-  try {
-    const { token } = await authService.resetPassword(req.body.token, req.body.newPassword);
-    res.status(200).json({ token });
-  } catch (error) {
-    next(error);
-  }
-});
+router.post('/register', validate(registerSchema), authController.register);
+router.post('/login', validate(loginSchema), authController.login);
+router.post('/refresh', authController.refresh);
+router.post('/logout', authController.logout);
+router.post(
+  '/request-password-reset',
+  validate(requestResetSchema),
+  authController.requestPasswordReset,
+);
+router.post('/reset-password', validate(resetPasswordSchema), authController.resetPassword);
 
 export default router;

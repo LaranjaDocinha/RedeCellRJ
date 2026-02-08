@@ -3,7 +3,7 @@ import * as labelService from '../../../src/services/labelService.js';
 
 describe('labelService', () => {
   it('generateProductLabelZPL should return ZPL string with product info', () => {
-    const zpl = labelService.generateProductLabelZPL('Test Product', 10.50, 'SKU123');
+    const zpl = labelService.generateProductLabelZPL('Test Product', 10.5, 'SKU123');
     expect(zpl).toContain('^XA');
     expect(zpl).toContain('Test Product');
     expect(zpl).toContain('R$ 10.50');

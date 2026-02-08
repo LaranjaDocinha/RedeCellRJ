@@ -1,5 +1,3 @@
-import { Request } from 'express';
-
 export interface UserPayload {
   id: string;
   email?: string; // Make email optional

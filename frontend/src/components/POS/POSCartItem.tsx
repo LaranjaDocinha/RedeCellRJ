@@ -71,7 +71,7 @@ const POSCartItem: React.FC<POSCartItemProps> = ({ item, onUpdateQuantity, onRem
       />
 
       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-        <Typography variant="subtitle2" fontWeight={700} noWrap sx={{ fontSize: '0.9rem' }}>
+        <Typography variant="subtitle2" fontWeight={400} noWrap sx={{ fontSize: '0.9rem' }}>
           {item.product_name || item.name}
         </Typography>
         <Stack direction="row" spacing={1} alignItems="center">
@@ -85,7 +85,7 @@ const POSCartItem: React.FC<POSCartItemProps> = ({ item, onUpdateQuantity, onRem
             </Tooltip>
         </Stack>
         {item.salesperson_name && (
-            <Typography variant="caption" sx={{ display: 'block', color: 'success.main', fontWeight: 800, fontSize: '0.6rem' }}>
+            <Typography variant="caption" sx={{ display: 'block', color: 'success.main', fontWeight: 400, fontSize: '0.6rem' }}>
                 VENDEDOR: {item.salesperson_name.toUpperCase()}
             </Typography>
         )}
@@ -98,7 +98,7 @@ const POSCartItem: React.FC<POSCartItemProps> = ({ item, onUpdateQuantity, onRem
             variant="outlined"
             onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
         >-</MuiButton>
-        <Typography variant="body2" fontWeight={800} sx={{ minWidth: 20, textAlign: 'center' }}>{item.quantity}</Typography>
+        <Typography variant="body2" fontWeight={400} sx={{ minWidth: 20, textAlign: 'center' }}>{item.quantity}</Typography>
         <MuiButton 
             size="small" 
             sx={{ minWidth: 30, p: 0, borderRadius: '8px' }} 
@@ -108,7 +108,7 @@ const POSCartItem: React.FC<POSCartItemProps> = ({ item, onUpdateQuantity, onRem
       </Stack>
 
       <Box sx={{ textAlign: 'right', minWidth: 90 }}>
-        <Typography variant="subtitle2" fontWeight={900} color="primary">
+        <Typography variant="subtitle2" fontWeight={400} color="primary">
           R$ {item.subtotal.toFixed(2)}
         </Typography>
       </Box>

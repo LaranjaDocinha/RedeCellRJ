@@ -8,7 +8,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:13
+        image: postgres:17
         env:
           POSTGRES_DB: pdv_web
           POSTGRES_USER: postgres
@@ -31,7 +31,7 @@ jobs:
       run: npm install --prefix backend
     - name: Run npm audit for vulnerabilities
       run: npm audit --audit-level=high --prefix backend
-      continue-on-error: true # Allow CI to pass even if vulnerabilities are found
+      continue-on-error: false # Fail CI if high severity vulnerabilities are found
     - name: Snyk Security Scan
       uses: snyk/actions/node@master
       with:
@@ -57,14 +57,22 @@ jobs:
         DATABASE_URL: postgres://postgres:${{ secrets.DB_PASSWORD }}@localhost:5432/pdv_web
     - name: Run lint
       run: npm run lint --prefix backend
-    - name: Run tests
+    - name: Run unit tests
       run: npm run coverage --prefix backend
       env:
         DB_HOST: localhost
         DB_PORT: 5432
         DB_USER: postgres
         DB_NAME: pdv_web
-        DB_PASSWORD: ${{ secrets.DB_PASSWORD }} # Pass password to tests
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+    - name: Run integration tests
+      run: npm run coverage:integration --prefix backend
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_USER: postgres
+        DB_NAME: pdv_web
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
     - name: Build backend
       run: npm run build --prefix backend
     - name: Run performance tests

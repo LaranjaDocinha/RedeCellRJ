@@ -4,7 +4,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { AppError } from '../utils/errors.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
-import { ocrService } from '../services/ocrService.js'; // Importar o serviço OCR
 import { uploadProcessingService } from '../services/uploadProcessingService.js'; // Importar o novo serviço de processamento
 
 const __filename = fileURLToPath(import.meta.url);
@@ -78,7 +77,7 @@ uploadsRouter.post(
         filePath,
         outputDirectory,
         fileName,
-        { width: 800, quality: 80, format: 'webp' }
+        { width: 800, quality: 80, format: 'webp' },
       );
 
       res.status(200).json({ url: `/uploads/${optimizedFileName}` });
@@ -99,7 +98,6 @@ uploadsRouter.post(
       return next(new AppError('No video file provided', 400));
     }
 
-    const filePath = req.file.path;
     const fileName = req.file.filename;
 
     try {
@@ -121,12 +119,14 @@ uploadsRouter.post(
       return next(new AppError('No document file provided', 400));
     }
 
-    const filePath = req.file.path;
+    const _filePath = req.file.path;
     const fileName = req.file.filename;
 
     try {
       // Usar o placeholder do serviço de processamento para OCR
-      const { ocrText, extractedData } = await uploadProcessingService.processDocumentOcr(filePath);
+      const { ocrText, extractedData } = await uploadProcessingService.processDocumentOcr(
+        req.file.path,
+      );
 
       res.status(200).json({
         url: `/uploads/${fileName}`,

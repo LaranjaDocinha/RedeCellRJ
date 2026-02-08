@@ -240,11 +240,11 @@ const RuleEnginePage: React.FC = () => {
             <Box sx={{ p: 1, bgcolor: 'warning.main', borderRadius: '10px', color: 'white', display: 'flex' }}>
               <LogicIcon />
             </Box>
-            <Typography variant="overline" sx={{ fontWeight: 800, color: 'warning.main', letterSpacing: 2 }}>
+            <Typography variant="overline" sx={{ fontWeight: 400, color: 'warning.main', letterSpacing: 2 }}>
               AUTOMAÇÃO INTELIGENTE
             </Typography>
           </Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
+          <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px' }}>
             Motor de Regras
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
@@ -256,7 +256,7 @@ const RuleEnginePage: React.FC = () => {
           size="large"
           startIcon={<AddIcon />} 
           onClick={handleCreateNew}
-          sx={{ borderRadius: '14px', px: 4, py: 1.5, fontWeight: 800, textTransform: 'none', bgcolor: 'warning.main', '&:hover': { bgcolor: 'warning.dark' } }}
+          sx={{ borderRadius: '14px', px: 4, py: 1.5, fontWeight: 400, textTransform: 'none', bgcolor: 'warning.main', '&:hover': { bgcolor: 'warning.dark' } }}
         >
           Nova Regra
         </Button>
@@ -278,7 +278,7 @@ const RuleEnginePage: React.FC = () => {
                         <RuleIcon />
                       </Avatar>
                       <Box flexGrow={1}>
-                        <Typography variant="subtitle1" fontWeight={800}>{rule.name}</Typography>
+                        <Typography variant="subtitle1" fontWeight={400}>{rule.name}</Typography>
                         <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                           <RunIcon sx={{ fontSize: 14 }} /> Gatilho: <strong>{rule.eventType}</strong>
                         </Typography>
@@ -287,7 +287,7 @@ const RuleEnginePage: React.FC = () => {
                         label={rule.isActive ? "ATIVA" : "DESATIVADA"} 
                         size="small" 
                         color={rule.isActive ? "success" : "default"}
-                        sx={{ fontWeight: 900, borderRadius: '6px', fontSize: '0.65rem' }}
+                        sx={{ fontWeight: 400, borderRadius: '6px', fontSize: '0.65rem' }}
                       />
                       <Box>
                         <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleEditRule(rule); }}><EditIcon sx={{ fontSize: 18 }} /></IconButton>
@@ -299,24 +299,24 @@ const RuleEnginePage: React.FC = () => {
                     <Divider sx={{ mb: 3, opacity: 0.5 }} />
                     <Grid container spacing={4}>
                       <Grid item xs={12} md={6}>
-                        <Typography variant="overline" fontWeight={800} color="text.secondary" display="block" mb={2}>Condições (IF)</Typography>
+                        <Typography variant="overline" fontWeight={400} color="text.secondary" display="block" mb={2}>Condições (IF)</Typography>
                         <Stack spacing={1}>
                           {rule.conditions.map((cond, i) => (
                             <Box key={i} sx={{ p: 1.5, bgcolor: 'action.hover', borderRadius: '12px', display: 'flex', gap: 1, alignItems: 'center' }}>
-                              <Chip label={cond.fact} size="small" variant="outlined" sx={{ fontWeight: 700 }} />
-                              <Typography variant="body2" fontWeight={600} color="primary">{cond.operator}</Typography>
-                              <Typography variant="body2" fontWeight={800}>"{cond.value}"</Typography>
+                              <Chip label={cond.fact} size="small" variant="outlined" sx={{ fontWeight: 400 }} />
+                              <Typography variant="body2" fontWeight={400} color="primary">{cond.operator}</Typography>
+                              <Typography variant="body2" fontWeight={400}>"{cond.value}"</Typography>
                             </Box>
                           ))}
                         </Stack>
                       </Grid>
                       <Grid item xs={12} md={6}>
-                        <Typography variant="overline" fontWeight={800} color="text.secondary" display="block" mb={2}>Ações (THEN)</Typography>
+                        <Typography variant="overline" fontWeight={400} color="text.secondary" display="block" mb={2}>Ações (THEN)</Typography>
                         <Stack spacing={1}>
                           {rule.actions.map((action, i) => (
                             <Box key={i} sx={{ p: 1.5, bgcolor: 'warning.50', borderRadius: '12px', display: 'flex', gap: 1, alignItems: 'center', border: '1px solid', borderColor: 'warning.100' }}>
                               <MagicIcon sx={{ fontSize: 16, color: 'warning.main' }} />
-                              <Typography variant="body2" fontWeight={800} sx={{ color: 'warning.dark' }}>{action.type}</Typography>
+                              <Typography variant="body2" fontWeight={400} sx={{ color: 'warning.dark' }}>{action.type}</Typography>
                               <Tooltip title={JSON.stringify(action.params)}>
                                 <Typography variant="caption" sx={{ color: 'text.secondary', cursor: 'help' }}>Ver parâmetros</Typography>
                               </Tooltip>
@@ -334,7 +334,7 @@ const RuleEnginePage: React.FC = () => {
       </Stack>
 
       <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: '24px' } }}>
-        <DialogTitle sx={{ fontWeight: 900, p: 4, pb: 2 }}>{editingRule ? 'Configurar Fluxo' : 'Novo Fluxo de Trabalho'}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 400, p: 4, pb: 2 }}>{editingRule ? 'Configurar Fluxo' : 'Novo Fluxo de Trabalho'}</DialogTitle>
         <DialogContent sx={{ p: 4, pt: 0 }}>
           <Box component="form" onSubmit={handleModalSubmit}>
             <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -350,7 +350,7 @@ const RuleEnginePage: React.FC = () => {
             </Grid>
 
             <Box display="flex" justifyContent="space-between" alignItems="center" mt={4} mb={2}>
-              <Typography variant="h6" fontWeight={800}>Se estas condições forem verdadeiras:</Typography>
+              <Typography variant="h6" fontWeight={400}>Se estas condições forem verdadeiras:</Typography>
               <Button size="small" startIcon={<AddIcon />} onClick={addCondition}>Adicionar Filtro</Button>
             </Box>
             
@@ -380,7 +380,7 @@ const RuleEnginePage: React.FC = () => {
             </Stack>
 
             <Box display="flex" justifyContent="space-between" alignItems="center" mt={4} mb={2}>
-              <Typography variant="h6" fontWeight={800}>Execute estas ações:</Typography>
+              <Typography variant="h6" fontWeight={400}>Execute estas ações:</Typography>
               <Button size="small" startIcon={<AddIcon />} onClick={addAction}>Adicionar Ação</Button>
             </Box>
 
@@ -408,7 +408,7 @@ const RuleEnginePage: React.FC = () => {
               <FormControlLabel control={<Switch checked={formState.isActive} onChange={handleToggleActive} />} label="Regra em Produção" />
               <DialogActions>
                 <Button onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-                <Button type="submit" variant="contained" color="warning" sx={{ borderRadius: '10px', px: 4, fontWeight: 800 }}>Salvar Automação</Button>
+                <Button type="submit" variant="contained" color="warning" sx={{ borderRadius: '10px', px: 4, fontWeight: 400 }}>Salvar Automação</Button>
               </DialogActions>
             </Box>
           </Box>

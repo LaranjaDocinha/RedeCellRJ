@@ -65,7 +65,7 @@ const StyledPageContainer = styled(motion.div)`
 
 const StyledPageTitle = styled(motion.h1)`
   font-size: 2rem;
-  font-weight: 800;
+  font-weight: 400;
   margin-bottom: 24px;
   letter-spacing: -1px;
 `;
@@ -342,7 +342,7 @@ const ProductKitsPage: React.FC = () => {
       {/* Filtros Rápidos */}
       <Paper elevation={0} sx={{ p: 2, mb: 4, borderRadius: '16px', border: '1px solid', borderColor: 'divider', display: 'flex', gap: 4, alignItems: 'center' }}>
           <Box sx={{ width: 300 }}>
-            <Typography variant="caption" fontWeight={800} color="text.secondary" gutterBottom display="block">FAIXA DE PREÇO (R$)</Typography>
+            <Typography variant="caption" fontWeight={400} color="text.secondary" gutterBottom display="block">FAIXA DE PREÇO (R$)</Typography>
             <Slider
                 size="small"
                 value={priceRange}
@@ -354,8 +354,8 @@ const ProductKitsPage: React.FC = () => {
           </Box>
           <Divider orientation="vertical" flexItem />
           <Box display="flex" gap={1}>
-            <Chip label="Mais Vendidos" onClick={() => {}} variant="outlined" sx={{ borderRadius: '8px', fontWeight: 600 }} />
-            <Chip label="Promoção Ativa" onClick={() => {}} variant="outlined" sx={{ borderRadius: '8px', fontWeight: 600 }} />
+            <Chip label="Mais Vendidos" onClick={() => {}} variant="outlined" sx={{ borderRadius: '8px', fontWeight: 400 }} />
+            <Chip label="Promoção Ativa" onClick={() => {}} variant="outlined" sx={{ borderRadius: '8px', fontWeight: 400 }} />
           </Box>
       </Paper>
 
@@ -376,8 +376,8 @@ const ProductKitsPage: React.FC = () => {
                         </Box>
                         <CardContent sx={{ flexGrow: 1, p: 3 }}>
                             <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-                                <Typography variant="h6" fontWeight={800} noWrap sx={{ maxWidth: '70%' }}>{kit.name}</Typography>
-                                <Chip label="COMBO" size="small" color="primary" sx={{ fontWeight: 900, fontSize: '0.6rem' }} />
+                                <Typography variant="h6" fontWeight={400} noWrap sx={{ maxWidth: '70%' }}>{kit.name}</Typography>
+                                <Chip label="COMBO" size="small" color="primary" sx={{ fontWeight: 400, fontSize: '0.6rem' }} />
                             </Box>
                             <Typography variant="body2" color="text.secondary" sx={{ 
                                 height: 40, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', mb: 2 
@@ -388,7 +388,7 @@ const ProductKitsPage: React.FC = () => {
                             <Stack direction="row" spacing={1} mb={3}>
                                 {kit.items?.slice(0, 3).map((item, idx) => (
                                     <Tooltip key={idx} title={`Item ${idx + 1}`}>
-                                        <Avatar sx={{ width: 24, height: 24, fontSize: '0.6rem', bgcolor: 'primary.50', color: 'primary.main', fontWeight: 800 }}>
+                                        <Avatar sx={{ width: 24, height: 24, fontSize: '0.6rem', bgcolor: 'primary.50', color: 'primary.main', fontWeight: 400 }}>
                                             {item.quantity}x
                                         </Avatar>
                                     </Tooltip>
@@ -399,7 +399,7 @@ const ProductKitsPage: React.FC = () => {
                             <Box display="flex" justifyContent="space-between" alignItems="center">
                                 <Box>
                                     <Typography variant="caption" color="text.secondary" display="block">Preço do Combo</Typography>
-                                    <Typography variant="h5" fontWeight={900} color="primary">R$ {Number(kit.price).toFixed(2)}</Typography>
+                                    <Typography variant="h5" fontWeight={400} color="primary">R$ {Number(kit.price).toFixed(2)}</Typography>
                                 </Box>
                                 <Stack direction="row">
                                     <IconButton size="small" color="primary" onClick={() => handleOpenModal(kit)}><FaEdit size={14} /></IconButton>
@@ -415,7 +415,7 @@ const ProductKitsPage: React.FC = () => {
 
       {/* Modal de Criação/Edição - Estratégico */}
       <Dialog open={isModalOpen} onClose={handleCloseModal} maxWidth="lg" fullWidth PaperProps={{ sx: { borderRadius: '24px', p: 1 } }}>
-        <DialogTitle sx={{ fontWeight: 800, pb: 0 }}>
+        <DialogTitle sx={{ fontWeight: 400, pb: 0 }}>
             {editingKit ? 'Editar Combo' : 'Novo Combo Estratégico'}
         </DialogTitle>
         <DialogContent>
@@ -482,7 +482,7 @@ const ProductKitsPage: React.FC = () => {
                                     {formData.items.map((item, idx) => (
                                         <TableRow key={idx}>
                                             <TableCell>
-                                                <Typography variant="body2" fontWeight={600}>{item.product_name}</Typography>
+                                                <Typography variant="body2" fontWeight={400}>{item.product_name}</Typography>
                                                 <Typography variant="caption" color="text.secondary">{item.variation_name}</Typography>
                                             </TableCell>
                                             <TableCell align="center">{item.quantity}</TableCell>
@@ -515,31 +515,31 @@ const ProductKitsPage: React.FC = () => {
                             gap: 3
                         }}
                     >
-                        <Typography variant="h6" fontWeight={800} color="primary.main" display="flex" alignItems="center" gap={1}>
+                        <Typography variant="h6" fontWeight={400} color="primary.main" display="flex" alignItems="center" gap={1}>
                             <FaChartLine /> Análise Financeira
                         </Typography>
 
                         <Box>
-                            <Typography variant="caption" color="text.secondary" fontWeight={600}>CUSTO TOTAL DOS ITENS</Typography>
-                            <Typography variant="h5" fontWeight={700}>R$ {strategy.totalCost.toFixed(2)}</Typography>
+                            <Typography variant="caption" color="text.secondary" fontWeight={400}>CUSTO TOTAL DOS ITENS</Typography>
+                            <Typography variant="h5" fontWeight={400}>R$ {strategy.totalCost.toFixed(2)}</Typography>
                         </Box>
 
                         <Box>
-                            <Typography variant="caption" color="text.secondary" fontWeight={600}>SOMA DOS PREÇOS ORIGINAIS</Typography>
-                            <Typography variant="h5" fontWeight={700} sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>
+                            <Typography variant="caption" color="text.secondary" fontWeight={400}>SOMA DOS PREÇOS ORIGINAIS</Typography>
+                            <Typography variant="h5" fontWeight={400} sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>
                                 R$ {strategy.originalTotalValue.toFixed(2)}
                             </Typography>
                         </Box>
 
                         <Paper elevation={0} sx={{ p: 2, borderRadius: '16px', bgcolor: 'background.paper' }}>
-                            <Typography variant="caption" color="primary" fontWeight={700} gutterBottom display="block">DEFINIR PREÇO DO COMBO</Typography>
+                            <Typography variant="caption" color="primary" fontWeight={400} gutterBottom display="block">DEFINIR PREÇO DO COMBO</Typography>
                             <TextField 
                                 fullWidth 
                                 value={formData.price} 
                                 onChange={(e) => setFormData({...formData, price: Number(e.target.value)})} 
                                 InputProps={{ 
                                     startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-                                    sx: { fontSize: '1.5rem', fontWeight: 800 }
+                                    sx: { fontSize: '1.5rem', fontWeight: 400 }
                                 }}
                                 variant="standard"
                             />
@@ -547,25 +547,25 @@ const ProductKitsPage: React.FC = () => {
 
                         <Stack direction="row" spacing={2} justifyContent="space-between">
                             <Box>
-                                <Typography variant="caption" color="text.secondary" fontWeight={600}>LUCRO LÍQUIDO</Typography>
-                                <Typography variant="h6" fontWeight={700} color={strategy.profit > 0 ? "success.main" : "error.main"}>
+                                <Typography variant="caption" color="text.secondary" fontWeight={400}>LUCRO LÍQUIDO</Typography>
+                                <Typography variant="h6" fontWeight={400} color={strategy.profit > 0 ? "success.main" : "error.main"}>
                                     R$ {strategy.profit.toFixed(2)}
                                 </Typography>
                             </Box>
                             <Box textAlign="right">
-                                <Typography variant="caption" color="text.secondary" fontWeight={600}>MARGEM</Typography>
+                                <Typography variant="caption" color="text.secondary" fontWeight={400}>MARGEM</Typography>
                                 <Chip 
                                     label={`${strategy.margin.toFixed(1)}%`} 
                                     color={strategy.margin > 20 ? "success" : strategy.margin > 0 ? "warning" : "error"} 
                                     size="small" 
-                                    sx={{ fontWeight: 900 }} 
+                                    sx={{ fontWeight: 400 }} 
                                 />
                             </Box>
                         </Stack>
 
                         {strategy.discount > 0 && (
                             <Box sx={{ bgcolor: 'secondary.main', color: 'white', p: 1.5, borderRadius: '12px', textAlign: 'center' }}>
-                                <Typography variant="body2" fontWeight={700}>
+                                <Typography variant="body2" fontWeight={400}>
                                     Você está oferecendo {strategy.discount.toFixed(1)}% de desconto neste combo!
                                 </Typography>
                             </Box>
@@ -590,7 +590,7 @@ const ProductKitsPage: React.FC = () => {
             <Button 
                 variant="contained" 
                 onClick={handleSaveKit} 
-                sx={{ borderRadius: '12px', px: 4, py: 1.5, fontWeight: 700 }}
+                sx={{ borderRadius: '12px', px: 4, py: 1.5, fontWeight: 400 }}
                 startIcon={<FaCalculator />}
             >
                 Salvar Combo

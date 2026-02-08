@@ -47,7 +47,8 @@ export const userKeybindService = {
       );
       return result.rows[0];
     } catch (error: any) {
-      if (error.code === '23505') { // Unique violation
+      if (error.code === '23505') {
+        // Unique violation
         throw new AppError('Keybind for this action and user already exists.', 409);
       }
       throw error;

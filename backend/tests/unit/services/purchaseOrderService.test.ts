@@ -40,7 +40,7 @@ describe('PurchaseOrderService', () => {
     vi.clearAllMocks();
     mockQuery.mockResolvedValue({ rows: [], rowCount: 0 });
     mockConnect.mockResolvedValue((dbModule as any)._mockClient);
-    
+
     vi.mocked(inventoryService.receiveStock).mockClear();
   });
 
@@ -55,7 +55,9 @@ describe('PurchaseOrderService', () => {
 
       const result = await purchaseOrderService.getAllPurchaseOrders();
       expect(result).toEqual(mockOrders);
-      expect(mockQuery).toHaveBeenCalledWith('SELECT * FROM purchase_orders ORDER BY created_at DESC');
+      expect(mockQuery).toHaveBeenCalledWith(
+        'SELECT * FROM purchase_orders ORDER BY created_at DESC',
+      );
     });
   });
 
@@ -71,7 +73,10 @@ describe('PurchaseOrderService', () => {
   });
 
   describe('createPurchaseOrder', () => {
-    const payload = { supplier_id: 1, items: [{ product_variation_id: 10, quantity: 5, unit_price: 10 }] };
+    const payload = {
+      supplier_id: 1,
+      items: [{ product_variation_id: 10, quantity: 5, unit_price: 10 }],
+    };
     const mockNewOrder = { id: 1, supplier_id: 1, status: 'pending' };
 
     it('should create a purchase order and its items', async () => {
@@ -87,11 +92,11 @@ describe('PurchaseOrderService', () => {
       expect(mockQuery).toHaveBeenCalledWith('COMMIT');
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO purchase_orders'),
-        expect.any(Array)
+        expect.any(Array),
       );
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO purchase_order_items'),
-        expect.any(Array)
+        expect.any(Array),
       );
     });
 
@@ -121,13 +126,15 @@ describe('PurchaseOrderService', () => {
       expect(result).toEqual(mockOrder);
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE purchase_orders SET status = $1'),
-        expect.any(Array)
+        expect.any(Array),
       );
     });
 
     it('should update items if provided', async () => {
-      const payloadWithItems = { items: [{ product_variation_id: 10, quantity: 10, unit_price: 10 }] };
-      
+      const payloadWithItems = {
+        items: [{ product_variation_id: 10, quantity: 10, unit_price: 10 }],
+      };
+
       mockQuery
         .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
         .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // DELETE existing items
@@ -136,11 +143,14 @@ describe('PurchaseOrderService', () => {
         .mockResolvedValueOnce({ rows: [mockOrder], rowCount: 1 }); // getPurchaseOrderById
 
       await purchaseOrderService.updatePurchaseOrder(orderId, payloadWithItems);
-      
-      expect(mockQuery).toHaveBeenCalledWith('DELETE FROM purchase_order_items WHERE purchase_order_id = $1', [orderId]);
+
+      expect(mockQuery).toHaveBeenCalledWith(
+        'DELETE FROM purchase_order_items WHERE purchase_order_id = $1',
+        [orderId],
+      );
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO purchase_order_items'),
-        expect.any(Array)
+        expect.any(Array),
       );
     });
   });
@@ -175,11 +185,19 @@ describe('PurchaseOrderService', () => {
 
       vi.mocked(inventoryService.receiveStock).mockResolvedValue({} as any);
 
-      const result = await purchaseOrderService.receivePurchaseOrderItems(orderId, receivedItems, 'user1');
+      const result = await purchaseOrderService.receivePurchaseOrderItems(
+        orderId,
+        receivedItems,
+        'user1',
+      );
 
       expect(result?.status).toBe('received');
       expect(inventoryService.receiveStock).toHaveBeenCalledWith(
-        10, 5, 10, 'user1', expect.anything()
+        10,
+        5,
+        10,
+        'user1',
+        expect.anything(),
       );
       expect(mockQuery).toHaveBeenCalledWith('COMMIT');
     });
@@ -189,9 +207,9 @@ describe('PurchaseOrderService', () => {
         .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
         .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // SELECT order (not found)
 
-      await expect(purchaseOrderService.receivePurchaseOrderItems(orderId, receivedItems)).rejects.toThrow(
-        new AppError(`Purchase order ${orderId} not found.`, 404)
-      );
+      await expect(
+        purchaseOrderService.receivePurchaseOrderItems(orderId, receivedItems),
+      ).rejects.toThrow(new AppError(`Purchase order ${orderId} not found.`, 404));
       expect(mockQuery).toHaveBeenCalledWith('ROLLBACK');
     });
 
@@ -200,8 +218,13 @@ describe('PurchaseOrderService', () => {
         .mockResolvedValueOnce({ rows: [], rowCount: 0 }) // BEGIN
         .mockResolvedValueOnce({ rows: [{ ...mockOrder, status: 'pending' }], rowCount: 1 }); // SELECT order
 
-      await expect(purchaseOrderService.receivePurchaseOrderItems(orderId, receivedItems)).rejects.toThrow(
-        new AppError(`Purchase order ${orderId} is not in 'ordered' status. Current status: pending`, 400)
+      await expect(
+        purchaseOrderService.receivePurchaseOrderItems(orderId, receivedItems),
+      ).rejects.toThrow(
+        new AppError(
+          `Purchase order ${orderId} is not in 'ordered' status. Current status: pending`,
+          400,
+        ),
       );
       expect(mockQuery).toHaveBeenCalledWith('ROLLBACK');
     });
@@ -212,8 +235,13 @@ describe('PurchaseOrderService', () => {
         .mockResolvedValueOnce({ rows: [mockOrder], rowCount: 1 }) // SELECT order
         .mockResolvedValueOnce({ rows: [], rowCount: 0 }); // SELECT items (empty or mismatch)
 
-      await expect(purchaseOrderService.receivePurchaseOrderItems(orderId, receivedItems)).rejects.toThrow(
-        new AppError(`Item (product_variation_id: 10) not found in purchase order ${orderId}.`, 400)
+      await expect(
+        purchaseOrderService.receivePurchaseOrderItems(orderId, receivedItems),
+      ).rejects.toThrow(
+        new AppError(
+          `Item (product_variation_id: 10) not found in purchase order ${orderId}.`,
+          400,
+        ),
       );
       expect(mockQuery).toHaveBeenCalledWith('ROLLBACK');
     });

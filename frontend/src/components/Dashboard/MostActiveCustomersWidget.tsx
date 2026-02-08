@@ -91,7 +91,7 @@ const MostActiveCustomersWidget: React.FC<MostActiveCustomersWidgetProps> = Reac
         }}
       >
         <FaUserCircle style={{ fontSize: '4rem', marginBottom: '1rem' }} />
-        <Typography variant="body1" fontWeight="bold">Nenhum cliente ativo encontrado.</Typography>
+        <Typography variant="body1" fontWeight={400}>Nenhum cliente ativo encontrado.</Typography>
         <Typography variant="body2" sx={{ mt: 1 }}>
           Incentive seus clientes a comprar mais!
         </Typography>
@@ -116,7 +116,7 @@ const MostActiveCustomersWidget: React.FC<MostActiveCustomersWidgetProps> = Reac
             </ListItemAvatar>
             <ListItemText
               primary={
-                <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                <Typography variant="body1" sx={{ fontWeight: 400 }}>
                   {customer.name}
                 </Typography>
               }
@@ -140,3 +140,4 @@ const MostActiveCustomersWidget: React.FC<MostActiveCustomersWidgetProps> = Reac
 });
 
 export default MostActiveCustomersWidget;
+

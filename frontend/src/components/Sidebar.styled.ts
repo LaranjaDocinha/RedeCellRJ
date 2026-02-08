@@ -9,7 +9,8 @@ export const SidebarNavItem = styled.a<{ $isCompact?: boolean }>`
   color: ${({ theme }) => theme.palette.text.secondary};
   border-radius: 12px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-weight: 500;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500 !important;
   font-size: 0.9rem;
   justify-content: ${({ $isCompact }) => ($isCompact ? 'center' : 'flex-start')};
   margin: 4px 12px;
@@ -21,12 +22,17 @@ export const SidebarNavItem = styled.a<{ $isCompact?: boolean }>`
     justify-content: center;
     font-size: 1.25rem;
     min-width: 24px;
-    color: ${({ theme }) => theme.palette.primary.main}; /* ÍCONES COM COR DO TEMA */
+    color: ${({ theme }) => theme.palette.primary.main};
     transition: color 0.3s ease;
   }
 
+  span {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+  }
+
   &:hover {
-    background-color: ${({ theme }) => theme.palette.primary.main}12; /* 7% da cor primária */
+    background-color: ${({ theme }) => theme.palette.primary.main}12;
     color: ${({ theme }) => theme.palette.primary.main};
     
     .sidebar-icon {
@@ -44,18 +50,20 @@ export const SidebarNavItem = styled.a<{ $isCompact?: boolean }>`
     box-shadow: 0 8px 20px ${({ theme }) => theme.palette.primary.main}40;
 
     .sidebar-icon {
-      color: ${({ theme }) => theme.palette.primary.contrastText}; /* Ícone branco se o fundo for escuro */
+      color: ${({ theme }) => theme.palette.primary.contrastText};
     }
     
     span {
-      font-weight: 600;
+      color: ${({ theme }) => theme.palette.primary.contrastText};
+      font-weight: 500 !important;
     }
   }
 `;
 
 export const StyledSidebar = styled.aside<{ $isOpen: boolean; $isCompact: boolean }>`
   width: ${({ $isCompact }) => ($isCompact ? '80px' : '280px')};
-  background-color: ${({ theme }) => theme.palette.background.paper};
+  background-color: ${({ theme }) => (theme as any).glass?.background || theme.palette.background.paper};
+  backdrop-filter: ${({ theme }) => (theme as any).glass?.blur || 'none'};
   position: fixed;
   top: 64px;
   left: ${({ $isOpen }) => ($isOpen ? '0' : '-280px')};
@@ -65,7 +73,7 @@ export const StyledSidebar = styled.aside<{ $isOpen: boolean; $isCompact: boolea
   z-index: 1100;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid ${({ theme }) => theme.palette.divider};
+  border-right: ${({ theme }) => (theme as any).glass?.border || `1px solid ${theme.palette.divider}`};
   overflow: hidden;
 
   @media (max-width: 768px) {
@@ -99,8 +107,9 @@ export const SidebarNavGroup = styled.div`
 `;
 
 export const SidebarNavGroupTitle = styled.h3`
+  font-family: 'Inter', sans-serif !important;
   font-size: 0.7rem;
-  font-weight: 800;
+  font-weight: 600 !important;
   color: ${({ theme }) => theme.palette.text.disabled};
   text-transform: uppercase;
   letter-spacing: 1.5px;
@@ -117,6 +126,7 @@ export const SidebarSearchInput = styled.input`
   border-radius: 12px;
   background-color: ${({ theme }) => theme.palette.background.default};
   color: ${({ theme }) => theme.palette.text.primary};
+  font-family: 'Inter', sans-serif !important;
   font-size: 0.85rem;
   outline: none;
   box-sizing: border-box;

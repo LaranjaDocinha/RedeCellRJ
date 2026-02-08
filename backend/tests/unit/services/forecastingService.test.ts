@@ -69,7 +69,7 @@ describe('forecastingService', () => {
         idealStock: Math.ceil(10 * 30 * 1.2), // 360
         suggestion: 355, // 360 - 5
         status: 'low', // 5 < 10
-      })
+      }),
     );
   });
 
@@ -98,7 +98,7 @@ describe('forecastingService', () => {
         idealStock: Math.ceil(2 * 30 * 1.2), // 72
         suggestion: 72, // 72 - 0
         status: 'critical',
-      })
+      }),
     );
   });
 

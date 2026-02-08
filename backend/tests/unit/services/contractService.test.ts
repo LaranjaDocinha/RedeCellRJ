@@ -71,7 +71,7 @@ describe('ContractService', () => {
 
       expect(mockDefaultQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO sale_contracts'),
-        [payload.sale_id, payload.contract_url, undefined, payload.signed_at]
+        [payload.sale_id, payload.contract_url, undefined, payload.signed_at],
       );
       expect(result).toEqual(createdContract);
     });
@@ -84,7 +84,9 @@ describe('ContractService', () => {
 
       const result = await contractService.getSaleContractById(1);
 
-      expect(mockDefaultQuery).toHaveBeenCalledWith('SELECT * FROM sale_contracts WHERE id = $1', [1]);
+      expect(mockDefaultQuery).toHaveBeenCalledWith('SELECT * FROM sale_contracts WHERE id = $1', [
+        1,
+      ]);
       expect(result).toEqual(contract);
     });
   });
@@ -98,7 +100,7 @@ describe('ContractService', () => {
 
       expect(mockDefaultQuery).toHaveBeenCalledWith(
         expect.stringContaining('SELECT * FROM sale_contracts WHERE sale_id = $1'),
-        [1]
+        [1],
       );
       expect(result).toEqual(contracts);
     });
@@ -113,7 +115,7 @@ describe('ContractService', () => {
 
       expect(mockDefaultQuery).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE sale_contracts SET signature_image_url = $1'),
-        ['http://sig.com', 1]
+        ['http://sig.com', 1],
       );
       expect(result).toEqual(updatedContract);
     });

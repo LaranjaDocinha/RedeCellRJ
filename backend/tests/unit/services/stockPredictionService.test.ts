@@ -68,43 +68,37 @@ describe('StockPredictionService', () => {
     });
 
     it('should handle zero historical demand correctly', async () => {
-        mockQuery.mockResolvedValueOnce({ rows: [] }); // Sales
-        mockQuery.mockResolvedValueOnce({ rows: [] }); // Repairs
-  
-        mockQuery.mockResolvedValueOnce({
-          rows: [
-            { id: 1, product_id: 100, stock_quantity: 10, low_stock_threshold: 5 }, 
-          ],
-        });
-  
-        mockQuery.mockResolvedValueOnce({
-          rows: [
-            { id: 10, name: 'Screen', stock_quantity: 10, low_stock_threshold: 5 }, 
-          ],
-        });
-  
-        const predictions = await stockPredictionService.predictStockNeeds();
-  
-        expect(predictions).toHaveLength(0); // Stock (10) > Threshold (5) with 0 demand
+      mockQuery.mockResolvedValueOnce({ rows: [] }); // Sales
+      mockQuery.mockResolvedValueOnce({ rows: [] }); // Repairs
+
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, product_id: 100, stock_quantity: 10, low_stock_threshold: 5 }],
       });
 
-      it('should alert if stock is already below threshold even with zero demand', async () => {
-        mockQuery.mockResolvedValueOnce({ rows: [] }); // Sales
-        mockQuery.mockResolvedValueOnce({ rows: [] }); // Repairs
-  
-        mockQuery.mockResolvedValueOnce({
-          rows: [
-            { id: 1, product_id: 100, stock_quantity: 2, low_stock_threshold: 5 }, 
-          ],
-        });
-  
-        mockQuery.mockResolvedValueOnce({ rows: [] }); // Parts
-  
-        const predictions = await stockPredictionService.predictStockNeeds();
-  
-        expect(predictions).toHaveLength(1);
-        expect(predictions[0].item_id).toBe(1);
-        expect(predictions[0].remaining_stock_after_prediction).toBe(2);
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 10, name: 'Screen', stock_quantity: 10, low_stock_threshold: 5 }],
       });
+
+      const predictions = await stockPredictionService.predictStockNeeds();
+
+      expect(predictions).toHaveLength(0); // Stock (10) > Threshold (5) with 0 demand
+    });
+
+    it('should alert if stock is already below threshold even with zero demand', async () => {
+      mockQuery.mockResolvedValueOnce({ rows: [] }); // Sales
+      mockQuery.mockResolvedValueOnce({ rows: [] }); // Repairs
+
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, product_id: 100, stock_quantity: 2, low_stock_threshold: 5 }],
+      });
+
+      mockQuery.mockResolvedValueOnce({ rows: [] }); // Parts
+
+      const predictions = await stockPredictionService.predictStockNeeds();
+
+      expect(predictions).toHaveLength(1);
+      expect(predictions[0].item_id).toBe(1);
+      expect(predictions[0].remaining_stock_after_prediction).toBe(2);
+    });
   });
 });

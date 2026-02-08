@@ -90,7 +90,7 @@ export const WhatsAppPreview: React.FC<WhatsAppPreviewProps> = ({ content, varia
         {parts.map((part, index) => {
           if (part.startsWith('{{') && part.endsWith('}}')) {
             return (
-              <span key={index} style={{ color: '#009688', fontWeight: 'bold' }}>
+              <span key={index} style={{ color: '#009688', fontWeight: 400 }}>
                 {part}
               </span>
             );
@@ -102,3 +102,4 @@ export const WhatsAppPreview: React.FC<WhatsAppPreviewProps> = ({ content, varia
     </PreviewContainer>
   );
 };
+

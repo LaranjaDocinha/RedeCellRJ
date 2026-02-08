@@ -8,18 +8,25 @@ import { ValidationError } from '../utils/errors.js'; // Importar ValidationErro
 const router = Router();
 
 // Define the base URL for the frontend product page (adjust as needed for deployment)
-const FRONTEND_PRODUCT_BASE_URL = process.env.FRONTEND_PRODUCT_BASE_URL || 'http://localhost:3000/product';
+const FRONTEND_PRODUCT_BASE_URL =
+  process.env.FRONTEND_PRODUCT_BASE_URL || 'http://localhost:3000/product';
 
 // Zod Schema for product listing query parameters
 const getProductsQuerySchema = z.object({
   search: z.string().optional(),
-  categoryId: z.preprocess((val) => parseInt(val as string, 10), z.number().int().positive()).optional(),
+  categoryId: z
+    .preprocess((val) => parseInt(val as string, 10), z.number().int().positive())
+    .optional(),
   minPrice: z.preprocess((val) => parseFloat(val as string), z.number().positive()).optional(),
   maxPrice: z.preprocess((val) => parseFloat(val as string), z.number().positive()).optional(),
   sortBy: z.enum(['name', 'price', 'created_at']).default('name').optional(),
   sortDirection: z.enum(['ASC', 'DESC']).default('ASC').optional(),
-  limit: z.preprocess((val) => parseInt(val as string, 10), z.number().int().positive()).default(10),
-  offset: z.preprocess((val) => parseInt(val as string, 10), z.number().int().nonnegative()).default(0),
+  limit: z
+    .preprocess((val) => parseInt(val as string, 10), z.number().int().positive())
+    .default(10),
+  offset: z
+    .preprocess((val) => parseInt(val as string, 10), z.number().int().nonnegative())
+    .default(0),
 });
 
 // Validation Middleware
@@ -41,17 +48,20 @@ const validateQuery =
     }
   };
 
-
 // Get all products (public)
-router.get('/', validateQuery(getProductsQuerySchema), async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const options = req.query as unknown as Parameters<typeof productService.getAllProducts>[0]; // Cast validado
-    const { products, totalCount } = await productService.getAllProducts(options);
-    res.status(200).json({ products, totalCount });
-  } catch (error) {
-    next(error);
-  }
-});
+router.get(
+  '/',
+  validateQuery(getProductsQuerySchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const options = req.query as unknown as Parameters<typeof productService.getAllProducts>[0]; // Cast validado
+      const { products, totalCount } = await productService.getAllProducts(options);
+      res.status(200).json({ products, totalCount });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 // Get a single product by ID (public)
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
@@ -101,7 +111,10 @@ router.get('/:id/qrcode', async (req: Request, res: Response, next: NextFunction
     const productPublicUrl = `${FRONTEND_PRODUCT_BASE_URL}/${productId}`;
 
     // Generate QR code as a data URL (Base64 image)
-    const qrCodeDataUrl = await QRCode.toDataURL(productPublicUrl, { errorCorrectionLevel: 'H', type: 'image/png' });
+    const qrCodeDataUrl = await QRCode.toDataURL(productPublicUrl, {
+      errorCorrectionLevel: 'H',
+      type: 'image/png',
+    });
 
     // Send the data URL as a JSON response
     res.status(200).json({ qrCodeImage: qrCodeDataUrl });

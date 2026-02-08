@@ -73,7 +73,7 @@ export const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit, onCance
         />
 
         <Box>
-          <Typography variant="caption" fontWeight={700} color="text.secondary" gutterBottom display="block" sx={{ mb: 1, ml: 1 }}>
+          <Typography variant="caption" fontWeight={400} color="text.secondary" gutterBottom display="block" sx={{ mb: 1, ml: 1 }}>
             COR DA ETIQUETA
           </Typography>
           <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
@@ -145,7 +145,7 @@ export const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit, onCance
               sx={{ 
                 bgcolor: formData.color, 
                 color: '#fff', 
-                fontWeight: 800,
+                fontWeight: 400,
                 borderRadius: '8px'
               }} 
             />

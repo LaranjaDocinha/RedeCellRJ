@@ -82,11 +82,11 @@ const ReferralPage: React.FC = () => {
             <Box sx={{ p: 1, bgcolor: 'primary.main', borderRadius: '10px', color: 'white', display: 'flex' }}>
               <GiftIcon />
             </Box>
-            <Typography variant="overline" sx={{ fontWeight: 800, color: 'primary.main', letterSpacing: 2 }}>
+            <Typography variant="overline" sx={{ fontWeight: 400, color: 'primary.main', letterSpacing: 2 }}>
               PROGRAMA DE CRESCIMENTO
             </Typography>
           </Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
+          <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px' }}>
             Indique e Ganhe
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
@@ -101,9 +101,9 @@ const ReferralPage: React.FC = () => {
           <Paper sx={{ p: 4, borderRadius: '32px', bgcolor: 'primary.main', color: 'white', boxShadow: '0 20px 60px rgba(25, 118, 210, 0.2)', position: 'relative', overflow: 'hidden' }}>
             <Box sx={{ position: 'absolute', right: -20, top: -20, opacity: 0.1 }}><TrophyIcon sx={{ fontSize: 200 }} /></Box>
             
-            <Typography variant="h6" fontWeight={800} gutterBottom>Seu Código Exclusivo</Typography>
+            <Typography variant="h6" fontWeight={400} gutterBottom>Seu Código Exclusivo</Typography>
             <Box sx={{ bgcolor: 'rgba(255,255,255,0.1)', p: 3, borderRadius: '20px', mt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px dashed rgba(255,255,255,0.3)' }}>
-              <Typography variant="h4" sx={{ fontWeight: 900, fontFamily: 'monospace', letterSpacing: 2 }}>{referralCode}</Typography>
+              <Typography variant="h4" sx={{ fontWeight: 400, fontFamily: 'monospace', letterSpacing: 2 }}>{referralCode}</Typography>
               <IconButton onClick={copyToClipboard} sx={{ color: 'white' }}><CopyIcon /></IconButton>
             </Box>
             
@@ -111,14 +111,14 @@ const ReferralPage: React.FC = () => {
               fullWidth 
               variant="contained" 
               startIcon={<ShareIcon />}
-              sx={{ mt: 4, bgcolor: 'white', color: 'primary.main', borderRadius: '14px', py: 1.5, fontWeight: 800, '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' } }}
+              sx={{ mt: 4, bgcolor: 'white', color: 'primary.main', borderRadius: '14px', py: 1.5, fontWeight: 400, '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' } }}
             >
               CONVIDAR AMIGOS
             </Button>
           </Paper>
 
           <Paper sx={{ p: 3, mt: 4, borderRadius: '24px', border: '1px solid', borderColor: 'divider' }}>
-            <Typography variant="subtitle2" fontWeight={800} mb={2}>Como funciona?</Typography>
+            <Typography variant="subtitle2" fontWeight={400} mb={2}>Como funciona?</Typography>
             <Stack spacing={2}>
               <Box display="flex" gap={2}>
                 <Avatar sx={{ width: 24, height: 24, fontSize: '0.7rem', bgcolor: 'primary.main' }}>1</Avatar>
@@ -140,7 +140,7 @@ const ReferralPage: React.FC = () => {
         <Grid item xs={12} md={7}>
           <Paper sx={{ borderRadius: '32px', border: '1px solid', borderColor: 'divider', overflow: 'hidden', height: '100%' }}>
             <Box p={3} borderBottom="1px solid" borderColor="divider">
-              <Typography variant="h6" fontWeight={800}>Suas Indicações</Typography>
+              <Typography variant="h6" fontWeight={400}>Suas Indicações</Typography>
             </Box>
             <List sx={{ p: 0 }}>
               {history.length > 0 ? (
@@ -152,18 +152,18 @@ const ReferralPage: React.FC = () => {
                           <UsersIcon />
                         </Avatar>
                         <Box flexGrow={1}>
-                          <Typography variant="body1" fontWeight={700}>{ref.referred_customer_name}</Typography>
+                          <Typography variant="body1" fontWeight={400}>{ref.referred_customer_name}</Typography>
                           <Typography variant="caption" color="text.secondary">Indicado em {moment(ref.date).format('LL')}</Typography>
                         </Box>
                         <Box textAlign="right">
-                          <Typography variant="body2" fontWeight={900} color={ref.status === 'completed' ? 'success.main' : 'warning.main'}>
+                          <Typography variant="body2" fontWeight={400} color={ref.status === 'completed' ? 'success.main' : 'warning.main'}>
                             {ref.reward}
                           </Typography>
                           <Chip 
                             label={ref.status === 'completed' ? 'RESGATADO' : 'PENDENTE'} 
                             size="small" 
                             variant="outlined" 
-                            sx={{ height: 16, fontSize: '0.55rem', fontWeight: 900, mt: 0.5 }} 
+                            sx={{ height: 16, fontSize: '0.55rem', fontWeight: 400, mt: 0.5 }} 
                           />
                         </Box>
                       </Box>

@@ -46,7 +46,7 @@ describe('CommissionRulesService', () => {
     // O pool é obtido no topo do arquivo do serviço, então ele usa a instância retornada por mockGetPool na importação
     // Precisamos garantir que mockClientQuery (retornado por pool.query) seja o que estamos configurando
     mockClientQuery.mockResolvedValue({ rows: [], rowCount: 0 });
-    
+
     service = new CommissionRulesService();
   });
 
@@ -56,7 +56,12 @@ describe('CommissionRulesService', () => {
 
   describe('createCommissionRule', () => {
     it('should create a commission rule', async () => {
-      const payload: any = { name: 'Rule 1', value_type: 'percentage', value: 10, applies_to: 'all' };
+      const payload: any = {
+        name: 'Rule 1',
+        value_type: 'percentage',
+        value: 10,
+        applies_to: 'all',
+      };
       const createdRule = { id: 'mock-uuid', ...payload };
       mockClientQuery.mockResolvedValueOnce({ rows: [createdRule] });
 
@@ -64,7 +69,7 @@ describe('CommissionRulesService', () => {
 
       expect(mockClientQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO commission_rules'),
-        expect.arrayContaining(['mock-uuid', 'Rule 1'])
+        expect.arrayContaining(['mock-uuid', 'Rule 1']),
       );
       expect(result).toEqual(createdRule);
     });
@@ -92,7 +97,7 @@ describe('CommissionRulesService', () => {
 
       expect(mockClientQuery).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE commission_rules SET'),
-        expect.arrayContaining(['1', 'Updated Rule'])
+        expect.arrayContaining(['1', 'Updated Rule']),
       );
       expect(result).toEqual(updatedRule);
     });
@@ -106,7 +111,7 @@ describe('CommissionRulesService', () => {
 
       expect(mockClientQuery).toHaveBeenCalledWith(
         'DELETE FROM commission_rules WHERE id = $1 RETURNING id',
-        ['1']
+        ['1'],
       );
       expect(result).toBe(true);
     });

@@ -113,7 +113,7 @@ export const WhatsAppTemplatesPage: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom component="h1" sx={{ fontWeight: 'bold', color: '#128c7e' }}>
+      <Typography variant="h4" gutterBottom component="h1" sx={{ fontWeight: 400, color: '#128c7e' }}>
         Gerenciador de Templates WhatsApp
       </Typography>
       
@@ -283,3 +283,4 @@ export const WhatsAppTemplatesPage: React.FC = () => {
 };
 
 export default WhatsAppTemplatesPage;
+

@@ -137,7 +137,7 @@ const ServiceOrderForm: React.FC = () => {
           <FaWifi style={{ color: 'red' }} title={t('offline_status')} />
         )}
         {pendingOfflineServiceOrders > 0 && (
-          <span style={{ color: 'orange', fontWeight: 'bold' }} title={t('pending_offline_service_orders', { count: pendingOfflineServiceOrders })}>
+          <span style={{ color: 'orange', fontWeight: 400 }} title={t('pending_offline_service_orders', { count: pendingOfflineServiceOrders })}>
             ({pendingOfflineServiceOrders} {t('pending_service_orders')})
           </span>
         )}
@@ -201,3 +201,4 @@ const ServiceOrderForm: React.FC = () => {
 };
 
 export default ServiceOrderForm;
+

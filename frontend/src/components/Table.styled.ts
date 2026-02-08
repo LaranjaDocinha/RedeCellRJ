@@ -24,7 +24,7 @@ export const StyledTable = styled.table`
 
   th {
     background-color: ${({ theme }) => theme.colors.background};
-    font-weight: bold;
+    font-weight: 400;
     text-transform: uppercase;
     font-size: ${({ theme }) => theme.typography.button.fontSize};
     color: ${({ theme }) => theme.colors.onBackground};
@@ -56,3 +56,4 @@ export const StyledTableControls = styled(motion.div)`
     flex-grow: 1;
   }
 `;
+

@@ -12,7 +12,10 @@ export const clockIn = async (req: Request, res: Response) => {
     res.status(201).json(entry);
   } catch (error: any) {
     console.error('Clock-in controller error:', error);
-    res.status(500).json({ message: error.message, stack: process.env.NODE_ENV === 'development' ? error.stack : undefined });
+    res.status(500).json({
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+    });
   }
 };
 

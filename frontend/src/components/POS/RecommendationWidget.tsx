@@ -43,7 +43,7 @@ const RecommendationWidget: React.FC<RecommendationWidgetProps> = ({ cartItemIds
 
   return (
     <Box mt={2}>
-      <Typography variant="caption" gutterBottom sx={{ fontWeight: 900, color: 'primary.main', letterSpacing: 1 }}>
+      <Typography variant="caption" gutterBottom sx={{ fontWeight: 400, color: 'primary.main', letterSpacing: 1 }}>
         SUGESTÕES DE UPSELL (IA)
       </Typography>
       {loading ? (
@@ -54,7 +54,7 @@ const RecommendationWidget: React.FC<RecommendationWidgetProps> = ({ cartItemIds
             <Grid item xs={12} key={product.id}>
               <CompactSearchResult onClick={() => onAddProduct(product)} whileHover={{ x: 5 }}>
                 <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                  <Typography variant="body2" fontWeight={700} noWrap>{product.name}</Typography>
+                  <Typography variant="body2" fontWeight={400} noWrap>{product.name}</Typography>
                   <Typography variant="caption" color="text.secondary">R$ {Number(product.price || 0).toFixed(2)}</Typography>
                 </Box>
                 <IconButton 

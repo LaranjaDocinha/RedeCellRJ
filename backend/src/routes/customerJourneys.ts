@@ -21,17 +21,6 @@ const createJourneySchema = z.object({
   is_active: z.boolean().default(true),
 });
 
-const updateJourneySchema = z.object({
-  name: z.string().min(1, 'Name is required').optional(),
-  trigger_segment: z.string().min(1, 'Trigger segment is required').optional(),
-  action_type: z.enum(['email', 'whatsapp_message', 'push_notification'], {
-    errorMap: () => ({ message: 'Invalid action type' }),
-  }).optional(),
-  template_id: z.string().min(1, 'Template ID is required').optional(),
-  delay_days: z.number().int().min(0).optional(),
-  is_active: z.boolean().optional(),
-}).partial();
-
 // Validation Middleware
 const validate =
   (schema: z.ZodObject<any, any, any> | z.ZodEffects<any, any, any>) =>
@@ -52,7 +41,6 @@ const validate =
       next(error);
     }
   };
-
 
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {

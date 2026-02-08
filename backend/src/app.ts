@@ -1,6 +1,6 @@
 import './lib/telemetry.js'; // Initialize OpenTelemetry
 import * as Sentry from '@sentry/node';
-import express from 'express';
+import express, { Router, Request, Response, NextFunction } from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import 'dotenv/config';
@@ -13,42 +13,136 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
+import crypto from 'crypto';
+import compression from 'compression';
 
 import errorMiddleware from './middlewares/errorMiddleware.js';
 import { xssSanitizer } from './middlewares/sanitizationMiddleware.js';
 import { requestLoggerMiddleware } from './middlewares/requestLoggerMiddleware.js';
+import { performanceTracer } from './middlewares/performanceTracer.js'; // Import tracer
 import chaosMiddleware from './middlewares/chaos/chaos.js';
+import { idempotencyMiddleware } from './middlewares/idempotency.js';
 
 // Import Listeners
-// import whatsappListener from './listeners/whatsappListener.js';
 import { initSocketListeners } from './listeners/socketEvents.js';
 import { initMarketplaceListener } from './listeners/marketplaceListener.js';
 import { initNotificationEventListener } from './listeners/notificationEventListener.js';
+import { initSystemNotificationListener } from './listeners/systemNotificationListener.js';
 import marketingAutomationListener from './listeners/marketingAutomationListener.js';
 
 // Import Jobs/Services initialization
 import { initCronJobs } from './jobs/cronJobs.js';
 import { initWorkers } from './jobs/workers.js';
-// import { initWhatsapp } from './services/whatsappService.js';
+
+// Import Routers
+import partsRouter from './routes/parts.js';
+import compatibilityRouter from './routes/compatibility.js';
+import authRouter from './routes/auth.js';
+import auth2faRouter from './routes/auth2fa.js';
+import { usersRouter } from './routes/users.js';
+import rolesRouter from './routes/roles.js';
+import permissionsRouter from './routes/permissions.js';
+import rolePermissionsRouter from './routes/rolePermissions.js';
+import branchesRouter from './routes/branches.js';
+import categoriesRouter from './routes/categories.js';
+import suppliersRouter from './routes/suppliers.js';
+import { createProductRouter } from './routes/products.js';
+import productKitsRouter from './routes/productKits.js';
+import inventoryRouter from './routes/inventory.js';
+import stockTransfersRouter from './routes/stockTransfers.js';
+import serializedItemsRouter from './routes/serializedItems.js';
+import customersRouter from './routes/customers.js';
+import customerCommunicationsRouter from './routes/customerCommunications.js';
+import customerJourneysRouter from './routes/customerJourneys.js';
+// import storeCreditRouter from './routes/storeCreditRoutes.js'; // REMOVED: File not found
+import loyaltyRouter from './routes/loyalty.js';
+import loyaltyTiersRouter from './routes/loyaltyTiers.js';
+import referralsRouter from './routes/referrals.js';
+import leadsRouter from './routes/leads.js';
+import salesRouter from './routes/sales.js';
+import salesGoalsRouter from './routes/salesGoals.js';
+import returnItemsRouter from './routes/returnItems.js';
+import returnsRouter from './routes/returns.js';
+import receiptsRouter from './routes/receipts.js';
+import tefRouter from './routes/tef.js';
+import pixRouter from './routes/pix.js';
+import cashDrawerRouter from './routes/cashDrawer.js';
+import serviceOrdersRouter from './routes/serviceOrders.js';
+import serviceOrderAttachmentsRouter from './routes/serviceOrderAttachments.js';
+import diagnosticNodesRoutes from './routes/diagnosticNodesRoutes.js';
+import diagnosticsRouter from './routes/diagnostics.js';
+import checklistsRouter from './routes/checklists.js';
+import kanbanRouter from './routes/kanban.js';
+import activityFeedRouter from './routes/activityFeed.js';
+import shiftsRouter from './routes/shifts.js';
+import timeClockRouter from './routes/timeClock.js';
+import expenseReimbursementsRouter from './routes/expenseReimbursements.js';
+import performanceRouter from './routes/performance.js';
+import performanceReviewsRouter from './routes/performanceReviews.js';
+import gamificationRouter from './routes/gamification.js';
+import badgesRouter from './routes/badges.js';
+import accountingRouter from './routes/accounting.js';
+import financeRouter from './routes/financeRoutes.js';
+import cashFlowRouter from './routes/cashFlow.js';
+import shiftReportsRouter from './routes/shiftReports.js';
+import reportsRouter from './routes/reports.js';
+import whatIfRouter from './routes/whatIf.js';
+import dashboardRouter from './routes/dashboard.js';
+import executiveDashboardRouter from './routes/executiveDashboard.js';
+import userDashboardRouter from './routes/userDashboard.js';
+import searchRouter from './routes/search.js';
+import notificationsRouter from './routes/notifications.js';
+import pushNotificationsRouter from './routes/pushNotifications.js';
+import whatsappRouter from './routes/whatsapp.js';
+import emailRouter from './routes/templates.js';
+import labelsRouter from './routes/labels.js';
+import auditRouter from './routes/audit.js';
+import backupRouter from './routes/backup.js';
+import healthRouter from './routes/health.js';
+import sandboxRouter from './routes/sandbox.js';
+import settingsRouter from './routes/settings.js';
+import brandingRouter from './routes/branding.js';
+import marketplaceRouter from './routes/marketplace.js';
+import marketplaceConfigRoutes from './routes/marketplaceConfigRoutes.js';
+import pricingRuleRoutes from './routes/pricingRuleRoutes.js';
+import tagsRouter from './routes/tags.js';
+import accountsRouter from './routes/accounts.js';
+import userKeybindsRouter from './routes/userKeybinds.js';
+import ipWhitelistRouter from './routes/ipWhitelist.js';
+import { apiKeyRouter, publicApiRouter } from './routes/api.js';
+import publicPortalRouter from './routes/publicPortalRoutes.js';
+import techAppRouter from './routes/techAppRoutes.js';
+import aiDiagnosticRouter from './routes/aiDiagnosticRoutes.js';
+import deliveryRouter from './routes/deliveryRoutes.js';
+import printRouter from './routes/printRoutes.js';
+import rmaRouter from './routes/rmaRoutes.js';
+import customer360Routes from './routes/customer360Routes.js';
+import commissionRulesRoutes from './routes/commissionRulesRoutes.js';
+import cycleCountsRouter from './routes/cycleCounts.js';
+import couponsRouter from './routes/coupons.js';
+import quarantineRouter from './routes/quarantine.js';
+import reviewsRouter from './routes/reviews.js';
+import discountsRouter from './routes/discounts.js';
+
+import { createBullBoard } from '@bull-board/api';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter.js';
+import { ExpressAdapter } from '@bull-board/express';
+import { badgeQueue, rfmQueue, whatsappQueue, defaultQueue } from './jobs/queue.js';
 
 // Initialize event listeners and services
 if (process.env.NODE_ENV !== 'test') {
   marketingAutomationListener();
-  // whatsappListener();
-  initSocketListeners();
   initMarketplaceListener();
   initNotificationEventListener();
+  initSystemNotificationListener();
   initCronJobs();
   initWorkers();
-  // initWhatsapp();
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-import partsRouter from './routes/parts.js';
-import compatibilityRouter from './routes/compatibility.js';
-
 const app = express();
+app.use(compression());
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
   cors: {
@@ -56,6 +150,11 @@ const io = new Server(httpServer, {
     methods: ['GET', 'POST'],
   },
 });
+
+// Initialize Socket Listeners after io is created
+if (process.env.NODE_ENV !== 'test') {
+  initSocketListeners(io);
+}
 
 // Sentry Initialization
 if (process.env.NODE_ENV !== 'test') {
@@ -70,11 +169,19 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(Sentry.Handlers.tracingHandler());
 }
 
+// Generate nonce for CSP
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.locals.nonce = crypto.randomBytes(16).toString('base64');
+  next();
+});
+
 // Global Middlewares
+app.use(performanceTracer);
 app.use(express.json());
 app.use(xssSanitizer);
 app.use(requestLoggerMiddleware);
-app.use(chaosMiddleware);
+app.use(idempotencyMiddleware); // Idempotency check before business logic
+app.use(chaosMiddleware); // Chaos monkey injection
 app.use(cookieParser());
 app.use(
   session({
@@ -90,13 +197,21 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: [
+          "'self'",
+          // Allow scripts with the correct nonce
+          (req: any, res: any) => `'nonce-${res.locals.nonce}'`,
+          // Note: unsafe-inline is still often needed for libraries that inject styles/scripts dynamically
+          // ideally we should remove it, but for now we keep it to prevent breaking the UI
+          "'unsafe-inline'",
+        ],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'", 'http://localhost:3001', 'ws://localhost:3001', 'https://api.redecellrj.com.br'],
       },
     },
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-  })
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }),
 );
 
 const allowedOrigins = ['http://localhost:3001', 'http://localhost:5000', 'http://localhost:5173'];
@@ -128,202 +243,152 @@ app.get('/', (req, res) => {
 });
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Import Routers
-import authRouter from './routes/auth.js';
-import auth2faRouter from './routes/auth2fa.js';
-import { usersRouter } from './routes/users.js';
-import rolesRouter from './routes/roles.js';
-import permissionsRouter from './routes/permissions.js';
-import rolePermissionsRouter from './routes/rolePermissions.js';
-import branchesRouter from './routes/branches.js';
-import categoriesRouter from './routes/categories.js';
-import suppliersRouter from './routes/suppliers.js';
-import { createProductRouter } from './routes/products.js';
-import productKitsRouter from './routes/productKits.js';
-import inventoryRouter from './routes/inventory.js';
-import stockTransfersRouter from './routes/stockTransfers.js';
-import serializedItemsRouter from './routes/serializedItems.js';
-import customersRouter from './routes/customers.js';
-import customerCommunicationsRouter from './routes/customerCommunications.js';
-import customerJourneysRouter from './routes/customerJourneys.js';
-import storeCreditRouter from './routes/storeCreditRoutes.js';
-import loyaltyRouter from './routes/loyalty.js';
-import loyaltyTiersRouter from './routes/loyaltyTiers.js';
-import referralsRouter from './routes/referrals.js';
-import leadsRouter from './routes/leads.js';
-import salesRouter from './routes/sales.js';
-import salesGoalsRouter from './routes/salesGoals.js';
-import returnItemsRouter from './routes/returnItems.js';
-import returnsRouter from './routes/returns.js';
-import receiptsRouter from './routes/receipts.js';
-import tefRouter from './routes/tef.js';
-import pixRouter from './routes/pix.js';
-import cashDrawerRouter from './routes/cashDrawer.js';
-import serviceOrdersRouter from './routes/serviceOrders.js';
-import serviceOrderAttachmentsRouter from './routes/serviceOrderAttachments.js';
-import diagnosticNodesRoutes from './routes/diagnosticNodesRoutes.js';
-import diagnosticsRouter from './routes/diagnostics.js';
-import checklistsRouter from './routes/checklists.js';
-import kanbanRouter from './routes/kanban.js';
-import activityFeedRouter from './routes/activityFeed.js';
-import shiftsRouter from './routes/shifts.js';
-import timeClockRouter from './routes/timeClock.js';
-import expenseReimbursementsRouter from './routes/expenseReimbursements.js';
-import performanceRouter from './routes/performance.js';
-import performanceReviewsRouter from './routes/performanceReviews.js';
-import gamificationRouter from './routes/gamification.js';
-import badgesRouter from './routes/badges.js';
-import accountingRouter from './routes/accounting.js';
-import financeRouter from './routes/finance.js';
-import cashFlowRouter from './routes/cashFlow.js';
-import reportsRouter from './routes/reports.js';
-import extendedReportsRouter from './routes/extendedReports.js';
-import shiftReportsRouter from './routes/shiftReports.js';
-import zReportsRouter from './routes/zReports.js';
-import pnlReportRouter from './routes/pnlReport.js';
-import cogsRouter from './routes/cogs.js';
-import clvRouter from './routes/clv.js';
-import financialDashboardRouter from './routes/financialDashboard.js';
-import whatIfRouter from './routes/whatIf.js';
-import dashboardRouter from './routes/dashboard.js';
-import userDashboardRouter from './routes/userDashboard.js';
-import searchRouter from './routes/search.js';
-import notificationsRouter from './routes/notifications.js';
-import pushNotificationsRouter from './routes/pushNotifications.js';
-import whatsappRouter from './routes/whatsapp.js';
-import emailRouter from './routes/templates.js'; // Assuming templates are for emails
-import labelsRouter from './routes/labels.js';
-import auditRouter from './routes/audit.js';
-import backupRouter from './routes/backup.js';
-import healthRouter from './routes/health.js';
-import sandboxRouter from './routes/sandbox.js';
-import settingsRouter from './routes/settings.js';
-import brandingRouter from './routes/branding.js';
-import marketplaceRouter from './routes/marketplace.js';
-import marketplaceConfigRoutes from './routes/marketplaceConfigRoutes.js';
-import pricingRuleRoutes from './routes/pricingRuleRoutes.js';
-import tagsRouter from './routes/tags.js';
-import accountsRouter from './routes/accounts.js';
-import userKeybindsRouter from './routes/userKeybinds.js';
-import ipWhitelistRouter from './routes/ipWhitelist.js';
-import { apiKeyRouter, publicApiRouter } from './routes/api.js';
-import publicPortalRouter from './routes/publicPortalRoutes.js';
-import techAppRouter from './routes/techAppRoutes.js';
-import customer360Routes from './routes/customer360Routes.js';
-import commissionRulesRoutes from './routes/commissionRulesRoutes.js';
-import cycleCountsRouter from './routes/cycleCounts.js';
-import couponsRouter from './routes/coupons.js';
-import quarantineRouter from './routes/quarantine.js';
-import reviewsRouter from './routes/reviews.js';
-import discountsRouter from './routes/discounts.js';
+// Bull Board Setup
+const serverAdapter = new ExpressAdapter();
+serverAdapter.setBasePath('/admin/queues');
+
+if (badgeQueue && rfmQueue && whatsappQueue && defaultQueue) {
+  createBullBoard({
+    queues: [
+      new BullMQAdapter(badgeQueue),
+      new BullMQAdapter(rfmQueue),
+      new BullMQAdapter(whatsappQueue),
+      new BullMQAdapter(defaultQueue),
+    ],
+    serverAdapter: serverAdapter,
+  });
+}
+
+app.use('/admin/queues', serverAdapter.getRouter());
 
 // Route Mounting
-app.use('/api/auth', authLimiter, authRouter);
-app.use('/api/auth', auth2faRouter);
-app.use('/api/users', usersRouter);
-app.use('/api/roles', rolesRouter);
-app.use('/api/permissions', permissionsRouter);
-app.use('/api/role-permissions', rolePermissionsRouter);
-app.use('/api/branches', branchesRouter);
-app.use('/api/categories', categoriesRouter);
-app.use('/api/suppliers', suppliersRouter);
-app.use('/api/products', createProductRouter());
-app.use('/api/product-kits', productKitsRouter);
-app.use('/api/inventory', inventoryRouter);
-app.use('/api/stock-transfers', stockTransfersRouter);
-app.use('/api/serialized-items', serializedItemsRouter);
-app.use('/api/customers', customersRouter);
-app.use('/api/customer-communications', customerCommunicationsRouter);
-app.use('/api/customer-journeys', customerJourneysRouter);
-app.use('/api/store-credit', storeCreditRouter);
-app.use('/api/loyalty', loyaltyRouter);
-app.use('/api/loyalty-tiers', loyaltyTiersRouter);
-app.use('/api/referrals', referralsRouter);
-app.use('/api/leads', leadsRouter);
-app.use('/api/sales', salesRouter);
-app.use('/api/sales-goals', salesGoalsRouter);
-app.use('/api/coupons', couponsRouter);
-app.use('/api/discounts', discountsRouter);
-app.use('/api/reviews', reviewsRouter);
-app.use('/api/return-items', returnItemsRouter);
-app.use('/api/returns', returnsRouter);
-app.use('/api/quarantine', quarantineRouter);
-app.use('/api/receipts', receiptsRouter);
-app.use('/api/tef', tefRouter);
-app.use('/api/pix', pixRouter);
-app.use('/api/cash-drawer', cashDrawerRouter);
-app.use('/api/parts', partsRouter);
-app.use('/api/compatibility', compatibilityRouter);
-app.use('/api/service-orders', serviceOrdersRouter);
-app.use('/api/service-order-attachments', serviceOrderAttachmentsRouter);
-app.use('/api/diagnostic-nodes', diagnosticNodesRoutes);
-app.use('/api/diagnostics', diagnosticsRouter);
-app.use('/api/checklists', checklistsRouter);
-app.use('/api/kanban', kanbanRouter);
-app.use('/api/activity-feed', activityFeedRouter);
-app.use('/api/shifts', shiftsRouter);
-app.use('/api/time-clock', timeClockRouter);
-app.use('/api/expense-reimbursements', expenseReimbursementsRouter);
-app.use('/api/performance', performanceRouter);
-app.use('/api/performance-reviews', performanceReviewsRouter);
-app.use('/api/gamification', gamificationRouter);
-app.use('/api/badges', badgesRouter);
-app.use('/api/accounting', accountingRouter);
-app.use('/api/finance', financeRouter);
-app.use('/api/cash-flow', cashFlowRouter);
-app.use('/api/reports', reportsRouter);
-app.use('/api/extended-reports', extendedReportsRouter);
-app.use('/api/shift-reports', shiftReportsRouter);
-app.use('/api/reports/z-report', zReportsRouter);
-app.use('/api/reports/pnl', pnlReportRouter);
-app.use('/api/cogs', cogsRouter);
-app.use('/api/clv', clvRouter);
-app.use('/api/financial-dashboard', financialDashboardRouter);
-app.use('/api/what-if', whatIfRouter);
-app.use('/api/dashboard', dashboardRouter);
-app.use('/api/user-dashboard', userDashboardRouter);
-app.use('/api/search', searchRouter);
-app.use('/api/notifications', notificationsRouter);
-app.use('/api/push', pushNotificationsRouter);
-app.use('/api/whatsapp', whatsappRouter);
-app.use('/api/templates', emailRouter);
-app.use('/api/labels', labelsRouter);
-app.use('/api/audit', auditRouter);
-app.use('/api/backup', backupRouter);
-app.use('/api/health', healthRouter);
-app.use('/api/sandbox', sandboxRouter);
-app.use('/api/settings', settingsRouter);
-app.use('/api/branding', brandingRouter);
-app.use('/api/marketplace', marketplaceRouter);
-app.use('/api/admin/marketplace', marketplaceConfigRoutes);
-app.use('/api/admin/pricing', pricingRuleRoutes);
-app.use('/api/tags', tagsRouter);
-app.use('/api/accounts', accountsRouter);
-app.use('/api/user-keybinds', userKeybindsRouter);
-app.use('/api/ip-whitelist', ipWhitelistRouter);
-app.use('/api/dev', apiKeyRouter);
-app.use('/api/public', publicApiRouter);
-app.use('/api/portal', publicPortalRouter);
-app.use('/api/tech', techAppRouter);
-app.use('/api/customer360', customer360Routes);
-app.use('/api/commission-rules', commissionRulesRoutes);
-app.use('/api/cycle-counts', cycleCountsRouter);
+const v1Router = Router();
+
+v1Router.use('/auth', authLimiter, authRouter);
+v1Router.use('/auth', auth2faRouter);
+v1Router.use('/users', usersRouter);
+v1Router.use('/roles', rolesRouter);
+v1Router.use('/permissions', permissionsRouter);
+v1Router.use('/role-permissions', rolePermissionsRouter);
+v1Router.use('/branches', branchesRouter);
+v1Router.use('/categories', categoriesRouter);
+v1Router.use('/suppliers', suppliersRouter);
+v1Router.use('/products', createProductRouter());
+v1Router.use('/product-kits', productKitsRouter);
+v1Router.use('/inventory', inventoryRouter);
+v1Router.use('/stock-transfers', stockTransfersRouter);
+v1Router.use('/serialized-items', serializedItemsRouter);
+v1Router.use('/customers', customersRouter);
+v1Router.use('/customer-communications', customerCommunicationsRouter);
+v1Router.use('/customer-journeys', customerJourneysRouter);
+// v1Router.use('/store-credit', storeCreditRouter); // REMOVED: File not found
+v1Router.use('/loyalty', loyaltyRouter);
+v1Router.use('/loyalty-tiers', loyaltyTiersRouter);
+v1Router.use('/referrals', referralsRouter);
+v1Router.use('/leads', leadsRouter);
+v1Router.use('/sales', salesRouter);
+v1Router.use('/sales-goals', salesGoalsRouter);
+v1Router.use('/coupons', couponsRouter);
+v1Router.use('/discounts', discountsRouter);
+v1Router.use('/reviews', reviewsRouter);
+v1Router.use('/return-items', returnItemsRouter);
+v1Router.use('/returns', returnsRouter);
+v1Router.use('/quarantine', quarantineRouter);
+v1Router.use('/receipts', receiptsRouter);
+v1Router.use('/tef', tefRouter);
+v1Router.use('/pix', pixRouter);
+v1Router.use('/cash-drawer', cashDrawerRouter);
+v1Router.use('/parts', partsRouter);
+v1Router.use('/compatibility', compatibilityRouter);
+v1Router.use('/service-orders', serviceOrdersRouter);
+v1Router.use('/service-order-attachments', serviceOrderAttachmentsRouter);
+v1Router.use('/diagnostic-nodes', diagnosticNodesRoutes);
+v1Router.use('/diagnostics', diagnosticsRouter);
+v1Router.use('/checklists', checklistsRouter);
+v1Router.use('/kanban', kanbanRouter);
+v1Router.use('/activity-feed', activityFeedRouter);
+v1Router.use('/shifts', shiftsRouter);
+v1Router.use('/time-clock', timeClockRouter);
+v1Router.use('/expense-reimbursements', expenseReimbursementsRouter);
+v1Router.use('/performance', performanceRouter);
+v1Router.use('/performance-reviews', performanceReviewsRouter);
+v1Router.use('/gamification', gamificationRouter);
+v1Router.use('/badges', badgesRouter);
+v1Router.use('/accounting', accountingRouter);
+v1Router.use('/finance', financeRouter);
+v1Router.use('/cash-flow', cashFlowRouter);
+v1Router.use('/reports', reportsRouter);
+v1Router.use('/shift-reports', shiftReportsRouter);
+v1Router.use('/what-if', whatIfRouter);
+v1Router.use('/dashboard', dashboardRouter);
+v1Router.use('/executive-dashboard', executiveDashboardRouter);
+v1Router.use('/user-dashboard', userDashboardRouter);
+v1Router.use('/search', searchRouter);
+v1Router.use('/notifications', notificationsRouter);
+v1Router.use('/push', pushNotificationsRouter);
+v1Router.use('/whatsapp', whatsappRouter);
+v1Router.use('/templates', emailRouter);
+v1Router.use('/labels', labelsRouter);
+v1Router.use('/audit', auditRouter);
+v1Router.use('/backup', backupRouter);
+v1Router.use('/health', healthRouter);
+v1Router.use('/sandbox', sandboxRouter);
+v1Router.use('/settings', settingsRouter);
+v1Router.use('/branding', brandingRouter);
+v1Router.use('/marketplace', marketplaceRouter);
+v1Router.use('/admin/marketplace', marketplaceConfigRoutes);
+v1Router.use('/admin/pricing', pricingRuleRoutes);
+v1Router.use('/tags', tagsRouter);
+v1Router.use('/accounts', accountsRouter);
+v1Router.use('/user-keybinds', userKeybindsRouter);
+v1Router.use('/ip-whitelist', ipWhitelistRouter);
+v1Router.use('/dev', apiKeyRouter);
+v1Router.use('/public', publicApiRouter);
+v1Router.use('/portal', publicPortalRouter);
+v1Router.use('/tech', techAppRouter);
+v1Router.use('/ai', aiDiagnosticRouter);
+v1Router.use('/delivery', deliveryRouter);
+v1Router.use('/print', printRouter);
+v1Router.use('/rma', rmaRouter);
+v1Router.use('/customer360', customer360Routes);
+v1Router.use('/commission-rules', commissionRulesRoutes);
+v1Router.use('/cycle-counts', cycleCountsRouter);
+
+app.use('/api/v1', v1Router);
+app.use('/api', v1Router);
 
 // Swagger UI
 const swaggerDocument = YAML.load(path.resolve(__dirname, '../swagger.yaml'));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Socket.IO
-io.on('connection', (socket) => {
-  console.log('a user connected:', socket.id);
-  socket.on('disconnect', () => {
-    console.log('user disconnected:', socket.id);
+// Socket listeners are already initialized via initSocketListeners(io) above
+
+// Serve Frontend Static Files (Production/Self-Hosting Mode)
+const frontendDistPath = path.join(__dirname, '../../frontend/dist');
+if (process.env.NODE_ENV === 'production' || process.env.SELF_HOSTED === 'true') {
+  app.use(express.static(frontendDistPath));
+  
+  // SPA Fallback: Any route not handled by API returns index.html
+  app.get('*', (req, res, next) => {
+    if (req.url.startsWith('/api')) return next(); // Let API 404 handler deal with it
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
   });
-});
+}
 
 // 404 handler
-app.use((req, res, next) => {
-  res.status(404).send('Not Found');
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: {
+      message: 'Route not found',
+      code: 'NOT_FOUND',
+    },
+    meta: {
+      timestamp: new Date().toISOString(),
+      requestId: (req as any).requestId,
+    },
+  });
 });
 
 // Error handlers

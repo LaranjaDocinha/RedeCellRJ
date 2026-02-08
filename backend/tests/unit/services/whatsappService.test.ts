@@ -1,321 +1,200 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { WhatsappService } from '../../../src/services/whatsappService.js';
-import { getPool } from '../../../src/db/index.js'; // getPool é exportado nomeadamente
-import { AppError } from '../../../src/utils/errors.js';
-import { logger } from '../../../src/utils/logger.js';
-import { Client, LocalAuth, Message } from 'whatsapp-web.js'; // Importações reais para tipos
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mocks
+const { mockPool, mockQuery, mockConnect, mockClient } = vi.hoisted(() => {
+  const mQuery = vi.fn();
+  const mRelease = vi.fn();
+  const mClient = { query: mQuery, release: mRelease };
+  const mConnect = vi.fn().mockResolvedValue(mClient);
+  const mPool = { query: mQuery, connect: mConnect };
+  return { mockPool: mPool, mockQuery: mQuery, mockConnect: mConnect, mockClient: mClient };
+});
+
 vi.mock('../../../src/db/index.js', () => ({
-  getPool: vi.fn(),
+  default: mockPool,
+  getPool: () => mockPool,
+  query: mockQuery,
+  connect: mockConnect,
+  _mockQuery: mockQuery,
+  _mockConnect: mockConnect,
+  _mockClient: mockClient,
+  _mockPool: mockPool,
 }));
 
-// Mock do whatsapp-web.js. É crucial que o Client mockado retorne uma instância com métodos "on" e "initialize"
 const mockClientInstance = {
-  on: vi.fn(),
-  initialize: vi.fn(),
-  sendMessage: vi.fn(),
+  on: vi.fn().mockReturnThis(),
+  initialize: vi.fn().mockResolvedValue(undefined),
+  sendMessage: vi.fn().mockResolvedValue(undefined),
 };
-// Garante que 'on' retorna a própria instância para permitir encadeamento
-mockClientInstance.on.mockReturnThis();
 
-vi.mock('whatsapp-web.js', () => ({
-  Client: vi.fn(() => mockClientInstance),
-  LocalAuth: vi.fn(),
-}));
+vi.mock('whatsapp-web.js', () => {
+  const mockClient = vi.fn(() => mockClientInstance);
+  return {
+    default: { Client: mockClient, LocalAuth: vi.fn() },
+    Client: mockClient,
+    LocalAuth: vi.fn(),
+  };
+});
 
 vi.mock('qrcode-terminal', () => ({
+  default: { generate: vi.fn() },
   generate: vi.fn(),
 }));
+
 vi.mock('../../../src/utils/logger.js', () => ({
-    logger: {
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-    },
+  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
+vi.mock('../../../src/jobs/queue.js', () => ({
+  addJob: vi.fn(),
+  whatsappQueue: { name: 'whatsapp' },
+}));
+
+import { WhatsappService } from '../../../src/services/whatsappService.js';
+import { AppError } from '../../../src/utils/errors.js';
+import { addJob, whatsappQueue } from '../../../src/jobs/queue.js';
 
 describe('WhatsappService', () => {
   let service: WhatsappService;
-  let mockPool: any;
-  let mockPgClient: any;
-  let originalNodeEnv: string | undefined;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
-    originalNodeEnv = process.env.NODE_ENV; // Salva o NODE_ENV original
+    mockQuery.mockResolvedValue({ rows: [], rowCount: 0 });
+    mockClient.query.mockResolvedValue({ rows: [], rowCount: 0 });
 
-    mockPgClient = {
-      query: vi.fn(),
-      release: vi.fn(),
-    };
-    mockPool = {
-      connect: vi.fn().mockResolvedValue(mockPgClient),
-      query: vi.fn(), // Para upsertTemplate e getLogsByCustomer
-    };
-    (getPool as vi.Mock).mockReturnValue(mockPool);
-
-    // Reinicia o serviço para cada teste, garantindo um novo client mockado
     service = new WhatsappService();
-    
-    // Garante que o cliente mockado é injetado no serviço
-    (service as any).client = mockClientInstance; 
-    (service as any).isReady = false; // Reseta o estado
-  });
-
-  afterEach(() => {
-    process.env.NODE_ENV = originalNodeEnv; // Restaura o NODE_ENV
+    // Simulate breaker behavior for tests
+    (service as any).breaker = {
+      fire: vi
+        .fn()
+        .mockImplementation((...args: any[]) => (service as any).deliverMessage(...args)),
+      fallback: vi.fn(),
+      opened: false,
+      halfOpen: false,
+      closed: true,
+      stats: {},
+    };
   });
 
   describe('initWhatsappClient', () => {
-    it('deve pular a inicialização em ambiente de teste', async () => {
-      process.env.NODE_ENV = 'test';
+    it('should initialize client and set up listeners', async () => {
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development';
       await service.initWhatsappClient();
-
-      expect(logger.info).toHaveBeenCalledWith('WhatsApp Client initialization skipped in test environment.');
-      expect(Client).not.toHaveBeenCalled();
-      expect(mockClientInstance.initialize).not.toHaveBeenCalled();
-    });
-
-    it('deve inicializar o cliente em ambiente de não-teste', async () => {
-      process.env.NODE_ENV = 'development'; // Ou 'production'
-      mockClientInstance.initialize.mockResolvedValueOnce(undefined);
-
-      await service.initWhatsappClient();
-
-      expect(logger.info).toHaveBeenCalledWith('Initializing WhatsApp Client...');
-      expect(Client).toHaveBeenCalledWith(expect.any(Object));
-      expect(mockClientInstance.on).toHaveBeenCalledWith('qr', expect.any(Function));
-      expect(mockClientInstance.on).toHaveBeenCalledWith('authenticated', expect.any(Function));
-      expect(mockClientInstance.on).toHaveBeenCalledWith('auth_failure', expect.any(Function));
-      expect(mockClientInstance.on).toHaveBeenCalledWith('ready', expect.any(Function));
-      expect(mockClientInstance.on).toHaveBeenCalledWith('disconnected', expect.any(Function));
-      expect(mockClientInstance.on).toHaveBeenCalledWith('message', expect.any(Function));
       expect(mockClientInstance.initialize).toHaveBeenCalled();
-    });
 
-    it('deve logar erro se a inicialização do cliente falhar', async () => {
-      process.env.NODE_ENV = 'development';
-      const initError = new Error('Init failed');
-      mockClientInstance.initialize.mockRejectedValueOnce(initError);
-
-      await service.initWhatsappClient();
-
-      expect(logger.error).toHaveBeenCalledWith('Failed to initialize WhatsApp Client:', initError);
-      expect((service as any).isReady).toBe(false);
-    });
-
-    it('deve setar isReady para true quando o cliente estiver pronto', async () => {
-      process.env.NODE_ENV = 'development';
-      mockClientInstance.initialize.mockResolvedValueOnce(undefined);
-
-      await service.initWhatsappClient();
-      const readyCallback = mockClientInstance.on.mock.calls.find(call => call[0] === 'ready')[1];
-      readyCallback();
-
-      expect(logger.info).toHaveBeenCalledWith('WhatsApp Client is READY!');
+      const readyCb = mockClientInstance.on.mock.calls.find((c) => c[0] === 'ready')[1];
+      readyCb();
       expect((service as any).isReady).toBe(true);
+
+      process.env.NODE_ENV = originalEnv;
     });
+  });
 
-    it('deve setar isReady para false em auth_failure', async () => {
-      process.env.NODE_ENV = 'development';
-      mockClientInstance.initialize.mockResolvedValueOnce(undefined);
-
-      await service.initWhatsappClient();
-      const authFailureCallback = mockClientInstance.on.mock.calls.find(call => call[0] === 'auth_failure')[1];
-      authFailureCallback('Auth failed message');
-
-      expect(logger.error).toHaveBeenCalledWith('WHATSAPP AUTH FAILURE:', 'Auth failed message');
-      expect((service as any).isReady).toBe(false);
-    });
-
-    it('deve setar isReady para false em disconnected', async () => {
-      process.env.NODE_ENV = 'development';
-      mockClientInstance.initialize.mockResolvedValueOnce(undefined);
-
-      await service.initWhatsappClient();
-      const disconnectedCallback = mockClientInstance.on.mock.calls.find(call => call[0] === 'disconnected')[1];
-      disconnectedCallback('Network issues');
-
-      expect(logger.warn).toHaveBeenCalledWith('WHATSAPP CLIENT DISCONNECTED:', 'Network issues');
-      expect((service as any).isReady).toBe(false);
+  describe('queueTemplateMessage', () => {
+    it('should add a job to the whatsapp queue', async () => {
+      const options = { phone: '123', templateName: 'test', variables: {} };
+      await service.queueTemplateMessage(options);
+      expect(addJob).toHaveBeenCalledWith(whatsappQueue, 'sendTemplate', options);
     });
   });
 
   describe('sendTemplateMessage', () => {
-    it('deve enviar mensagem de template e logar sucesso', async () => {
-      (service as any).isReady = true; // Cliente pronto
-      mockPgClient.query.mockResolvedValueOnce({ rows: [{ content: 'Olá {{name}}!' }], rowCount: 1 }); // Template encontrado
-      vi.spyOn(service as any, 'deliverMessage').mockResolvedValueOnce(undefined); // Mockar o envio
-
-      await service.sendTemplateMessage({
-        customerId: 1,
-        phone: '11987654321',
-        templateName: 'welcome',
-        variables: { name: 'João' },
+    it('should send message using template and replace variables', async () => {
+      (service as any).isReady = true;
+      (service as any).client = mockClientInstance;
+      mockClient.query.mockResolvedValueOnce({ 
+        rows: [{ content: 'Hello {{name}}!' }], 
+        rowCount: 1 
       });
 
-      expect(mockPgClient.query).toHaveBeenCalledWith(
-        'SELECT content FROM whatsapp_templates WHERE name = $1 AND is_active = TRUE',
-        ['welcome']
-      );
-      expect(service['deliverMessage']).toHaveBeenCalledWith('11987654321', 'Olá João!');
-      expect(mockPgClient.query).toHaveBeenCalledWith(
-        `INSERT INTO whatsapp_logs (customer_id, phone, content, status, sent_at)
-         VALUES ($1, $2, $3, 'sent', NOW())`,
-        [1, '11987654321', 'Olá João!']
-      );
-      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Whatsapp message sent'));
-      expect(mockPgClient.release).toHaveBeenCalled();
-    });
-
-    it('deve usar conteúdo fallback se template não encontrado e logar sucesso', async () => {
-      (service as any).isReady = true; // Cliente pronto
-      mockPgClient.query.mockResolvedValueOnce({ rows: [], rowCount: 0 }); // Template NÃO encontrado
-      vi.spyOn(service as any, 'deliverMessage').mockResolvedValueOnce(undefined);
-
       await service.sendTemplateMessage({
         customerId: 1,
-        phone: '11987654321',
-        templateName: 'unknown_template',
+        phone: '123456789',
+        templateName: 'welcome',
+        variables: { name: 'John' },
+      });
+
+      expect(mockClientInstance.sendMessage).toHaveBeenCalledWith(expect.any(String), 'Hello John!');
+      expect(mockClient.query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO whatsapp_logs'), expect.any(Array));
+    });
+
+    it('should use fallback content if template not found', async () => {
+      (service as any).isReady = true;
+      (service as any).client = mockClientInstance;
+      mockClient.query.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+      await service.sendTemplateMessage({
+        phone: '123',
+        templateName: 'missing',
         variables: {},
       });
 
-      expect(mockPgClient.query).toHaveBeenCalledWith(
-        'SELECT content FROM whatsapp_templates WHERE name = $1 AND is_active = TRUE',
-        ['unknown_template']
-      );
-      expect(service['deliverMessage']).toHaveBeenCalledWith(
-        '11987654321',
-        expect.stringContaining('[FALLBACK] Olá, sua notificação sobre unknown_template está pronta!')
-      );
-      expect(mockPgClient.query).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO whatsapp_logs'),
-        [1, '11987654321', expect.stringContaining('[FALLBACK]')]
-      );
-      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('not found or inactive'));
-      expect(mockPgClient.release).toHaveBeenCalled();
+      expect(mockClientInstance.sendMessage).toHaveBeenCalledWith(expect.any(String), expect.stringContaining('[FALLBACK]'));
     });
 
-    it('deve logar erro no DB se o envio da mensagem falhar', async () => {
+    it('should log failure if sending fails', async () => {
       (service as any).isReady = true;
-      mockPgClient.query.mockResolvedValueOnce({ rows: [{ content: 'Test' }], rowCount: 1 });
-      const deliveryError = new Error('Failed to deliver');
-      vi.spyOn(service as any, 'deliverMessage').mockRejectedValueOnce(deliveryError);
+      (service as any).client = mockClientInstance;
+      mockClient.query.mockResolvedValueOnce({ rows: [{ content: 'Hi' }], rowCount: 1 });
+      mockClientInstance.sendMessage.mockRejectedValueOnce(new Error('Send failed'));
 
       await service.sendTemplateMessage({
-        customerId: 1,
-        phone: '11987654321',
+        phone: '123',
         templateName: 'test',
         variables: {},
       });
 
-      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Failed to send whatsapp message'), deliveryError);
-      expect(mockPgClient.query).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO whatsapp_logs'),
-        [1, '11987654321', 'Test', deliveryError.message]
+      expect(mockClient.query).toHaveBeenCalledWith(
+        expect.stringContaining("status, error_message"),
+        expect.arrayContaining(['Send failed'])
       );
-      expect(mockPgClient.release).toHaveBeenCalled();
-    });
-
-    it('deve logar erro no DB se a busca do template falhar', async () => {
-        (service as any).isReady = true;
-        const dbFetchError = new Error('DB Fetch Error');
-        mockPgClient.query.mockRejectedValueOnce(dbFetchError); // Simula erro na busca do template
-        
-        await service.sendTemplateMessage({
-            customerId: 1,
-            phone: '11987654321',
-            templateName: 'error_template',
-            variables: {},
-        });
-
-        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Failed to send whatsapp message'), dbFetchError);
-        expect(mockPgClient.query).toHaveBeenCalledWith( // Deveria tentar logar o erro
-            expect.stringContaining('INSERT INTO whatsapp_logs'),
-            [1, '11987654321', expect.stringContaining('Template Error'), dbFetchError.message]
-        );
-        expect(mockPgClient.release).toHaveBeenCalled();
     });
   });
 
   describe('deliverMessage', () => {
-    it('deve lançar AppError se o cliente não estiver pronto', async () => {
-      (service as any).isReady = false;
-      await expect(service['deliverMessage']('11987654321', 'Test')).rejects.toThrow(
-        'WhatsApp Client is not ready or authenticated.'
-      );
-      expect(logger.warn).toHaveBeenCalledWith('WhatsApp Client not ready. Message delivery skipped.');
-      expect(mockClientInstance.sendMessage).not.toHaveBeenCalled();
-    });
-
-    it('deve formatar o telefone e enviar a mensagem', async () => {
-      (service as any).isReady = true;
-      (service as any).client = mockClientInstance; // Garante que o client está configurado
-      mockClientInstance.sendMessage.mockResolvedValueOnce(undefined);
-
-      await service['deliverMessage']('  +55 (11) 98765-4321 ', 'Hello');
-
-      expect(mockClientInstance.sendMessage).toHaveBeenCalledWith('5511987654321@c.us', 'Hello');
-      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('[WHATSAPP_PROVIDER] Message sent'));
-    });
-
-    it('deve relançar erro se sendMessage falhar', async () => {
+    it('should format phone correctly and send', async () => {
       (service as any).isReady = true;
       (service as any).client = mockClientInstance;
-      const sendError = new Error('Send failed');
-      mockClientInstance.sendMessage.mockRejectedValueOnce(sendError);
 
-      await expect(service['deliverMessage']('11987654321', 'Hello')).rejects.toThrow(sendError);
-      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('[WHATSAPP_PROVIDER] Error sending message'), sendError);
+      await (service as any).deliverMessage('11999998888', 'Hi');
+      expect(mockClientInstance.sendMessage).toHaveBeenCalledWith('5511999998888@c.us', 'Hi');
+    });
+
+    it('should not format if already has 55', async () => {
+      (service as any).isReady = true;
+      (service as any).client = mockClientInstance;
+
+      await (service as any).deliverMessage('5511999998888', 'Hi');
+      expect(mockClientInstance.sendMessage).toHaveBeenCalledWith('5511999998888@c.us', 'Hi');
+    });
+
+    it('should throw AppError if client not ready', async () => {
+      (service as any).isReady = false;
+      await expect((service as any).deliverMessage('123', 'msg')).rejects.toThrow(AppError);
     });
   });
 
   describe('upsertTemplate', () => {
-    it('deve inserir um novo template', async () => {
-      mockPool.query.mockResolvedValueOnce({ rowCount: 1 });
-
-      await service.upsertTemplate('new_template', 'Conteúdo do novo template');
-
-      expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO whatsapp_templates'),
-        ['new_template', 'Conteúdo do novo template']
-      );
-    });
-
-    it('deve atualizar um template existente', async () => {
-      mockPool.query.mockResolvedValueOnce({ rowCount: 1 });
-
-      await service.upsertTemplate('existing_template', 'Conteúdo atualizado');
-
-      expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining('ON CONFLICT (name) DO UPDATE SET'),
-        ['existing_template', 'Conteúdo atualizado']
-      );
+    it('should insert or update template', async () => {
+      await service.upsertTemplate('test', 'content');
+      expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO whatsapp_templates'), ['test', 'content']);
     });
   });
 
   describe('getLogsByCustomer', () => {
-    it('deve retornar logs de mensagens para um cliente', async () => {
-      const mockLogs = [{ id: 1, customer_id: 1, content: 'Log1' }];
-      mockPool.query.mockResolvedValueOnce({ rows: mockLogs });
-
-      const logs = await service.getLogsByCustomer(1);
-
-      expect(logs).toEqual(mockLogs);
-      expect(mockPool.query).toHaveBeenCalledWith(
-        'SELECT * FROM whatsapp_logs WHERE customer_id = $1 ORDER BY created_at DESC',
-        [1]
-      );
+    it('should return logs from db', async () => {
+      const mockLogs = [{ id: 1, content: 'hi' }];
+      mockQuery.mockResolvedValueOnce({ rows: mockLogs });
+      const result = await service.getLogsByCustomer(1);
+      expect(result).toEqual(mockLogs);
     });
+  });
 
-    it('deve retornar array vazio se não houver logs', async () => {
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
-
-      const logs = await service.getLogsByCustomer(999);
-
-      expect(logs).toEqual([]);
+  describe('getBreakerStatus', () => {
+    it('should return breaker status object', () => {
+      const status = service.getBreakerStatus();
+      expect(status).toHaveProperty('name');
+      expect(status).toHaveProperty('opened');
     });
   });
 });

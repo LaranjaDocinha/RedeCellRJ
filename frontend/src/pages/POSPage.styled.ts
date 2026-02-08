@@ -87,7 +87,7 @@ export const StyledStatusIndicator = styled(motion.div)<{ isOnline: boolean }>`
 
 export const StyledPendingSales = styled(motion.span)`
   color: ${({ theme }) => theme.colors.warning};
-  font-weight: bold;
+  font-weight: 400;
   font-size: ${({ theme }) => theme.typography.bodyMedium.fontSize};
   margin-left: ${({ theme }) => theme.spacing.sm};
 `;

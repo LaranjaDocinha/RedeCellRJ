@@ -10,8 +10,11 @@ const OfflineIndicator: React.FC = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isSyncing, setIsSyncing] = useState(false);
   
-  // Count pending items
-  const pendingCount = useLiveQuery(() => db.offlineServiceOrders.where('synced').equals(0).count());
+  // Count pending items with safety check
+  const pendingCount = useLiveQuery(async () => {
+    if (!db.offlineServiceOrders) return 0;
+    return await db.offlineServiceOrders.where('synced').equals(0).count();
+  }, []);
 
   useEffect(() => {
     const handleOnline = () => {
@@ -66,7 +69,7 @@ const OfflineIndicator: React.FC = () => {
             {isSyncing || (pendingCount && pendingCount > 0) ? (
                 <>
                     <CircularProgress size={20} color="inherit" />
-                    <Typography variant="body2" fontWeight="bold">
+                    <Typography variant="body2" fontWeight={400}>
                       Sincronizando {pendingCount} itens...
                     </Typography>
                 </>
@@ -80,7 +83,7 @@ const OfflineIndicator: React.FC = () => {
         ) : (
           <>
             <WifiOff fontSize="small" />
-            <Typography variant="body2" fontWeight="bold">
+            <Typography variant="body2" fontWeight={400}>
               Modo Offline
             </Typography>
             {pendingCount ? (
@@ -103,3 +106,4 @@ const OfflineIndicator: React.FC = () => {
 };
 
 export default OfflineIndicator;
+

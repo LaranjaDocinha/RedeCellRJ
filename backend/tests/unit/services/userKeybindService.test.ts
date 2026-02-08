@@ -21,19 +21,18 @@ describe('UserKeybindService', () => {
 
       const result = await userKeybindService.getUserKeybinds('user1');
       expect(result).toEqual(mockKeybinds);
-      expect(pool.query).toHaveBeenCalledWith(
-          expect.stringContaining('WHERE user_id = $1'),
-          ['user1']
-      );
+      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('WHERE user_id = $1'), [
+        'user1',
+      ]);
     });
 
     it('should filter by context', async () => {
-        (pool.query as any).mockResolvedValue({ rows: [] });
-        await userKeybindService.getUserKeybinds('user1', 'editor');
-        expect(pool.query).toHaveBeenCalledWith(
-            expect.stringContaining('AND context = $2'),
-            ['user1', 'editor']
-        );
+      (pool.query as any).mockResolvedValue({ rows: [] });
+      await userKeybindService.getUserKeybinds('user1', 'editor');
+      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('AND context = $2'), [
+        'user1',
+        'editor',
+      ]);
     });
   });
 
@@ -49,16 +48,24 @@ describe('UserKeybindService', () => {
     it('should throw AppError on unique violation', async () => {
       (pool.query as any).mockRejectedValue({ code: '23505' });
 
-      await expect(userKeybindService.createKeybind({ 
-          user_id: '1', action_name: 'a', key_combination: 'k' 
-      })).rejects.toThrow('Keybind for this action and user already exists.');
+      await expect(
+        userKeybindService.createKeybind({
+          user_id: '1',
+          action_name: 'a',
+          key_combination: 'k',
+        }),
+      ).rejects.toThrow('Keybind for this action and user already exists.');
     });
 
     it('should rethrow other errors', async () => {
-        (pool.query as any).mockRejectedValue(new Error('DB Error'));
-        await expect(userKeybindService.createKeybind({ 
-            user_id: '1', action_name: 'a', key_combination: 'k' 
-        })).rejects.toThrow('DB Error');
+      (pool.query as any).mockRejectedValue(new Error('DB Error'));
+      await expect(
+        userKeybindService.createKeybind({
+          user_id: '1',
+          action_name: 'a',
+          key_combination: 'k',
+        }),
+      ).rejects.toThrow('DB Error');
     });
   });
 
@@ -70,14 +77,14 @@ describe('UserKeybindService', () => {
     });
 
     it('should throw if no fields to update', async () => {
-      await expect(userKeybindService.updateKeybind(1, {}))
-        .rejects.toThrow('No fields to update.');
+      await expect(userKeybindService.updateKeybind(1, {})).rejects.toThrow('No fields to update.');
     });
 
     it('should throw if keybind not found', async () => {
-        (pool.query as any).mockResolvedValue({ rows: [] });
-        await expect(userKeybindService.updateKeybind(1, { context: 'new' }))
-          .rejects.toThrow('Keybind not found.');
+      (pool.query as any).mockResolvedValue({ rows: [] });
+      await expect(userKeybindService.updateKeybind(1, { context: 'new' })).rejects.toThrow(
+        'Keybind not found.',
+      );
     });
   });
 

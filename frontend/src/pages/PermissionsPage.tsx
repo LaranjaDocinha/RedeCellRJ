@@ -156,7 +156,7 @@ const PermissionsPage: React.FC = () => {
 
           {showForm && (
             <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-3">
+              <h2 className="text-xl font-normal mb-3">
                 {editingPermission ? 'Edit Permission' : 'Add New Permission'}
               </h2>
               <PermissionForm

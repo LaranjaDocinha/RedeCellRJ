@@ -35,6 +35,8 @@ type UpdateArticlePayload = z.infer<typeof updateArticleSchema>;
 type CreateAttachmentPayload = z.infer<typeof createAttachmentSchema>;
 type UpdateAttachmentPayload = z.infer<typeof updateAttachmentSchema>;
 
+export { createArticleSchema, updateArticleSchema, createAttachmentSchema, updateAttachmentSchema };
+
 export const createArticle = async (data: CreateArticlePayload) => {
   const { title, content, author_id, tags, category } = data;
   const result = await pool.query(

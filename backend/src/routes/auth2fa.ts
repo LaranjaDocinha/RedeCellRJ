@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { twoFactorAuthService } from '../services/twoFactorAuthService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { AppError } from '../utils/errors.js';
-import { z } from 'zod';
 
 const router = Router();
 
@@ -11,7 +10,10 @@ router.post('/2fa/generate', authMiddleware.authenticate, async (req, res, next)
   try {
     const userId = (req as any).user.id;
     const userEmail = (req as any).user.email; // Assuming email is in user payload
-    const { secret, otpauthUrl, qrCodeDataURL } = await twoFactorAuthService.generateSecret(userId, userEmail);
+    const { secret, otpauthUrl, qrCodeDataURL } = await twoFactorAuthService.generateSecret(
+      userId,
+      userEmail,
+    );
     res.json({ secret, otpauthUrl, qrCodeDataURL });
   } catch (error) {
     next(error);
@@ -83,7 +85,6 @@ router.post('/login/2fa', async (req, res, next) => {
     const { authService } = await import('../services/authService.js'); // Lazy import to avoid circular dependency
     const loginResult = await authService.generateTokenFor2FA(userId); // New method in authService
     res.json(loginResult);
-
   } catch (error) {
     next(error);
   }

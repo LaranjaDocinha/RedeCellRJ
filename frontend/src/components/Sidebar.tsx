@@ -8,7 +8,7 @@ import {
   FaClock, FaMoneyBillWave, FaClipboardCheck, FaChartPie, FaMoneyBillAlt, 
   FaChartBar, FaExchangeAlt, FaBalanceScale, FaKey, FaPhone, FaLink, 
   FaWordpress, FaMobileAlt, FaGoogle, FaQuestionCircle, FaCommentDots, 
-  FaCube, FaHandshake 
+  FaCube, FaHandshake, FaHome 
 } from 'react-icons/fa';
 import { Tooltip } from '@mui/material';
 import {
@@ -30,6 +30,7 @@ interface NavItem {
   path: string;
   label: string;
   icon: JSX.Element;
+  id?: string;
 }
 
 interface NavGroup {
@@ -41,44 +42,24 @@ const navGroups: NavGroup[] = [
   {
     title: 'Vendas',
     items: [
-      { path: '/dashboard', label: 'Dashboard', icon: <FaTachometerAlt /> },
-      { path: '/pos', label: 'Ponto de Venda', icon: <FaShoppingCart /> },
-      { path: '/customers', label: 'Clientes', icon: <FaUsers /> },
+      { path: '/', label: 'Início', icon: <FaHome />, id: 'home-link' },
+      { path: '/dashboard', label: 'Dashboard', icon: <FaTachometerAlt />, id: 'dashboard-link' },
+      { path: '/pos', label: 'Ponto de Venda', icon: <FaShoppingCart />, id: 'pos-link' },
+      { path: '/customers', label: 'Clientes', icon: <FaUsers />, id: 'customers-link' },
       { path: '/orders', label: 'Recepção', icon: <FaClipboardList /> },
       { path: '/returns', label: 'Retornos e Reembolsos', icon: <FaUndo /> },
     ]
   },
   {
-    title: 'Catálogo',
+    title: 'Estoque e Produtos',
     items: [
       { path: '/products', label: 'Produtos', icon: <FaBoxOpen /> },
-      { path: '/product-kits', label: 'Kits de Produtos', icon: <FaBox /> },
-      { path: '/compatibility', label: 'Películas Compatíveis', icon: <FaMobileAlt /> },
+      { path: '/inventory', label: 'Inventário', icon: <FaBox /> },
+      { path: '/inventory/purchase-suggestions', label: 'Sugestões Compra', icon: <FaShoppingCart /> },
       { path: '/categories', label: 'Categorias', icon: <FaTags /> },
-      { path: '/tags', label: 'Tags', icon: <FaTags /> },
-      { path: '/reviews', label: 'Avaliações', icon: <FaStar /> },
-    ]
-  },
-  {
-    title: 'Marketing',
-    items: [
-      { path: '/promotions', label: 'Promoções', icon: <FaTags /> },
-      { path: '/loyalty', label: 'Fidelidade', icon: <FaGift /> },
-      { path: '/rfm-segments', label: 'Segmentos RFM', icon: <FaUsers /> },
-      { path: '/leads', label: 'Gestão de Leads', icon: <FaUsers /> },
-    ]
-  },
-  {
-    title: 'Operações',
-    items: [
-      { path: '/inventory', label: 'Estoque', icon: <FaTasks /> },
-      { path: '/quarantine', label: 'Quarentena', icon: <FaBiohazard /> },
-      { path: '/suppliers', label: 'Fornecedores', icon: <FaTruck /> },
-      { path: '/purchase-orders', label: 'Ordens de Compra', icon: <FaClipboardList /> },
-      { path: '/branches', label: 'Filiais', icon: <FaStore /> },
-      { path: '/service-orders', label: 'Ordens de Serviço', icon: <FaClipboardList /> },
-      { path: '/shifts', label: 'Turnos', icon: <FaCalendarAlt /> },
-      { path: '/time-clock', label: 'Ponto Eletrônico', icon: <FaClock /> },
+      { path: '/tags', label: 'Tags', icon: <FaStar /> },
+      { path: '/product-kits', label: 'Kits de Produtos', icon: <FaCube /> },
+      { path: '/quarantine', label: 'Quarentena & RMA', icon: <FaBiohazard /> },
     ]
   },
   {
@@ -87,6 +68,10 @@ const navGroups: NavGroup[] = [
       { path: '/gamification', label: 'Gamificação', icon: <FaTrophy /> },
       { path: '/kanban', label: 'Kanban', icon: <FaTasks /> },
       { path: '/my-performance', label: 'Meu Desempenho', icon: <FaChartPie /> },
+      { path: '/marketplace-sync', label: 'Hub Marketplace', icon: <FaStore /> },
+      { path: '/branches', label: 'Filiais', icon: <FaStore /> },
+      { path: '/executive-dashboard', label: 'Torre de Controle', icon: <FaChartBar />, id: 'executive-dashboard-link' },
+      { path: '/settings', label: 'Configurações', icon: <FaCogs /> },
     ]
   },
   {
@@ -94,17 +79,8 @@ const navGroups: NavGroup[] = [
     items: [
       { path: '/reports', label: 'Relatórios Vendas', icon: <FaChartLine /> },
       { path: '/cash-flow', label: 'Fluxo de Caixa', icon: <FaMoneyBillAlt /> },
-      { path: '/what-if-promotion', label: 'Análise What-If', icon: <FaChartBar /> },
-      { path: '/accounting-integration', label: 'Integração Contábil', icon: <FaExchangeAlt /> },
-      { path: '/accounts-report', label: 'Contas a Pagar/Receber', icon: <FaMoneyBillAlt /> },
-      { path: '/category-profitability', label: 'Rentabilidade Categoria', icon: <FaChartPie /> },
-      { path: '/break-even', label: 'Ponto de Equilíbrio', icon: <FaBalanceScale /> },
-    ]
-  },
-  {
-    title: 'Configurações',
-    items: [
-      { path: '/settings', label: 'Configurações', icon: <FaCogs /> },
+      { path: '/print/queue', label: 'Fila de Impressão', icon: <FaClipboardCheck />, id: 'print-queue-link' },
+      { path: '/expense-reimbursements', label: 'Reembolsos Equipe', icon: <FaMoneyBillWave /> },
     ]
   }
 ];
@@ -143,6 +119,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCompact, onClose }) => {
                     <SidebarNavItem
                       as={NavLink}
                       to={item.path}
+                      id={item.id}
                       onClick={() => {
                         if (window.innerWidth < 768) onClose();
                       }}

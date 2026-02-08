@@ -25,14 +25,22 @@ describe('meService', () => {
   describe('getMyProfile', () => {
     it('should return the user profile if found', async () => {
       const userId = 1;
-      const mockProfile = { id: userId, name: 'Test User', email: 'test@example.com', phone: '12345' };
+      const mockProfile = {
+        id: userId,
+        name: 'Test User',
+        email: 'test@example.com',
+        phone: '12345',
+      };
       mockedPool.query.mockResolvedValueOnce({ rows: [mockProfile] });
 
       const result = await meService.getMyProfile(userId);
 
       expect(result).toEqual(mockProfile);
       expect(mockedPool.query).toHaveBeenCalledTimes(1);
-      expect(mockedPool.query).toHaveBeenCalledWith('SELECT id, name, email, phone FROM users WHERE id = $1', [userId]);
+      expect(mockedPool.query).toHaveBeenCalledWith(
+        'SELECT id, name, email, phone FROM users WHERE id = $1',
+        [userId],
+      );
     });
 
     it('should return undefined if user profile not found', async () => {
@@ -65,7 +73,10 @@ describe('meService', () => {
 
       expect(result).toEqual(mockSales);
       expect(mockedPool.query).toHaveBeenCalledTimes(1);
-      expect(mockedPool.query).toHaveBeenCalledWith('SELECT * FROM sales WHERE user_id = $1 ORDER BY sale_date DESC', [userId]);
+      expect(mockedPool.query).toHaveBeenCalledWith(
+        'SELECT * FROM sales WHERE user_id = $1 ORDER BY sale_date DESC',
+        [userId],
+      );
     });
 
     it('should return an empty array if no sales found for the user', async () => {
@@ -91,14 +102,19 @@ describe('meService', () => {
   describe('getMyServiceOrders', () => {
     it('should return a list of service orders for the user', async () => {
       const userId = 1;
-      const mockServiceOrders = [{ id: 1, user_id: userId, description: 'Repair', created_at: new Date() }];
+      const mockServiceOrders = [
+        { id: 1, user_id: userId, description: 'Repair', created_at: new Date() },
+      ];
       mockedPool.query.mockResolvedValueOnce({ rows: mockServiceOrders });
 
       const result = await meService.getMyServiceOrders(userId);
 
       expect(result).toEqual(mockServiceOrders);
       expect(mockedPool.query).toHaveBeenCalledTimes(1);
-      expect(mockedPool.query).toHaveBeenCalledWith('SELECT * FROM service_orders WHERE user_id = $1 ORDER BY created_at DESC', [userId]);
+      expect(mockedPool.query).toHaveBeenCalledWith(
+        'SELECT * FROM service_orders WHERE user_id = $1 ORDER BY created_at DESC',
+        [userId],
+      );
     });
 
     it('should return an empty array if no service orders found for the user', async () => {

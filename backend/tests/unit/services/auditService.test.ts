@@ -1,68 +1,90 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { auditService } from '../../../src/services/auditService';
-import * as dbModule from '../../../src/db/index';
+import { auditService } from '../../../src/services/auditService.js';
+import pool from '../../../src/db/index.js';
+import * as contextModule from '../../../src/utils/context.js';
 
-// Mock getPool
-const mockQuery = vi.fn();
-const mockPool = {
-  query: mockQuery,
-};
+vi.mock('../../../src/db/index.js', () => ({
+  default: {
+    query: vi.fn(),
+  },
+}));
 
-vi.mock('../../../src/db/index', () => ({
-  getPool: vi.fn(() => mockPool),
+vi.mock('../../../src/utils/logger.js', () => ({
+  logger: { error: vi.fn() },
 }));
 
 describe('AuditService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(contextModule, 'getContext').mockReturnValue({ userId: 'u1' } as any);
   });
 
-  describe('recordAuditLog', () => {
-    it('should insert audit log', async () => {
-      mockQuery.mockResolvedValue({}); // Insert returns nothing useful typically or row count
-
-      await auditService.recordAuditLog({
-        userId: 'u1',
-        action: 'CREATE',
-        entityType: 'User',
-        entityId: '1',
+  describe('logStockChange', () => {
+    it('should log stock change to db', async () => {
+      await auditService.logStockChange({
+        productVariationId: 1,
+        branchId: 1,
+        oldQuantity: 10,
+        newQuantity: 5,
+        reason: 'sale'
       });
 
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO audit_logs'),
-        ['u1', 'CREATE', 'User', '1', undefined]
+      expect(pool.query).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO stock_history'),
+        expect.arrayContaining([1, 1, 10, 5, 'sale', undefined, 'u1'])
       );
     });
 
-    it('should catch error silently', async () => {
-      mockQuery.mockRejectedValue(new Error('DB Error'));
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    it('should use provided client if available', async () => {
+      const mockClient = { query: vi.fn() };
+      await auditService.logStockChange({
+        productVariationId: 1,
+        branchId: 1,
+        oldQuantity: 10,
+        newQuantity: 5,
+        reason: 'sale',
+        client: mockClient
+      });
 
-      await auditService.recordAuditLog({ action: 'TEST' });
-
-      expect(consoleSpy).toHaveBeenCalled();
-      consoleSpy.mockRestore();
+      expect(mockClient.query).toHaveBeenCalled();
+      expect(pool.query).not.toHaveBeenCalled();
     });
   });
 
-  describe('getAuditLogs', () => {
-    it('should return logs and total count with filters', async () => {
-      mockQuery
-        .mockResolvedValueOnce({ rows: [{ count: '10' }] }) // Count query
-        .mockResolvedValueOnce({ rows: [{ id: 1 }] }); // Logs query
+  describe('logProductChange', () => {
+    it('should log product snapshot to history', async () => {
+      const snapshot = { name: 'P', sku: 'S', is_serialized: false };
+      await auditService.logProductChange(1, 'UPDATE', snapshot);
 
-      const result = await auditService.getAuditLogs({
-        userId: 'u1',
-        action: 'CREATE',
-        entityType: 'User',
-        entityId: '1',
-        startDate: '2023-01-01',
-        endDate: '2023-12-31',
-      });
+      expect(pool.query).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO products_history'),
+        [1, 'P', 'S', false, 'UPDATE', JSON.stringify(snapshot), 'u1']
+      );
+    });
+  });
 
-      expect(mockQuery).toHaveBeenNthCalledWith(1, expect.stringContaining('SELECT COUNT(*)'), expect.any(Array));
-      expect(mockQuery).toHaveBeenNthCalledWith(2, expect.stringContaining('SELECT al.*'), expect.any(Array));
-      expect(result).toEqual({ logs: [{ id: 1 }], totalCount: 10 });
+  describe('logAction', () => {
+    it('should insert audit log', async () => {
+      vi.mocked(pool.query).mockResolvedValueOnce({ rows: [], rowCount: 1 } as any);
+
+      await auditService.logAction('u1', 'CREATE', 'User', { details: 'info' });
+
+      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO audit_logs'), [
+        'u1',
+        'CREATE',
+        'User',
+        '{"details":"info"}',
+      ]);
+    });
+
+    it('should catch error silently', async () => {
+      vi.mocked(pool.query).mockRejectedValueOnce(new Error('DB Error'));
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      await auditService.logAction('u1', 'TEST', 'Entity', {});
+
+      expect(consoleSpy).toHaveBeenCalledWith('Audit log failed:', expect.any(Error));
+      consoleSpy.mockRestore();
     });
   });
 });

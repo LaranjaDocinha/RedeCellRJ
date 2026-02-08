@@ -24,10 +24,11 @@ describe('faqService', () => {
 
     const result = await faqService.createFaq('Q', 'A', 'General');
     expect(result).toEqual(mockFaq);
-    expect(mockPool.query).toHaveBeenCalledWith(
-      expect.stringContaining('INSERT INTO faqs'),
-      ['Q', 'A', 'General']
-    );
+    expect(mockPool.query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO faqs'), [
+      'Q',
+      'A',
+      'General',
+    ]);
   });
 
   it('updateFaq should update an FAQ', async () => {
@@ -36,10 +37,12 @@ describe('faqService', () => {
 
     const result = await faqService.updateFaq(1, 'Q2', 'A2');
     expect(result).toEqual(mockFaq);
-    expect(mockPool.query).toHaveBeenCalledWith(
-      expect.stringContaining('UPDATE faqs'),
-      ['Q2', 'A2', undefined, 1]
-    );
+    expect(mockPool.query).toHaveBeenCalledWith(expect.stringContaining('UPDATE faqs'), [
+      'Q2',
+      'A2',
+      undefined,
+      1,
+    ]);
   });
 
   it('deleteFaq should delete an FAQ', async () => {

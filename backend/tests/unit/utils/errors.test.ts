@@ -1,6 +1,12 @@
 // backend/tests/unit/utils/errors.test.ts
 import { describe, it, expect } from 'vitest';
-import { AppError, NotFoundError, ValidationError, AuthenticationError, AuthorizationError } from '../../../src/utils/errors.js';
+import {
+  AppError,
+  NotFoundError,
+  ValidationError,
+  AuthenticationError,
+  AuthorizationError,
+} from '../../../src/utils/errors.js';
 
 describe('Error Classes', () => {
   describe('AppError', () => {

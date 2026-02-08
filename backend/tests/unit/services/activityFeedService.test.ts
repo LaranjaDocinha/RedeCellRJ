@@ -25,10 +25,12 @@ describe('ActivityFeedService', () => {
       const result = await activityFeedService.createActivity('1', 1, 'LOGIN', {});
 
       expect(dbModule.getPool).toHaveBeenCalled();
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO activity_feed'),
-        ['1', 1, 'LOGIN', {}]
-      );
+      expect(mockQuery).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO activity_feed'), [
+        '1',
+        1,
+        'LOGIN',
+        {},
+      ]);
       expect(result).toEqual(mockResult.rows[0]);
     });
 
@@ -42,7 +44,7 @@ describe('ActivityFeedService', () => {
       expect(dbModule.getPool).not.toHaveBeenCalled();
       expect(mockClient.query).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO activity_feed'),
-        ['1', 1, 'LOGIN', {}]
+        ['1', 1, 'LOGIN', {}],
       );
       expect(result).toEqual(mockResult.rows[0]);
     });
@@ -57,7 +59,7 @@ describe('ActivityFeedService', () => {
 
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('LIMIT $1 OFFSET $2'),
-        [20, 0]
+        [20, 0],
       );
       expect(result).toEqual(mockRows);
     });
@@ -70,7 +72,7 @@ describe('ActivityFeedService', () => {
 
       expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('WHERE af.branch_id = $1'),
-        [1, 10, 5]
+        [1, 10, 5],
       );
     });
   });

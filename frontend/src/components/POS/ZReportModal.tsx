@@ -102,7 +102,7 @@ const ZReportModal: React.FC<ZReportModalProps> = ({ open, onClose }) => {
       aria-labelledby="z-report-modal-title"
     >
       <Box sx={style}>
-        <Typography id="z-report-modal-title" variant="h5" fontWeight={800} gutterBottom>
+        <Typography id="z-report-modal-title" variant="h5" fontWeight={400} gutterBottom>
           RELATÓRIO Z (FECHAMENTO)
         </Typography>
         <Divider sx={{ mb: 3 }} />
@@ -136,29 +136,29 @@ const ZReportModal: React.FC<ZReportModalProps> = ({ open, onClose }) => {
 
         {reportData && !loading && (
           <Paper elevation={0} sx={{ p: 3, mb: 2, bgcolor: 'action.hover', borderRadius: '16px' }}>
-            <Typography variant="overline" fontWeight={900} color="text.secondary">RESUMO DO PERÍODO</Typography>
+            <Typography variant="overline" fontWeight={400} color="text.secondary">RESUMO DO PERÍODO</Typography>
             <Grid container spacing={2} mt={1}>
               <Grid size={{ xs: 6 }}><Typography variant="body2">Total de Vendas:</Typography></Grid>
-              <Grid size={{ xs: 6 }} textAlign="right"><Typography fontWeight={700}>R$ {reportData.totalSalesAmount.toFixed(2)}</Typography></Grid>
+              <Grid size={{ xs: 6 }} textAlign="right"><Typography fontWeight={400}>R$ {reportData.totalSalesAmount.toFixed(2)}</Typography></Grid>
 
               <Grid size={{ xs: 6 }}><Typography variant="body2">Transações:</Typography></Grid>
-              <Grid size={{ xs: 6 }} textAlign="right"><Typography fontWeight={700}>{reportData.totalTransactions}</Typography></Grid>
+              <Grid size={{ xs: 6 }} textAlign="right"><Typography fontWeight={400}>{reportData.totalTransactions}</Typography></Grid>
 
               <Grid size={{ xs: 6 }}><Typography variant="body2">Descontos:</Typography></Grid>
               <Grid size={{ xs: 6 }} textAlign="right"><Typography color="error">R$ {reportData.totalDiscounts.toFixed(2)}</Typography></Grid>
 
               <Divider sx={{ width: '100%', my: 1 }} />
 
-              <Grid size={{ xs: 6 }}><Typography variant="subtitle1" fontWeight={800}>SALDO LÍQUIDO:</Typography></Grid>
-              <Grid size={{ xs: 6 }} textAlign="right"><Typography variant="subtitle1" fontWeight={900} color="primary">R$ {reportData.netCash.toFixed(2)}</Typography></Grid>
+              <Grid size={{ xs: 6 }}><Typography variant="subtitle1" fontWeight={400}>SALDO LÍQUIDO:</Typography></Grid>
+              <Grid size={{ xs: 6 }} textAlign="right"><Typography variant="subtitle1" fontWeight={400} color="primary">R$ {reportData.netCash.toFixed(2)}</Typography></Grid>
             </Grid>
 
             <Box mt={4}>
-                <Typography variant="overline" fontWeight={900} color="text.secondary">POR MÉTODO DE PAGAMENTO</Typography>
+                <Typography variant="overline" fontWeight={400} color="text.secondary">POR MÉTODO DE PAGAMENTO</Typography>
                 {reportData.salesByPaymentMethod.map((item, index) => (
                     <Box key={index} display="flex" justifyContent="space-between" mt={1}>
                         <Typography variant="body2">{t(item.method)}:</Typography>
-                        <Typography variant="body2" fontWeight={600}>R$ {item.amount.toFixed(2)}</Typography>
+                        <Typography variant="body2" fontWeight={400}>R$ {item.amount.toFixed(2)}</Typography>
                     </Box>
                 ))}
             </Box>

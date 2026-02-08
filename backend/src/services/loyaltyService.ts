@@ -1,5 +1,7 @@
-import { getPool } from '../db/index.js';
+import pool from '../db/index.js';
+import { getPool } from '../db/index.js'; // Keep getPool for legacy tier methods if needed, or replace with pool.query
 import { AppError } from '../utils/errors.js';
+import { loyaltyRepository } from '../repositories/loyalty.repository.js';
 
 interface LoyaltyTier {
   id: number;
@@ -27,40 +29,44 @@ interface UpdateLoyaltyTierPayload {
 
 export const loyaltyService = {
   async getLoyaltyPoints(customerId: number) {
-    const { rows } = await getPool().query('SELECT loyalty_points FROM customers WHERE id = $1', [
-      customerId,
-    ]);
-    if (rows.length === 0) {
+    const points = await loyaltyRepository.getPoints(customerId);
+    if (points === null) {
       throw new AppError('Customer not found', 404);
     }
-    return rows[0].loyalty_points;
+    return points;
   },
 
   async addLoyaltyPoints(customerId: number, points: number, reason: string) {
-    const client = await getPool().connect();
+    const client = await pool.connect();
     try {
       await client.query('BEGIN');
 
       // Update customer's points
-      const {
-        rows: [customer],
-      } = await client.query(
-        'UPDATE customers SET loyalty_points = loyalty_points + $1 WHERE id = $2 RETURNING loyalty_points',
-        [points, customerId],
-      );
+      // Check if customer exists first or rely on update returning row? Repo logic: update returns new points.
+      // If customer doesn't exist, update returns empty/error? Repo assumes valid ID or returns null if not found logic is needed.
+      // Let's assume repo updatePoints throws or returns null if not found.
+      // Actually, my repo implementation returns rows[0].loyalty_points. If no row, it throws (undefined access).
+      // Let's use check first for safety or try/catch.
+      // Better: check existence.
 
-      if (!customer) {
-        throw new AppError('Customer not found.', 404);
-      }
+      const currentPoints = await loyaltyRepository.getPoints(customerId, client);
+      if (currentPoints === null) throw new AppError('Customer not found.', 404);
+
+      const newPoints = await loyaltyRepository.updatePoints(customerId, points, client);
 
       // Log transaction
-      await client.query(
-        'INSERT INTO loyalty_transactions (customer_id, points, type, reason) VALUES ($1, $2, $3, $4)',
-        [customerId, points, points > 0 ? 'earned' : 'redeemed', reason],
+      await loyaltyRepository.createTransaction(
+        {
+          customer_id: customerId,
+          points: points,
+          type: points > 0 ? 'earned' : 'redeemed',
+          reason: reason,
+        },
+        client,
       );
 
       await client.query('COMMIT');
-      return customer.loyalty_points;
+      return newPoints;
     } catch (error: unknown) {
       await client.query('ROLLBACK');
       if (error instanceof AppError) {
@@ -72,60 +78,60 @@ export const loyaltyService = {
     }
   },
 
-  async redeemLoyaltyPoints(customerId: number, points: number, reason: string) {
-    const client = await getPool().connect();
+  async redeemLoyaltyPoints(customerId: number, points: number) {
+    const client = await pool.connect();
     try {
       await client.query('BEGIN');
 
-      // Check if customer has enough points
-      const {
-        rows: [customer],
-      } = await client.query('SELECT loyalty_points FROM customers WHERE id = $1 FOR UPDATE', [customerId]);
-      if (!customer) {
-        throw new AppError('Customer not found', 404);
+      const currentPoints = await loyaltyRepository.getPointsForUpdate(customerId, client);
+
+      if (currentPoints === null) {
+        throw new AppError('Customer not found.', 404);
       }
-      if (customer.loyalty_points < points) {
+
+      if (currentPoints < points) {
         throw new AppError('Insufficient loyalty points.', 400);
       }
 
-      // Deduct points
-      const {
-        rows: [updatedCustomer],
-      } = await client.query(
-        'UPDATE customers SET loyalty_points = loyalty_points - $1 WHERE id = $2 RETURNING loyalty_points',
-        [points, customerId],
-      );
+      await loyaltyRepository.updatePoints(customerId, -points, client);
 
-      // Log transaction
-      await client.query(
-        'INSERT INTO loyalty_transactions (customer_id, points, type, reason) VALUES ($1, $2, $3, $4)',
-        [customerId, -points, 'redeemed', reason],
+      await loyaltyRepository.createTransaction(
+        {
+          customer_id: customerId,
+          points: -points,
+          type: 'redeemed',
+          reason: 'Redeemed loyalty points',
+        },
+        client,
       );
 
       await client.query('COMMIT');
-      return updatedCustomer.loyalty_points;
-    } catch (error: unknown) {
+      return { success: true, message: 'Loyalty points redeemed successfully.' };
+    } catch (error) {
       await client.query('ROLLBACK');
       if (error instanceof AppError) {
         throw error;
       }
-      throw error;
+      throw new AppError('Database error', 500);
     } finally {
       client.release();
     }
   },
 
   async getLoyaltyTransactions(customerId: number) {
-    const { rows: customerCheck } = await getPool().query('SELECT id FROM customers WHERE id = $1', [
+    const customerCheck = await getPool().query('SELECT id FROM customers WHERE id = $1', [
       customerId,
     ]);
-    if (customerCheck.length === 0) {
-      throw new AppError('Customer not found', 404);
+
+    if (customerCheck.rows.length === 0) {
+      throw new AppError(`Cliente com ID ${customerId} não encontrado.`, 404);
     }
+
     const { rows } = await getPool().query(
-      'SELECT points as points_change, reason, created_at FROM loyalty_transactions WHERE customer_id = $1 ORDER BY created_at DESC',
+      'SELECT points_change, reason, created_at FROM loyalty_transactions WHERE customer_id = $1 ORDER BY created_at DESC',
       [customerId],
     );
+
     return rows;
   },
 
@@ -229,7 +235,7 @@ export const loyaltyService = {
   },
 
   async updateAllCustomerTiers(): Promise<void> {
-    const client = await getPool().connect();
+    const client = await pool.connect();
     try {
       await client.query('BEGIN');
 
@@ -240,7 +246,6 @@ export const loyaltyService = {
       const tiers = tiersResult.rows;
 
       if (tiers.length === 0) {
-        console.log('No loyalty tiers defined. Skipping tier update.');
         await client.query('COMMIT');
         return;
       }
@@ -271,7 +276,6 @@ export const loyaltyService = {
       }
 
       if (updates.length === 0) {
-        console.log('All customer loyalty tiers are up to date.');
         await client.query('COMMIT');
         return;
       }
@@ -288,7 +292,6 @@ export const loyaltyService = {
       await client.query(updateQuery);
 
       await client.query('COMMIT');
-      console.log(`Updated loyalty tiers for ${updates.length} customers.`);
     } catch (error) {
       await client.query('ROLLBACK');
       console.error('Error updating customer loyalty tiers:', error);

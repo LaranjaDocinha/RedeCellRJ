@@ -23,12 +23,12 @@ router.get(
         LEFT JOIN suppliers s ON qi.supplier_id = s.id
         ORDER BY qi.created_at DESC
       `);
-      
+
       res.status(200).json(result.rows);
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // POST /api/quarantine
@@ -49,7 +49,7 @@ router.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const data = createQuarantineItemSchema.parse(req.body);
-      
+
       const result = await query(
         `INSERT INTO quarantine_items 
          (product_id, variation_id, supplier_id, quantity, reason, status, is_battery_risk, item_cost, identified_by)
@@ -64,15 +64,15 @@ router.post(
           data.status,
           data.is_battery_risk,
           data.item_cost,
-          (req as any).user.id
-        ]
+          (req as any).user.id,
+        ],
       );
 
       res.status(201).json(result.rows[0]);
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 export default router;

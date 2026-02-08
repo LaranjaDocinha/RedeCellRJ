@@ -151,7 +151,7 @@ const LeadTasks: React.FC<LeadTasksProps> = ({ leadId }) => {
   return (
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>Tarefas do Lead</Typography>
+        <Typography variant="h6" sx={{ fontWeight: 400 }}>Tarefas do Lead</Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddTask}>
           Nova Tarefa
         </Button>
@@ -194,3 +194,4 @@ const LeadTasks: React.FC<LeadTasksProps> = ({ leadId }) => {
 };
 
 export default LeadTasks;
+

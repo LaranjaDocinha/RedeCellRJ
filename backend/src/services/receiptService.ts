@@ -2,24 +2,6 @@ import { getPool } from '../db/index.js';
 import { AppError } from '../utils/errors.js';
 import nodemailer from 'nodemailer';
 
-interface SaleData {
-  sale_id: string;
-  sale_date: string;
-  total_amount: number;
-  customer_name?: string;
-  customer_email?: string;
-  items: Array<{
-    product_name: string;
-    quantity: number;
-    unit_price: number;
-    total_price: number;
-  }>;
-  payments: Array<{
-    payment_method: string;
-    amount: number;
-  }>;
-}
-
 class ReceiptService {
   private transporter: nodemailer.Transporter;
 
@@ -47,7 +29,7 @@ class ReceiptService {
       FROM sales s
       LEFT JOIN customers c ON s.customer_id = c.id
       WHERE s.id = $1`,
-      [saleId]
+      [saleId],
     );
 
     if (saleRes.rows.length === 0) {
@@ -65,7 +47,7 @@ class ReceiptService {
       JOIN product_variations pv ON si.variation_id = pv.id
       JOIN products p ON pv.product_id = p.id
       WHERE si.sale_id = $1`,
-      [saleId]
+      [saleId],
     );
     sale.items = itemsRes.rows;
 
@@ -75,7 +57,7 @@ class ReceiptService {
         amount
       FROM sale_payments
       WHERE sale_id = $1`,
-      [saleId]
+      [saleId],
     );
     sale.payments = paymentsRes.rows;
 
@@ -95,17 +77,21 @@ ID da Venda: ${sale.sale_id}
 Itens:
 `;
     sale.items.forEach((item: any) => {
-      receiptContent += `${item.product_name} x ${item.quantity} @ R$ ${item.unit_price.toFixed(2)} = R$ ${item.total_price.toFixed(2)}\n`;
+      const unitPrice = Number(item.unit_price);
+      const totalPrice = Number(item.total_price);
+      receiptContent += `${item.product_name} x ${item.quantity} @ R$ ${unitPrice.toFixed(2)} = R$ ${totalPrice.toFixed(2)}\n`;
     });
 
+    const totalAmount = Number(sale.total_amount);
     receiptContent += `
 ----------------------------------------------------
-Total: R$ ${sale.total_amount.toFixed(2)}
+Total: R$ ${totalAmount.toFixed(2)}
 ----------------------------------------------------
 Pagamentos:
 `;
     sale.payments.forEach((payment: any) => {
-      receiptContent += `${payment.payment_method.replace('_', ' ').toUpperCase()}: R$ ${payment.amount.toFixed(2)}\n`;
+      const amount = Number(payment.amount);
+      receiptContent += `${payment.payment_method.replace('_', ' ').toUpperCase()}: R$ ${amount.toFixed(2)}\n`;
     });
 
     receiptContent += `
@@ -129,7 +115,7 @@ Obrigado pela sua compra!
       FROM sales s
       LEFT JOIN customers c ON s.customer_id = c.id
       WHERE s.id = $1`,
-      [saleId]
+      [saleId],
     );
 
     if (saleRes.rows.length === 0) {
@@ -137,13 +123,14 @@ Obrigado pela sua compra!
     }
     const sale = saleRes.rows[0];
 
+    const totalAmount = Number(sale.total_amount);
     let fiscalNoteContent = `
 ----------------------------------------------------
                 NOTA FISCAL (SIMULADA)
 ----------------------------------------------------
 Data da Emissão: ${new Date().toLocaleString()}
 ID da Venda Associada: ${sale.sale_id}
-Valor Total: R$ ${sale.total_amount.toFixed(2)}
+Valor Total: R$ ${totalAmount.toFixed(2)}
 `;
     if (sale.customer_name) {
       fiscalNoteContent += `Cliente: ${sale.customer_name}\n`;
@@ -164,7 +151,7 @@ Não possui validade fiscal real.
     to: string,
     subject: string,
     htmlContent: string,
-    textContent: string
+    textContent: string,
   ): Promise<void> {
     try {
       await this.transporter.sendMail({

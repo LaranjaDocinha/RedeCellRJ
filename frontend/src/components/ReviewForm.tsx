@@ -20,7 +20,7 @@ export const ReviewForm: React.FC = () => {
 
   return (
     <Paper sx={{ p: 3, borderRadius: '16px' }}>
-        <Typography variant="h6" fontWeight="bold" gutterBottom>Escreva sua avaliação</Typography>
+        <Typography variant="h6" fontWeight={400} gutterBottom>Escreva sua avaliação</Typography>
         <Stack spacing={2}>
             <RatingStars value={rating || 0} onChange={setRating} size="large" />
             <TextField 

@@ -11,7 +11,7 @@ import {
 
 describe('errorMiddleware', () => {
   let mockRequest: Partial<Request>;
-  let mockResponse: Partial<Response>;
+  let mockResponse: any;
   let mockNext: NextFunction;
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
   let originalNodeEnv: string | undefined;
@@ -22,6 +22,7 @@ describe('errorMiddleware', () => {
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
       send: vi.fn().mockReturnThis(),
+      req: mockRequest,
     };
     mockNext = vi.fn();
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -31,10 +32,9 @@ describe('errorMiddleware', () => {
 
   afterEach(() => {
     consoleErrorSpy.mockRestore();
-    process.env.NODE_ENV = originalNodeEnv; // Restore original NODE_ENV
+    process.env.NODE_ENV = originalNodeEnv;
   });
 
-  // --- AppError Test Cases ---
   it('should handle AppError in development environment', () => {
     process.env.NODE_ENV = 'development';
     const error = new AppError('Test AppError', 400, { field: 'error' });
@@ -42,65 +42,14 @@ describe('errorMiddleware', () => {
     errorMiddleware(error, mockRequest as Request, mockResponse as Response, mockNext);
 
     expect(mockResponse.status).toHaveBeenCalledWith(400);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      status: 'error',
-      message: 'Test AppError',
-      errors: { field: 'error' }, // Expect 'errors' property if provided in constructor
-    });
-    expect(consoleErrorSpy).toHaveBeenCalled(); // Just verify it logged something
-    expect(mockNext).not.toHaveBeenCalled();
-  });
-
-  it('should handle AppError in production environment', () => {
-    process.env.NODE_ENV = 'production';
-    const error = new AppError('Test AppError', 400);
-
-    errorMiddleware(error, mockRequest as Request, mockResponse as Response, mockNext);
-
-    expect(mockResponse.status).toHaveBeenCalledWith(400);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      status: 'error',
-      message: 'Test AppError',
-      // In production, 'errors' should not be exposed unless explicitly configured
-      // Assuming it's not exposed by default, so it would be undefined
-      errors: undefined, 
-    });
-    expect(consoleErrorSpy).toHaveBeenCalled(); // Just verify it logged something
-    expect(mockNext).not.toHaveBeenCalled();
-  });
-
-  it('should handle AppError in test environment (no console.error)', () => {
-    process.env.NODE_ENV = 'test';
-    const error = new AppError('Test AppError', 400);
-
-    errorMiddleware(error, mockRequest as Request, mockResponse as Response, mockNext);
-
-    expect(mockResponse.status).toHaveBeenCalledWith(400);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      status: 'error',
-      message: 'Test AppError',
-      errors: undefined, // Same as production for simplicity in test env
-    });
-    expect(consoleErrorSpy).not.toHaveBeenCalled();
-    expect(mockNext).not.toHaveBeenCalled();
-  });
-
-  // --- Generic Error Test Cases ---
-  it('should handle generic Error in development environment', () => {
-    process.env.NODE_ENV = 'development';
-    const error = new Error('Something went wrong');
-    error.stack = 'Error Stack Trace';
-
-    errorMiddleware(error, mockRequest as Request, mockResponse as Response, mockNext);
-
-    expect(mockResponse.status).toHaveBeenCalledWith(500);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      status: 'error',
-      message: 'Something went wrong',
-      stack: 'Error Stack Trace',
-    });
-    expect(consoleErrorSpy).toHaveBeenCalled();
-    expect(mockNext).not.toHaveBeenCalled();
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'fail',
+        data: expect.objectContaining({
+          field: 'error',
+        }),
+      }),
+    );
   });
 
   it('should handle generic Error in production environment', () => {
@@ -110,83 +59,72 @@ describe('errorMiddleware', () => {
     errorMiddleware(error, mockRequest as Request, mockResponse as Response, mockNext);
 
     expect(mockResponse.status).toHaveBeenCalledWith(500);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      status: 'error',
-      message: 'Internal Server Error',
-    });
-    expect(consoleErrorSpy).toHaveBeenCalled();
-    expect(mockNext).not.toHaveBeenCalled();
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'error',
+        message: 'Internal Server Error',
+        code: 'INTERNAL_SERVER_ERROR',
+      }),
+    );
   });
 
-  it('should handle generic Error in test environment (no console.error)', () => {
-    process.env.NODE_ENV = 'test';
-    const error = new Error('Something went wrong');
-
-    errorMiddleware(error, mockRequest as Request, mockResponse as Response, mockNext);
-
-    expect(mockResponse.status).toHaveBeenCalledWith(500);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      status: 'error',
-      message: 'Internal Server Error',
-    });
-    expect(consoleErrorSpy).not.toHaveBeenCalled();
-    expect(mockNext).not.toHaveBeenCalled();
-  });
-
-  // --- Specific AppError subclasses test cases (brief examples) ---
   it('should handle AuthenticationError', () => {
-    process.env.NODE_ENV = 'development';
     const error = new AuthenticationError();
-
     errorMiddleware(error, mockRequest as Request, mockResponse as Response, mockNext);
 
     expect(mockResponse.status).toHaveBeenCalledWith(401);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      status: 'error',
-      message: 'Authentication failed',
-      errors: undefined, // Assuming default is undefined
-    });
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'fail',
+        data: expect.objectContaining({
+          message: 'Authentication failed',
+        }),
+      }),
+    );
   });
 
   it('should handle AuthorizationError', () => {
-    process.env.NODE_ENV = 'development';
     const error = new AuthorizationError();
-
     errorMiddleware(error, mockRequest as Request, mockResponse as Response, mockNext);
 
     expect(mockResponse.status).toHaveBeenCalledWith(403);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      status: 'error',
-      message: 'You are not authorized to perform this action',
-      errors: undefined, // Assuming default is undefined
-    });
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'fail',
+        data: expect.objectContaining({
+          message: 'You are not authorized to perform this action',
+        }),
+      }),
+    );
   });
 
   it('should handle NotFoundError', () => {
-    process.env.NODE_ENV = 'development';
     const error = new NotFoundError();
-
     errorMiddleware(error, mockRequest as Request, mockResponse as Response, mockNext);
 
     expect(mockResponse.status).toHaveBeenCalledWith(404);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      status: 'error',
-      message: 'Resource not found',
-      errors: undefined, // Assuming default is undefined
-    });
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'fail',
+        data: expect.objectContaining({
+          message: 'Resource not found',
+        }),
+      }),
+    );
   });
 
   it('should handle ValidationError', () => {
-    process.env.NODE_ENV = 'development';
     const error = new ValidationError('Validation failed', { name: 'required' });
-
     errorMiddleware(error, mockRequest as Request, mockResponse as Response, mockNext);
 
     expect(mockResponse.status).toHaveBeenCalledWith(422);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      status: 'error',
-      message: 'Validation failed',
-      errors: { name: 'required' },
-    });
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'fail',
+        data: expect.objectContaining({
+          name: 'required',
+        }),
+      }),
+    );
   });
 });

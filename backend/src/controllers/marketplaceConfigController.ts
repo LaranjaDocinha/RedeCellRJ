@@ -11,21 +11,34 @@ export const marketplaceConfigController = {
   }),
 
   createIntegration: catchAsync(async (req: Request, res: Response) => {
-    const { name, apiKey, apiSecret, accessToken, refreshToken, tokenExpiresAt, isActive } = req.body;
+    const { name, apiKey, apiSecret, accessToken, refreshToken, tokenExpiresAt, isActive } =
+      req.body;
     if (!name) {
       throw new AppError('Name is required', 400);
     }
     const newIntegration = await marketplaceSyncService.createIntegration(name, {
-      apiKey, apiSecret, accessToken, refreshToken, tokenExpiresAt, isActive
+      apiKey,
+      apiSecret,
+      accessToken,
+      refreshToken,
+      tokenExpiresAt,
+      isActive,
     });
     res.status(201).json(newIntegration);
   }),
 
   updateIntegration: catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, apiKey, apiSecret, accessToken, refreshToken, tokenExpiresAt, isActive } = req.body;
+    const { name, apiKey, apiSecret, accessToken, refreshToken, tokenExpiresAt, isActive } =
+      req.body;
     const updatedIntegration = await marketplaceSyncService.updateIntegration(Number(id), {
-      name, apiKey, apiSecret, accessToken, refreshToken, tokenExpiresAt, isActive
+      name,
+      apiKey,
+      apiSecret,
+      accessToken,
+      refreshToken,
+      tokenExpiresAt,
+      isActive,
     });
     res.json(updatedIntegration);
   }),
@@ -51,7 +64,7 @@ export const marketplaceConfigController = {
       Number(marketplaceId),
       Number(productVariationId),
       externalId,
-      externalUrl
+      externalUrl,
     );
     res.status(201).json(newListing);
   }),
@@ -60,7 +73,11 @@ export const marketplaceConfigController = {
     const { id } = req.params;
     const { marketplaceId, productVariationId, externalId, externalUrl, status } = req.body;
     const updatedListing = await marketplaceSyncService.updateListing(Number(id), {
-      marketplaceId: Number(marketplaceId), productVariationId: Number(productVariationId), externalId, externalUrl, status
+      marketplaceId: Number(marketplaceId),
+      productVariationId: Number(productVariationId),
+      externalId,
+      externalUrl,
+      status,
     });
     res.json(updatedListing);
   }),

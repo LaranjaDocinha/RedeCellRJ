@@ -32,7 +32,13 @@ describe('ShiftService', () => {
       expect(result).toEqual(expectedShift);
       expect(mockQuery).toHaveBeenCalledWith(
         'INSERT INTO shifts (user_id, branch_id, start_time, end_time, role) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [shiftData.user_id, shiftData.branch_id, shiftData.start_time, shiftData.end_time, shiftData.role]
+        [
+          shiftData.user_id,
+          shiftData.branch_id,
+          shiftData.start_time,
+          shiftData.end_time,
+          shiftData.role,
+        ],
       );
     });
 
@@ -63,7 +69,7 @@ describe('ShiftService', () => {
       expect(result).toEqual(mockShifts);
       expect(mockQuery).toHaveBeenCalledWith(
         'SELECT s.*, u.name as user_name FROM shifts s JOIN users u ON s.user_id = u.id WHERE s.start_time >= $1 AND s.end_time <= $2',
-        [start, end]
+        [start, end],
       );
     });
 
@@ -79,7 +85,7 @@ describe('ShiftService', () => {
       expect(result).toEqual(mockShifts);
       expect(mockQuery).toHaveBeenCalledWith(
         'SELECT s.*, u.name as user_name FROM shifts s JOIN users u ON s.user_id = u.id WHERE s.start_time >= $1 AND s.end_time <= $2 AND s.branch_id = $3',
-        [start, end, "5"]
+        [start, end, '5'],
       );
     });
   });
@@ -102,7 +108,14 @@ describe('ShiftService', () => {
       expect(result).toEqual(updatedShift);
       expect(mockQuery).toHaveBeenCalledWith(
         'UPDATE shifts SET user_id = $1, branch_id = $2, start_time = $3, end_time = $4, role = $5 WHERE id = $6 RETURNING *',
-        [shiftData.user_id, shiftData.branch_id, shiftData.start_time, shiftData.end_time, shiftData.role, id]
+        [
+          shiftData.user_id,
+          shiftData.branch_id,
+          shiftData.start_time,
+          shiftData.end_time,
+          shiftData.role,
+          id,
+        ],
       );
     });
   });

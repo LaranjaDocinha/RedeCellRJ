@@ -68,7 +68,7 @@ export const TagList: React.FC<TagListProps> = ({ tags, onEdit, onDelete }) => {
                   sx={{ 
                     bgcolor: tag.color, 
                     color: '#fff', 
-                    fontWeight: 900,
+                    fontWeight: 400,
                     fontSize: '0.7rem',
                     px: 1,
                     borderRadius: '6px'
@@ -91,7 +91,7 @@ export const TagList: React.FC<TagListProps> = ({ tags, onEdit, onDelete }) => {
               <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Box>
                   <Typography variant="caption" color="text.secondary" display="block">USO NO SISTEMA</Typography>
-                  <Typography variant="h6" fontWeight={800}>--</Typography>
+                  <Typography variant="h6" fontWeight={400}>--</Typography>
                 </Box>
                 <Box 
                   sx={{ 

@@ -13,10 +13,13 @@ interface TefTransactionResult {
   message: string;
 }
 
-export const processTefPayment = async (amount: number, paymentType: 'credit' | 'debit'): Promise<TefTransactionResult> => {
+export const processTefPayment = async (
+  amount: number,
+  paymentType: 'credit' | 'debit',
+): Promise<TefTransactionResult> => {
   // Simula uma transação TEF
   console.log(`[HardwareService] Processing TEF payment: ${paymentType} R$ ${amount.toFixed(2)}`);
-  
+
   // Simular sucesso/falha aleatória
   const success = Math.random() > 0.1; // 90% de sucesso
 
@@ -29,12 +32,12 @@ export const processTefPayment = async (amount: number, paymentType: 'credit' | 
       transactionId,
       authorizationCode,
       nsu,
-      message: 'Transação TEF aprovada com sucesso.'
+      message: 'Transação TEF aprovada com sucesso.',
     };
   } else {
     return {
       success: false,
-      message: 'Transação TEF negada. Tente novamente.'
+      message: 'Transação TEF negada. Tente novamente.',
     };
   }
 };

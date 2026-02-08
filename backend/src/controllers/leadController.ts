@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as leadService from '../services/leadService.js';
 import { z } from 'zod';
-import { validate } from '../middlewares/validationMiddleware.js'; // Assuming validationMiddleware exists
 import { AppError } from '../utils/errors.js'; // Assuming AppError exists
 
 // Zod Schemas for validation

@@ -20,9 +20,9 @@ router.get(
         LEFT JOIN users u ON ss.technician_id = u.id
         ORDER BY ss.created_at DESC
       `);
-      
+
       // Mapear para o formato esperado pelo frontend se necessário
-      const reviews = result.rows.map(r => ({
+      const reviews = result.rows.map((r) => ({
         id: r.id,
         customer_name: r.customer_name || 'Anônimo',
         rating_overall: r.rating_overall,
@@ -31,14 +31,14 @@ router.get(
         sentiment_score: r.sentiment_score || 'Neutral',
         created_at: r.created_at,
         technician: r.technician_name || 'Não informado',
-        service: 'Ordem de Serviço #' + r.service_order_id
+        service: 'Ordem de Serviço #' + r.service_order_id,
       }));
 
       res.status(200).json(reviews);
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 export default router;

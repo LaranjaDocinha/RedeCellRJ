@@ -43,11 +43,13 @@ exports.up = (pgm) => {
     id: { type: 'serial', primaryKey: true },
     name: { type: 'varchar(255)', notNull: true },
     email: { type: 'varchar(255)', unique: true },
-    phone: { type: 'varchar(50)' },
-    cpf: { type: 'varchar(20)' },
+    phone: { type: 'text' },
+    cpf: { type: 'text' },
+    cep: { type: 'text' },
     address: { type: 'text' },
     loyalty_points: { type: 'integer', default: 0 },
     store_credit_balance: { type: 'decimal(10, 2)', default: 0 },
+    deleted_at: { type: 'timestamp' },
     created_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
     updated_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
   });
@@ -63,6 +65,9 @@ exports.up = (pgm) => {
     theme_preference: { type: 'varchar(20)', default: 'light' },
     xp: { type: 'integer', default: 0 },
     level: { type: 'integer', default: 1 },
+    failed_login_attempts: { type: 'integer', notNull: true, default: 0 },
+    last_login: { type: 'timestamp' },
+    deleted_at: { type: 'timestamp' },
     created_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
     updated_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
   });
@@ -147,6 +152,7 @@ exports.up = (pgm) => {
     sku: { type: 'varchar(100)', unique: true },
     product_type: { type: 'varchar(50)', notNull: true, default: 'Produto' },
     is_serialized: { type: 'boolean', default: false },
+    deleted_at: { type: 'timestamp' },
     created_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
     updated_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
   });
@@ -162,6 +168,7 @@ exports.up = (pgm) => {
     low_stock_threshold: { type: 'integer', default: 0 },
     reorder_point: { type: 'integer', default: 0 },
     lead_time_days: { type: 'integer', default: 7 },
+    deleted_at: { type: 'timestamp' },
     created_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
     updated_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
   });
@@ -566,6 +573,7 @@ exports.up = (pgm) => {
     position: { type: 'integer', notNull: true, default: 0 },
     tags: { type: 'jsonb' },
     assignees: { type: 'jsonb' },
+    assignee_id: { type: 'uuid', references: 'users(id)', onDelete: 'SET NULL' },
     service_order_id: { type: 'integer', references: 'service_orders(id)', onDelete: 'SET NULL' },
     created_at: { type: 'timestamp', default: pgm.func('current_timestamp') },
     updated_at: { type: 'timestamp', default: pgm.func('current_timestamp') },
@@ -608,8 +616,8 @@ exports.up = (pgm) => {
     name: { type: 'varchar(100)', notNull: true, unique: true },
     description: { type: 'text' },
     icon_url: { type: 'text' },
-    metric: { type: 'varchar(50)' }, // Added metric
-    threshold: { type: 'decimal(10, 2)' }, // Added threshold
+    metric: { type: 'varchar(50)' },
+    threshold: { type: 'decimal(10, 2)' },
     created_at: { type: 'timestamp', default: pgm.func('current_timestamp') },
   });
 
@@ -746,8 +754,8 @@ exports.up = (pgm) => {
     quantity: { type: 'integer', notNull: true, default: 1 },
     reason: { type: 'text', notNull: true },
     defect_details: { type: 'text' },
-    physical_location: { type: 'varchar(100)' }, // Gaveta, Caixa, Bacia
-    is_battery_risk: { type: 'boolean', default: false }, // Baterias inchadas
+    physical_location: { type: 'varchar(100)' },
+    is_battery_risk: { type: 'boolean', default: false },
     warranty_expiry_date: { type: 'timestamp' },
     item_cost: { type: 'decimal(10, 2)', default: 0 },
     status: { type: 'varchar(50)', notNull: true, default: 'Pending' }, 
@@ -766,7 +774,7 @@ exports.up = (pgm) => {
     service_order_id: { type: 'integer', references: 'service_orders(id)', onDelete: 'CASCADE' },
     customer_id: { type: 'integer', references: 'customers(id)', onDelete: 'CASCADE' },
     technician_id: { type: 'uuid', references: 'users(id)' },
-    rating_overall: { type: 'integer', notNull: true }, // 1-5
+    rating_overall: { type: 'integer', notNull: true }, 
     rating_technical: { type: 'integer' },
     rating_service: { type: 'integer' },
     rating_price: { type: 'integer' },
@@ -775,7 +783,7 @@ exports.up = (pgm) => {
     store_response: { type: 'text' },
     response_time_seconds: { type: 'integer' },
     sentiment_score: { type: 'varchar(20)' },
-    ai_topics: { type: 'jsonb' }, // ['Preço', 'Prazo', 'Qualidade']
+    ai_topics: { type: 'jsonb' },
     customer_loyalty_level: { type: 'varchar(50)', default: 'Standard' },
     is_public: { type: 'boolean', default: true },
     images: { type: 'jsonb' },
@@ -807,18 +815,48 @@ exports.up = (pgm) => {
     id: { type: 'serial', primaryKey: true },
     brand: { type: 'varchar(100)', notNull: true },
     model: { type: 'varchar(255)', notNull: true },
-    compatible_models: { type: 'text[]', notNull: true }, // Array of strings
+    compatible_models: { type: 'text[]', notNull: true },
     category: { type: 'varchar(100)', notNull: true, default: 'Pelicula 3D' },
     notes: { type: 'text' },
     created_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
     updated_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
   });
-  pgm.addIndex('product_compatibilities', ['brand', 'model']);
+  pgm.createTable('stock_transfers', {
+    id: { type: 'serial', primaryKey: true },
+    from_branch_id: { type: 'integer', notNull: true, references: 'branches(id)', onDelete: 'CASCADE' },
+    to_branch_id: { type: 'integer', notNull: true, references: 'branches(id)', onDelete: 'CASCADE' },
+    status: { type: 'varchar(50)', notNull: true, default: 'pending' }, 
+    sent_at: { type: 'timestamp' },
+    received_at: { type: 'timestamp' },
+    created_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
+    updated_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
+  });
+
+  pgm.createTable('stock_transfer_items', {
+    id: { type: 'serial', primaryKey: true },
+    transfer_id: { type: 'integer', notNull: true, references: 'stock_transfers(id)', onDelete: 'CASCADE' },
+    product_variation_id: { type: 'integer', notNull: true, references: 'product_variations(id)', onDelete: 'CASCADE' },
+    quantity: { type: 'integer', notNull: true },
+  });
+
+  pgm.createTable('refresh_tokens', {
+    id: { type: 'serial', primaryKey: true },
+    user_id: { type: 'uuid', notNull: true, references: 'users(id)', onDelete: 'CASCADE' },
+    token: { type: 'text', notNull: true, unique: true },
+    expires_at: { type: 'timestamp', notNull: true },
+    created_at: { type: 'timestamp', notNull: true, default: pgm.func('current_timestamp') },
+  });
+
+  pgm.createIndex('refresh_tokens', 'user_id');
 };
 
 exports.down = (pgm) => {
+  pgm.dropTable('refresh_tokens');
+  pgm.dropTable('stock_transfer_items');
+  pgm.dropTable('stock_transfers');
   pgm.dropTable('system_branding');
   pgm.dropTable('product_compatibilities');
+  pgm.dropTable('task_time_log');
   pgm.dropTable('time_clock_entries');
   pgm.dropTable('product_kit_items');
   pgm.dropTable('product_kits');
@@ -852,6 +890,8 @@ exports.down = (pgm) => {
   pgm.dropTable('service_order_items');
   pgm.dropTable('service_order_status_history');
   pgm.dropTable('service_orders');
+  pgm.dropTable('quarantine_items');
+  pgm.dropTable('satisfaction_surveys');
   pgm.dropTable('return_items');
   pgm.dropTable('returns');
   pgm.dropTable('discounts');

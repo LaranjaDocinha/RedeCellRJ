@@ -45,7 +45,13 @@ describe('ExpenseReimbursementService', () => {
 
   describe('createRequest', () => {
     it('should create a reimbursement request', async () => {
-      const payload = { user_id: 1, branch_id: 1, amount: 100, description: 'Lunch', receipt_url: 'url' };
+      const payload = {
+        user_id: 1,
+        branch_id: 1,
+        amount: 100,
+        description: 'Lunch',
+        receipt_url: 'url',
+      };
       const created = { id: 1, ...payload, status: 'pending' };
       mockClientQuery.mockResolvedValueOnce({ rows: [created] });
 
@@ -53,7 +59,7 @@ describe('ExpenseReimbursementService', () => {
 
       expect(mockClientQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO expense_reimbursements'),
-        [1, 1, 100, 'Lunch', 'url']
+        [1, 1, 100, 'Lunch', 'url'],
       );
       expect(result).toEqual(created);
     });
@@ -68,21 +74,21 @@ describe('ExpenseReimbursementService', () => {
 
       expect(mockClientQuery).toHaveBeenCalledWith(
         expect.stringContaining('WHERE er.status = $1'),
-        ['pending']
+        ['pending'],
       );
       expect(result).toEqual(requests);
     });
 
     it('should return requests filtered by branch', async () => {
-        mockClientQuery.mockResolvedValueOnce({ rows: [] });
-  
-        await expenseReimbursementService.getRequests(undefined, 2);
-  
-        expect(mockClientQuery).toHaveBeenCalledWith(
-          expect.stringContaining('WHERE er.branch_id = $1'),
-          [2]
-        );
-      });
+      mockClientQuery.mockResolvedValueOnce({ rows: [] });
+
+      await expenseReimbursementService.getRequests(undefined, 2);
+
+      expect(mockClientQuery).toHaveBeenCalledWith(
+        expect.stringContaining('WHERE er.branch_id = $1'),
+        [2],
+      );
+    });
   });
 
   describe('getUserRequests', () => {
@@ -92,10 +98,9 @@ describe('ExpenseReimbursementService', () => {
 
       const result = await expenseReimbursementService.getUserRequests('1');
 
-      expect(mockClientQuery).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE user_id = $1'),
-        ['1']
-      );
+      expect(mockClientQuery).toHaveBeenCalledWith(expect.stringContaining('WHERE user_id = $1'), [
+        '1',
+      ]);
       expect(result).toEqual(requests);
     });
   });
@@ -109,7 +114,7 @@ describe('ExpenseReimbursementService', () => {
 
       expect(mockClientQuery).toHaveBeenCalledWith(
         expect.stringContaining("UPDATE expense_reimbursements SET status = 'approved'"),
-        ['admin1', 1]
+        ['admin1', 1],
       );
       expect(result).toEqual(approved);
     });
@@ -117,16 +122,16 @@ describe('ExpenseReimbursementService', () => {
 
   describe('rejectRequest', () => {
     it('should reject a request', async () => {
-        const rejected = { id: 1, status: 'rejected' };
-        mockClientQuery.mockResolvedValueOnce({ rows: [rejected] });
-  
-        const result = await expenseReimbursementService.rejectRequest(1, 'admin1');
-  
-        expect(mockClientQuery).toHaveBeenCalledWith(
-          expect.stringContaining("UPDATE expense_reimbursements SET status = 'rejected'"),
-          ['admin1', 1]
-        );
-        expect(result).toEqual(rejected);
-      });
+      const rejected = { id: 1, status: 'rejected' };
+      mockClientQuery.mockResolvedValueOnce({ rows: [rejected] });
+
+      const result = await expenseReimbursementService.rejectRequest(1, 'admin1');
+
+      expect(mockClientQuery).toHaveBeenCalledWith(
+        expect.stringContaining("UPDATE expense_reimbursements SET status = 'rejected'"),
+        ['admin1', 1],
+      );
+      expect(result).toEqual(rejected);
+    });
   });
 });

@@ -21,7 +21,7 @@ import {
 } from '../../../src/services/gamificationService.js';
 
 describe('GamificationService', () => {
-  let mockPoolQuery = mockQuery; // Referenciar a instância global mockQuery
+  const mockPoolQuery = mockQuery; // Referenciar a instância global mockQuery
 
   beforeEach(() => {
     mockPoolQuery.mockReset(); // Limpar mocks antes de cada teste
@@ -31,7 +31,14 @@ describe('GamificationService', () => {
     it('should return sales volume leaderboard for monthly period', async () => {
       mockPoolQuery.mockResolvedValueOnce({
         rows: [
-          { id: 'user1', name: 'User 1', email: 'user1@example.com', total: 1000, xp: 100, level: 3 },
+          {
+            id: 'user1',
+            name: 'User 1',
+            email: 'user1@example.com',
+            total: 1000,
+            xp: 100,
+            level: 3,
+          },
           { id: 'user2', name: 'User 2', email: 'user2@example.com', total: 500, xp: 50, level: 2 },
         ],
       });
@@ -42,7 +49,11 @@ describe('GamificationService', () => {
         { id: 'user2', name: 'User 2', email: 'user2@example.com', total: 500, xp: 50, level: 2 },
       ]);
       expect(mockPoolQuery).toHaveBeenCalledTimes(1);
-      expect(mockPoolQuery).toHaveBeenCalledWith(expect.stringMatching(/FROM\s*sales\s*s\s*JOIN\s*users\s*u\s*ON\s*s\.user_id\s*=\s*u\.id\s*AND\s*s\.sale_date\s*>=\s*CURRENT_DATE\s*-\s*INTERVAL\s*'30 days'\s*GROUP BY u\.id,\s*u\.name,\s*u\.email\s*ORDER BY xp DESC\s*LIMIT 10;/s));
+      expect(mockPoolQuery).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /FROM\s*sales\s*s\s*JOIN\s*users\s*u\s*ON\s*s\.user_id\s*=\s*u\.id\s*AND\s*s\.sale_date\s*>=\s*CURRENT_DATE\s*-\s*INTERVAL\s*'30 days'\s*GROUP BY u\.id,\s*u\.name,\s*u\.email\s*ORDER BY xp DESC\s*LIMIT 10;/s,
+        ),
+      );
     });
 
     it('should return repairs completed leaderboard for all_time period', async () => {
@@ -59,7 +70,11 @@ describe('GamificationService', () => {
         { id: 'user4', name: 'User 4', email: 'user4@example.com', total: 5, xp: 250, level: 4 },
       ]);
       expect(mockPoolQuery).toHaveBeenCalledTimes(1);
-      expect(mockPoolQuery).toHaveBeenCalledWith(expect.stringMatching(/FROM\s*service_orders\s*so\s*JOIN\s*users\s*u\s*ON\s*so\.technician_id\s*=\s*u\.id\s*WHERE\s*so\.status\s*=\s*'Entregue'\s*GROUP BY u\.id,\s*u\.name,\s*u\.email\s*ORDER BY xp DESC\s*LIMIT 10;/s));
+      expect(mockPoolQuery).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /FROM\s*service_orders\s*so\s*JOIN\s*users\s*u\s*ON\s*so\.technician_id\s*=\s*u\.id\s*WHERE\s*so\.status\s*=\s*'Entregue'\s*GROUP BY u\.id,\s*u\.name,\s*u\.email\s*ORDER BY xp DESC\s*LIMIT 10;/s,
+        ),
+      );
     });
 
     it('should return empty array if no data', async () => {
@@ -102,7 +117,10 @@ describe('GamificationService', () => {
 
       await awardBadge('user123', 1);
       expect(consoleSpy).toHaveBeenCalledTimes(1);
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to award badge 1 to user user123'), expect.any(Error));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to award badge 1 to user user123'),
+        expect.any(Error),
+      );
       consoleSpy.mockRestore(); // Restaurar console.error
     });
   });
@@ -202,7 +220,12 @@ describe('GamificationService', () => {
       const challenges = await getMyChallenges('user123');
       expect(challenges).toEqual([{ id: 1, title: 'C1', current_value: 50, completed: false }]);
       expect(mockPoolQuery).toHaveBeenCalledTimes(1);
-      expect(mockPoolQuery).toHaveBeenCalledWith(expect.stringMatching(/FROM\s*gamification_challenges\s*c\s*LEFT\s*JOIN\s*user_challenge_progress\s*ucp\s*ON\s*c\.id\s*=\s*ucp\.challenge_id\s*AND\s*ucp\.user_id\s*=\s*\$1\s*WHERE\s*c\.end_date\s*>=\s*NOW\(\)\s*AND\s*c\.start_date\s*<=\s*NOW\(\)/s), ['user123']);
+      expect(mockPoolQuery).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /FROM\s*gamification_challenges\s*c\s*LEFT\s*JOIN\s*user_challenge_progress\s*ucp\s*ON\s*c\.id\s*=\s*ucp\.challenge_id\s*AND\s*ucp\.user_id\s*=\s*\$1\s*WHERE\s*c\.end_date\s*>=\s*NOW\(\)\s*AND\s*c\.start_date\s*<=\s*NOW\(\)/s,
+        ),
+        ['user123'],
+      );
     });
 
     it('should return empty array if no active challenges', async () => {
@@ -243,20 +266,24 @@ describe('GamificationService', () => {
 
       expect(mockPoolQuery).toHaveBeenCalledTimes(4); // 1 para buscar desafios, 1 para upsert, 1 para verificar, 1 para completar
       expect(mockPoolQuery).toHaveBeenCalledWith(
-        expect.stringMatching(/SELECT id, target_value, reward_xp FROM gamification_challenges\s+WHERE metric = \$1 AND start_date <= NOW\(\) AND end_date >= NOW\(\)/s),
-        [metric]
+        expect.stringMatching(
+          /SELECT id, target_value, reward_xp FROM gamification_challenges\s+WHERE metric = \$1 AND start_date <= NOW\(\) AND end_date >= NOW\(\)/s,
+        ),
+        [metric],
       );
       expect(mockPoolQuery).toHaveBeenCalledWith(
-        expect.stringMatching(/INSERT INTO user_challenge_progress \(user_id, challenge_id, current_value\)\s+VALUES \(\$1, \$2, \$3\)\s+ON CONFLICT \(user_id, challenge_id\)\s+DO UPDATE SET current_value = user_challenge_progress\.current_value \+ \$3/s),
-        [userId, challengeId, value]
+        expect.stringMatching(
+          /INSERT INTO user_challenge_progress \(user_id, challenge_id, current_value\)\s+VALUES \(\$1, \$2, \$3\)\s+ON CONFLICT \(user_id, challenge_id\)\s+DO UPDATE SET current_value = user_challenge_progress\.current_value \+ \$3/s,
+        ),
+        [userId, challengeId, value],
       );
       expect(mockPoolQuery).toHaveBeenCalledWith(
         'SELECT current_value, completed FROM user_challenge_progress WHERE user_id = $1 AND challenge_id = $2',
-        [userId, challengeId]
+        [userId, challengeId],
       );
       expect(mockPoolQuery).toHaveBeenCalledWith(
         'UPDATE user_challenge_progress SET completed = TRUE, completed_at = NOW() WHERE user_id = $1 AND challenge_id = $2',
-        [userId, challengeId]
+        [userId, challengeId],
       );
       expect(consoleSpy).toHaveBeenCalledWith(`User ${userId} completed challenge ${challengeId}!`);
       consoleSpy.mockRestore();
@@ -277,7 +304,9 @@ describe('GamificationService', () => {
       await updateChallengeProgress(userId, metric, value);
 
       expect(mockPoolQuery).toHaveBeenCalledTimes(3); // Buscar, upsert, verificar
-      expect(mockPoolQuery).not.toHaveBeenCalledWith(expect.stringContaining('UPDATE user_challenge_progress SET completed = TRUE'));
+      expect(mockPoolQuery).not.toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE user_challenge_progress SET completed = TRUE'),
+      );
     });
 
     it('should not update progress if no active challenges for the metric', async () => {
@@ -287,8 +316,10 @@ describe('GamificationService', () => {
 
       expect(mockPoolQuery).toHaveBeenCalledTimes(1); // Apenas a busca por desafios
       expect(mockPoolQuery).toHaveBeenCalledWith(
-        expect.stringMatching(/SELECT id, target_value, reward_xp FROM gamification_challenges\s+WHERE metric = \$1 AND start_date <= NOW\(\) AND end_date >= NOW\(\)/s),
-        ['sales_volume']
+        expect.stringMatching(
+          /SELECT id, target_value, reward_xp FROM gamification_challenges\s+WHERE metric = \$1 AND start_date <= NOW\(\) AND end_date >= NOW\(\)/s,
+        ),
+        ['sales_volume'],
       );
     });
 
@@ -307,13 +338,17 @@ describe('GamificationService', () => {
       await updateChallengeProgress(userId, metric, value);
 
       expect(mockPoolQuery).toHaveBeenCalledTimes(3); // Buscar, upsert, verificar
-      expect(mockPoolQuery).not.toHaveBeenCalledWith(expect.stringContaining('UPDATE user_challenge_progress SET completed = TRUE'));
+      expect(mockPoolQuery).not.toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE user_challenge_progress SET completed = TRUE'),
+      );
     });
 
     it('should throw AppError if database query fails during challenge search', async () => {
       mockPoolQuery.mockRejectedValueOnce(new AppError('DB Error', 500));
 
-      await expect(updateChallengeProgress('user123', 'sales_volume', 50)).rejects.toThrow(AppError);
+      await expect(updateChallengeProgress('user123', 'sales_volume', 50)).rejects.toThrow(
+        AppError,
+      );
     });
 
     it('should throw AppError if database query fails during progress upsert', async () => {

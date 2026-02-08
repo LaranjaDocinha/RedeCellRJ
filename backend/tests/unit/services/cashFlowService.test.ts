@@ -1,19 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getCashFlowData } from '../../../src/services/cashFlowService';
-import * as dbModule from '../../../src/db/index';
+import { getCashFlowData } from '../../../src/services/cashFlowService.js';
+import { cashFlowRepository } from '../../../src/repositories/cashFlow.repository.js';
 
-const mockQuery = vi.fn();
-const mockRelease = vi.fn();
-const mockClient = {
-  query: mockQuery,
-  release: mockRelease,
-};
-const mockPool = {
-  connect: vi.fn(() => mockClient),
-};
-
-vi.mock('../../../src/db/index', () => ({
-  getPool: vi.fn(() => mockPool),
+vi.mock('../../../src/repositories/cashFlow.repository.js', () => ({
+  cashFlowRepository: {
+    getSummary: vi.fn(),
+    getDailyBreakdown: vi.fn(),
+  },
 }));
 
 describe('CashFlowService', () => {
@@ -22,28 +15,28 @@ describe('CashFlowService', () => {
   });
 
   describe('getCashFlowData', () => {
-    it('should calculate cash flow', async () => {
-      // Mock queries
-      mockQuery
-        .mockResolvedValueOnce({ rows: [{ total_inflow: '1000' }] }) // Sales
-        .mockResolvedValueOnce({ rows: [{ total_outflow: '200' }] }) // Expenses
-        .mockResolvedValueOnce({ rows: [{ total_po_outflow: '300' }] }) // POs
-        .mockResolvedValueOnce({ rows: [{ date: '2023-01-01', daily_inflow: '1000' }] }) // Daily Inflow
-        .mockResolvedValueOnce({ rows: [{ date: '2023-01-01', daily_outflow: '200' }] }) // Daily Expenses
-        .mockResolvedValueOnce({ rows: [{ date: '2023-01-01', daily_po_outflow: '300' }] }); // Daily POs
+    it('should calculate cash flow correctly', async () => {
+      vi.mocked(cashFlowRepository.getSummary).mockResolvedValue({
+        totalInflow: 1000,
+        totalOutflow: 500,
+        netCashFlow: 500,
+      });
+      vi.mocked(cashFlowRepository.getDailyBreakdown).mockResolvedValue({
+        inflows: [{ date: '2023-01-01', amount: 1000 }],
+        expenses: [{ date: '2023-01-01', amount: 300 }],
+        purchases: [{ date: '2023-01-01', amount: 200 }],
+      });
 
       const result = await getCashFlowData(1, '2023-01-01', '2023-01-31');
 
       expect(result.totalInflow).toBe(1000);
       expect(result.totalOutflow).toBe(500);
       expect(result.netCashFlow).toBe(500);
-      expect(result.cashFlowTrend).toHaveLength(1);
       expect(result.cashFlowTrend[0]).toEqual({
         date: '2023-01-01',
         inflow: 1000,
         outflow: 500,
       });
-      expect(mockRelease).toHaveBeenCalled();
     });
   });
 });

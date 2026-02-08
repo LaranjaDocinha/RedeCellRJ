@@ -16,12 +16,14 @@ const sdk = new NodeSDK({
     [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
   }),
   traceExporter: exporter,
-  instrumentations: [getNodeAutoInstrumentations({
-    // The fs instrumentation is very noisy, so we disable it.
-    '@opentelemetry/instrumentation-fs': {
-      enabled: false,
-    },
-  })],
+  instrumentations: [
+    getNodeAutoInstrumentations({
+      // The fs instrumentation is very noisy, so we disable it.
+      '@opentelemetry/instrumentation-fs': {
+        enabled: false,
+      },
+    }),
+  ],
 });
 
 export const initTelemetry = () => {
@@ -32,7 +34,8 @@ export const initTelemetry = () => {
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  sdk.shutdown()
+  sdk
+    .shutdown()
     .then(() => console.log('Tracing terminated'))
     .catch((error) => console.log('Error terminating tracing', error))
     .finally(() => process.exit(0));

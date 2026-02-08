@@ -49,7 +49,7 @@ const StatusBadge = styled.span<{ status: string }>`
   color: white;
   padding: 8px 12px;
   border-radius: 20px;
-  font-weight: bold;
+  font-weight: 400;
   font-size: 0.9em;
   text-transform: capitalize;
 `;
@@ -74,7 +74,7 @@ const DetailLabel = styled.span`
   color: #666;
   font-size: 0.85em;
   margin-bottom: 3px;
-  font-weight: 500;
+  font-weight: 400;
 `;
 
 const DetailValue = styled.span`
@@ -109,7 +109,7 @@ const ListItem = styled.li`
 `;
 
 const ItemName = styled.span`
-  font-weight: 500;
+  font-weight: 400;
   color: #333;
 `;
 
@@ -238,3 +238,4 @@ const OrderTrackingCard: React.FC<OrderTrackingCardProps> = ({ order }) => {
 };
 
 export default OrderTrackingCard;
+

@@ -105,22 +105,22 @@ const StockKeeperPage: React.FC = () => {
       {/* Header Operacional */}
       <Box mb={6} display="flex" justifyContent="space-between" alignItems="center">
         <Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
+          <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px' }}>
             Terminal de Estoque
           </Typography>
           <Box display="flex" alignItems="center" gap={1} mt={1}>
             <StockIcon color="primary" />
-            <Typography variant="body1" color="text.secondary" fontWeight={600}>
+            <Typography variant="body1" color="text.secondary" fontWeight={400}>
               Almoxarifado Central • Filial Matriz
             </Typography>
           </Box>
         </Box>
         <Stack direction="row" spacing={2}>
-          <Button variant="outlined" startIcon={<HistoryIcon />} sx={{ borderRadius: '12px', fontWeight: 700 }}>Histórico</Button>
+          <Button variant="outlined" startIcon={<HistoryIcon />} sx={{ borderRadius: '12px', fontWeight: 400 }}>Histórico</Button>
           <Button 
             variant="contained" 
             startIcon={<SyncIcon />} 
-            sx={{ borderRadius: '12px', px: 3, fontWeight: 800 }}
+            sx={{ borderRadius: '12px', px: 3, fontWeight: 400 }}
           >
             Sincronizar
           </Button>
@@ -139,7 +139,7 @@ const StockKeeperPage: React.FC = () => {
             onBlur={() => setIsScanning(false)}
             onKeyPress={(e) => e.key === 'Enter' && handleSearch(searchTerm)}
             sx={{ 
-              '& .MuiOutlinedInput-root': { border: 'none', fontSize: '1.2rem', fontWeight: 600 },
+              '& .MuiOutlinedInput-root': { border: 'none', fontSize: '1.2rem', fontWeight: 400 },
               '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
             }}
             InputProps={{
@@ -150,7 +150,7 @@ const StockKeeperPage: React.FC = () => {
             variant="contained" 
             size="large" 
             onClick={() => handleSearch(searchTerm)}
-            sx={{ height: 60, px: 6, borderRadius: '18px', fontWeight: 900 }}
+            sx={{ height: 60, px: 6, borderRadius: '18px', fontWeight: 400 }}
           >
             BUSCAR
           </Button>
@@ -160,7 +160,7 @@ const StockKeeperPage: React.FC = () => {
       {loading ? (
         <Box display="flex" flexDirection="column" alignItems="center" py={10}>
           <CircularProgress size={60} thickness={5} />
-          <Typography sx={{ mt: 3, fontWeight: 700 }} color="text.secondary">Consultando inventário...</Typography>
+          <Typography sx={{ mt: 3, fontWeight: 400 }} color="text.secondary">Consultando inventário...</Typography>
         </Box>
       ) : (
         <Grid container spacing={3}>
@@ -180,23 +180,23 @@ const StockKeeperPage: React.FC = () => {
                         </Avatar>
                       </Grid>
                       <Grid item xs={12} sm={4}>
-                        <Typography variant="subtitle1" fontWeight={900}>{p.product_name}</Typography>
-                        <Typography variant="body2" color="text.secondary" fontWeight={600}>{p.variation_details}</Typography>
+                        <Typography variant="subtitle1" fontWeight={400}>{p.product_name}</Typography>
+                        <Typography variant="body2" color="text.secondary" fontWeight={400}>{p.variation_details}</Typography>
                         <Typography variant="caption" sx={{ fontFamily: 'monospace', bgcolor: 'divider', px: 1, borderRadius: '4px', mt: 1, display: 'inline-block' }}>
                           SKU: {p.sku}
                         </Typography>
                       </Grid>
                       <Grid item xs={6} sm={2} textAlign="center">
                         <Box>
-                          <Typography variant="caption" fontWeight={800} color="text.secondary">ESTOQUE ATUAL</Typography>
-                          <Typography variant="h4" fontWeight={900} color={p.current_stock <= (p.min_stock || 0) ? 'error.main' : 'text.primary'}>
+                          <Typography variant="caption" fontWeight={400} color="text.secondary">ESTOQUE ATUAL</Typography>
+                          <Typography variant="h4" fontWeight={400} color={p.current_stock <= (p.min_stock || 0) ? 'error.main' : 'text.primary'}>
                             {p.current_stock}
                           </Typography>
                         </Box>
                       </Grid>
                       <Grid item xs={6} sm={2} textAlign="center">
                          {p.current_stock <= (p.min_stock || 0) && (
-                           <Chip icon={<AlertIcon sx={{ fontSize: '14px !important' }} />} label="ESTOQUE CRÍTICO" color="error" size="small" sx={{ fontWeight: 900, borderRadius: '6px' }} />
+                           <Chip icon={<AlertIcon sx={{ fontSize: '14px !important' }} />} label="ESTOQUE CRÍTICO" color="error" size="small" sx={{ fontWeight: 400, borderRadius: '6px' }} />
                          )}
                       </Grid>
                       <Grid item xs={12} sm={3}>
@@ -206,13 +206,13 @@ const StockKeeperPage: React.FC = () => {
                               <MinusIcon />
                             </IconButton>
                             <Box sx={{ width: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <Typography variant="h6" fontWeight={900}>1</Typography>
+                              <Typography variant="h6" fontWeight={400}>1</Typography>
                             </Box>
                             <IconButton size="large" onClick={() => handleAdjustStock(p.variation_id, 1)} sx={{ bgcolor: 'success.50', color: 'success.main', borderRadius: '10px' }}>
                               <PlusIcon />
                             </IconButton>
                           </Box>
-                          <Button variant="contained" color="primary" sx={{ borderRadius: '14px', fontWeight: 800 }}>REPOR</Button>
+                          <Button variant="contained" color="primary" sx={{ borderRadius: '14px', fontWeight: 400 }}>REPOR</Button>
                         </Stack>
                       </Grid>
                     </Grid>

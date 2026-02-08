@@ -11,6 +11,8 @@ const createSaleContractSchema = z.object({
 
 type CreateSaleContractPayload = z.infer<typeof createSaleContractSchema>;
 
+export { createSaleContractSchema };
+
 export const contractService = {
   /**
    * Gera um contrato HTML/PDF com base em um template e dados da venda.

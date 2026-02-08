@@ -34,7 +34,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             {product.description || 'No description available.'}
           </Typography>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
-            <Chip label={price} color="primary" sx={{ fontWeight: 'bold' }} />
+            <Chip label={price} color="primary" sx={{ fontWeight: 400 }} />
             <Button variant="contained" size="small" startIcon={<AddShoppingCart />}>
               Adicionar
             </Button>
@@ -46,3 +46,4 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 };
 
 export default ProductCard;
+

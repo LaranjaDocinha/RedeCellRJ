@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { getPool } from '../db/index.js';
+import { sendSuccess, sendError } from '../utils/responseHelper.js';
 
 // Helper to format currency values
 const formatCurrency = (value: any) => {
@@ -7,45 +8,70 @@ const formatCurrency = (value: any) => {
   return isNaN(num) ? '0.00' : num.toFixed(2);
 };
 
+const executeTransaction = async (
+  client: any,
+  customerId: string,
+  amount: number,
+  type: 'credit' | 'debit',
+  reason: string,
+  relatedId?: string,
+) => {
+  const transactionResult = await client.query(
+    'INSERT INTO store_credit_transactions (customer_id, amount, type, reason, related_id) VALUES ($1, $2, $3, $4, $5) RETURNING *;',
+    [customerId, amount, type, reason, relatedId],
+  );
+
+  const balanceChange = type === 'credit' ? amount : -amount;
+  const customerUpdateResult = await client.query(
+    'UPDATE customers SET store_credit_balance = store_credit_balance + $1 WHERE id = $2 RETURNING *;',
+    [balanceChange, customerId],
+  );
+
+  return {
+    transaction: transactionResult.rows[0],
+    customer: customerUpdateResult.rows[0],
+  };
+};
+
 export const addStoreCredit = async (req: Request, res: Response) => {
   const { customerId } = req.params;
   const { amount, reason, relatedId } = req.body;
 
   if (!amount || !reason) {
-    return res.status(400).json({ message: 'Amount and reason are required.' });
+    return sendError(res, 'Amount and reason are required.', 'VALIDATION_ERROR', 400);
   }
 
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
 
-    const transactionResult = await client.query(
-      'INSERT INTO store_credit_transactions (customer_id, amount, type, reason, related_id) VALUES ($1, $2, $3, $4, $5) RETURNING *;',
-      [customerId, amount, 'credit', reason, relatedId],
-    );
-
-    const customerUpdateResult = await client.query(
-      'UPDATE customers SET store_credit_balance = store_credit_balance + $1 WHERE id = $2 RETURNING *;',
-      [amount, customerId],
+    const result = await executeTransaction(
+      client,
+      customerId,
+      amount,
+      'credit',
+      reason,
+      relatedId,
     );
 
     await client.query('COMMIT');
 
-    const formattedTransaction = {
-      ...transactionResult.rows[0],
-      amount: formatCurrency(transactionResult.rows[0].amount),
-    };
-
-    const formattedCustomer = {
-      ...customerUpdateResult.rows[0],
-      store_credit_balance: formatCurrency(customerUpdateResult.rows[0].store_credit_balance),
-    };
-
-    res.status(201).json({ transaction: formattedTransaction, customer: formattedCustomer });
+    sendSuccess(
+      res,
+      {
+        message: 'Store credit added successfully',
+        transaction: { ...result.transaction, amount: formatCurrency(result.transaction.amount) },
+        customer: {
+          ...result.customer,
+          store_credit_balance: formatCurrency(result.customer.store_credit_balance),
+        },
+      },
+      200,
+    );
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('Error adding store credit:', error);
-    res.status(500).json({ message: 'Internal server error.' });
+    sendError(res, 'Internal server error.', 'INTERNAL_ERROR', 500);
   } finally {
     client.release();
   }
@@ -56,7 +82,7 @@ export const debitStoreCredit = async (req: Request, res: Response) => {
   const { amount, reason, relatedId } = req.body;
 
   if (!amount || !reason) {
-    return res.status(400).json({ message: 'Amount and reason are required.' });
+    return sendError(res, 'Amount and reason are required.', 'VALIDATION_ERROR', 400);
   }
 
   const client = await getPool().connect();
@@ -70,42 +96,35 @@ export const debitStoreCredit = async (req: Request, res: Response) => {
 
     if (customerResult.rows.length === 0) {
       await client.query('ROLLBACK');
-      return res.status(404).json({ message: 'Customer not found.' });
+      return sendError(res, 'Customer not found.', 'NOT_FOUND', 404);
     }
 
     const currentBalance = parseFloat(customerResult.rows[0].store_credit_balance);
     if (currentBalance < amount) {
       await client.query('ROLLBACK');
-      return res.status(400).json({ message: 'Insufficient store credit balance.' });
+      return sendError(res, 'Insufficient store credit balance.', 'INSUFFICIENT_FUNDS', 400);
     }
 
-    const transactionResult = await client.query(
-      'INSERT INTO store_credit_transactions (customer_id, amount, type, reason, related_id) VALUES ($1, $2, $3, $4, $5) RETURNING *;',
-      [customerId, amount, 'debit', reason, relatedId],
-    );
-
-    const customerUpdateResult = await client.query(
-      'UPDATE customers SET store_credit_balance = store_credit_balance - $1 WHERE id = $2 RETURNING *;',
-      [amount, customerId],
-    );
+    const result = await executeTransaction(client, customerId, amount, 'debit', reason, relatedId);
 
     await client.query('COMMIT');
 
-    const formattedTransaction = {
-      ...transactionResult.rows[0],
-      amount: formatCurrency(transactionResult.rows[0].amount),
-    };
-
-    const formattedCustomer = {
-      ...customerUpdateResult.rows[0],
-      store_credit_balance: formatCurrency(customerUpdateResult.rows[0].store_credit_balance),
-    };
-
-    res.status(201).json({ transaction: formattedTransaction, customer: formattedCustomer });
+    sendSuccess(
+      res,
+      {
+        message: 'Store credit debited successfully',
+        transaction: { ...result.transaction, amount: formatCurrency(result.transaction.amount) },
+        customer: {
+          ...result.customer,
+          store_credit_balance: formatCurrency(result.customer.store_credit_balance),
+        },
+      },
+      200,
+    );
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('Error debiting store credit:', error);
-    res.status(500).json({ message: 'Internal server error.' });
+    sendError(res, 'Internal server error.', 'INTERNAL_ERROR', 500);
   } finally {
     client.release();
   }
@@ -127,7 +146,7 @@ export const getStoreCreditHistory = async (req: Request, res: Response) => {
     );
 
     if (balanceResult.rows.length === 0) {
-      return res.status(404).json({ message: 'Customer not found.' });
+      return sendError(res, 'Customer not found.', 'NOT_FOUND', 404);
     }
 
     const formattedHistory = historyResult.rows.map((t: any) => ({
@@ -135,13 +154,13 @@ export const getStoreCreditHistory = async (req: Request, res: Response) => {
       amount: formatCurrency(t.amount),
     }));
 
-    res.status(200).json({
+    sendSuccess(res, {
       balance: formatCurrency(balanceResult.rows[0].store_credit_balance),
       history: formattedHistory,
     });
   } catch (error) {
     console.error('Error fetching store credit history:', error);
-    res.status(500).json({ message: 'Internal server error.' });
+    sendError(res, 'Internal server error.', 'INTERNAL_ERROR', 500);
   } finally {
     client.release();
   }

@@ -8,8 +8,10 @@ const ERP_EXPORT_DIR = process.env.ERP_EXPORT_DIR || path.resolve('temp/erp_expo
 
 export const erpService = {
   async exportSalesToERP(startDate: Date, endDate: Date): Promise<string> {
-    logger.info(`Exporting sales data for ERP from ${startDate.toISOString()} to ${endDate.toISOString()}`);
-    
+    logger.info(
+      `Exporting sales data for ERP from ${startDate.toISOString()} to ${endDate.toISOString()}`,
+    );
+
     // Fetch sales data within the date range
     const salesRes = await pool.query(
       `SELECT
@@ -38,7 +40,7 @@ export const erpService = {
        JOIN sale_payments sp ON s.id = sp.sale_id
        WHERE s.sale_date >= $1 AND s.sale_date <= $2
        ORDER BY s.sale_date ASC`,
-      [startDate, endDate]
+      [startDate, endDate],
     );
 
     const salesData = salesRes.rows;
@@ -48,7 +50,7 @@ export const erpService = {
     }
 
     // Transform data into a flat structure suitable for CSV or JSON
-    const transformedData = salesData.map(sale => ({
+    const transformedData = salesData.map((sale) => ({
       sale_id: sale.sale_id,
       sale_date: sale.sale_date,
       total_amount: sale.total_amount,
@@ -63,13 +65,13 @@ export const erpService = {
       unit_price: sale.unit_price,
       cost_price: sale.cost_price,
       payment_method: sale.payment_method,
-      payment_amount: sale.payment_amount
+      payment_amount: sale.payment_amount,
     }));
 
     // Example: Export to JSON file
     const fileName = `sales_erp_export_${new Date().toISOString().slice(0, 10)}.json`;
     const filePath = path.join(ERP_EXPORT_DIR, fileName);
-    
+
     await fs.mkdir(ERP_EXPORT_DIR, { recursive: true }); // Ensure directory exists
     await fs.writeFile(filePath, JSON.stringify(transformedData, null, 2));
 
@@ -78,8 +80,10 @@ export const erpService = {
   },
 
   async exportExpensesToERP(startDate: Date, endDate: Date): Promise<string> {
-    logger.info(`Exporting expense data for ERP from ${startDate.toISOString()} to ${endDate.toISOString()}`);
-    
+    logger.info(
+      `Exporting expense data for ERP from ${startDate.toISOString()} to ${endDate.toISOString()}`,
+    );
+
     // Fetch expense data (assuming an 'expenses' table exists)
     const expensesRes = await pool.query(
       `SELECT
@@ -92,7 +96,7 @@ export const erpService = {
        FROM expenses
        WHERE expense_date >= $1 AND expense_date <= $2
        ORDER BY expense_date ASC`,
-      [startDate, endDate]
+      [startDate, endDate],
     );
 
     const expensesData = expensesRes.rows;
@@ -103,7 +107,7 @@ export const erpService = {
 
     const fileName = `expenses_erp_export_${new Date().toISOString().slice(0, 10)}.json`;
     const filePath = path.join(ERP_EXPORT_DIR, fileName);
-    
+
     await fs.mkdir(ERP_EXPORT_DIR, { recursive: true });
     await fs.writeFile(filePath, JSON.stringify(expensesData, null, 2));
 

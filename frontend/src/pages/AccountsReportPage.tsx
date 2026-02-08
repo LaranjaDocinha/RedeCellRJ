@@ -166,7 +166,7 @@ const AccountsReportPage: React.FC = () => {
 
   return (
     <Box p={4}>
-      <Typography variant="h3" fontWeight={900} gutterBottom sx={{ letterSpacing: '-2px', mb: 4 }}>
+      <Typography variant="h3" fontWeight={400} gutterBottom sx={{ letterSpacing: '-2px', mb: 4 }}>
         Gestão Financeira
       </Typography>
 
@@ -215,11 +215,11 @@ const AccountsReportPage: React.FC = () => {
                     <Box display="flex" alignItems="center" gap={1.5}>
                         <Avatar sx={{ bgcolor: alpha(theme.palette.error.main, 0.1), color: 'error.main' }}><FaMoneyBillWave size={20} /></Avatar>
                         <Box>
-                            <Typography variant="h6" fontWeight={800}>Contas a Pagar</Typography>
+                            <Typography variant="h6" fontWeight={400}>Contas a Pagar</Typography>
                             <Typography variant="caption" color="text.secondary">Fluxo de saída e fornecedores</Typography>
                         </Box>
                     </Box>
-                    <Button variant="contained" color="error" startIcon={<FaPlus />} onClick={() => setIsPayableModalOpen(true)} sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700 }}>Nova Conta</Button>
+                    <Button variant="contained" color="error" startIcon={<FaPlus />} onClick={() => setIsPayableModalOpen(true)} sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 400 }}>Nova Conta</Button>
                 </Stack>
 
                 <FormControl sx={{ mb: 3, minWidth: 160 }} size="small">
@@ -236,10 +236,10 @@ const AccountsReportPage: React.FC = () => {
                     <Table stickyHeader size="small">
                         <TableHead>
                             <TableRow>
-                                <TableCell sx={{ fontWeight: 800, bgcolor: 'background.paper' }}>DESCRIÇÃO</TableCell>
-                                <TableCell sx={{ fontWeight: 800, bgcolor: 'background.paper' }}>VALOR</TableCell>
-                                <TableCell sx={{ fontWeight: 800, bgcolor: 'background.paper' }}>VENCIMENTO</TableCell>
-                                <TableCell align="center" sx={{ fontWeight: 800, bgcolor: 'background.paper' }}>AÇÕES</TableCell>
+                                <TableCell sx={{ fontWeight: 400, bgcolor: 'background.paper' }}>DESCRIÇÃO</TableCell>
+                                <TableCell sx={{ fontWeight: 400, bgcolor: 'background.paper' }}>VALOR</TableCell>
+                                <TableCell sx={{ fontWeight: 400, bgcolor: 'background.paper' }}>VENCIMENTO</TableCell>
+                                <TableCell align="center" sx={{ fontWeight: 400, bgcolor: 'background.paper' }}>AÇÕES</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -247,24 +247,24 @@ const AccountsReportPage: React.FC = () => {
                             {payables.map((payable) => (
                                 <TableRow key={payable.id} hover>
                                     <TableCell>
-                                        <Typography variant="body2" fontWeight={600}>{payable.description}</Typography>
+                                        <Typography variant="body2" fontWeight={400}>{payable.description}</Typography>
                                         <Typography variant="caption" color="text.secondary">{payable.supplier_name || 'Sem fornecedor'}</Typography>
                                     </TableCell>
                                     <TableCell>
-                                        <Typography variant="body2" fontWeight={800} color="error.main">
+                                        <Typography variant="body2" fontWeight={400} color="error.main">
                                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(payable.amount)}
                                         </Typography>
                                     </TableCell>
                                     <TableCell>
                                         <Stack direction="row" spacing={1} alignItems="center">
                                             <FaCalendarAlt size={12} color={theme.palette.text.disabled} />
-                                            <Typography variant="caption" fontWeight={600}>{moment(payable.due_date).format('DD/MM/YY')}</Typography>
+                                            <Typography variant="caption" fontWeight={400}>{moment(payable.due_date).format('DD/MM/YY')}</Typography>
                                         </Stack>
                                     </TableCell>
                                     <TableCell align="center">
                                         {payable.status === 'pending' ? (
                                             <Button size="small" variant="outlined" color="error" onClick={() => handleUpdatePayableStatus(payable.id, 'paid')} sx={{ borderRadius: '8px', fontSize: '0.7rem' }}>Liquidar</Button>
-                                        ) : <Chip label="PAGO" size="small" color="success" sx={{ fontSize: '0.6rem', fontWeight: 900, height: 20 }} />}
+                                        ) : <Chip label="PAGO" size="small" color="success" sx={{ fontSize: '0.6rem', fontWeight: 400, height: 20 }} />}
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -281,11 +281,11 @@ const AccountsReportPage: React.FC = () => {
                     <Box display="flex" alignItems="center" gap={1.5}>
                         <Avatar sx={{ bgcolor: alpha(theme.palette.success.main, 0.1), color: 'success.main' }}><FaFileInvoiceDollar size={20} /></Avatar>
                         <Box>
-                            <Typography variant="h6" fontWeight={800}>Contas a Receber</Typography>
+                            <Typography variant="h6" fontWeight={400}>Contas a Receber</Typography>
                             <Typography variant="caption" color="text.secondary">Fluxo de entrada e clientes</Typography>
                         </Box>
                     </Box>
-                    <Button variant="contained" color="success" startIcon={<FaPlus />} onClick={() => setIsReceivableModalOpen(true)} sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700 }}>Novo Recebível</Button>
+                    <Button variant="contained" color="success" startIcon={<FaPlus />} onClick={() => setIsReceivableModalOpen(true)} sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 400 }}>Novo Recebível</Button>
                 </Stack>
 
                 <FormControl sx={{ mb: 3, minWidth: 160 }} size="small">
@@ -302,10 +302,10 @@ const AccountsReportPage: React.FC = () => {
                     <Table stickyHeader size="small">
                         <TableHead>
                             <TableRow>
-                                <TableCell sx={{ fontWeight: 800, bgcolor: 'background.paper' }}>DESCRIÇÃO</TableCell>
-                                <TableCell sx={{ fontWeight: 800, bgcolor: 'background.paper' }}>VALOR</TableCell>
-                                <TableCell sx={{ fontWeight: 800, bgcolor: 'background.paper' }}>VENCIMENTO</TableCell>
-                                <TableCell align="center" sx={{ fontWeight: 800, bgcolor: 'background.paper' }}>AÇÕES</TableCell>
+                                <TableCell sx={{ fontWeight: 400, bgcolor: 'background.paper' }}>DESCRIÇÃO</TableCell>
+                                <TableCell sx={{ fontWeight: 400, bgcolor: 'background.paper' }}>VALOR</TableCell>
+                                <TableCell sx={{ fontWeight: 400, bgcolor: 'background.paper' }}>VENCIMENTO</TableCell>
+                                <TableCell align="center" sx={{ fontWeight: 400, bgcolor: 'background.paper' }}>AÇÕES</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -313,24 +313,24 @@ const AccountsReportPage: React.FC = () => {
                             {receivables.map((receivable) => (
                                 <TableRow key={receivable.id} hover>
                                     <TableCell>
-                                        <Typography variant="body2" fontWeight={600}>{receivable.description}</Typography>
+                                        <Typography variant="body2" fontWeight={400}>{receivable.description}</Typography>
                                         <Typography variant="caption" color="text.secondary">{receivable.customer_name || 'Sem cliente'}</Typography>
                                     </TableCell>
                                     <TableCell>
-                                        <Typography variant="body2" fontWeight={800} color="success.main">
+                                        <Typography variant="body2" fontWeight={400} color="success.main">
                                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(receivable.amount)}
                                         </Typography>
                                     </TableCell>
                                     <TableCell>
                                         <Stack direction="row" spacing={1} alignItems="center">
                                             <FaCalendarAlt size={12} color={theme.palette.text.disabled} />
-                                            <Typography variant="caption" fontWeight={600}>{moment(receivable.due_date).format('DD/MM/YY')}</Typography>
+                                            <Typography variant="caption" fontWeight={400}>{moment(receivable.due_date).format('DD/MM/YY')}</Typography>
                                         </Stack>
                                     </TableCell>
                                     <TableCell align="center">
                                         {receivable.status === 'pending' ? (
                                             <Button size="small" variant="outlined" color="success" onClick={() => handleUpdateReceivableStatus(receivable.id, 'received')} sx={{ borderRadius: '8px', fontSize: '0.7rem' }}>Receber</Button>
-                                        ) : <Chip label="RECEBIDO" size="small" color="success" sx={{ fontSize: '0.6rem', fontWeight: 900, height: 20 }} />}
+                                        ) : <Chip label="RECEBIDO" size="small" color="success" sx={{ fontSize: '0.6rem', fontWeight: 400, height: 20 }} />}
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -380,7 +380,7 @@ const AddAccountModal = ({ type, onSave, onClose, branches }: any) => {
     return (
         <Modal open onClose={onClose} disableRestoreFocus>
             <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 450, bgcolor: 'background.paper', boxShadow: 24, p: 4, borderRadius: '24px' }}>
-                <Typography variant="h5" fontWeight={800} mb={3}>Lançar {type === 'payable' ? 'Conta a Pagar' : 'Conta a Receber'}</Typography>
+                <Typography variant="h5" fontWeight={400} mb={3}>Lançar {type === 'payable' ? 'Conta a Pagar' : 'Conta a Receber'}</Typography>
                 <Stack spacing={2.5}>
                     <TextField fullWidth name="description" label="Descrição do Lançamento" value={formData.description} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
                     <TextField fullWidth name="amount" label="Valor (R$)" type="number" value={formData.amount} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }} />
@@ -404,7 +404,7 @@ const AddAccountModal = ({ type, onSave, onClose, branches }: any) => {
                 </Stack>
                 <Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
                     <Button onClick={onClose} sx={{ borderRadius: '10px' }}>Cancelar</Button>
-                    <Button variant="contained" color={type === 'payable' ? 'error' : 'success'} onClick={() => onSave(formData)} sx={{ borderRadius: '10px', px: 4, fontWeight: 700 }}>Salvar Lançamento</Button>
+                    <Button variant="contained" color={type === 'payable' ? 'error' : 'success'} onClick={() => onSave(formData)} sx={{ borderRadius: '10px', px: 4, fontWeight: 400 }}>Salvar Lançamento</Button>
                 </Box>
             </Box>
         </Modal>

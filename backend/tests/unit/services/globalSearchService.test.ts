@@ -59,19 +59,23 @@ describe('GlobalSearchService', () => {
   describe('globalSearch', () => {
     it('should search for products and users', async () => {
       mockDefaultQuery
-        .mockResolvedValueOnce({ rows: [{ id: 'prod1', name: 'Product 1', description: 'Desc 1' }] }) // Products
-        .mockResolvedValueOnce({ rows: [{ id: 'user1', name: 'User 1', email: 'user@example.com' }] }); // Users
+        .mockResolvedValueOnce({
+          rows: [{ id: 'prod1', name: 'Product 1', description: 'Desc 1' }],
+        }) // Products
+        .mockResolvedValueOnce({
+          rows: [{ id: 'user1', name: 'User 1', email: 'user@example.com' }],
+        }); // Users
 
       const result = await globalSearch('test');
 
       expect(mockDefaultQuery).toHaveBeenCalledTimes(2);
       expect(mockDefaultQuery).toHaveBeenCalledWith(
         expect.stringContaining('SELECT id, name, description FROM products'),
-        ['%test%']
+        ['%test%'],
       );
       expect(mockDefaultQuery).toHaveBeenCalledWith(
         expect.stringContaining('SELECT id, name, email FROM users'),
-        ['%test%']
+        ['%test%'],
       );
       expect(result).toEqual([
         { type: 'product', id: 'prod1', name: 'Product 1', description: 'Desc 1' },

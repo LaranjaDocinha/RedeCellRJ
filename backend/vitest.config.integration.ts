@@ -18,7 +18,7 @@ export default defineConfig({
     fileParallelism: false, // Run tests sequentially to avoid db deadlocks
     globals: true,
     coverage: {
-      enabled: false,
+      enabled: true,
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       exclude: ['**/node_modules/**', '**/dist/**', '**/tests/**', '**/vitest.*.ts', '**/vitest.global-setup.ts'],

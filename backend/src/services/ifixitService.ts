@@ -7,7 +7,7 @@ export const searchGuides = async (device: string) => {
   try {
     const params: any = {
       filter: 'guide',
-      limit: 5 // Limit results
+      limit: 5, // Limit results
     };
     if (IFIXIT_API_KEY) {
       params.api_key = IFIXIT_API_KEY;
@@ -20,7 +20,7 @@ export const searchGuides = async (device: string) => {
   } catch (error) {
     console.error('Error fetching iFixit guides:', error);
     // Fallback to empty array instead of error if search fails
-    return []; 
+    return [];
   }
 };
 
@@ -28,7 +28,7 @@ export const getGuideDetails = async (guideId: number) => {
   try {
     const params: any = {};
     if (IFIXIT_API_KEY) {
-        params.api_key = IFIXIT_API_KEY;
+      params.api_key = IFIXIT_API_KEY;
     }
     const response = await axios.get(`${IFIXIT_API_URL}/guides/${guideId}`, {
       params,

@@ -32,6 +32,14 @@ type UpdateChecklistTemplatePayload = z.infer<typeof updateChecklistTemplateSche
 type CreateChecklistTemplateItemPayload = z.infer<typeof createChecklistTemplateItemSchema>;
 type UpdateChecklistTemplateItemPayload = z.infer<typeof updateChecklistTemplateItemSchema>;
 
+// Export schemas for use in controllers if needed
+export {
+  createChecklistTemplateSchema,
+  updateChecklistTemplateSchema,
+  createChecklistTemplateItemSchema,
+  updateChecklistTemplateItemSchema,
+};
+
 export const getChecklistTemplateWithItems = async (templateId: number) => {
   const templateRes = await pool.query('SELECT * FROM checklist_templates WHERE id = $1', [
     templateId,

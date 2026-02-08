@@ -11,7 +11,7 @@ const doc = {
   schemes: ['http'],
 };
 
-const outputFile = './swagger-output.json';
+const outputFile = './docs/swagger/swagger-output.json';
 const endpointsFiles = ['./src/index.ts']; // Point to the source input
 
 autogen(outputFile, endpointsFiles, doc);

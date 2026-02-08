@@ -1,5 +1,4 @@
 import { getPool } from '../db/index.js';
-import { AppError } from '../utils/errors.js';
 
 interface ZReportData {
   startDate: Date;

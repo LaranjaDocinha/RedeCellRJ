@@ -92,7 +92,7 @@ export const CartHeader = styled.div`
   
   h2 {
     font-size: 1.15rem;
-    font-weight: 900;
+    font-weight: 400;
     margin: 0;
     display: flex;
     align-items: center;
@@ -129,14 +129,14 @@ export const SummaryLine = styled.div<{ $total?: boolean }>`
   
   span:first-child {
     font-size: ${({ $total }) => $total ? '0.9rem' : '0.8rem'};
-    font-weight: 700;
+    font-weight: 400;
     color: ${({ theme, $total }) => $total ? theme.palette.text.primary : theme.palette.text.secondary};
     text-transform: uppercase;
   }
 
   span:last-child {
     font-size: ${({ $total }) => $total ? '2.25rem' : '1rem'};
-    font-weight: 900;
+    font-weight: 400;
     color: ${({ theme, $total }) => $total ? theme.palette.primary.main : theme.palette.text.primary};
     letter-spacing: -1px;
   }
@@ -168,7 +168,7 @@ export const BirthdayAlert = styled(motion.div)`
   color: #fff;
   padding: 0.5rem 1rem;
   border-radius: 10px;
-  font-weight: 800;
+  font-weight: 400;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -182,7 +182,7 @@ export const ActionButton = muiStyled(motion.button)<{ $variant?: 'primary' | 's
     borderRadius: '14px',
     border: 'none',
     fontSize: '1.1rem',
-    fontWeight: 900,
+    fontWeight: 400,
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
@@ -213,3 +213,4 @@ export const ActionButton = muiStyled(motion.button)<{ $variant?: 'primary' | 's
 export const QuickPickSection = styled.div`
   margin-top: 1rem;
 `;
+

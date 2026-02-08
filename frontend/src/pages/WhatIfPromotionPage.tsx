@@ -1,271 +1,133 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
 import { 
-  Box, 
-  Typography, 
-  Paper, 
-  Grid, 
-  CircularProgress, 
-  TextField, 
-  Button, 
-  Select, 
-  MenuItem, 
-  FormControl, 
-  InputLabel, 
-  Slider,
-  Card,
-  CardContent,
-  Avatar,
-  Stack,
-  Divider,
-  useTheme,
-  Tooltip,
-  IconButton,
-  Chip
+  Slider, Typography, Box, Paper, Grid, Divider, 
+  alpha, useTheme, Card, CardContent 
 } from '@mui/material';
-import { 
-  Science as LabIcon, 
-  TrendingUp, 
-  TrendingDown, 
-  AttachMoney, 
-  Percent, 
-  Timeline, 
-  InfoOutlined as InfoIcon,
-  Calculate as CalcIcon,
-  CheckCircle as SuccessIcon,
-  Warning as RiskIcon
-} from '@mui/icons-material';
-import { useAuth } from '../contexts/AuthContext';
-import ReactApexChart from 'react-apexcharts';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ShowChart, TrendingUp, AttachMoney, Settings } from '@mui/icons-material';
+import api from '../services/api';
+import { PageContainer } from '../styles/common.styles';
 
-const WhatIfPromotionPage: React.FC = () => {
-  const theme = useTheme();
-  const { token } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [simulationData, setSimulationData] = useState<any>(null);
-  
-  // Simulation Inputs
-  const [discountPercentage, setDiscountPercentage] = useState(15);
-  const [expectedSalesIncrease, setExpectedSalesIncrease] = useState(25);
-  const [durationDays, setDurationDays] = useState(30);
-  
-  const [products, setProducts] = useState<any[]>([]);
-  const [selectedBranch, setSelectedBranch] = useState<string>('1');
+const SimulationCard = styled(Paper)`
+  padding: 30px;
+  border-radius: 24px;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.05);
+`;
 
-  // Initial fetch for baseline comparison (Mocked for demonstration)
+const StatBox = styled(Box)<{ positive: boolean }>`
+  text-align: center;
+  padding: 20px;
+  border-radius: 16px;
+  background: ${props => props.positive ? '#e8f5e9' : '#ffebee'};
+  color: ${props => props.positive ? '#2e7d32' : '#c62828'};
+`;
+
+const WhatIfSimulationPage: React.FC = () => {
+  const [printPrice, setPrintPrice] = useState(1);
+  const [salesVol, setSalesVol] = useState(1);
+  const [costs, setCost] = useState(1);
+  const [results, setResults] = useState<any>(null);
+
   useEffect(() => {
-    handleSimulate();
-  }, []);
+    runSim();
+  }, [printPrice, salesVol, costs]);
 
-  const handleSimulate = async () => {
-    setLoading(true);
-    // Simulated backend logic for "What-If"
-    setTimeout(() => {
-      const baselineProfit = 50000;
-      const baselineRevenue = 120000;
-      
-      const simulatedRevenue = baselineRevenue * (1 + expectedSalesIncrease / 100) * (1 - discountPercentage / 100);
-      const simulatedProfit = simulatedRevenue * 0.35; // Simplified fixed margin for simulation
-      const profitChange = simulatedProfit - baselineProfit;
-
-      setSimulationData({
-        baseline: { profit: baselineProfit, revenue: baselineRevenue },
-        simulated: { profit: simulatedProfit, revenue: simulatedRevenue },
-        impact: { 
-          profitChange, 
-          percentage: (profitChange / baselineProfit) * 100,
-          revenueChange: simulatedRevenue - baselineRevenue
+  const runSim = async () => {
+    try {
+      const res = await api.get('/what-if/simulate', {
+        params: {
+            printPriceMultiplier: printPrice,
+            salesVolumeMultiplier: salesVol,
+            costMultiplier: costs
         }
       });
-      setLoading(false);
-    }, 800);
+      setResults(res.data);
+    } catch (e) { console.error(e); }
   };
-
-  const chartOptions: ApexCharts.ApexOptions = {
-    chart: { type: 'bar', toolbar: { show: false } },
-    plotOptions: { bar: { borderRadius: 10, columnWidth: '50%' } },
-    colors: [theme.palette.primary.main, theme.palette.secondary.main],
-    xaxis: { categories: ['Receita', 'Lucro Estimado'], labels: { style: { fontWeight: 700 } } },
-    yaxis: { labels: { formatter: (val) => `R$ ${val.toLocaleString()}` } },
-    dataLabels: { enabled: false },
-    tooltip: { y: { formatter: (val) => `R$ ${val.toLocaleString()}` } }
-  };
-
-  const chartSeries = simulationData ? [
-    { name: 'Cenário Base', data: [simulationData.baseline.revenue, simulationData.baseline.profit] },
-    { name: 'Simulação', data: [simulationData.simulated.revenue, simulationData.simulated.profit] }
-  ] : [];
 
   return (
-    <Box p={4} sx={{ maxWidth: 1400, margin: '0 auto', bgcolor: 'background.default' }}>
-      <Box mb={6} display="flex" justifyContent="space-between" alignItems="flex-end">
-        <Box>
-          <Box display="flex" alignItems="center" gap={1.5} mb={1}>
-            <Box sx={{ p: 1, bgcolor: 'primary.main', borderRadius: '10px', color: 'white', display: 'flex' }}>
-              <LabIcon />
-            </Box>
-            <Typography variant="overline" sx={{ fontWeight: 800, color: 'primary.main', letterSpacing: 2 }}>
-              ESTRATÉGIA COMERCIAL
-            </Typography>
-          </Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
-            Simulador "What-If"
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-            Preveja o impacto financeiro de promoções e descontos antes de colocá-los em prática.
-          </Typography>
-        </Box>
-        <Chip icon={<Timeline />} label="MODO INTELIGÊNCIA ATIVO" color="info" sx={{ fontWeight: 900, borderRadius: '8px', px: 1 }} />
-      </Box>
+    <PageContainer>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Settings color="primary" /> Simulador Estratégico "What-If"
+      </Typography>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+        Ajuste as variáveis abaixo para prever o impacto financeiro no seu negócio baseado no histórico dos últimos 30 dias.
+      </Typography>
 
       <Grid container spacing={4}>
-        {/* Parâmetros da Simulação */}
-        <Grid item xs={12} lg={4}>
-          <Paper sx={{ p: 4, borderRadius: '32px', boxShadow: '0 20px 60px rgba(0,0,0,0.05)', height: '100%' }}>
-            <Typography variant="h6" fontWeight={800} mb={4}>Configurar Cenário</Typography>
+        <Grid item xs={12} md={5}>
+          <SimulationCard elevation={0}>
+            <Typography variant="h6" gutterBottom>Variáveis de Mercado</Typography>
             
-            <Box mb={5}>
-              <Typography variant="body2" fontWeight={700} gutterBottom display="flex" justifyContent="space-between">
-                <span>Desconto Aplicado</span>
-                <span style={{ color: theme.palette.primary.main }}>{discountPercentage}%</span>
-              </Typography>
-              <Slider 
-                value={discountPercentage} 
-                onChange={(_, v) => setDiscountPercentage(v as number)} 
-                min={0} max={50}
-                valueLabelDisplay="auto"
-              />
+            <Box sx={{ mt: 4 }}>
+                <Typography gutterBottom>Preço Médio Impressão ({Math.round(printPrice * 100)}%)</Typography>
+                <Slider value={printPrice} min={0.5} max={2} step={0.1} onChange={(_, v) => setPrintPrice(v as number)} valueLabelDisplay="auto" />
             </Box>
 
-            <Box mb={5}>
-              <Typography variant="body2" fontWeight={700} gutterBottom display="flex" justifyContent="space-between">
-                <span>Aumento de Vendas Esperado</span>
-                <span style={{ color: theme.palette.secondary.main }}>{expectedSalesIncrease}%</span>
-              </Typography>
-              <Slider 
-                value={expectedSalesIncrease} 
-                onChange={(_, v) => setExpectedSalesIncrease(v as number)} 
-                min={0} max={200}
-                color="secondary"
-                valueLabelDisplay="auto"
-              />
+            <Box sx={{ mt: 4 }}>
+                <Typography gutterBottom>Volume de Vendas ({Math.round(salesVol * 100)}%)</Typography>
+                <Slider value={salesVol} min={0.5} max={3} step={0.1} onChange={(_, v) => setSalesVol(v as number)} valueLabelDisplay="auto" />
             </Box>
 
-            <Box mb={5}>
-              <Typography variant="body2" fontWeight={700} gutterBottom>Duração da Campanha (Dias)</Typography>
-              <TextField 
-                type="number" 
-                fullWidth 
-                size="small" 
-                value={durationDays} 
-                onChange={(e) => setDurationDays(parseInt(e.target.value))}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-              />
+            <Box sx={{ mt: 4 }}>
+                <Typography gutterBottom>Custos Operacionais ({Math.round(costs * 100)}%)</Typography>
+                <Slider value={costs} min={0.5} max={2} step={0.1} onChange={(_, v) => setCost(v as number)} valueLabelDisplay="auto" color="secondary" />
             </Box>
-
-            <Divider sx={{ my: 4, borderStyle: 'dashed' }} />
-
-            <Button 
-              fullWidth 
-              variant="contained" 
-              size="large" 
-              startIcon={<CalcIcon />}
-              onClick={handleSimulate}
-              disabled={loading}
-              sx={{ borderRadius: '16px', py: 2, fontWeight: 800, boxShadow: '0 10px 30px rgba(25, 118, 210, 0.3)' }}
-            >
-              RECALCULAR IMPACTO
-            </Button>
-          </Paper>
+          </SimulationCard>
         </Grid>
 
-        {/* Resultados e Gráficos */}
-        <Grid item xs={12} lg={8}>
-          <Stack spacing={4}>
-            {/* Impact Cards */}
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <Card sx={{ borderRadius: '24px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
-                  <CardContent sx={{ p: 3 }}>
-                    <Typography variant="overline" fontWeight={800} color="text.secondary">Mudança no Lucro Líquido</Typography>
-                    <Box display="flex" alignItems="center" gap={2} mt={1}>
-                      <Avatar sx={{ bgcolor: simulationData?.impact?.profitChange >= 0 ? 'success.light' : 'error.light', borderRadius: '12px' }}>
-                        {simulationData?.impact?.profitChange >= 0 ? <TrendingUp /> : <TrendingDown />}
-                      </Avatar>
-                      <Box>
-                        <Typography variant="h4" fontWeight={900}>
-                          R$ {Math.abs(simulationData?.impact?.profitChange || 0).toLocaleString()}
-                        </Typography>
-                        <Typography variant="caption" color={simulationData?.impact?.profitChange >= 0 ? 'success.main' : 'error.main'} fontWeight={800}>
-                          {simulationData?.impact?.percentage.toFixed(1)}% em relação ao normal
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Card sx={{ borderRadius: '24px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
-                  <CardContent sx={{ p: 3 }}>
-                    <Typography variant="overline" fontWeight={800} color="text.secondary">Indicador de Viabilidade</Typography>
-                    <Box display="flex" alignItems="center" gap={2} mt={1}>
-                      <Avatar sx={{ bgcolor: simulationData?.impact?.profitChange > 0 ? 'success.main' : 'warning.main', borderRadius: '12px' }}>
-                        {simulationData?.impact?.profitChange > 0 ? <SuccessIcon /> : <RiskIcon />}
-                      </Avatar>
-                      <Box>
-                        <Typography variant="h5" fontWeight={900}>
-                          {simulationData?.impact?.profitChange > 0 ? 'Campanha Lucrativa' : 'Alerta de Margem'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {simulationData?.impact?.profitChange > 0 ? 'O aumento de volume compensa o desconto.' : 'Risco de prejuízo operacional.'}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
+        <Grid item xs={12} md={7}>
+          {results && (
+            <Grid container spacing={2}>
+                <Grid item xs={12}>
+                    <Card sx={{ borderRadius: '20px', bgcolor: '#2c3e50', color: 'white' }}>
+                        <CardContent>
+                            <Typography variant="overline">RECEITA MENSAL PROJETADA</Typography>
+                            <Typography variant="h3">R$ {Number(results.projection.revenue).toLocaleString()}</Typography>
+                            <Typography variant="body2" sx={{ opacity: 0.7 }}>
+                                Base atual: R$ {Number(results.baseline.revenue).toLocaleString()}
+                            </Typography>
+                        </CardContent>
+                    </Card>
+                </Grid>
 
-            {/* Main Chart */}
-            <Paper sx={{ p: 4, borderRadius: '32px', border: '1px solid', borderColor: 'divider', position: 'relative' }}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-                <Typography variant="h6" fontWeight={800}>Comparação de Performance</Typography>
-                <Stack direction="row" spacing={2}>
-                  <Box display="flex" alignItems="center" gap={1}><Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'primary.main' }} /><Typography variant="caption" fontWeight={700}>BASE</Typography></Box>
-                  <Box display="flex" alignItems="center" gap={1}><Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'secondary.main' }} /><Typography variant="caption" fontWeight={700}>SIMULADO</Typography></Box>
-                </Stack>
-              </Box>
-              <Box sx={{ minHeight: 350 }}>
-                {loading ? <Box display="flex" justifyContent="center" py={10}><CircularProgress /></Box> : <ReactApexChart options={chartOptions} series={chartSeries} type="bar" height={350} />}
-              </Box>
-            </Paper>
-          </Stack>
+                <Grid item xs={6}>
+                    <StatBox positive={Number(results.projection.impact) >= 0}>
+                        <Typography variant="overline">LUCRO PROJETADO</Typography>
+                        <Typography variant="h4">R$ {Number(results.projection.profit).toLocaleString()}</Typography>
+                    </StatBox>
+                </Grid>
+
+                <Grid item xs={6}>
+                    <StatBox positive={Number(results.projection.impact) >= 0}>
+                        <Typography variant="overline">IMPACTO LÍQUIDO</Typography>
+                        <Typography variant="h4">
+                            {Number(results.projection.impact) >= 0 ? '+' : ''} 
+                            R$ {Number(results.projection.impact).toLocaleString()}
+                        </Typography>
+                    </StatBox>
+                </Grid>
+
+                <Grid item xs={12}>
+                    <Paper sx={{ p: 3, borderRadius: '20px', border: '1px dashed #ccc' }}>
+                        <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <TrendingUp color="success" /> Análise de Viabilidade
+                        </Typography>
+                        <Typography variant="body2">
+                            {Number(results.projection.impact) > 0 
+                                ? `Este cenário resultaria em um aumento de R$ ${results.projection.impact} no seu bolso ao final do mês.`
+                                : `Cuidado: estas alterações podem reduzir sua lucratividade mensal em R$ ${Math.abs(results.projection.impact)}.`
+                            }
+                        </Typography>
+                    </Paper>
+                </Grid>
+            </Grid>
+          )}
         </Grid>
       </Grid>
-
-      {/* Insights Section */}
-      <Box mt={6}>
-        <Typography variant="h6" fontWeight={800} mb={3}>Recomendações da Inteligência</Typography>
-        <Grid container spacing={3}>
-          {[
-            { title: 'Otimização de Preço', desc: 'Para este cenário, um aumento de 5% no volume já cobre os custos fixos.', icon: <CalcIcon />, color: 'primary' },
-            { title: 'Risco de Estoque', desc: 'Atenção: O aumento esperado de vendas pode esgotar o estoque de iPhones em 12 dias.', icon: <RiskIcon />, color: 'warning' },
-            { title: 'Janela de Oportunidade', desc: 'Sexta-feira e Sábado são os melhores dias para iniciar esta promoção.', icon: <Timeline />, color: 'success' },
-          ].map((insight, i) => (
-            <Grid item xs={12} md={4} key={i}>
-              <Paper sx={{ p: 3, borderRadius: '20px', bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider', display: 'flex', gap: 2 }}>
-                <Box sx={{ color: `${insight.color}.main` }}>{insight.icon}</Box>
-                <Box>
-                  <Typography variant="subtitle2" fontWeight={800}>{insight.title}</Typography>
-                  <Typography variant="caption" color="text.secondary" lineHeight={1.4} display="block">{insight.desc}</Typography>
-                </Box>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-    </Box>
+    </PageContainer>
   );
 };
 
-export default WhatIfPromotionPage;
+export default WhatIfSimulationPage;

@@ -1,9 +1,12 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { inventoryService } from '../services/inventoryService.js';
+import { aiInventoryService } from '../services/aiInventoryService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 import { ValidationError } from '../utils/errors.js';
+
+import { inventoryAnalyticsController } from '../controllers/inventoryAnalyticsController.js';
 
 const router = Router();
 
@@ -68,14 +71,26 @@ router.get(
   },
 );
 
-// Nova rota para sugestões de pedidos de compra
+// Nova rota para sugestões de pedidos de compra (Inteligente)
 router.get(
   '/purchase-suggestions',
   authMiddleware.authorize('read', 'Inventory'),
+  inventoryAnalyticsController.getPurchaseSuggestions,
+);
+
+// Nova rota para Análise Curva ABC
+router.get(
+  '/abc-analysis',
+  authMiddleware.authorize('read', 'Inventory'),
+  inventoryAnalyticsController.getABCAnalysis,
+);
+
+router.get(
+  '/ai-suggestions',
+  authMiddleware.authorize('read', 'Inventory'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const branchId = parseInt(req.query.branchId as string, 10) || 1; // Default to branch 1
-      const suggestions = await inventoryService.suggestPurchaseOrders(branchId);
+      const suggestions = await aiInventoryService.getSmartPurchaseSuggestions();
       res.json(suggestions);
     } catch (error) {
       next(error);
@@ -84,7 +99,7 @@ router.get(
 );
 
 router.put(
-  '/:variationId/adjust-stock', // Changed route path
+  '/:variationId/adjust',
   authMiddleware.authorize('update', 'Inventory'),
   validate(adjustStockSchema),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -157,7 +172,7 @@ router.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 export default router;

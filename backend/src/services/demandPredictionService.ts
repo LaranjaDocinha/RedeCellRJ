@@ -1,39 +1,40 @@
-import pool from '../db/index.js';
 import { AppError } from '../utils/errors.js';
+import { predictionRepository } from '../repositories/prediction.repository.js';
 
 export const demandPredictionService = {
   /**
-   * Prevê a demanda para um produto com base no histórico de vendas.
-   * Por enquanto, uma previsão simples baseada na média dos últimos N meses.
-   * Pode ser expandido com modelos de ML, sazonalidade, etc.
+   * Prevê a demanda para um produto usando Média Móvel Ponderada.
+   * Dá mais peso aos meses recentes para capturar tendências.
    * @param productId ID do produto
-   * @param numberOfMonths O número de meses anteriores para calcular a média.
+   * @param numberOfMonths O número de meses anteriores a considerar (padrão: 3).
    * @returns Previsão de demanda para o próximo mês.
    */
-  async predictDemand(productId: string, numberOfMonths: number = 3): Promise<number> {
+  async predictDemand(productId: string | number, numberOfMonths: number = 3): Promise<number> {
     if (!productId) {
       throw new AppError('Product ID is required for demand prediction.', 400);
     }
 
-    // Calcula a data de início para buscar o histórico de vendas
-    const startDate = new Date();
-    startDate.setMonth(startDate.getMonth() - numberOfMonths);
-    const startDateFormatted = startDate.toISOString().split('T')[0];
+    const history = await predictionRepository.getMonthlySalesHistory(productId, numberOfMonths);
 
-    const { rows } = await pool.query(
-      `SELECT
-         COALESCE(SUM(si.quantity), 0) AS total_quantity_sold
-       FROM sales s
-       JOIN sale_items si ON s.id = si.sale_id
-       JOIN product_variations pv ON si.variation_id = pv.id
-       WHERE pv.product_id = $1 AND s.sale_date >= $2;`,
-      [productId, startDateFormatted]
-    );
+    if (history.length === 0) {
+      return 0;
+    }
 
-    const totalQuantitySold = parseInt(rows[0].total_quantity_sold || '0');
-    // Previsão simples: média mensal das vendas no período
-    const predictedDemand = totalQuantitySold / numberOfMonths;
+    // Algoritmo de Média Ponderada
+    // Ex para 3 meses: (M1*1 + M2*2 + M3*3) / (1+2+3)
+    // Onde M3 é o mais recente
 
-    return predictedDemand;
+    let weightedSum = 0;
+    let weightTotal = 0;
+
+    history.forEach((data, index) => {
+      const weight = index + 1; // Meses mais recentes (índice maior) ganham mais peso
+      weightedSum += data.quantity * weight;
+      weightTotal += weight;
+    });
+
+    const predictedDemand = weightTotal > 0 ? weightedSum / weightTotal : 0;
+
+    return Math.ceil(predictedDemand); // Arredondar para cima (segurança de estoque)
   },
 };

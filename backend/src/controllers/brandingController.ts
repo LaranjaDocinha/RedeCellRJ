@@ -5,13 +5,14 @@ import { query } from '../db/index.js';
 export const getBrandingConfig = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let franchiseId = (req as any).user?.franchiseId || req.query.franchiseId || 'default';
-    
+
     if (!franchiseId || franchiseId === '') {
       franchiseId = 'default';
     }
-      'SELECT * FROM system_branding WHERE franchise_id = $1',
-      [franchiseId]
-    );
+
+    const result = await query('SELECT * FROM system_branding WHERE franchise_id = $1', [
+      franchiseId,
+    ]);
 
     if (result.rows.length === 0) {
       // Se não existir, retorna o padrão e já cria no banco para futuras edições
@@ -24,15 +25,23 @@ export const getBrandingConfig = async (req: Request, res: Response, next: NextF
         faviconUrl: '/favicon.ico',
         appName: 'Redecell PDV',
       };
-      
+
       // Tenta inserir se for o default
       if (franchiseId === 'default') {
-         await query(
-            `INSERT INTO system_branding (franchise_id, logo_url, primary_color, secondary_color, font_family, favicon_url, app_name)
+        await query(
+          `INSERT INTO system_branding (franchise_id, logo_url, primary_color, secondary_color, font_family, favicon_url, app_name)
              VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING`,
-            [defaultConfig.franchiseId, defaultConfig.logoUrl, defaultConfig.primaryColor, defaultConfig.secondaryColor, defaultConfig.fontFamily, defaultConfig.faviconUrl, defaultConfig.appName]
-         );
-         return res.status(200).json(defaultConfig);
+          [
+            defaultConfig.franchiseId,
+            defaultConfig.logoUrl,
+            defaultConfig.primaryColor,
+            defaultConfig.secondaryColor,
+            defaultConfig.fontFamily,
+            defaultConfig.faviconUrl,
+            defaultConfig.appName,
+          ],
+        );
+        return res.status(200).json(defaultConfig);
       }
       return res.status(200).json(defaultConfig);
     }
@@ -55,11 +64,11 @@ export const getBrandingConfig = async (req: Request, res: Response, next: NextF
 export const updateBrandingConfig = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let franchiseId = (req as any).user?.franchiseId || req.query.franchiseId || 'default';
-    
+
     if (!franchiseId || franchiseId === '') {
       franchiseId = 'default';
     }
-    
+
     const { logoUrl, primaryColor, secondaryColor, fontFamily, faviconUrl, appName } = req.body;
 
     const result = await query(
@@ -75,7 +84,7 @@ export const updateBrandingConfig = async (req: Request, res: Response, next: Ne
          app_name = EXCLUDED.app_name,
          updated_at = current_timestamp
        RETURNING *`,
-      [franchiseId, logoUrl, primaryColor, secondaryColor, fontFamily, faviconUrl, appName]
+      [franchiseId, logoUrl, primaryColor, secondaryColor, fontFamily, faviconUrl, appName],
     );
 
     const config = result.rows[0];

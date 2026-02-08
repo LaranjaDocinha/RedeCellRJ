@@ -1,4 +1,3 @@
-
 import { vi } from 'vitest';
 
 // Mock Redis (node-redis)
@@ -22,15 +21,31 @@ vi.mock('ioredis', () => {
   return {
     default: class RedisMock {
       constructor() {}
-      connect() { return Promise.resolve(); }
-      on(event: string, callback: any) { return this; }
-      get() { return Promise.resolve(null); }
-      set() { return Promise.resolve('OK'); }
-      del() { return Promise.resolve(1); }
-      quit() { return Promise.resolve(); }
-      disconnect() { return Promise.resolve(); }
+      connect() {
+        return Promise.resolve();
+      }
+      on(_event: string, _callback: any) {
+        return this;
+      }
+      get() {
+        return Promise.resolve(null);
+      }
+      set() {
+        return Promise.resolve('OK');
+      }
+      del() {
+        return Promise.resolve(1);
+      }
+      quit() {
+        return Promise.resolve();
+      }
+      disconnect() {
+        return Promise.resolve();
+      }
       status = 'ready';
-      emit(event: string, ...args: any[]) { return true; }
+      emit(_event: string, ..._args: any[]) {
+        return true;
+      }
     },
   };
 });

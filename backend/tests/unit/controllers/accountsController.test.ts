@@ -55,7 +55,10 @@ describe('AccountsController', () => {
 
   describe('getPayables', () => {
     it('should call getPayables service and return 200 with payables', async () => {
-      const mockPayables = [{ id: 1, amount: 100 }, { id: 2, amount: 200 }];
+      const mockPayables = [
+        { id: 1, amount: 100 },
+        { id: 2, amount: 200 },
+      ];
       (accountsService.getPayables as any).mockResolvedValue(mockPayables);
 
       mockRequest.query = { branchId: '1', status: 'pending' };
@@ -75,7 +78,12 @@ describe('AccountsController', () => {
 
       await accountsController.getPayables(mockRequest as Request, mockResponse as Response);
 
-      expect(accountsService.getPayables).toHaveBeenCalledWith(undefined, undefined, undefined, undefined);
+      expect(accountsService.getPayables).toHaveBeenCalledWith(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
       expect(mockResponse.json).toHaveBeenCalledWith(mockPayables);
     });
 
@@ -100,7 +108,10 @@ describe('AccountsController', () => {
       mockRequest.params = { id: '1' };
       mockRequest.body = { status: 'paid', paidDate: '2025-01-01' };
 
-      await accountsController.updatePayableStatus(mockRequest as Request, mockResponse as Response);
+      await accountsController.updatePayableStatus(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       expect(accountsService.updatePayableStatus).toHaveBeenCalledWith(1, 'paid', '2025-01-01');
       expect(mockResponse.json).toHaveBeenCalledWith(mockUpdatedPayable);
@@ -113,7 +124,10 @@ describe('AccountsController', () => {
       mockRequest.params = { id: '999' };
       mockRequest.body = { status: 'paid' };
 
-      await accountsController.updatePayableStatus(mockRequest as Request, mockResponse as Response);
+      await accountsController.updatePayableStatus(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       expect(accountsService.updatePayableStatus).toHaveBeenCalledWith(999, 'paid', undefined);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
@@ -127,7 +141,10 @@ describe('AccountsController', () => {
       mockRequest.params = { id: '1' };
       mockRequest.body = { status: 'paid' };
 
-      await accountsController.updatePayableStatus(mockRequest as Request, mockResponse as Response);
+      await accountsController.updatePayableStatus(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({ message: errorMessage });
@@ -164,14 +181,22 @@ describe('AccountsController', () => {
 
   describe('getReceivables', () => {
     it('should call getReceivables service and return 200 with receivables', async () => {
-      const mockReceivables = [{ id: 1, amount: 100 }, { id: 2, amount: 200 }];
+      const mockReceivables = [
+        { id: 1, amount: 100 },
+        { id: 2, amount: 200 },
+      ];
       (accountsService.getReceivables as any).mockResolvedValue(mockReceivables);
 
       mockRequest.query = { branchId: '1', status: 'pending' };
 
       await accountsController.getReceivables(mockRequest as Request, mockResponse as Response);
 
-      expect(accountsService.getReceivables).toHaveBeenCalledWith(1, 'pending', undefined, undefined);
+      expect(accountsService.getReceivables).toHaveBeenCalledWith(
+        1,
+        'pending',
+        undefined,
+        undefined,
+      );
       expect(mockResponse.json).toHaveBeenCalledWith(mockReceivables);
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
@@ -184,7 +209,12 @@ describe('AccountsController', () => {
 
       await accountsController.getReceivables(mockRequest as Request, mockResponse as Response);
 
-      expect(accountsService.getReceivables).toHaveBeenCalledWith(undefined, undefined, undefined, undefined);
+      expect(accountsService.getReceivables).toHaveBeenCalledWith(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
       expect(mockResponse.json).toHaveBeenCalledWith(mockReceivables);
     });
 
@@ -209,9 +239,16 @@ describe('AccountsController', () => {
       mockRequest.params = { id: '1' };
       mockRequest.body = { status: 'received', receivedDate: '2025-01-01' };
 
-      await accountsController.updateReceivableStatus(mockRequest as Request, mockResponse as Response);
+      await accountsController.updateReceivableStatus(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
-      expect(accountsService.updateReceivableStatus).toHaveBeenCalledWith(1, 'received', '2025-01-01');
+      expect(accountsService.updateReceivableStatus).toHaveBeenCalledWith(
+        1,
+        'received',
+        '2025-01-01',
+      );
       expect(mockResponse.json).toHaveBeenCalledWith(mockUpdatedReceivable);
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
@@ -222,9 +259,16 @@ describe('AccountsController', () => {
       mockRequest.params = { id: '999' };
       mockRequest.body = { status: 'received' };
 
-      await accountsController.updateReceivableStatus(mockRequest as Request, mockResponse as Response);
+      await accountsController.updateReceivableStatus(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
-      expect(accountsService.updateReceivableStatus).toHaveBeenCalledWith(999, 'received', undefined);
+      expect(accountsService.updateReceivableStatus).toHaveBeenCalledWith(
+        999,
+        'received',
+        undefined,
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(404);
       expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Receivable not found' });
     });
@@ -236,7 +280,10 @@ describe('AccountsController', () => {
       mockRequest.params = { id: '1' };
       mockRequest.body = { status: 'received' };
 
-      await accountsController.updateReceivableStatus(mockRequest as Request, mockResponse as Response);
+      await accountsController.updateReceivableStatus(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({ message: errorMessage });

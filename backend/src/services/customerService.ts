@@ -1,20 +1,9 @@
 import pool from '../db/index.js';
 import { AppError } from '../utils/errors.js';
 import { referralService } from './referralService.js';
+import { customerRepository, Customer } from '../repositories/customer.repository.js';
 
-interface Customer {
-  id: number;
-  name: string;
-  email: string;
-  phone?: string;
-  address?: string;
-  cpf?: string; // Adicionar CPF
-  store_credit_balance: string;
-  loyalty_points: number;
-  created_at: Date;
-  updated_at: Date;
-}
-
+// Interfaces
 interface CreateCustomerPayload {
   name: string;
   email: string;
@@ -39,7 +28,7 @@ interface ExtractedCustomerData {
   email?: string;
   phone?: string;
   address?: string;
-  cpf?: string; // Adicionar CPF como campo extraído
+  cpf?: string;
 }
 
 interface SearchCustomersQuery {
@@ -49,48 +38,34 @@ interface SearchCustomersQuery {
 }
 
 interface Customer360View extends Customer {
-  store_credit_balance: string;
-  loyalty_points: number; // Added loyalty_points
   recent_sales: Array<{
-    id: string;
-    total_amount: string;
+    id: number;
+    total_amount: number;
     sale_date: Date;
   }>;
 }
 
 class CustomerService {
   async getAllCustomers(): Promise<Customer[]> {
-    const result = await pool.query('SELECT * FROM customers');
-    return result.rows;
+    return customerRepository.findAll();
   }
 
   async getCustomerById(id: string): Promise<Customer | undefined> {
-    const result = await pool.query('SELECT * FROM customers WHERE id = $1', [id]);
-    return result.rows[0];
+    return customerRepository.findById(id);
   }
 
   async getCustomerByEmail(email: string): Promise<Customer | undefined> {
-    const result = await pool.query('SELECT * FROM customers WHERE email = $1', [email]);
-    return result.rows[0];
+    return customerRepository.findByEmail(email);
   }
 
   async getCustomersWithBirthdayToday(): Promise<Customer[]> {
-    const result = await pool.query(
-      'SELECT * FROM customers WHERE EXTRACT(MONTH FROM birth_date) = EXTRACT(MONTH FROM NOW()) AND EXTRACT(DAY FROM birth_date) = EXTRACT(DAY FROM NOW())',
-    );
-    return result.rows;
+    return customerRepository.findWithBirthdayToday();
   }
 
-  // ... (CustomerService class)
-
   async createCustomer(payload: CreateCustomerPayload): Promise<Customer> {
-    const { name, email, phone, address, cpf, birth_date, referral_code } = payload;
+    const { name, email, phone, address, cpf, referral_code } = payload;
     try {
-      const result = await pool.query(
-        'INSERT INTO customers (name, email, phone, address, cpf, birth_date) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-        [name, email, phone, address, cpf, birth_date],
-      );
-      const newCustomer = result.rows[0];
+      const newCustomer = await customerRepository.create({ name, email, phone, address, cpf });
 
       if (referral_code) {
         await referralService.applyReferralCode(referral_code, newCustomer.id);
@@ -102,7 +77,6 @@ class CustomerService {
         throw error;
       }
       if (error instanceof Error && (error as any).code === '23505') {
-        // Unique violation error code
         throw new AppError('Customer with this email or CPF already exists', 409);
       }
       throw error;
@@ -110,56 +84,19 @@ class CustomerService {
   }
 
   async updateCustomer(id: string, payload: UpdateCustomerPayload): Promise<Customer | undefined> {
-    const { name, email, phone, address, cpf, birth_date } = payload;
-    const fields: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
-
-    if (name !== undefined) {
-      fields.push(`name = $${paramIndex++}`);
-      values.push(name);
-    }
-    if (email !== undefined) {
-      fields.push(`email = $${paramIndex++}`);
-      values.push(email);
-    }
-    if (phone !== undefined) {
-      fields.push(`phone = $${paramIndex++}`);
-      values.push(phone);
-    }
-    if (address !== undefined) {
-      fields.push(`address = $${paramIndex++}`);
-      values.push(address);
-    }
-    if (cpf !== undefined) {
-      fields.push(`cpf = $${paramIndex++}`);
-      values.push(cpf);
-    }
-    if (birth_date !== undefined) {
-      fields.push(`birth_date = $${paramIndex++}`);
-      values.push(birth_date);
-    }
-
-    if (fields.length === 0) {
-      const existingCustomer = await this.getCustomerById(id);
-      if (!existingCustomer) {
-        return undefined; // No customer found to update
-      }
-      return existingCustomer; // No fields to update, return existing customer
-    }
-
-    values.push(id); // Add id for WHERE clause
-    const query = `UPDATE customers SET ${fields.join(', ')}, updated_at = current_timestamp WHERE id = $${paramIndex} RETURNING *`;
-
     try {
-      const result = await pool.query(query, values);
-      return result.rows[0];
+      const updated = await customerRepository.update(id, payload);
+      if (!updated && Object.keys(payload).length > 0) {
+        const exists = await customerRepository.findById(id);
+        if (!exists) return undefined;
+        return exists;
+      }
+      return updated;
     } catch (error: unknown) {
       if (error instanceof AppError) {
         throw error;
       }
       if (error instanceof Error && (error as any).code === '23505') {
-        // Unique violation error code
         throw new AppError('Customer with this email or CPF already exists', 409);
       }
       throw error;
@@ -167,37 +104,33 @@ class CustomerService {
   }
 
   async deleteCustomer(id: string): Promise<boolean> {
-    const result = await pool.query('DELETE FROM customers WHERE id = $1 RETURNING id', [id]);
-    return (result?.rowCount ?? 0) > 0;
+    return customerRepository.delete(id);
   }
 
   async createOrUpdateCustomerFromOCR(data: ExtractedCustomerData): Promise<Customer> {
     const { name, email, phone, address, cpf } = data;
 
-    // Tentar encontrar um cliente existente por CPF ou e-mail
     let existingCustomer: Customer | undefined;
     if (cpf) {
-      const res = await pool.query('SELECT * FROM customers WHERE cpf = $1', [cpf]);
-      existingCustomer = res.rows[0];
+      existingCustomer = await customerRepository.findByCpf(cpf);
     }
     if (!existingCustomer && email) {
-      const res = await pool.query('SELECT * FROM customers WHERE email = $1', [email]);
-      existingCustomer = res.rows[0];
+      existingCustomer = await customerRepository.findByEmail(email);
     }
 
     if (existingCustomer) {
-      // Atualizar cliente existente
       const updatePayload: UpdateCustomerPayload = { name, email, phone, address, cpf };
-      // Remover campos undefined para não sobrescrever com nulo
       Object.keys(updatePayload).forEach(
         (key) =>
           updatePayload[key as keyof UpdateCustomerPayload] === undefined &&
           delete updatePayload[key as keyof UpdateCustomerPayload],
       );
 
-      return this.updateCustomer(existingCustomer.id.toString(), updatePayload) as Promise<Customer>;
+      return this.updateCustomer(
+        existingCustomer.id.toString(),
+        updatePayload,
+      ) as Promise<Customer>;
     } else {
-      // Criar novo cliente
       if (!name || !email) {
         throw new AppError(
           'Name and email are required to create a new customer from OCR data.',
@@ -210,63 +143,26 @@ class CustomerService {
   }
 
   async getCustomerSegments(): Promise<any[]> {
-    const query = `
-      SELECT
-        rfm_segment,
-        COUNT(id) AS customer_count
-      FROM customers
-      WHERE rfm_segment IS NOT NULL
-      GROUP BY rfm_segment
-      ORDER BY customer_count DESC;
-    `;
-    const result = await pool.query(query);
-    return result.rows.map((row) => ({ ...row, customer_count: parseInt(row.customer_count, 10) }));
+    return customerRepository.getSegments();
   }
 
   async searchCustomers(
     query: SearchCustomersQuery,
   ): Promise<{ customers: Customer[]; totalCustomers: number }> {
-    const { searchTerm, limit = 10, offset = 0 } = query;
-    const queryParams: (string | number)[] = [];
-    let paramIndex = 1;
-
-    let whereClause = 'WHERE 1=1';
-    if (searchTerm) {
-      whereClause += ` AND (name ILIKE $${paramIndex} OR email ILIKE $${paramIndex} OR phone ILIKE $${paramIndex})`;
-      queryParams.push(`%${searchTerm}%`);
-      paramIndex++;
-    }
-
-    const countQuery = `SELECT COUNT(*) FROM customers ${whereClause}`;
-    const countResult = await pool.query(countQuery, queryParams);
-    const totalCustomers = parseInt(countResult.rows[0].count, 10);
-
-    const customersQuery = `
-      SELECT *
-      FROM customers
-      ${whereClause}
-      ORDER BY name ASC
-      LIMIT $${paramIndex++} OFFSET $${paramIndex++}
-    `;
-    queryParams.push(limit, offset);
-
-    const customerResult = await pool.query(customersQuery, queryParams);
-
+    const result = await customerRepository.search(query);
     return {
-      customers: customerResult.rows,
-      totalCustomers,
+      customers: result.customers,
+      totalCustomers: result.total,
     };
   }
 
   async getCustomer360View(customerId: string): Promise<Customer360View | undefined> {
-    const customerResult = await pool.query('SELECT * FROM customers WHERE id = $1', [customerId]);
-    const customer = customerResult.rows[0];
+    const customer = await customerRepository.findById(customerId);
 
     if (!customer) {
       return undefined;
     }
 
-    // Fetch recent sales
     const recentSalesResult = await pool.query(
       `SELECT id, total_amount, sale_date FROM sales WHERE customer_id = $1 ORDER BY sale_date DESC LIMIT 5`,
       [customerId],
@@ -274,88 +170,136 @@ class CustomerService {
 
     return {
       ...customer,
-      store_credit_balance: parseFloat(customer.store_credit_balance),
-      recent_sales: recentSalesResult.rows,
+      store_credit_balance: customer.store_credit_balance,
+      recent_sales: recentSalesResult.rows.map((r) => ({
+        ...r,
+        total_amount: parseFloat(r.total_amount),
+      })),
     };
   }
 
   async addLoyaltyPoints(customerId: string, points: number): Promise<Customer | undefined> {
-    const result = await pool.query(
-      'UPDATE customers SET loyalty_points = loyalty_points + $1 WHERE id = $2 RETURNING *',
-      [points, customerId],
-    );
-    return result.rows[0];
+    return customerRepository.updateLoyaltyPoints(customerId, points);
   }
 
   async subtractLoyaltyPoints(customerId: string, points: number): Promise<Customer | undefined> {
-    const result = await pool.query(
-      'UPDATE customers SET loyalty_points = GREATEST(0, loyalty_points - $1) WHERE id = $2 RETURNING *',
-      [points, customerId],
-    );
-    return result.rows[0];
+    return customerRepository.updateLoyaltyPoints(customerId, -points);
   }
 
   async deductStoreCredit(
     customerId: string,
     amount: number,
-    relatedId: string,
-    client: any,
+    relatedId: string | null = null,
+    client: any = null,
+    reason: string = 'Manual deduction',
   ): Promise<Customer | undefined> {
-    const db = client || pool;
-    const result = await db.query(
-      'UPDATE customers SET store_credit_balance = store_credit_balance - $1 WHERE id = $2 RETURNING *',
-      [amount, customerId],
-    );
-    if (result.rows.length > 0) {
-      await db.query(
-        'INSERT INTO store_credit_transactions (customer_id, amount, type, reason, related_id) VALUES ($1, $2, $3, $4, $5)',
-        [customerId, amount, 'debit', 'Sale payment', relatedId],
+    const transactionClient = client || (await pool.connect());
+    const shouldManageTransaction = !client;
+
+    try {
+      if (shouldManageTransaction) await transactionClient.query('BEGIN');
+
+      const customer = await customerRepository.findById(customerId, transactionClient);
+      if (!customer) {
+        throw new AppError('Customer not found', 404);
+      }
+
+      const currentBalance = parseFloat(customer.store_credit_balance);
+      if (currentBalance < amount) {
+        throw new AppError('Insufficient store credit balance', 400);
+      }
+
+      const updatedCustomer = await customerRepository.updateStoreCredit(
+        customerId,
+        -amount,
+        transactionClient,
       );
+
+      if (updatedCustomer) {
+        await customerRepository.logStoreCreditTransaction(
+          {
+            customer_id: customerId,
+            amount: amount,
+            type: 'debit',
+            reason: reason,
+            related_id: relatedId,
+          },
+          transactionClient,
+        );
+      }
+
+      if (shouldManageTransaction) await transactionClient.query('COMMIT');
+      return updatedCustomer;
+    } catch (error) {
+      if (shouldManageTransaction) await transactionClient.query('ROLLBACK');
+      throw error;
+    } finally {
+      if (shouldManageTransaction) transactionClient.release();
     }
-    return result.rows[0];
   }
 
   async addStoreCredit(
     customerId: string,
     amount: number,
-    relatedId: string | null,
-    client: any,
-    reason: string = 'Manual adjustment', // Added reason parameter
+    relatedId: string | null = null,
+    client: any = null,
+    reason: string = 'Manual adjustment',
   ): Promise<Customer | undefined> {
-    const db = client || pool;
-    const result = await db.query(
-      'UPDATE customers SET store_credit_balance = store_credit_balance + $1 WHERE id = $2 RETURNING *',
-      [amount, customerId],
-    );
-    if (result.rows.length > 0) {
-      await db.query(
-        'INSERT INTO store_credit_transactions (customer_id, amount, type, reason, related_id) VALUES ($1, $2, $3, $4, $5)',
-        [customerId, amount, 'credit', reason, relatedId],
+    const updatedCustomer = await customerRepository.updateStoreCredit(customerId, amount, client);
+
+    if (updatedCustomer) {
+      await customerRepository.logStoreCreditTransaction(
+        {
+          customer_id: customerId,
+          amount: amount,
+          type: 'credit',
+          reason: reason,
+          related_id: relatedId,
+        },
+        client,
       );
     }
-    return result.rows[0];
+    return updatedCustomer;
   }
 
-  async addCashback(customerId: string, amount: number, orderId: string): Promise<void> {
-    const client = await pool.connect();
+  async addCashback(
+    customerId: string,
+    amount: number,
+    reason: string = 'Cashback',
+    client: any = null,
+  ): Promise<Customer | undefined> {
+    const transactionClient = client || (await pool.connect());
+    const shouldManageTransaction = !client;
+
     try {
-      await client.query('BEGIN');
-      await this.addStoreCredit(customerId, amount, orderId, client, 'Cashback Reward');
-      await client.query('COMMIT');
-    } catch (e) {
-      await client.query('ROLLBACK');
-      throw e;
-    } finally {
-      client.release();
-    }
-  }
+      if (shouldManageTransaction) await transactionClient.query('BEGIN');
 
-  async getStoreCreditTransactions(customerId: string): Promise<any[]> {
-    const result = await pool.query(
-      'SELECT * FROM store_credit_transactions WHERE customer_id = $1 ORDER BY created_at DESC',
-      [customerId],
-    );
-    return result.rows;
+      const updatedCustomer = await customerRepository.updateStoreCredit(
+        customerId,
+        amount,
+        transactionClient,
+      );
+
+      if (updatedCustomer) {
+        await customerRepository.logStoreCreditTransaction(
+          {
+            customer_id: customerId,
+            amount: amount,
+            type: 'cashback',
+            reason: reason,
+          },
+          transactionClient,
+        );
+      }
+
+      if (shouldManageTransaction) await transactionClient.query('COMMIT');
+      return updatedCustomer;
+    } catch (error) {
+      if (shouldManageTransaction) await transactionClient.query('ROLLBACK');
+      throw error;
+    } finally {
+      if (shouldManageTransaction) transactionClient.release();
+    }
   }
 }
 

@@ -36,7 +36,12 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Checkbox, InputAdornment, Menu, IconButton, Badge } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { useTheme as useAppTheme } from '../contexts/ThemeContext';
+import { useTheme as useMuiTheme, alpha, Chip, Divider, Tooltip, Stack, Avatar } from '@mui/material';
+import moment from 'moment';
+import PersonIcon from '@mui/icons-material/Person';
+import { useWhatsappApi } from '../hooks/useWhatsappApi';
 
 
 // Interfaces
@@ -108,7 +113,18 @@ interface SortableLeadItemProps {
   isSelected: boolean;
 }
 
+import { 
+  FaWhatsapp, FaTools, FaCheckCircle, FaStar, FaEnvelope, FaPhone, FaCalendarAlt, FaUserEdit 
+} from 'react-icons/fa';
+import { useWhatsappApi } from '../hooks/useWhatsappApi';
+
 const SortableLeadItem: React.FC<SortableLeadItemProps> = ({ lead, onEdit, onSelectLead, isSelected }) => {
+  const { theme } = useAppTheme();
+  const muiTheme = useMuiTheme();
+  const { sendTemplate } = useWhatsappApi();
+  const { showNotification } = useNotification();
+  const navigate = useNavigate();
+
   const {
     attributes,
     listeners,
@@ -125,6 +141,30 @@ const SortableLeadItem: React.FC<SortableLeadItemProps> = ({ lead, onEdit, onSel
     opacity: isDragging ? 0.8 : 1
   };
 
+  const handleWhatsappAbordagem = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!lead.phone) {
+        showNotification('Lead sem telefone cadastrado', 'warning');
+        return;
+    }
+    sendTemplate(lead.phone, 'lead_warmup', { 
+        leadName: lead.name.split(' ')[0],
+        source: lead.source
+    });
+  };
+
+  const handleConverttoOS = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate('/service-orders/new', { 
+        state: { 
+            customer_name: lead.name,
+            customer_phone: lead.phone,
+            customer_email: lead.email,
+            issue_description: `Lead convertido da fonte: ${lead.source}`
+        } 
+    });
+  };
+
   return (
     <motion.div
       ref={setNodeRef}
@@ -135,27 +175,57 @@ const SortableLeadItem: React.FC<SortableLeadItemProps> = ({ lead, onEdit, onSel
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
     >
-      <Paper variant="outlined" sx={{ p: 1.5, mb: 1.5, '&:hover': { bgcolor: 'action.hover' } }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Checkbox 
-            checked={isSelected}
-            onChange={(e) => onSelectLead(lead.id, e.target.checked)}
-            onClick={(e) => e.stopPropagation()} // Prevent card click event
-          />
-          <Box flexGrow={1} onClick={() => onEdit(lead)} sx={{ cursor: 'pointer' }}>
-            <Typography variant="subtitle2">{lead.name}</Typography>
-            <Typography variant="body2" color="textSecondary" noWrap>
-              {lead.email}
-            </Typography>
-          </Box>
-          <Chip label={`Score: ${lead.score}`} size="small" color="primary" sx={{ height: 20 }} />
+      <Paper 
+        variant="outlined" 
+        sx={{ 
+            p: 2, 
+            mb: 2, 
+            borderRadius: '16px',
+            borderColor: lead.score > 70 ? 'success.main' : 'divider',
+            borderWidth: lead.score > 70 ? 2 : 1,
+            '&:hover': { bgcolor: alpha(muiTheme.palette.primary.main, 0.02), boxShadow: '0 4px 12px rgba(0,0,0,0.05)' },
+            cursor: 'grab'
+        }}
+      >
+        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 400 }}>{lead.name}</Typography>
+            <Chip 
+                label={`${lead.score}%`} 
+                size="small" 
+                color={lead.score > 70 ? 'success' : lead.score > 40 ? 'warning' : 'default'} 
+                sx={{ height: 18, fontSize: '0.6rem', fontWeight: 400 }} 
+            />
         </Box>
+        
+        <Typography variant="caption" color="text.secondary" display="block" mb={2}>
+            Fonte: {lead.source} • {moment(lead.createdAt).fromNow()}
+        </Typography>
+
+        <Divider sx={{ mb: 2, borderStyle: 'dashed' }} />
+
+        <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <Tooltip title="Falar no WhatsApp">
+                <IconButton size="small" onClick={handleWhatsappAbordagem} sx={{ bgcolor: alpha('#25D366', 0.1), color: '#25D366' }}>
+                    <FaWhatsapp size={14} />
+                </IconButton>
+            </Tooltip>
+            <Tooltip title="Abrir Ordem de Serviço">
+                <IconButton size="small" onClick={handleConverttoOS} sx={{ bgcolor: alpha(muiTheme.palette.primary.main, 0.1), color: 'primary.main' }}>
+                    <FaTools size={14} />
+                </IconButton>
+            </Tooltip>
+            <Tooltip title="Detalhes do Lead">
+                <IconButton size="small" onClick={() => onEdit(lead)}>
+                    <FaUserEdit size={14} />
+                </IconButton>
+            </Tooltip>
+        </Stack>
       </Paper>
     </motion.div>
   );
 };
+
 
 const LeadsPage: React.FC = () => {
   const { token } = useAuth();
@@ -464,7 +534,7 @@ const LeadsPage: React.FC = () => {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
         >
-          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+          <Typography variant="body1" sx={{ fontWeight: 400 }}>
             {selectedLeads.length} leads selecionados
           </Typography>
           <Button
@@ -600,3 +670,4 @@ const LeadsPage: React.FC = () => {
 };
 
 export default LeadsPage;
+

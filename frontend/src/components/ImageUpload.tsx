@@ -63,7 +63,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, current
         className="block w-full text-sm text-gray-500
           file:mr-4 file:py-2 file:px-4
           file:rounded-full file:border-0
-          file:text-sm file:font-semibold
+          file:text-sm file:font-normal
           file:bg-indigo-50 file:text-indigo-700
           hover:file:bg-indigo-100"
       />
@@ -79,7 +79,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, current
       <button
         onClick={handleUpload}
         disabled={!selectedFile || uploading}
-        className="mt-4 inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="mt-4 inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-normal text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {uploading ? 'Uploading...' : 'Upload Image'}
       </button>
@@ -87,3 +87,4 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, current
     </div>
   );
 };
+

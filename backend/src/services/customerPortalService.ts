@@ -1,5 +1,3 @@
-import { getPool } from '../db/index.js';
-
 export const getCustomerHistory = async (customerId: number) => {
   console.log(`Simulating fetching history for customer ${customerId}`);
   // In a real scenario, this would fetch purchase, repair, and communication history.

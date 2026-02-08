@@ -7,7 +7,7 @@ describe('TefService', () => {
     it('should approve a transaction successfully', async () => {
       const transactionData = {
         transactionId: 'tef-123',
-        amount: 100.50,
+        amount: 100.5,
         paymentMethod: 'credit_card' as const,
         status: 'pending' as const,
       };
@@ -21,13 +21,15 @@ describe('TefService', () => {
     it('should throw AppError if transaction status is denied', async () => {
       const transactionData = {
         transactionId: 'tef-456',
-        amount: 50.00,
+        amount: 50.0,
         paymentMethod: 'debit_card' as const,
         status: 'denied' as const,
       };
 
       await expect(tefService.processTefTransaction(transactionData)).rejects.toThrow(AppError);
-      await expect(tefService.processTefTransaction(transactionData)).rejects.toThrow('TEF Transaction denied');
+      await expect(tefService.processTefTransaction(transactionData)).rejects.toThrow(
+        'TEF Transaction denied',
+      );
     });
   });
 

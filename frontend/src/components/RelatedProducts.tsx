@@ -18,7 +18,7 @@ const MiniProductCard: React.FC<{ product: typeof relatedProductsData[0] }> = ({
         <Checkbox defaultChecked />
         <img src={product.imageUrl} alt={product.name} style={{ width: 50, height: 50, marginRight: 8 }} />
         <Box>
-            <Typography variant="body2" fontWeight="bold">{product.name}</Typography>
+            <Typography variant="body2" fontWeight={400}>{product.name}</Typography>
             <Typography variant="body2">R$ {product.price.toFixed(2)}</Typography>
         </Box>
     </Paper>
@@ -29,11 +29,11 @@ export const RelatedProducts: React.FC = () => {
 
   return (
     <Box sx={{ p: 2, backgroundColor: '#f9f9f9', borderRadius: '16px' }}>
-      <Typography variant="h5" fontWeight="bold" gutterBottom>Compre Junto</Typography>
+      <Typography variant="h5" fontWeight={400} gutterBottom>Compre Junto</Typography>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, my: 2 }}>
         <Paper variant="outlined" sx={{ p: 1, display: 'flex', alignItems: 'center', width: 250 }}>
             <Checkbox checked disabled />
-            <Typography variant="body2" fontWeight="bold" sx={{ml: 1}}>{mainProduct.name}</Typography>
+            <Typography variant="body2" fontWeight={400} sx={{ml: 1}}>{mainProduct.name}</Typography>
         </Paper>
         <AddIcon color="disabled" />
         <MiniProductCard product={relatedProductsData[0]} />
@@ -41,7 +41,7 @@ export const RelatedProducts: React.FC = () => {
         <MiniProductCard product={relatedProductsData[1]} />
       </Box>
       <Box sx={{textAlign: 'right'}}>
-        <Typography>Total: <Typography component="span" variant="h5" fontWeight="bold">R$ {total.toFixed(2)}</Typography></Typography>
+        <Typography>Total: <Typography component="span" variant="h5" fontWeight={400}>R$ {total.toFixed(2)}</Typography></Typography>
       </Box>
     </Box>
   );

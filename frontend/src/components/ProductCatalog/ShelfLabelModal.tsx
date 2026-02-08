@@ -74,10 +74,10 @@ const ShelfLabelModal: React.FC<ShelfLabelModalProps> = ({ open, onClose, produc
                 }}
               >
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.8rem', lineHeight: 1.1, mb: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 400, fontSize: '0.8rem', lineHeight: 1.1, mb: 1 }}>
                     {p.name.substring(0, 40)}
                   </Typography>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                  <Typography variant="h6" sx={{ fontWeight: 400 }}>
                     R$ {Number(price).toFixed(2)}
                   </Typography>
                   <Typography variant="caption" display="block">
@@ -103,3 +103,4 @@ const ShelfLabelModal: React.FC<ShelfLabelModalProps> = ({ open, onClose, produc
 };
 
 export default ShelfLabelModal;
+

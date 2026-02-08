@@ -73,10 +73,10 @@ const ServiceNode: React.FC<{
             {icon}
           </Box>
           <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 800, lineHeight: 1 }}>{name}</Typography>
+            <Typography variant="subtitle1" sx={{ fontWeight: 400, lineHeight: 1 }}>{name}</Typography>
             <Box display="flex" alignItems="center" gap={0.5} mt={0.5}>
               <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#4caf50' }} />
-              <Typography variant="caption" sx={{ color: '#4caf50', fontWeight: 700, letterSpacing: 0.5 }}>{status}</Typography>
+              <Typography variant="caption" sx={{ color: '#4caf50', fontWeight: 400, letterSpacing: 0.5 }}>{status}</Typography>
             </Box>
           </Box>
         </Box>
@@ -120,14 +120,14 @@ const MicroservicesPage: React.FC = () => {
   return (
     <Box p={4} sx={{ maxWidth: 1400, margin: '0 auto' }}>
       <Breadcrumbs sx={{ mb: 3 }}>
-        <MuiLink component="button" onClick={() => {}} underline="hover" color="inherit" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.9rem', fontWeight: 600 }}>
+        <MuiLink component="button" onClick={() => {}} underline="hover" color="inherit" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.9rem', fontWeight: 400 }}>
           <SettingsIcon sx={{ fontSize: 16 }} /> Configurações
         </MuiLink>
-        <Typography sx={{ fontSize: '0.9rem', fontWeight: 500 }} color="text.primary">Arquitetura</Typography>
+        <Typography sx={{ fontSize: '0.9rem', fontWeight: 400 }} color="text.primary">Arquitetura</Typography>
       </Breadcrumbs>
 
       <Box mb={6}>
-        <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px', mb: 1 }}>
+        <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px', mb: 1 }}>
           Ecossistema de Microserviços
         </Typography>
         <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 800, fontWeight: 400, lineHeight: 1.4 }}>
@@ -160,7 +160,7 @@ const MicroservicesPage: React.FC = () => {
                 <Avatar sx={{ bgcolor: theme.palette.primary.main, width: 64, height: 64, margin: '0 auto mb-2' }}>
                   <FaServer size={32} />
                 </Avatar>
-                <Typography variant="h6" fontWeight={800}>Redecell Core</Typography>
+                <Typography variant="h6" fontWeight={400}>Redecell Core</Typography>
                 <Typography variant="caption" color="text.secondary">MONOLITH (CURRENT)</Typography>
               </Paper>
             </motion.div>
@@ -198,7 +198,7 @@ const MicroservicesPage: React.FC = () => {
       </Paper>
 
       {/* Roadmap de Decomposição */}
-      <Typography variant="h5" sx={{ fontWeight: 800, mb: 4 }}>Mapa de Decomposição (Roadmap)</Typography>
+      <Typography variant="h5" sx={{ fontWeight: 400, mb: 4 }}>Mapa de Decomposição (Roadmap)</Typography>
       <Grid container spacing={3}>
         {roadmapItems.map((item, idx) => (
           <Grid item xs={12} sm={6} md={4} key={item.name}>
@@ -215,11 +215,11 @@ const MicroservicesPage: React.FC = () => {
       </Grid>
 
       <Box mt={8} textAlign="center" p={4} sx={{ borderRadius: '24px', bgcolor: 'action.hover' }}>
-        <Typography variant="h6" fontWeight={800} gutterBottom>Pronto para o Próximo Nível?</Typography>
+        <Typography variant="h6" fontWeight={400} gutterBottom>Pronto para o Próximo Nível?</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
           A migração está sendo realizada em ondas para garantir zero downtime nos serviços de PDV.
         </Typography>
-        <Button variant="contained" size="large" sx={{ borderRadius: '12px', px: 4, py: 1.5, fontWeight: 700 }}>
+        <Button variant="contained" size="large" sx={{ borderRadius: '12px', px: 4, py: 1.5, fontWeight: 400 }}>
           Ver Documentação Técnica
         </Button>
       </Box>

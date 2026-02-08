@@ -29,7 +29,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ imageUrl, title, subti
         style={{ y, position: 'absolute', top: 0, left: 0, width: '100%', height: '150%', backgroundImage: `url(${imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
       />
       <Box sx={{ textAlign: 'center', color: 'white', zIndex: 1 }}>
-        <Typography variant="h2" component="h1" fontWeight="bold" sx={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7)' }}>
+        <Typography variant="h2" component="h1" fontWeight={400} sx={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7)' }}>
           {title}
         </Typography>
         <Typography variant="h5" component="p" sx={{ textShadow: '1px 1px 4px rgba(0,0,0,0.7)' }}>

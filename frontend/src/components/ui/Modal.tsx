@@ -45,7 +45,7 @@ const Header = styled.div`
 const Title = styled.h2`
   margin: 0;
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 400;
   color: #111827;
   font-family: 'Inter', sans-serif;
 `;
@@ -121,3 +121,4 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
     document.body
   );
 };
+

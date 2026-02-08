@@ -1,5 +1,4 @@
 import { getPool } from '../db/index.js';
-import { AppError } from '../utils/errors.js';
 
 export const calculateBreakEvenPoint = async (
   branchId: number | undefined,

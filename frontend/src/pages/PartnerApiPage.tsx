@@ -141,7 +141,7 @@ async function getSales() {
     <Box p={4} sx={{ maxWidth: 1400, margin: '0 auto' }}>
       <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
         <Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px' }}>
+          <Typography variant="h3" sx={{ fontWeight: 400, letterSpacing: '-1.5px' }}>
             Developer Portal
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -152,7 +152,7 @@ async function getSales() {
           variant="contained" 
           startIcon={<AddIcon />} 
           onClick={() => setIsModalOpen(true)}
-          sx={{ borderRadius: '12px', px: 3, py: 1.5, fontWeight: 700 }}
+          sx={{ borderRadius: '12px', px: 3, py: 1.5, fontWeight: 400 }}
         >
           Gerar Nova Chave
         </Button>
@@ -178,7 +178,7 @@ async function getSales() {
                           <SecurityIcon />
                         </Avatar>
                         <Box>
-                          <Typography variant="h6" fontWeight={800}>{key.partner_name}</Typography>
+                          <Typography variant="h6" fontWeight={400}>{key.partner_name}</Typography>
                           <Typography variant="caption" color="text.secondary" sx={{ letterSpacing: 1 }}>
                             ID: {key.id} • CRIADA EM {moment(key.created_at).format('DD/MM/YYYY')}
                           </Typography>
@@ -188,7 +188,7 @@ async function getSales() {
                         label={key.is_active ? "ATIVA" : "REVOGADA"} 
                         color={key.is_active ? "success" : "default"}
                         size="small"
-                        sx={{ fontWeight: 900, borderRadius: '6px' }}
+                        sx={{ fontWeight: 400, borderRadius: '6px' }}
                       />
                     </Box>
 
@@ -203,14 +203,14 @@ async function getSales() {
 
                     <Stack direction="row" spacing={1} flexWrap="wrap" gap={1} mb={2}>
                       {key.permissions.map((p: string) => (
-                        <Chip key={p} label={p} size="small" variant="outlined" sx={{ borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700 }} />
+                        <Chip key={p} label={p} size="small" variant="outlined" sx={{ borderRadius: '6px', fontSize: '0.7rem', fontWeight: 400 }} />
                       ))}
                     </Stack>
 
                     <Divider sx={{ my: 2, opacity: 0.5 }} />
 
                     <Box display="flex" justifyContent="space-between" alignItems="center">
-                      <Typography variant="caption" color={key.expires_at ? 'warning.main' : 'text.disabled'} sx={{ fontWeight: 700 }}>
+                      <Typography variant="caption" color={key.expires_at ? 'warning.main' : 'text.disabled'} sx={{ fontWeight: 400 }}>
                         {key.expires_at ? `Expira em: ${moment(key.expires_at).format('LL')}` : 'Sem expiração programada'}
                       </Typography>
                       {key.is_active && (
@@ -219,7 +219,7 @@ async function getSales() {
                           size="small" 
                           startIcon={<DeleteIcon />} 
                           onClick={() => handleRevokeApiKey(key.id)}
-                          sx={{ fontWeight: 700 }}
+                          sx={{ fontWeight: 400 }}
                         >
                           Revogar Acesso
                         </Button>
@@ -238,7 +238,7 @@ async function getSales() {
             <Paper sx={{ p: 3, borderRadius: '24px', bgcolor: 'primary.main', color: 'white' }}>
               <Box display="flex" alignItems="center" gap={1} mb={2}>
                 <DocIcon />
-                <Typography variant="h6" fontWeight={800}>Guia Rápido</Typography>
+                <Typography variant="h6" fontWeight={400}>Guia Rápido</Typography>
               </Box>
               <Typography variant="body2" sx={{ opacity: 0.9, lineHeight: 1.6 }}>
                 Nossa API utiliza autenticação via Token na Header. Use o campo <code>X-API-Key</code> em todas as requisições para os endpoints autorizados.
@@ -252,7 +252,7 @@ async function getSales() {
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                 <Box display="flex" alignItems="center" gap={1}>
                   <TerminalIcon sx={{ color: '#4caf50' }} />
-                  <Typography variant="subtitle2" fontWeight={800}>Code Snippet (Node.js)</Typography>
+                  <Typography variant="subtitle2" fontWeight={400}>Code Snippet (Node.js)</Typography>
                 </Box>
                 <IconButton size="small" onClick={() => copyToClipboard(codeSnippet)} sx={{ color: 'inherit' }}>
                   <CopyIcon fontSize="small" />
@@ -264,12 +264,12 @@ async function getSales() {
             </Paper>
 
             <Paper sx={{ p: 3, borderRadius: '24px', border: '1px solid', borderColor: 'divider' }}>
-              <Typography variant="h6" fontWeight={800} gutterBottom>Endpoints Disponíveis</Typography>
+              <Typography variant="h6" fontWeight={400} gutterBottom>Endpoints Disponíveis</Typography>
               <Box display="flex" flexDirection="column" gap={1.5} mt={2}>
                 {['/sales', '/products', '/customers', '/inventory'].map(ep => (
                   <Box key={ep} display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 700 }}>{ep}</Typography>
-                    <Chip label="GET" size="small" sx={{ height: 18, fontSize: '0.6rem', fontWeight: 900, bgcolor: 'success.light', color: 'white' }} />
+                    <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 400 }}>{ep}</Typography>
+                    <Chip label="GET" size="small" sx={{ height: 18, fontSize: '0.6rem', fontWeight: 400, bgcolor: 'success.light', color: 'white' }} />
                   </Box>
                 ))}
               </Box>
@@ -284,7 +284,7 @@ async function getSales() {
           position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', 
           width: 500, bgcolor: 'background.paper', borderRadius: '24px', boxShadow: 24, p: 4 
         }}>
-          <Typography variant="h5" sx={{ fontWeight: 900, mb: 1 }}>Gerar Chave API</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 400, mb: 1 }}>Gerar Chave API</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>Nomeie o parceiro e defina quais permissões esta chave terá.</Typography>
           
           <TextField
@@ -332,8 +332,8 @@ async function getSales() {
           />
 
           <Box display="flex" gap={2}>
-            <Button fullWidth onClick={() => setIsModalOpen(false)} sx={{ borderRadius: '12px', fontWeight: 700 }}>Cancelar</Button>
-            <Button fullWidth variant="contained" onClick={handleCreateApiKey} sx={{ borderRadius: '12px', fontWeight: 700 }}>Gerar Chave Agora</Button>
+            <Button fullWidth onClick={() => setIsModalOpen(false)} sx={{ borderRadius: '12px', fontWeight: 400 }}>Cancelar</Button>
+            <Button fullWidth variant="contained" onClick={handleCreateApiKey} sx={{ borderRadius: '12px', fontWeight: 400 }}>Gerar Chave Agora</Button>
           </Box>
         </Box>
       </Modal>

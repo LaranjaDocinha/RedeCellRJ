@@ -1,14 +1,14 @@
 import { Router } from 'express';
-import { Customer360Controller } from '../controllers/Customer360Controller.js';
-import { Customer360Service } from '../services/Customer360Service.js';
+import { customer360Controller } from '../controllers/customer360Controller.js';
+import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = Router();
 
-const customer360Service = new Customer360Service();
-const customer360Controller = new Customer360Controller(customer360Service);
-
-router.get('/customers/:customerId/360-view', (req, res) =>
-  customer360Controller.getCustomer360View(req, res),
+router.get(
+  '/:id/timeline',
+  authMiddleware.authenticate,
+  authMiddleware.authorize('read', 'Customer'),
+  customer360Controller.getTimeline,
 );
 
 export default router;

@@ -1,5 +1,3 @@
-import { getPool } from '../db/index.js';
-
 export const getOfflineData = async (userId: string) => {
   console.log(`Simulating fetching offline data for user ${userId}`);
   // In a real scenario, this would fetch a subset of data for offline use.

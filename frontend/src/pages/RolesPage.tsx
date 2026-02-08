@@ -1,251 +1,159 @@
 import React, { useState, useEffect } from 'react';
-import { RoleList } from '../components/RoleList';
-import { RoleForm } from '../components/RoleForm';
-import { PermissionList } from '../components/PermissionList';
+import { 
+  Box, 
+  Typography, 
+  Paper, 
+  Grid, 
+  CircularProgress, 
+  Button, 
+  Stack, 
+  IconButton, 
+  alpha, 
+  useTheme,
+  Avatar,
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  Switch,
+  TextField,
+  InputAdornment
+} from '@mui/material';
+import { 
+  FaUserShield, FaPlus, FaCheckCircle, FaLock, FaUsers, FaArrowRight, FaShieldAlt, FaCopy, FaSearch
+} from 'react-icons/fa';
+import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
-
-interface Role {
-  id: number;
-  name: string;
-}
-
-interface Permission {
-  id: number;
-  name: string;
-}
+import axios from 'axios';
 
 const RolesPage: React.FC = () => {
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [permissions, setPermissions] = useState<Permission[]>([]);
-  const [editingRole, setEditingRole] = useState<Role | undefined>(undefined);
-  const [showRoleForm, setShowRoleForm] = useState(false);
-  const [managingPermissionsForRole, setManagingPermissionsForRole] = useState<Role | undefined>(undefined);
+  const theme = useTheme();
   const { token } = useAuth();
-  const { addNotification } = useNotification();
+  const { showNotification } = useNotification();
+  
+  const [roles, setRoles] = useState<any[]>([]);
+  const [permissions, setPermissions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedRole, setSelectedRole] = useState<any>(null);
 
-  useEffect(() => {
-    fetchRoles();
-    fetchPermissions();
-  }, []);
-
-  const fetchRoles = async () => {
+  const fetchData = async () => {
     try {
-      const response = await fetch('/api/roles', {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const data = await response.json();
-      setRoles(data);
-    } catch (error: any) {
-      console.error("Error fetching roles:", error);
-      addNotification(`Failed to fetch roles: ${error.message}`, 'error');
+      setLoading(true);
+      const [rRes, pRes] = await Promise.all([
+        axios.get('/api/v1/roles', { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('/api/v1/permissions', { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      setRoles(rRes.data);
+      setPermissions(pRes.data);
+      if (rRes.data.length > 0) setSelectedRole(rRes.data[0]);
+    } catch (err) {
+      showNotification('Erro ao carregar níveis de acesso.', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const fetchPermissions = async () => {
-    try {
-      const response = await fetch('/api/permissions', {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const data = await response.json();
-      setPermissions(data);
-    } catch (error: any) {
-      console.error("Error fetching permissions:", error);
-      addNotification(`Failed to fetch permissions: ${error.message}`, 'error');
-    }
-  };
+  useEffect(() => { fetchData(); }, []);
 
-  const handleCreateRole = async (roleData: Omit<Role, 'id'>) => {
-    try {
-      const response = await fetch('/api/roles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(roleData),
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      await response.json();
-      setShowRoleForm(false);
-      fetchRoles();
-      addNotification('Role created successfully!', 'success');
-    } catch (error: any) {
-      console.error("Error creating role:", error);
-      addNotification(`Failed to create role: ${error.message}`, 'error');
-    }
-  };
-
-  const handleUpdateRole = async (id: number, roleData: Omit<Role, 'id'>) => {
-    try {
-      const response = await fetch(`/api/roles/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(roleData),
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      await response.json();
-      setEditingRole(undefined);
-      setShowRoleForm(false);
-      fetchRoles();
-      addNotification('Role updated successfully!', 'success');
-    } catch (error: any) {
-      console.error("Error updating role:", error);
-      addNotification(`Failed to update role: ${error.message}`, 'error');
-    }
-  };
-
-  const handleDeleteRole = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this role?')) return;
-    try {
-      const response = await fetch(`/api/roles/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      fetchRoles();
-      addNotification('Role deleted successfully!', 'success');
-    } catch (error: any) {
-      console.error("Error deleting role:", error);
-      addNotification(`Failed to delete role: ${error.message}`, 'error');
-    }
-  };
-
-  const handleEditRoleClick = (id: number) => {
-    const roleToEdit = roles.find((r) => r.id === id);
-    if (roleToEdit) {
-      setEditingRole(roleToEdit);
-      setShowRoleForm(true);
-    }
-  };
-
-  const handleCancelRoleForm = () => {
-    setEditingRole(undefined);
-    setShowRoleForm(false);
-  };
-
-  const handleManagePermissionsClick = (id: number) => {
-    const roleToManage = roles.find((r) => r.id === id);
-    if (roleToManage) {
-      setManagingPermissionsForRole(roleToManage);
-    }
-  };
-
-  const handleAssignPermission = async (roleId: number, permissionId: number) => {
-    try {
-      const response = await fetch(`/api/roles/${roleId}/permissions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ permissionId }),
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      addNotification('Permission assigned successfully!', 'success');
-      // Optionally refresh permissions for the role if needed, or just rely on UI update
-    } catch (error: any) {
-      console.error("Error assigning permission:", error);
-      addNotification(`Failed to assign permission: ${error.message}`, 'error');
-    }
-  };
-
-  const handleRemovePermission = async (roleId: number, permissionId: number) => {
-    try {
-      const response = await fetch(`/api/roles/${roleId}/permissions/${permissionId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      addNotification('Permission removed successfully!', 'success');
-      // Optionally refresh permissions for the role if needed, or just rely on UI update
-    } catch (error: any) {
-      console.error("Error removing permission:", error);
-      addNotification(`Failed to remove permission: ${error.message}`, 'error');
-    }
-  };
+  if (loading) return <Box display="flex" justifyContent="center" py={10}><CircularProgress /></Box>;
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Role Management</h1>
+    <Box sx={{ p: 4, bgcolor: 'background.default', minHeight: '100vh' }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={5}>
+        <Box>
+            <Typography variant="h4" fontWeight={400} sx={{ letterSpacing: '-1.5px', display: 'flex', alignItems: 'center', gap: 2 }}>
+                <FaUserShield color={theme.palette.primary.main} /> Níveis de Acesso
+            </Typography>
+            <Typography variant="body2" color="text.secondary">Gestão de cargos, hierarquia e permissões do sistema</Typography>
+        </Box>
+        <Stack direction="row" spacing={2}>
+            <Button variant="outlined" startIcon={<FaCopy />} sx={{ borderRadius: '12px' }}>Clonar Selecionado</Button>
+            <Button variant="contained" startIcon={<FaPlus />} sx={{ borderRadius: '12px', px: 3 }}>Criar Novo Cargo</Button>
+        </Stack>
+      </Stack>
 
-      {!managingPermissionsForRole ? (
-        <>
-          <div className="flex justify-end mb-4">
-            <button
-              onClick={() => setShowRoleForm(true)}
-              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-            >
-              Add New Role
-            </button>
-          </div>
-
-          {showRoleForm && (
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-3">
-                {editingRole ? 'Edit Role' : 'Add New Role'}
-              </h2>
-              <RoleForm
-                initialData={editingRole}
-                onSubmit={(data) => {
-                  if (editingRole) {
-                    handleUpdateRole(editingRole.id, data);
-                  } else {
-                    handleCreateRole(data);
-                  }
-                }}
-                onCancel={handleCancelRoleForm}
-              />
-            </div>
-          )}
-
-          <RoleList
-            roles={roles}
-            onEdit={handleEditRoleClick}
-            onDelete={handleDeleteRole}
-            onManagePermissions={handleManagePermissionsClick}
+      <Paper sx={{ p: 2, mb: 4, borderRadius: '20px', border: `1px solid ${theme.palette.divider}`, display: 'flex', gap: 2, alignItems: 'center' }}>
+          <TextField 
+            fullWidth size="small" placeholder="Buscar permissão ou módulo..." 
+            InputProps={{
+                startAdornment: <InputAdornment position="start"><FaSearch size={14} /></InputAdornment>,
+                sx: { borderRadius: '12px', border: 'none', bgcolor: 'action.hover', '& fieldset': { border: 'none' } }
+            }}
           />
-        </>
-      ) : (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-3">Manage Permissions for {managingPermissionsForRole.name}</h2>
-          <button
-            onClick={() => setManagingPermissionsForRole(undefined)}
-            className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mb-4"
-          >
-            Back to Roles
-          </button>
-          <PermissionList
-            permissions={permissions} // All available permissions
-            onEdit={() => {}} // Not editing permissions directly from here
-            onDelete={() => {}} // Not deleting permissions directly from here
-          />
-          {/* TODO: Add UI to assign/unassign permissions to the current role */}
-          <div className="mt-4 p-4 border rounded-md">
-            <h3 className="text-lg font-semibold mb-2">Assign/Remove Permissions</h3>
-            {/* This is a simplified example. In a real app, you'd have a checkboxes or a multi-select */}
-            <p>Available Permissions:</p>
-            <ul>
-              {permissions.map(p => (
-                <li key={p.id} className="flex items-center justify-between py-1">
-                  <span>{p.name}</span>
-                  <div className="space-x-2">
-                    <button
-                      onClick={() => handleAssignPermission(managingPermissionsForRole.id, p.id)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs"
-                    >
-                      Assign
-                    </button>
-                    <button
-                      onClick={() => handleRemovePermission(managingPermissionsForRole.id, p.id)}
-                      className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-xs"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
-    </div>
+      </Paper>
+
+
+      <Grid container spacing={4}>
+        {/* Esquerda: Lista de Cargos */}
+        <Grid item xs={12} md={4}>
+            <Stack spacing={2}>
+                {roles.map((role) => (
+                    <motion.div key={role.id} whileHover={{ x: 5 }}>
+                        <Paper 
+                            onClick={() => setSelectedRole(role)}
+                            sx={{ 
+                                p: 3, 
+                                borderRadius: '20px', 
+                                cursor: 'pointer',
+                                border: `2px solid ${selectedRole?.id === role.id ? theme.palette.primary.main : 'transparent'}`,
+                                bgcolor: selectedRole?.id === role.id ? alpha(theme.palette.primary.main, 0.05) : 'background.paper',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <Stack direction="row" spacing={2} alignItems="center">
+                                <Avatar sx={{ bgcolor: selectedRole?.id === role.id ? 'primary.main' : 'action.hover' }}>
+                                    <FaUsers size={16} />
+                                </Avatar>
+                                <Box sx={{ flexGrow: 1 }}>
+                                    <Typography variant="subtitle1" fontWeight={400}>{role.name}</Typography>
+                                    <Typography variant="caption" color="text.secondary">Colaboradores</Typography>
+                                </Box>
+                                <FaShieldAlt size={14} style={{ opacity: 0.3 }} />
+                            </Stack>
+                        </Paper>
+                    </motion.div>
+                ))}
+            </Stack>
+        </Grid>
+
+        {/* Direita: Matriz de Permissões */}
+        <Grid item xs={12} md={8}>
+            <Paper sx={{ p: 4, borderRadius: '32px', minHeight: '600px' }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+                    <Typography variant="h6" fontWeight={400}>Permissões para: {selectedRole?.name}</Typography>
+                    <Button size="small" variant="outlined" color="primary">Salvar Alterações</Button>
+                </Box>
+
+                <Divider sx={{ mb: 4 }} />
+
+                <List disablePadding>
+                    {permissions.map((perm, idx) => (
+                        <ListItem 
+                            key={perm.id}
+                            sx={{ 
+                                p: 2, 
+                                borderRadius: '16px', 
+                                mb: 1, 
+                                bgcolor: idx % 2 === 0 ? alpha(theme.palette.action.hover, 0.5) : 'transparent' 
+                            }}
+                            secondaryAction={
+                                <Switch defaultChecked={idx % 3 !== 0} color="primary" />
+                            }
+                        >
+                            <ListItemIcon sx={{ color: theme.palette.primary.main }}><FaLock size={14} /></ListItemIcon>
+                            <ListItemText 
+                                primary={<Typography variant="subtitle2" fontWeight={400}>{perm.action} {perm.subject}</Typography>}
+                                secondary={`Permite realizar a ação de ${perm.action.toLowerCase()} no módulo ${perm.subject}.`}
+                            />
+                        </ListItem>
+                    ))}
+                </List>
+            </Paper>
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 

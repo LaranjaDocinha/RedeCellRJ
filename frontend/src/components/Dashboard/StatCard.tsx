@@ -11,7 +11,7 @@ interface StatCardProps {
   loading?: boolean;
 }
 
-const StatCard: React.FC<StatCardProps> = React.memo(({ title, value, icon, color, delay = 0, loading = false }) => {
+const StatCard: React.FC<StatCardProps> = React.memo(({ title, value, icon, color = '#3498db', delay = 0, loading = false }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 

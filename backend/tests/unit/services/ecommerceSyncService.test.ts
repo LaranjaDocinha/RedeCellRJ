@@ -17,8 +17,14 @@ describe('ecommerceSyncService', () => {
 
       const result = await syncProductsToEcommerce(productsData);
 
-      expect(result).toEqual({ success: true, message: 'Product data sent to e-commerce (simulated).' });
-      expect(consoleSpy).toHaveBeenCalledWith('Simulating product synchronization to e-commerce platform:', productsData);
+      expect(result).toEqual({
+        success: true,
+        message: 'Product data sent to e-commerce (simulated).',
+      });
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Simulating product synchronization to e-commerce platform:',
+        productsData,
+      );
       consoleSpy.mockRestore(); // Restaura console.log
     });
   });
@@ -29,8 +35,13 @@ describe('ecommerceSyncService', () => {
 
       const result = await syncOrdersFromEcommerce();
 
-      expect(result).toEqual({ success: true, message: 'Orders fetched from e-commerce (simulated).' });
-      expect(consoleSpy).toHaveBeenCalledWith('Simulating fetching orders from e-commerce platform.');
+      expect(result).toEqual({
+        success: true,
+        message: 'Orders fetched from e-commerce (simulated).',
+      });
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Simulating fetching orders from e-commerce platform.',
+      );
       consoleSpy.mockRestore(); // Restaura console.log
     });
   });

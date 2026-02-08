@@ -35,7 +35,16 @@ describe('LeadService', () => {
         assignedTo: 'user-uuid-123',
       };
       const expectedLead = { id: 1, status: 'new', ...leadData };
-      mockQuery.mockResolvedValueOnce({ rows: [{ ...expectedLead, assigned_to: leadData.assignedTo, created_at: new Date(), updated_at: new Date() }] });
+      mockQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            ...expectedLead,
+            assigned_to: leadData.assignedTo,
+            created_at: new Date(),
+            updated_at: new Date(),
+          },
+        ],
+      });
 
       const newLead = await createLead(leadData);
       expect(newLead).toEqual(expect.objectContaining({ ...expectedLead }));
@@ -61,14 +70,34 @@ describe('LeadService', () => {
   describe('getAllLeads', () => {
     it('should return all leads', async () => {
       const dbLeads = [
-        { id: 1, name: 'Lead 1', email: 'l1@example.com', source: 'web', status: 'new', assigned_to: null, created_at: new Date(), updated_at: new Date() },
-        { id: 2, name: 'Lead 2', email: 'l2@example.com', source: 'ref', status: 'contacted', assigned_to: 'user-uuid-456', created_at: new Date(), updated_at: new Date() },
+        {
+          id: 1,
+          name: 'Lead 1',
+          email: 'l1@example.com',
+          source: 'web',
+          status: 'new',
+          assigned_to: null,
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+        {
+          id: 2,
+          name: 'Lead 2',
+          email: 'l2@example.com',
+          source: 'ref',
+          status: 'contacted',
+          assigned_to: 'user-uuid-456',
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
       ];
       mockQuery.mockResolvedValueOnce({ rows: dbLeads });
 
       const leads = await getAllLeads();
       expect(leads.length).toBe(2);
-      expect(leads[0]).toEqual(expect.objectContaining({ id: 1, name: 'Lead 1', email: 'l1@example.com' }));
+      expect(leads[0]).toEqual(
+        expect.objectContaining({ id: 1, name: 'Lead 1', email: 'l1@example.com' }),
+      );
       expect(mockQuery).toHaveBeenCalledTimes(1);
       expect(mockQuery).toHaveBeenCalledWith('SELECT * FROM leads ORDER BY created_at DESC');
     });
@@ -90,7 +119,16 @@ describe('LeadService', () => {
 
   describe('getLeadById', () => {
     it('should return a lead if found', async () => {
-      const dbLead = { id: 1, name: 'Lead 1', email: 'l1@example.com', source: 'web', status: 'new', assigned_to: null, created_at: new Date(), updated_at: new Date() };
+      const dbLead = {
+        id: 1,
+        name: 'Lead 1',
+        email: 'l1@example.com',
+        source: 'web',
+        status: 'new',
+        assigned_to: null,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
       mockQuery.mockResolvedValueOnce({ rows: [dbLead] });
 
       const lead = await getLeadById(1);
@@ -117,34 +155,68 @@ describe('LeadService', () => {
   describe('updateLead', () => {
     it('should update multiple fields of a lead', async () => {
       const updatedData = { email: 'updated@example.com', status: 'contacted' as const };
-      const dbLead = { id: 1, name: 'Lead 1', email: updatedData.email, source: 'web', status: updatedData.status, assigned_to: null, created_at: new Date(), updated_at: new Date() };
+      const dbLead = {
+        id: 1,
+        name: 'Lead 1',
+        email: updatedData.email,
+        source: 'web',
+        status: updatedData.status,
+        assigned_to: null,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
       mockQuery.mockResolvedValueOnce({ rows: [dbLead] });
 
       const updatedLead = await updateLead(1, updatedData);
-      expect(updatedLead).toEqual(expect.objectContaining({ id: 1, email: updatedData.email, status: updatedData.status }));
+      expect(updatedLead).toEqual(
+        expect.objectContaining({ id: 1, email: updatedData.email, status: updatedData.status }),
+      );
       expect(mockQuery).toHaveBeenCalledTimes(1);
       expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringMatching(/UPDATE leads SET email = \$1, status = \$2, updated_at = NOW\(\) WHERE id = \$3 RETURNING \*/s),
+        expect.stringMatching(
+          /UPDATE leads SET email = \$1, status = \$2, updated_at = NOW\(\) WHERE id = \$3 RETURNING \*/s,
+        ),
         ['updated@example.com', 'contacted', 1],
       );
     });
 
     it('should update a single field of a lead', async () => {
       const updatedData = { phone: '987654321' };
-      const dbLead = { id: 1, name: 'Lead 1', email: 'l1@example.com', source: 'web', status: 'new', phone: updatedData.phone, assigned_to: null, created_at: new Date(), updated_at: new Date() };
+      const dbLead = {
+        id: 1,
+        name: 'Lead 1',
+        email: 'l1@example.com',
+        source: 'web',
+        status: 'new',
+        phone: updatedData.phone,
+        assigned_to: null,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
       mockQuery.mockResolvedValueOnce({ rows: [dbLead] });
 
       const updatedLead = await updateLead(1, updatedData);
       expect(updatedLead).toEqual(expect.objectContaining({ id: 1, phone: updatedData.phone }));
       expect(mockQuery).toHaveBeenCalledTimes(1);
       expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringMatching(/UPDATE leads SET phone = \$1, updated_at = NOW\(\) WHERE id = \$2 RETURNING \*/s),
+        expect.stringMatching(
+          /UPDATE leads SET phone = \$1, updated_at = NOW\(\) WHERE id = \$2 RETURNING \*/s,
+        ),
         ['987654321', 1],
       );
     });
 
     it('should return the current lead if no fields are updated', async () => {
-      const dbLead = { id: 1, name: 'Lead 1', email: 'l1@example.com', source: 'web', status: 'new', assigned_to: null, created_at: new Date(), updated_at: new Date() };
+      const dbLead = {
+        id: 1,
+        name: 'Lead 1',
+        email: 'l1@example.com',
+        source: 'web',
+        status: 'new',
+        assigned_to: null,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
       mockQuery.mockResolvedValueOnce({ rows: [dbLead] }); // For getLeadById
       mockQuery.mockResolvedValueOnce({ rows: [dbLead] }); // For the update itself, though it shouldn't hit
 
@@ -204,14 +276,37 @@ describe('LeadService', () => {
         userId: 'user-uuid-123',
       };
       const expectedActivity = { id: 1, ...activityData };
-      mockQuery.mockResolvedValueOnce({ rows: [{ ...expectedActivity, lead_id: activityData.leadId, activity_type: activityData.activityType, activity_date: activityData.activityDate, user_id: activityData.userId, created_at: new Date() }] });
+      mockQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            ...expectedActivity,
+            lead_id: activityData.leadId,
+            activity_type: activityData.activityType,
+            activity_date: activityData.activityDate,
+            user_id: activityData.userId,
+            created_at: new Date(),
+          },
+        ],
+      });
 
       const newActivity = await addLeadActivity(activityData);
-      expect(newActivity).toEqual(expect.objectContaining({ id: 1, leadId: activityData.leadId, activityType: activityData.activityType }));
+      expect(newActivity).toEqual(
+        expect.objectContaining({
+          id: 1,
+          leadId: activityData.leadId,
+          activityType: activityData.activityType,
+        }),
+      );
       expect(mockQuery).toHaveBeenCalledTimes(1);
       expect(mockQuery).toHaveBeenCalledWith(
         'INSERT INTO lead_activities (lead_id, activity_type, description, activity_date, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [activityData.leadId, activityData.activityType, activityData.description, activityData.activityDate, activityData.userId],
+        [
+          activityData.leadId,
+          activityData.activityType,
+          activityData.description,
+          activityData.activityDate,
+          activityData.userId,
+        ],
       );
     });
 
@@ -232,17 +327,39 @@ describe('LeadService', () => {
   describe('getLeadActivities', () => {
     it('should return activities for a given lead ID', async () => {
       const dbActivities = [
-        { id: 1, lead_id: 1, activity_type: 'call', description: 'Call 1', activity_date: new Date(), user_id: 'user1', created_at: new Date(), user_name: 'User One' },
-        { id: 2, lead_id: 1, activity_type: 'email', description: 'Email 1', activity_date: new Date(), user_id: 'user2', created_at: new Date(), user_name: 'User Two' },
+        {
+          id: 1,
+          lead_id: 1,
+          activity_type: 'call',
+          description: 'Call 1',
+          activity_date: new Date(),
+          user_id: 'user1',
+          created_at: new Date(),
+          user_name: 'User One',
+        },
+        {
+          id: 2,
+          lead_id: 1,
+          activity_type: 'email',
+          description: 'Email 1',
+          activity_date: new Date(),
+          user_id: 'user2',
+          created_at: new Date(),
+          user_name: 'User Two',
+        },
       ];
       mockQuery.mockResolvedValueOnce({ rows: dbActivities });
 
       const activities = await getLeadActivities(1);
       expect(activities.length).toBe(2);
-      expect(activities[0]).toEqual(expect.objectContaining({ leadId: 1, activityType: 'call', description: 'Call 1' }));
+      expect(activities[0]).toEqual(
+        expect.objectContaining({ leadId: 1, activityType: 'call', description: 'Call 1' }),
+      );
       expect(mockQuery).toHaveBeenCalledTimes(1);
       expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringMatching(/SELECT la\.\*,\s*u\.name\s*as\s*user_name\s*FROM\s*lead_activities\s*la\s*JOIN\s*users\s*u\s*ON\s*la\.user_id\s*=\s*u\.id\s*WHERE\s*lead_id\s*=\s*\$1\s*ORDER BY activity_date DESC/s),
+        expect.stringMatching(
+          /SELECT la\.\*,\s*u\.name\s*as\s*user_name\s*FROM\s*lead_activities\s*la\s*JOIN\s*users\s*u\s*ON\s*la\.user_id\s*=\s*u\.id\s*WHERE\s*lead_id\s*=\s*\$1\s*ORDER BY activity_date DESC/s,
+        ),
         [1],
       );
     });

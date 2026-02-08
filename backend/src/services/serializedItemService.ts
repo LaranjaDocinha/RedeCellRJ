@@ -1,6 +1,4 @@
 import pool from '../db/index.js';
-import { AppError } from '../utils/errors.js';
-import { z } from 'zod';
 
 interface SerializedItem {
   id: number;
@@ -38,9 +36,11 @@ export const serializedItemService = {
       [serial_number, product_variation_id, branch_id, status || 'in_stock'],
     );
     const newItem = result.rows[0];
-    
-    await this.logHistory(newItem.id, 'entry', null, newItem.status, userId || null, { initial: true });
-    
+
+    await this.logHistory(newItem.id, 'entry', null, newItem.status, userId || null, {
+      initial: true,
+    });
+
     return newItem;
   },
 
@@ -73,8 +73,16 @@ export const serializedItemService = {
     id: number,
     payload: UpdateSerializedItemPayload,
   ): Promise<SerializedItem | undefined> {
-    const { serial_number, product_variation_id, branch_id, status, userId, actionReason, relatedId } = payload;
-    
+    const {
+      serial_number,
+      product_variation_id,
+      branch_id,
+      status,
+      userId,
+      actionReason,
+      relatedId,
+    } = payload;
+
     const existingItem = await this.getSerializedItemById(id);
     if (!existingItem) return undefined;
 
@@ -111,14 +119,14 @@ export const serializedItemService = {
 
     // Log history if status changed
     if (status && status !== existingItem.status) {
-        await this.logHistory(
-            id, 
-            actionReason || 'status_change', 
-            existingItem.status, 
-            status, 
-            userId || null, 
-            { relatedId }
-        );
+      await this.logHistory(
+        id,
+        actionReason || 'status_change',
+        existingItem.status,
+        status,
+        userId || null,
+        { relatedId },
+      );
     }
 
     return updatedItem;
@@ -136,7 +144,7 @@ export const serializedItemService = {
     if (!item) return [];
     const result = await pool.query(
       'SELECT * FROM serialized_items_history WHERE serialized_item_id = $1 ORDER BY created_at DESC',
-      [item.id]
+      [item.id],
     );
     return result.rows;
   },
@@ -147,11 +155,11 @@ export const serializedItemService = {
     oldStatus: string | null,
     newStatus: string,
     userId: number | null,
-    details: any
+    details: any,
   ) {
     await pool.query(
       'INSERT INTO serialized_items_history (serialized_item_id, action, old_status, new_status, user_id, details) VALUES ($1, $2, $3, $4, $5, $6)',
-      [serializedItemId, action, oldStatus, newStatus, userId, details]
+      [serializedItemId, action, oldStatus, newStatus, userId, details],
     );
-  }
+  },
 };

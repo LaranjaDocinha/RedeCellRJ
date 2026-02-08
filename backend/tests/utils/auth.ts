@@ -14,7 +14,8 @@ export async function loginUser(email: string, password: string): Promise<string
     );
   }
 
-  return response.body.token;
+  // The authController now returns { status: 'success', data: { user, accessToken } }
+  return response.body.data.accessToken;
 }
 
 /**

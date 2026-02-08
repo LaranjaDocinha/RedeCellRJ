@@ -1,83 +1,79 @@
 import request from 'supertest';
 import { app } from '../../src/app.js';
-import { getPool } from '../../src/db';
+import { getPool } from '../../src/db/index.js';
 import {
+  seedSale,
+  getAdminUserId,
   seedBranch,
   seedCustomer,
-  getAdminUserId,
   seedProduct,
-} from '../utils/seedTestData';
-import { saleService } from '../../src/services/saleService.js';
+  seedCategory,
+} from '../utils/seedTestData.js';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { getAdminAuthToken } from '../utils/auth.js';
 
 describe('Financial Dashboard API', () => {
-  let authToken: string;
-  let branchId: number;
-  let productId: number;
-  let variationId: number;
-  let customerId: string;
-  let userId: string;
-  let client: any;
-
-  beforeAll(async () => {
-    const loginRes = await request(app)
-      .post('/api/auth/login')
-      .send({ email: 'admin@pdv.com', password: 'admin123' });
-    authToken = loginRes.body.token;
-    userId = (await getAdminUserId()).id;
-  });
+  let adminToken: string;
 
   beforeEach(async () => {
-    client = await getPool().connect();
-    await client.query('BEGIN');
+    adminToken = await getAdminAuthToken();
+    const pool = getPool();
+    const userRes = await getAdminUserId(pool);
+    const branchId = await seedBranch(pool);
+    const customerId = await seedCustomer(pool);
+    const product = await seedProduct(branchId, pool);
 
-    branchId = await seedBranch(client);
-    console.log('[financialDashboard.integration.test.ts] branchId:', branchId);
-    const product = await seedProduct(branchId, client);
-    productId = product.productId;
-    variationId = product.variationId;
-    customerId = await seedCustomer(client);
-  });
-
-  afterEach(async () => {
-    await client.query('ROLLBACK');
-    client.release();
+    await seedSale({
+      client: pool,
+      userId: userRes.id,
+      customerId: customerId,
+      branchId: branchId,
+      totalAmount: 500,
+      items: [
+        {
+          productId: product.productId,
+          variationId: product.variationId,
+          quantity: 5,
+          unitPrice: 100,
+          costPrice: 50,
+        },
+      ],
+      payments: [{ method: 'cash', amount: 500 }],
+    });
   });
 
   it('should return financial dashboard data', async () => {
-    const saleData = {
-      branchId: branchId,
-      customerId: customerId,
-      total_amount: 200,
-      payment_type: 'cash',
-      payments: [{ method: 'cash', amount: 200 }],
+    const pool = getPool();
+    const branchId = await seedBranch(pool);
+    const categoryId = await seedCategory(pool);
+    const { productId, variationId } = await seedProduct(branchId, pool, categoryId);
+    const customerId = await seedCustomer(pool);
+    const adminId = await getAdminUserId(pool);
+
+    await seedSale({
+      client: pool,
+      userId: adminId!,
+      customerId: String(customerId),
+      saleDate: new Date(),
+      totalAmount: 100,
       items: [
         {
-          product_id: productId,
-          variation_id: variationId,
-          quantity: 2,
-          unit_price: 100,
+          productId,
+          variationId,
+          quantity: 1,
+          unitPrice: 100,
+          costPrice: 50,
         },
       ],
-    };
-
-    await request(app)
-      .post('/api/sales')
-      .set('Authorization', `Bearer ${authToken}`)
-      .send(saleData);
+      payments: [{ method: 'cash', amount: 100 }],
+    });
 
     const res = await request(app)
-      .get('/api/financial-dashboard?startDate=2020-01-01&endDate=2030-01-01')
-      .set('Authorization', `Bearer ${authToken}`)
-      .expect(200);
+      .get('/api/reports/financial-dashboard?startDate=2020-01-01&endDate=2030-01-01')
+      .set('Authorization', `Bearer ${adminToken}`);
 
-    expect(res.body).toHaveProperty('total_revenue');
-    expect(res.body.total_revenue).toBeGreaterThan(0);
-    expect(res.body).toHaveProperty('total_cogs');
-    expect(res.body.total_cogs).toBeGreaterThan(0);
-    expect(res.body).toHaveProperty('total_profit');
-    expect(res.body).toHaveProperty('sales_by_category');
-    expect(res.body.sales_by_category.length).toBeGreaterThan(0);
-    expect(res.body).toHaveProperty('top_selling_products');
-    expect(res.body.top_selling_products.length).toBeGreaterThan(0);
+    expect(res.statusCode).toEqual(200);
+    expect(Number(res.body.data.total_revenue)).toBeGreaterThan(0);
+    expect(Number(res.body.data.total_profit)).toBeGreaterThan(0);
   });
 });

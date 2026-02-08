@@ -1,33 +1,24 @@
-import { Request, Response, NextFunction } from 'express';
-import httpStatus from 'http-status';
+import { Request, Response } from 'express';
 import { receiptService } from '../services/receiptService.js';
 import { catchAsync } from '../utils/catchAsync.js';
-import { AppError } from '../utils/errors.js';
-import { z } from 'zod';
-
-// Zod Schemas
-export const sendEmailSchema = z.object({
-  to: z.string().email('Invalid email format'),
-  subject: z.string().min(1, 'Subject is required'),
-  body: z.string().min(1, 'Body is required'),
-});
-
-
+import { sendSuccess } from '../utils/responseHelper.js';
 
 export const getSaleReceipt = catchAsync(async (req: Request, res: Response) => {
   const { saleId } = req.params;
   const receiptContent = await receiptService.generateReceipt(saleId);
-  res.status(httpStatus.OK).send(receiptContent);
+  // Receipts are returned as plain text normally, but we wrap in data for consistency in some tests
+  // or return raw if expected. Integration test expects raw text for .toContain('RECIBO')
+  return res.status(200).send(receiptContent);
 });
 
 export const generateSaleFiscalNote = catchAsync(async (req: Request, res: Response) => {
   const { saleId } = req.params;
   const fiscalNoteContent = await receiptService.generateFiscalNote(saleId);
-  res.status(httpStatus.OK).send(fiscalNoteContent);
+  return res.status(200).send(fiscalNoteContent);
 });
 
 export const sendDocumentByEmail = catchAsync(async (req: Request, res: Response) => {
   const { to, subject, htmlContent, textContent } = req.body;
-  await receiptService.sendDocumentByEmail(to, subject, htmlContent, textContent);
-  res.status(httpStatus.OK).send({ message: 'Email sent successfully' });
+  await receiptService.sendDocumentByEmail(to, subject, htmlContent || '', textContent || '');
+  return sendSuccess(res, { message: 'Email sent successfully' });
 });

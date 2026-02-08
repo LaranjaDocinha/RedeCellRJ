@@ -27,13 +27,13 @@ export const PurchaseOrderList: React.FC<PurchaseOrderListProps> = ({
       <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
         <thead className="bg-gray-800 text-white">
           <tr>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">ID</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Supplier ID</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Order Date</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Expected Delivery</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Status</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Total Amount</th>
-            <th className="py-3 px-4 uppercase font-semibold text-sm">Actions</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">ID</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Supplier ID</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Order Date</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Expected Delivery</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Status</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Total Amount</th>
+            <th className="py-3 px-4 uppercase font-normal text-sm">Actions</th>
           </tr>
         </thead>
         <tbody className="text-gray-700">
@@ -59,7 +59,7 @@ export const PurchaseOrderList: React.FC<PurchaseOrderListProps> = ({
                 <td className="py-3 px-4">
                   <button
                     onClick={() => onViewDetails(order.id)}
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs mr-2"
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-normal py-1 px-2 rounded text-xs mr-2"
                   >
                     View Details
                   </button>
@@ -80,7 +80,7 @@ export const PurchaseOrderList: React.FC<PurchaseOrderListProps> = ({
                   </select>
                   <button
                     onClick={() => onReceiveItems(order.id)}
-                    className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded text-xs"
+                    className="bg-green-500 hover:bg-green-700 text-white font-normal py-1 px-2 rounded text-xs"
                   >
                     Receive Items
                   </button>
@@ -93,3 +93,4 @@ export const PurchaseOrderList: React.FC<PurchaseOrderListProps> = ({
     </div>
   );
 };
+

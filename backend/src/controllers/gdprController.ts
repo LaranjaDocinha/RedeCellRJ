@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import httpStatus from 'http-status';
 import { gdprService } from '../services/gdprService.js';
 import { catchAsync } from '../utils/catchAsync.js';
@@ -20,8 +20,6 @@ export const dataExportSchema = z.object({
   }),
   entityId: z.string().uuid('Invalid entity ID format'),
 });
-
-
 
 export const requestDataDeletion = catchAsync(async (req: Request, res: Response) => {
   const { entityType, entityId } = req.body;

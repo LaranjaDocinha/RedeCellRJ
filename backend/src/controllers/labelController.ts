@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import axios from 'axios';
 
 export const labelController = {
   async generateZpl(req: Request, res: Response) {
@@ -15,7 +14,7 @@ export const labelController = {
       if (type === 'product') {
         // Tamanho padrão etiqueta gôndola 30x20mm (aprox 240x160 dots em 203dpi)
         // Ajustar conforme impressora
-        
+
         for (const item of items) {
           // ^XA: Start
           // ^PW400: Label width
@@ -26,7 +25,7 @@ export const labelController = {
           // ^FD: Field Data
           // ^FS: Field Separator
           // ^XZ: End
-          
+
           zplCommands += `
 ^XA
 ^PW400
@@ -46,9 +45,8 @@ export const labelController = {
 
       res.setHeader('Content-Type', 'text/plain');
       res.send(zplCommands);
-
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
-  }
+  },
 };
