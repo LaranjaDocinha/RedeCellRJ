@@ -1,9 +1,11 @@
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 import { setupInterceptors } from './apiInterceptors';
+import { API_BASE_URL } from '../config/constants';
 
 const api = axios.create({
-  baseURL: '/',
+  baseURL: API_BASE_URL,
+  withCredentials: true, // Importante para cookies (refreshToken)
 });
 
 // Configurar Retry com Backoff Exponencial

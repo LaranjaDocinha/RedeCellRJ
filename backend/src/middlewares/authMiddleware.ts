@@ -17,6 +17,7 @@ const authenticate = async (req: Request, res: Response, next: NextFunction) => 
   }
 
   const token = authHeader.split(' ')[1];
+  console.log('[AUTH DEBUG] Received token string:', token);
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as UserPayload & { ip?: string; ua?: string };

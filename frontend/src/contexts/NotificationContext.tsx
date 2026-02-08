@@ -47,12 +47,25 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setLoading(true);
     try {
       const response = await api.get('/notifications');
-      // Map backend type to frontend severity
-      const mapped = response.data.map((n: any) => ({
-          ...n,
-          severity: n.type === 'error' ? 'error' : n.type === 'warning' ? 'warning' : n.type === 'success' ? 'success' : 'info'
-      }));
-      setNotifications(mapped);
+      // Verify if data is an array before mapping
+      if (Array.isArray(response.data)) {
+        // Map backend type to frontend severity
+        const mapped = response.data.map((n: any) => ({
+            ...n,
+            severity: n.type === 'error' ? 'error' : n.type === 'warning' ? 'warning' : n.type === 'success' ? 'success' : 'info'
+        }));
+        setNotifications(mapped);
+      } else if (response.data && Array.isArray(response.data.data)) {
+         // Handle wrapped response { status: 'success', data: [...] }
+         const mapped = response.data.data.map((n: any) => ({
+            ...n,
+            severity: n.type === 'error' ? 'error' : n.type === 'warning' ? 'warning' : n.type === 'success' ? 'success' : 'info'
+        }));
+        setNotifications(mapped);
+      } else {
+        console.warn('Notifications response is not an array:', response.data);
+        setNotifications([]);
+      }
     } catch (error) {
       console.error('Failed to fetch notifications', error);
     } finally {

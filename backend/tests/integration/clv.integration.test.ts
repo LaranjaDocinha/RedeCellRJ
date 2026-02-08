@@ -20,7 +20,7 @@ describe('CLV Report API', () => {
     const loginRes = await request(app)
       .post('/api/auth/login')
       .send({ email: 'admin@pdv.com', password: 'admin123' });
-    const authToken = loginRes.body.accessToken;
+    const authToken = loginRes.body.data.accessToken;
     const adminUserId = await getAdminUserId();
     console.log('[clv.integration.test.ts] adminUserResult from getAdminUserId:', adminUserId);
     console.log(

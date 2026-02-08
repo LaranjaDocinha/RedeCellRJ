@@ -18,7 +18,7 @@ describe('COGS Report API', () => {
     const loginRes = await request(app)
       .post('/api/auth/login')
       .send({ email: 'admin@pdv.com', password: 'admin123' });
-    authToken = loginRes.body.accessToken;
+    authToken = loginRes.body.data.accessToken;
     const adminUser = await getAdminUserId();
     adminUserId = adminUser.id;
   });

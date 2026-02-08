@@ -378,10 +378,11 @@ if (process.env.NODE_ENV === 'production' || process.env.SELF_HOSTED === 'true')
 
 // 404 handler
 app.use((req, res) => {
+  console.warn(`[404] Route not found: ${req.method} ${req.originalUrl}`);
   res.status(404).json({
     success: false,
     error: {
-      message: 'Route not found',
+      message: `Route not found: ${req.method} ${req.originalUrl}`,
       code: 'NOT_FOUND',
     },
     meta: {
