@@ -125,6 +125,7 @@ const CustomerDisplayPage = lazy(() => import('./pages/CustomerDisplayPage'));
 const SurveyPage = lazy(() => import('./pages/SurveyPage'));
 const AdminAuditPage = lazy(() => import('./pages/AdminAuditPage'));
 const ExecutiveDashboardPage = lazy(() => import('./pages/ExecutiveDashboardPage'));
+const ExpenseReimbursementsPage = lazy(() => import('./pages/ExpenseReimbursementsPage'));
 const KioskHomePage = lazy(() => import('./pages/Kiosk/KioskHomePage'));
 const ReconciliationPage = lazy(() => import('./pages/Finance/ReconciliationPage'));
 const PurchaseSuggestionPage = lazy(() => import('./pages/Inventory/PurchaseSuggestionPage'));
@@ -195,6 +196,7 @@ const router = createBrowserRouter([
       { path: "users", element: <PageTransition><UsersPage /></PageTransition> },
       { path: "audit-logs", element: <PageTransition><AdminAuditPage /></PageTransition> },
       { path: "executive-dashboard", element: <PageTransition><ExecutiveDashboardPage /></PageTransition> },
+      { path: "expense-reimbursements", element: <PageTransition><ExpenseReimbursementsPage /></PageTransition> },
       { path: "settings", element: <PageTransition><SettingsPage /></PageTransition> },
       { path: "promotions", element: <PageTransition><PromotionsPage /></PageTransition> },
       { path: "returns", element: <PageTransition><ReturnsAndRefundsPage /></PageTransition> },

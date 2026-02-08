@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserList } from '../components/UserList';
+import UserList from '../components/UserList';
 import { UserForm } from '../components/UserForm';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';

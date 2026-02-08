@@ -18,7 +18,7 @@ describe('Users API Integration', () => {
       .post('/api/auth/login')
       .send({ email: 'admin@pdv.com', password: 'admin123' });
 
-    adminToken = authRes.body.accessToken;
+    adminToken = authRes.body.data.accessToken;
   });
 
   afterAll(async () => {

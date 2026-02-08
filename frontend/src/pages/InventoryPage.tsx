@@ -14,7 +14,7 @@ import {
 import { 
   Search, Add, History, Inventory as InventoryIcon, WarningAmber, 
   Assessment, LocalOffer, Print, FileDownload, TrendingUp, SmartToy, 
-  Bolt, Close, KeyboardReturn, QrCodeScanner,
+  Bolt, Close, KeyboardReturn, QrCodeScanner, Sync,
   AttachMoney, Timer, TrendingDown, Speed,
   Inventory2Outlined, AutoGraph
 } from '@mui/icons-material';
@@ -94,7 +94,7 @@ interface ProductVariation {
 
 const InventoryPage: React.FC = () => {
   const theme = useTheme();
-  const { showNotification } = useNotification();
+  const { addNotification } = useNotification();
   const { token } = useAuth();
   const { socket } = useSocket();
 
@@ -122,11 +122,11 @@ const InventoryPage: React.FC = () => {
       // Aqui simulamos a estrutura necessária para o frontend premium.
       setProducts(response.data.data || []);
     } catch (error) {
-      showNotification('Erro ao carregar inventário.', 'error');
+      addNotification('Erro ao carregar inventário.', 'error');
     } finally {
       setLoading(false);
     }
-  }, [token, showNotification]);
+  }, [token, addNotification]);
 
   const fetchAISuggestions = async () => {
     setIsAIModalOpen(true);
@@ -137,7 +137,7 @@ const InventoryPage: React.FC = () => {
       });
       setAISuggestions(response.data.data || []);
     } catch (error) {
-      showNotification('Falha ao obter insights da IA.', 'error');
+      addNotification('Falha ao obter insights da IA.', 'error');
     } finally {
       setAILoading(false);
     }
@@ -347,7 +347,7 @@ const InventoryPage: React.FC = () => {
           { label: 'PRODUTOS EM RUPTURA', val: stats.criticalCount, color: 'error.main', icon: <WarningAmber />, trend: 'Crítico' },
           { label: 'ITENS SEM GIRO (AGING)', val: stats.agingCount, color: 'warning.main', icon: <Timer />, trend: 'Ação Necessária' }
         ].map((s, i) => (
-          <Grid item xs={12} sm={6} md={3} key={i}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
             <GlassCard>
               <Box sx={{ position: 'absolute', top: -10, right: -10, opacity: 0.05, transform: 'scale(2)' }}>{s.icon}</Box>
               <Typography variant="overline" sx={{ fontWeight: 400, opacity: 0.6, letterSpacing: 1 }}>{s.label}</Typography>
@@ -488,7 +488,7 @@ const InventoryPage: React.FC = () => {
             </Typography>
             
             <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={6}>
+              <Grid size={{ xs: 6 }}>
                 <Paper variant="outlined" sx={{ p: 2, borderRadius: '20px', bgcolor: alpha(theme.palette.success.main, 0.02) }}>
                   <Typography variant="caption" color="text.secondary" fontWeight={400}>MARKUP ATUAL</Typography>
                   <Typography variant="h5" sx={{ fontWeight: 400, color: 'success.main' }}>
@@ -496,13 +496,13 @@ const InventoryPage: React.FC = () => {
                   </Typography>
                 </Paper>
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={{ xs: 6 }}>
                 <Paper variant="outlined" sx={{ p: 2, borderRadius: '20px', bgcolor: alpha(theme.palette.info.main, 0.02) }}>
                   <Typography variant="caption" color="text.secondary" fontWeight={400}>DIAS DE COBERTURA</Typography>
                   <Typography variant="h5" sx={{ fontWeight: 400, color: 'info.main' }}>{selectedProduct.days_of_cover}d</Typography>
                 </Paper>
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Paper variant="outlined" sx={{ p: 2, borderRadius: '20px', textAlign: 'center' }}>
                   <Typography variant="caption" color="text.secondary" fontWeight={400}>PATRIMÔNIO IMOBILIZADO NESTE ITEM</Typography>
                   <Typography variant="h4" sx={{ fontWeight: 400 }}>R$ {(selectedProduct.cost_price * selectedProduct.stock_quantity).toLocaleString()}</Typography>

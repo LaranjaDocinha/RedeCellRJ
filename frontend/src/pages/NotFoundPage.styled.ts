@@ -8,7 +8,8 @@ export const StyledNotFoundContainer = styled(motion.div)`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
+  height: 100vh;
+  width: 100vw;
   background: ${({ theme }) => 
     theme.palette.mode === 'light' 
       ? `radial-gradient(circle at center, #ffffff 0%, #f0f2f5 100%)`
@@ -18,7 +19,12 @@ export const StyledNotFoundContainer = styled(motion.div)`
   text-align: center;
   padding: 2rem;
   overflow: hidden;
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
 `;
 
 export const IconWrapper = styled(motion.div)`

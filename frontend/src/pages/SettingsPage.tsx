@@ -21,9 +21,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 // Componentes unificados
 import GeneralSettings from './GeneralSettings';
-import UserList from '../components/UserList';
-import RoleList from '../components/RoleList';
-import PermissionList from '../components/PermissionList';
+import UsersPage from './UsersPage';
+import RolesPage from './RolesPage';
+import PermissionsPage from './PermissionsPage';
 import AuditLogsPage from './AuditLogsPage'; // Reutilizamos a página inteira como aba
 import SystemHealthPage from './SystemHealthPage';
 
@@ -33,9 +33,9 @@ const SettingsPage: React.FC = () => {
 
   const tabs = [
     { label: 'Geral', icon: <SettingsIcon />, component: <GeneralSettings /> },
-    { label: 'Usuários', icon: <PeopleIcon />, component: <UserList /> },
-    { label: 'Cargos', icon: <BadgeIcon />, component: <RoleList /> },
-    { label: 'Permissões', icon: <SecurityIcon />, component: <PermissionList /> },
+    { label: 'Usuários', icon: <PeopleIcon />, component: <UsersPage /> },
+    { label: 'Cargos', icon: <BadgeIcon />, component: <RolesPage /> },
+    { label: 'Permissões', icon: <SecurityIcon />, component: <PermissionsPage /> },
     { label: 'Auditoria', icon: <HistoryIcon />, component: <AuditLogsPage /> }, 
     { label: 'Saúde', icon: <DnsIcon />, component: <SystemHealthPage /> },
   ];

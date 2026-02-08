@@ -12,7 +12,7 @@ describe('Store Credit Controller', () => {
     const authRes = await request(app)
       .post('/api/auth/login')
       .send({ email: 'admin@pdv.com', password: 'admin123' });
-    adminToken = authRes.body.accessToken;
+    adminToken = authRes.body.data.accessToken;
   });
 
   beforeEach(async () => {

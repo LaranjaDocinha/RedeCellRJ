@@ -15,6 +15,7 @@ export async function loginUser(email: string, password: string): Promise<string
   }
 
   // The authController now returns { status: 'success', data: { user, accessToken } }
+  console.log(`[AUTH TEST DEBUG] Token for ${email}:`, response.body.data.accessToken);
   return response.body.data.accessToken;
 }
 

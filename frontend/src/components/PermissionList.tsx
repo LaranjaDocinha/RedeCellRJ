@@ -39,7 +39,8 @@ const PermissionList: React.FC<PermissionListProps> = ({
           </tr>
         </StyledTableHead>
         <StyledTableBody>
-          {permissions.map((permission) => (
+          {Array.isArray(permissions) && permissions.length > 0 ? (
+            permissions.map((permission) => (
             <tr key={permission.id}>
               <td>{permission.id}</td>
               <td>{permission.name}</td>
@@ -64,7 +65,13 @@ const PermissionList: React.FC<PermissionListProps> = ({
                 </ActionButton>
               </td>
             </tr>
-          ))}
+          ))) : (
+            <tr>
+              <td colSpan={3} style={{ textAlign: 'center', padding: '20px' }}>
+                Nenhuma permissão encontrada.
+              </td>
+            </tr>
+          )}
         </StyledTableBody>
       </StyledTable>
     </StyledTableContainer>

@@ -44,7 +44,7 @@ import moment from 'moment';
 const OrdersPage: React.FC = () => {
   const theme = useTheme();
   const { token } = useAuth();
-  const { showNotification } = useNotification();
+  const { addNotification } = useNotification();
   
   const [orders, setOrders] = useState<ServiceOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,7 +64,7 @@ const OrdersPage: React.FC = () => {
       const data = await getServiceOrders(token, filters);
       setOrders(Array.isArray(data) ? data : []);
     } catch (err) {
-      showNotification('Falha ao buscar pedidos.', 'error');
+      addNotification('Falha ao buscar pedidos.', 'error');
     } finally {
       setLoading(false);
     }
@@ -82,7 +82,7 @@ const OrdersPage: React.FC = () => {
       setSelectedOrder(fullOrder);
       setIsModalOpen(true);
     } catch (err) {
-      showNotification('Erro ao carregar detalhes.', 'error');
+      addNotification('Erro ao carregar detalhes.', 'error');
     }
   };
 

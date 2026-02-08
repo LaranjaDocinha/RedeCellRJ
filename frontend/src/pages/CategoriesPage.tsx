@@ -90,7 +90,14 @@ const CategoriesPage: React.FC = () => {
   const theme = useTheme();
   const [categories, setCategories] = useState<Category[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'tree'>('grid');
-  // ... rest of state
+  
+  // Missing states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | undefined>(undefined);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const { token } = useAuth();
   const { addNotification } = useNotification();

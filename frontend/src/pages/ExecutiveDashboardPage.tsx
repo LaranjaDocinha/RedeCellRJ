@@ -72,10 +72,10 @@ const ExecutiveDashboardPage: React.FC = () => {
   if (loading) return <LoadingSpinner />;
   if (!stats) return <PageContainer><div>Erro ao carregar dados.</div></PageContainer>;
 
-  const salesLabels = stats.salesByChannel.map((s: any) => s.channel);
-  const salesData = stats.salesByChannel.map((s: any) => Number(s.revenue));
+  const salesLabels = stats.salesByChannel?.map((s: any) => s.channel) || [];
+  const salesData = stats.salesByChannel?.map((s: any) => Number(s.revenue)) || [];
 
-  const conversionRate = stats.serviceConversion.total > 0 
+  const conversionRate = stats.serviceConversion?.total > 0 
     ? ((stats.serviceConversion.completed / stats.serviceConversion.total) * 100).toFixed(1) 
     : 0;
 

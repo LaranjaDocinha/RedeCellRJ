@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { 
   Box, Typography, Button, IconButton, Tooltip, Chip, 
-  LinearProgress, alpha, useTheme, Avatar
+  LinearProgress, alpha, useTheme, Avatar, Paper
 } from '@mui/material';
 import { 
   DataGrid, GridColDef, GridToolbarContainer, 
@@ -11,8 +11,7 @@ import {
   Add as AddIcon, 
   Visibility as ViewIcon, 
   Edit as EditIcon, 
-  WhatsApp as WhatsAppIcon,
-  Search as SearchIcon,
+  WhatsApp as WhatsAppIcon, 
   Refresh as RefreshIcon
 } from '@mui/icons-material';
 import axios from 'axios';
@@ -23,7 +22,7 @@ import { useNavigation } from 'react-router-dom';
 const CustomersPage: React.FC = () => {
   const theme = useTheme();
   const { token } = useAuth();
-  const { showNotification } = useNotification();
+  const { addNotification } = useNotification();
   const navigation = useNavigation();
 
   const [customers, setCustomers] = useState<any[]>([]);
@@ -39,11 +38,11 @@ const CustomersPage: React.FC = () => {
       });
       setCustomers(response.data.data || []);
     } catch (error) {
-      showNotification('Erro ao carregar clientes.', 'error');
+      addNotification('Erro ao carregar clientes.', 'error');
     } finally {
       setLoading(false);
     }
-  }, [token, showNotification]);
+  }, [token, addNotification]);
 
   useEffect(() => {
     fetchCustomers();

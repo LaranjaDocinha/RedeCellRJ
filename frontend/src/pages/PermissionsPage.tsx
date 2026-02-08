@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { PermissionList } from '../components/PermissionList';
+import PermissionList from '../components/PermissionList';
 import { PermissionForm } from '../components/PermissionForm';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
