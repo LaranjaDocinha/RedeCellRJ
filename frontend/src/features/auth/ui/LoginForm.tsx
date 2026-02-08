@@ -121,7 +121,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onFocusChange, isError }) 
         setIsLoading(true);
         try {
             const result = await loginApi({ email: 'admin@pdv.com', password: 'admin123', rememberMe: true });
-            login(result.user, result.accessToken, true);
+            // Ajuste para o formato JSend
+            login(result.data.user, result.data.accessToken, true);
             navigate('/dashboard');
             addNotification('Autenticação Biométrica concluída!', 'success');
         } catch (e) {
@@ -142,7 +143,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onFocusChange, isError }) 
   React.useEffect(() => {
     if (emailValue && emailValue.includes('@')) {
         const hash = md5(emailValue.trim().toLowerCase());
-        setUserAvatar(`https://www.gravatar.com/avatar/${hash}?d=404`);
+        setUserAvatar(`https://www.gravatar.com/avatar/${hash}?d=mp`);
     } else {
         setUserAvatar(null);
     }
@@ -161,8 +162,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onFocusChange, isError }) 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      const result = await loginApi(data);
-      login(result.user, result.accessToken, data.rememberMe);
+      // Garantir que o email não tenha espaços acidentais
+      const cleanedData = {
+        ...data,
+        email: data.email.trim()
+      };
+      const result = await loginApi(cleanedData);
+      // Ajuste crucial para o formato JSend: os dados estão dentro de result.data
+      login(result.data.user, result.data.accessToken, data.rememberMe);
       const searchRedirect = searchParams.get('redirect');
       if (searchRedirect) navigate(searchRedirect);
       else navigate('/dashboard');

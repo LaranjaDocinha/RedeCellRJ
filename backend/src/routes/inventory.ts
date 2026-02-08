@@ -7,6 +7,7 @@ import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { ValidationError } from '../utils/errors.js';
 
 import { inventoryAnalyticsController } from '../controllers/inventoryAnalyticsController.js';
+import { ResponseHelper } from '../utils/responseHelper.js';
 
 const router = Router();
 
@@ -56,6 +57,20 @@ const validate =
   };
 
 router.get(
+  '/',
+  authMiddleware.authorize('read', 'Inventory'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const branchId = req.user?.branch_id || 1;
+      const inventory = await inventoryService.getAllInventory(branchId);
+      ResponseHelper.success(res, inventory);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+router.get(
   '/low-stock',
   authMiddleware.authorize('read', 'Inventory'),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -64,7 +79,7 @@ router.get(
         ? parseInt(req.query.threshold as string, 10)
         : undefined;
       const lowStockProducts = await inventoryService.getLowStockProducts(threshold);
-      res.json(lowStockProducts);
+      ResponseHelper.success(res, lowStockProducts);
     } catch (error) {
       next(error);
     }
@@ -86,12 +101,36 @@ router.get(
 );
 
 router.get(
-  '/ai-suggestions',
+  ['/ai-suggestions', '/ai-insights'],
   authMiddleware.authorize('read', 'Inventory'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const suggestions = await aiInventoryService.getSmartPurchaseSuggestions();
-      res.json(suggestions);
+      ResponseHelper.success(res, suggestions);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+router.put(
+  '/adjust-stock',
+  authMiddleware.authorize('update', 'Inventory'),
+  validate(adjustStockSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { variationId, quantityChange, reason, unitCost, branchId } = req.body;
+      const userId = req.user?.id;
+      const updatedVariation = await inventoryService.adjustStock(
+        variationId,
+        quantityChange,
+        reason,
+        userId,
+        undefined,
+        unitCost,
+        branchId || req.user?.branch_id,
+      );
+      ResponseHelper.success(res, updatedVariation);
     } catch (error) {
       next(error);
     }
@@ -114,9 +153,9 @@ router.put(
         userId,
         undefined, // dbClient
         unitCost,
-        branchId, // Pass branchId
+        branchId || req.user?.branch_id, // Pass branchId
       );
-      res.json(updatedVariation);
+      ResponseHelper.success(res, updatedVariation);
     } catch (error) {
       next(error);
     }
@@ -137,7 +176,7 @@ router.put(
         unitCost,
         userId,
       );
-      res.json(updatedVariation);
+      ResponseHelper.success(res, updatedVariation);
     } catch (error) {
       next(error);
     }
@@ -154,7 +193,7 @@ router.put(
       console.log('Inside /dispatch-stock try block');
       const { variationId, quantity } = req.body;
       const updatedVariation = await inventoryService.dispatchStock(variationId, quantity);
-      res.json(updatedVariation);
+      ResponseHelper.success(res, updatedVariation);
     } catch (error) {
       next(error);
     }
@@ -168,7 +207,7 @@ router.get(
     try {
       const branchId = parseInt(req.query.branchId as string, 10) || 1; // Default to branch 1
       const discrepancies = await inventoryService.getInventoryDiscrepancies(branchId);
-      res.json(discrepancies);
+      ResponseHelper.success(res, discrepancies);
     } catch (error) {
       next(error);
     }

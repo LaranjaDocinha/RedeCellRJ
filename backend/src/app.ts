@@ -22,6 +22,7 @@ import { requestLoggerMiddleware } from './middlewares/requestLoggerMiddleware.j
 import { performanceTracer } from './middlewares/performanceTracer.js'; // Import tracer
 import chaosMiddleware from './middlewares/chaos/chaos.js';
 import { idempotencyMiddleware } from './middlewares/idempotency.js';
+import { sendError } from './utils/responseHelper.js';
 
 // Import Listeners
 import { initSocketListeners } from './listeners/socketEvents.js';
@@ -130,11 +131,12 @@ import { ExpressAdapter } from '@bull-board/express';
 import { badgeQueue, rfmQueue, whatsappQueue, defaultQueue } from './jobs/queue.js';
 
 // Initialize event listeners and services
+marketingAutomationListener();
+initMarketplaceListener();
+initNotificationEventListener();
+initSystemNotificationListener();
+
 if (process.env.NODE_ENV !== 'test') {
-  marketingAutomationListener();
-  initMarketplaceListener();
-  initNotificationEventListener();
-  initSystemNotificationListener();
   initCronJobs();
   initWorkers();
 }
@@ -379,17 +381,7 @@ if (process.env.NODE_ENV === 'production' || process.env.SELF_HOSTED === 'true')
 // 404 handler
 app.use((req, res) => {
   console.warn(`[404] Route not found: ${req.method} ${req.originalUrl}`);
-  res.status(404).json({
-    success: false,
-    error: {
-      message: `Route not found: ${req.method} ${req.originalUrl}`,
-      code: 'NOT_FOUND',
-    },
-    meta: {
-      timestamp: new Date().toISOString(),
-      requestId: (req as any).requestId,
-    },
-  });
+  return sendError(res, `Route not found: ${req.method} ${req.originalUrl}`, 'NOT_FOUND', 404);
 });
 
 // Error handlers

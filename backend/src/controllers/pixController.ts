@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import httpStatus from 'http-status';
 import { pixService } from '../services/pixService.js';
 import { catchAsync } from '../utils/catchAsync.js';
 import { z } from 'zod';
+import { sendSuccess } from '../utils/responseHelper.js';
 
 // Zod Schemas
 export const generateQrCodeSchema = z.object({
@@ -18,13 +18,13 @@ export const generatePixQrCode = catchAsync(async (req: Request, res: Response) 
 
   const qrCodeData = await pixService.generateDynamicQrCode({ amount, transactionId, description });
 
-  res.status(httpStatus.OK).send(qrCodeData);
+  return sendSuccess(res, qrCodeData);
 });
 
 export const checkPixPaymentStatus = catchAsync(async (req: Request, res: Response) => {
   const { transactionId } = req.params;
   const status = await pixService.checkPaymentStatus(transactionId);
-  res.status(httpStatus.OK).send({ status });
+  return sendSuccess(res, { status });
 });
 
 export const handlePixWebhook = catchAsync(async (req: Request, res: Response) => {
@@ -32,5 +32,5 @@ export const handlePixWebhook = catchAsync(async (req: Request, res: Response) =
   // and then process the payment confirmation.
   await pixService.handleWebhook(req.body);
 
-  res.status(httpStatus.OK).send({ message: 'Webhook received and processed' });
+  return sendSuccess(res, { message: 'Webhook received and processed' });
 });

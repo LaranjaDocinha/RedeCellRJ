@@ -44,6 +44,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { useNotification } from '../contexts/NotificationContext';
+import api from '../services/api';
 import moment from 'moment';
 
 // --- Styled Components Premium ---
@@ -100,12 +101,12 @@ const HomePage: React.FC = () => {
   const [clockLoading, setClockLoading] = useState(true);
   const [clockActionLoading, setClockActionLoading] = useState(false);
 
-  // Fetching Vital Data for Cockpit
+  // Fetching Vital Data for Cockpit using our standard API client
   const { data: stats, refetch: refetchStats } = useQuery({
     queryKey: ['home-cockpit-stats'],
     queryFn: async () => {
-      const res = await fetch('/api/dashboard?period=today', { headers: { 'Authorization': `Bearer ${token}` } });
-      return res.json();
+      const res = await api.get('/dashboard?period=today');
+      return res.data.data || res.data;
     },
     enabled: !!token
   });
@@ -113,11 +114,9 @@ const HomePage: React.FC = () => {
   const fetchClockStatus = useCallback(async () => {
     if (!token) return;
     try {
-      const res = await fetch('/api/time-clock/me/latest', { headers: { Authorization: `Bearer ${token}` } });
-      if (res.status === 200) {
-        const entry = await res.json();
-        setIsClockedIn(entry && entry.clock_in_time && !entry.clock_out_time);
-      }
+      const res = await api.get('/time-clock/me/latest');
+      const entry = res.data.data || res.data;
+      setIsClockedIn(entry && entry.clock_in_time && !entry.clock_out_time);
     } catch (e) { console.error(e); } finally { setClockLoading(false); }
   }, [token]);
 
@@ -130,17 +129,16 @@ const HomePage: React.FC = () => {
   const handleClockAction = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setClockActionLoading(true);
-    const endpoint = isClockedIn ? '/api/time-clock/clock-out' : '/api/time-clock/clock-in';
+    const endpoint = isClockedIn ? '/time-clock/clock-out' : '/time-clock/clock-in';
     try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ branchId: 1 })
-      });
-      if (!res.ok) throw new Error('Falha no registro');
+      await api.post(endpoint, { branchId: 1 });
       addNotification(`Turno ${!isClockedIn ? 'iniciado' : 'encerrado'}!`, 'success');
       fetchClockStatus();
-    } catch (err: any) { addNotification(err.message, 'error'); } finally { setClockActionLoading(false); }
+    } catch (err: any) { 
+      addNotification(err.response?.data?.message || 'Falha no registro', 'error'); 
+    } finally { 
+      setClockActionLoading(false); 
+    }
   };
 
   const greeting = useMemo(() => {

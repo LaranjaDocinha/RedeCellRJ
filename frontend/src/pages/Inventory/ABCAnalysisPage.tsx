@@ -58,8 +58,8 @@ const ABCAnalysisPage: React.FC = () => {
 
   const fetchABC = async () => {
     try {
-      const response = await api.get('/api/v1/inventory/abc-analysis');
-      setData(response.data);
+      const response = await api.get('/inventory/abc-analysis');
+      setData(response.data.data || []);
     } catch (error) {
       console.error('Error fetching ABC analysis:', error);
     } finally {

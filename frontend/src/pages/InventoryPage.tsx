@@ -21,7 +21,7 @@ import {
 import { useNotification } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
-import axios from 'axios';
+import api from '../services/api';
 import InventorySkeleton from '../components/ui/InventorySkeleton';
 import { AISuggestionsModal } from '../components/Products/AISuggestionsModal';
 
@@ -95,7 +95,6 @@ interface ProductVariation {
 const InventoryPage: React.FC = () => {
   const theme = useTheme();
   const { addNotification } = useNotification();
-  const { token } = useAuth();
   const { socket } = useSocket();
 
   // Estados
@@ -107,6 +106,10 @@ const InventoryPage: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showMargin, setShowMargin] = useState(false);
   const [quickFilter, setQuickFilter] = useState<'all' | 'low' | 'aging' | 'top'>('all');
+  const [paginationModel, setPaginationModel] = useState({
+    pageSize: 10,
+    page: 0,
+  });
   
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [aiSuggestions, setAISuggestions] = useState<any[]>([]);
@@ -115,26 +118,20 @@ const InventoryPage: React.FC = () => {
   const fetchInventory = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/api/inventory', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      // Em um cenário real, os dados viriam do backend formatados. 
-      // Aqui simulamos a estrutura necessária para o frontend premium.
+      const response = await api.get('/inventory');
       setProducts(response.data.data || []);
     } catch (error) {
       addNotification('Erro ao carregar inventário.', 'error');
     } finally {
       setLoading(false);
     }
-  }, [token, addNotification]);
+  }, [addNotification]);
 
   const fetchAISuggestions = async () => {
     setIsAIModalOpen(true);
     setAILoading(true);
     try {
-      const response = await axios.get('/api/inventory/ai-insights', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/inventory/ai-insights');
       setAISuggestions(response.data.data || []);
     } catch (error) {
       addNotification('Falha ao obter insights da IA.', 'error');
@@ -178,18 +175,19 @@ const InventoryPage: React.FC = () => {
     setProducts(prev => prev.map(p => p.id === id ? { ...p, stock_quantity: Math.max(0, p.stock_quantity + delta) } : p));
     
     try {
-      await axios.put('/api/inventory/adjust-stock', { 
+      await api.put('/inventory/adjust-stock', { 
         variationId: id, 
-        quantityChange: delta 
-      }, { headers: { Authorization: `Bearer ${token}` } });
-      showNotification('Estoque ajustado!', 'success');
+        quantityChange: delta,
+        reason: 'Ajuste rápido via Hub de Ativos'
+      });
+      addNotification('Estoque ajustado!', 'success');
     } catch (error) {
       setProducts(originalProducts);
-      showNotification('Falha no ajuste.', 'error');
+      addNotification('Falha no ajuste.', 'error');
     }
   };
 
-  const columns: GridColDef[] = [
+  const columns: GridColDef[] = useMemo(() => [
     { 
       field: 'product_name', 
       headerName: 'PRODUTO E CATEGORIA', 
@@ -297,7 +295,7 @@ const InventoryPage: React.FC = () => {
         </IconButton>
       )
     }
-  ];
+  ], [theme, showMargin, handleQuickAdjust]);
 
   if (loading && products.length === 0) return <InventorySkeleton />;
 
@@ -421,7 +419,8 @@ const InventoryPage: React.FC = () => {
           disableRowSelectionOnClick
           onRowSelectionModelChange={(newModel) => setSelectionModel(newModel)}
           rowSelectionModel={selectionModel}
-          initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
           pageSizeOptions={[10, 25, 50]}
           sx={{
             border: 'none',

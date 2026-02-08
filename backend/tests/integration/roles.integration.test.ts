@@ -55,7 +55,7 @@ describe('Roles API Integration', () => {
       .post('/api/auth/login')
       .send({ email: adminUserData.email, password: adminUserData.password });
 
-    adminToken = res.body.accessToken;
+    adminToken = res.body.data.accessToken;
 
     // Permissions for testing roles
     permissionId1 = await createTestPermission('view', `Dashboard-${timestamp}`);

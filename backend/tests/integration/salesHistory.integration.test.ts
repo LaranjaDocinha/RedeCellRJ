@@ -30,10 +30,9 @@ describe('Sales History API - Integration', () => {
 
     const res = await request(app) // Using app instead of httpServer for supertest usually works better unless server specific logic
       .post('/api/auth/login')
-
       .send({ email: 'admin@pdv.com', password: 'admin123' });
 
-    adminToken = res.body.accessToken;
+    adminToken = res.body.data.accessToken;
 
     const adminUserResult: any = await getAdminUserId();
 

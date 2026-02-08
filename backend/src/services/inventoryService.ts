@@ -13,6 +13,10 @@ export const inventoryService = {
     return inventoryRepository.findLowStockProducts(threshold);
   },
 
+  async getAllInventory(branchId: number = 1) {
+    return inventoryRepository.findAllInventory(branchId);
+  },
+
   async adjustStock(
     variationId: number,
     quantityChange: number,

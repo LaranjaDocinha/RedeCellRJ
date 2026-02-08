@@ -45,9 +45,20 @@ const navGroups: NavGroup[] = [
       { path: '/', label: 'Início', icon: <FaHome />, id: 'home-link' },
       { path: '/dashboard', label: 'Dashboard', icon: <FaTachometerAlt />, id: 'dashboard-link' },
       { path: '/pos', label: 'Ponto de Venda', icon: <FaShoppingCart />, id: 'pos-link' },
+      { path: '/shifts', label: 'Gestão de Turnos', icon: <FaClock /> },
+      { path: '/service-orders', label: 'Ordens de Serviço', icon: <FaClipboardCheck /> },
       { path: '/customers', label: 'Clientes', icon: <FaUsers />, id: 'customers-link' },
       { path: '/orders', label: 'Recepção', icon: <FaClipboardList /> },
       { path: '/returns', label: 'Retornos e Reembolsos', icon: <FaUndo /> },
+    ]
+  },
+  {
+    title: 'Marketing & Fidelidade',
+    items: [
+      { path: '/promotions', label: 'Promoções', icon: <FaPercentage /> },
+      { path: '/coupons', label: 'Cupons', icon: <FaTicketAlt /> },
+      { path: '/loyalty', label: 'Programa Fidelidade', icon: <FaGem /> },
+      { path: '/referrals', label: 'Indicações', icon: <FaHandshake /> },
     ]
   },
   {
@@ -70,6 +81,7 @@ const navGroups: NavGroup[] = [
       { path: '/my-performance', label: 'Meu Desempenho', icon: <FaChartPie /> },
       { path: '/marketplace-sync', label: 'Hub Marketplace', icon: <FaStore /> },
       { path: '/branches', label: 'Filiais', icon: <FaStore /> },
+      { path: '/audit-logs', label: 'Auditoria do Sistema', icon: <FaUserShield /> },
       { path: '/executive-dashboard', label: 'Torre de Controle', icon: <FaChartBar />, id: 'executive-dashboard-link' },
       { path: '/settings', label: 'Configurações', icon: <FaCogs /> },
     ]

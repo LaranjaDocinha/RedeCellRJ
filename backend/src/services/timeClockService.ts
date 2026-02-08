@@ -16,8 +16,13 @@ export const clockIn = async (userId: string, branchId: number) => {
       [userId, branchId],
     );
     return result.rows[0];
-  } catch (error) {
-    console.error('Error in clockIn service:', error);
+  } catch (error: any) {
+    console.error('CRITICAL: Error in clockIn service:', {
+      message: error.message,
+      detail: error.detail,
+      userId,
+      branchId
+    });
     throw error;
   }
 };

@@ -8,6 +8,7 @@ import {
   seedCustomer,
   seedProduct,
 } from '../utils/seedTestData';
+import { getAdminAuthToken } from '../utils/auth.js';
 import { describe, it, expect, beforeAll } from 'vitest';
 
 describe('Z-Reports API', () => {
@@ -19,10 +20,7 @@ describe('Z-Reports API', () => {
     const pool = getPool();
 
     // Get an admin token
-    const authRes = await request(app)
-      .post('/api/auth/login')
-      .send({ email: 'admin@pdv.com', password: 'admin123' });
-    adminToken = authRes.body.data.accessToken;
+    adminToken = await getAdminAuthToken();
 
     const userRes = await getAdminUserId(pool);
     userId = userRes.id;

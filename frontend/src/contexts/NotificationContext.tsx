@@ -28,10 +28,6 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
-const MotionTransition = React.forwardRef(function Transition(props: any, ref: React.Ref<unknown>) {
-  return <motion.div ref={ref} initial={{ opacity: 0, y: 50, scale: 0.3 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }} {...props} />;
-});
-
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -115,7 +111,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         autoHideDuration={5000} 
         onClose={() => setSnackOpen(false)} 
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        TransitionComponent={MotionTransition}
       >
         <Alert severity={snackSev} variant="filled" sx={{ borderRadius: '12px', boxShadow: 3 }}>
           {snackMsg}

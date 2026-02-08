@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { getPool } from '../db/index.js';
 import { v4 as uuidv4 } from 'uuid';
+import { sendSuccess, sendError } from '../utils/responseHelper.js';
 
 const pool = getPool();
 
@@ -13,7 +14,7 @@ export const createRole = async (req: Request, res: Response, next: NextFunction
       'INSERT INTO roles (id, name, description) VALUES ($1, $2, $3) RETURNING *',
       [id, name, description],
     );
-    res.status(201).json(result.rows[0]);
+    return sendSuccess(res, result.rows[0], 201);
   } catch (error) {
     next(error);
   }
@@ -22,7 +23,7 @@ export const createRole = async (req: Request, res: Response, next: NextFunction
 export const getRoles = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await pool.query('SELECT * FROM roles');
-    res.status(200).json(result.rows);
+    return sendSuccess(res, result.rows);
   } catch (error) {
     next(error);
   }
@@ -37,9 +38,9 @@ export const updateRole = async (req: Request, res: Response, next: NextFunction
       [name, description, id],
     );
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Role not found.' });
+      return sendError(res, 'Role not found.', 'NOT_FOUND', 404);
     }
-    res.status(200).json(result.rows[0]);
+    return sendSuccess(res, result.rows[0]);
   } catch (error) {
     next(error);
   }
@@ -50,9 +51,9 @@ export const deleteRole = async (req: Request, res: Response, next: NextFunction
     const { id } = req.params;
     const result = await pool.query('DELETE FROM roles WHERE id = $1 RETURNING *', [id]);
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Role not found.' });
+      return sendError(res, 'Role not found.', 'NOT_FOUND', 404);
     }
-    res.status(204).send();
+    return res.status(204).send();
   } catch (error) {
     next(error);
   }
@@ -82,7 +83,7 @@ export const getPermissions = async (req: Request, res: Response, next: NextFunc
       { id: 'create_sales', name: 'Create Sales', description: 'Allows creating new sales.' },
       // ... more permissions
     ];
-    res.status(200).json(permissions);
+    return sendSuccess(res, permissions);
   } catch (error) {
     next(error);
   }
@@ -97,7 +98,7 @@ export const assignPermissionToRole = async (req: Request, res: Response, next: 
       'INSERT INTO role_permissions (role_id, permission_id) VALUES ($1, $2) ON CONFLICT (role_id, permission_id) DO NOTHING',
       [roleId, permissionId],
     );
-    res.status(200).json({ message: 'Permission assigned to role successfully.' });
+    return sendSuccess(res, { message: 'Permission assigned to role successfully.' });
   } catch (error) {
     next(error);
   }
@@ -110,7 +111,7 @@ export const removePermissionFromRole = async (req: Request, res: Response, next
       roleId,
       permissionId,
     ]);
-    res.status(200).json({ message: 'Permission removed from role successfully.' });
+    return sendSuccess(res, { message: 'Permission removed from role successfully.' });
   } catch (error) {
     next(error);
   }

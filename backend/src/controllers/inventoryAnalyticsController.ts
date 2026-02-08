@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { demandForecastingService } from '../services/demandForecastingService.js';
 import { catchAsync } from '../utils/catchAsync.js';
+import { ResponseHelper } from '../utils/responseHelper.js';
 
 export const inventoryAnalyticsController = {
   /**
@@ -8,7 +9,7 @@ export const inventoryAnalyticsController = {
    */
   getABCAnalysis: catchAsync(async (req: Request, res: Response) => {
     const analysis = await demandForecastingService.getABCAnalysis();
-    res.json(analysis);
+    ResponseHelper.success(res, analysis);
   }),
 
   /**
@@ -16,6 +17,6 @@ export const inventoryAnalyticsController = {
    */
   getPurchaseSuggestions: catchAsync(async (req: Request, res: Response) => {
     const suggestions = await demandForecastingService.getPurchaseSuggestions();
-    res.json(suggestions);
+    ResponseHelper.success(res, suggestions);
   }),
 };

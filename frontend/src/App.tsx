@@ -213,6 +213,7 @@ const router = createBrowserRouter([
       { path: "custom-dashboard", element: <PageTransition><CustomizableDashboard /></PageTransition> },
       { path: "referrals", element: <PageTransition><ReferralPage /></PageTransition> },
       { path: "gamification", element: <PageTransition><GamificationPage /></PageTransition> },
+      { path: "shifts", element: <PageTransition><ShiftsPage /></PageTransition> },
       { path: "time-clock", element: <PageTransition><TimeClockPage /></PageTransition> },
       { path: "quarantine", element: <PageTransition><QuarantinePage /></PageTransition> },
       { path: "reviews", element: <PageTransition><ReviewsPage /></PageTransition> },

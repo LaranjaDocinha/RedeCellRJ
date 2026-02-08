@@ -17,7 +17,7 @@ const InventorySkeleton: React.FC = () => {
       {/* Stats Cards */}
       <Grid container spacing={3} mb={4}>
         {[1, 2, 3].map((i) => (
-          <Grid item xs={12} md={4} key={i}>
+          <Grid size={{ xs: 12, md: 4 }} key={i}>
             <Paper sx={{ p: 3, borderRadius: '24px' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <SkeletonLoader width="100px" height="30px" />

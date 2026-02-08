@@ -216,6 +216,37 @@ export class InventoryRepository {
     );
     return rows;
   }
+
+  async findAllInventory(branchId: number): Promise<any[]> {
+    const { rows } = await this.db.query(
+      `
+      SELECT
+        pv.id,
+        pv.id AS variation_id,
+        p.id AS product_id,
+        p.name AS product_name,
+        pv.color,
+        ps.quantity AS stock_quantity,
+        pv.low_stock_threshold AS min_stock,
+        pv.reorder_point AS max_stock,
+        pv.price,
+        pv.cost_price,
+        c.name AS category_name,
+        'C' as abc_class, -- Placeholder
+        15 as days_of_cover, -- Placeholder
+        false as is_aging, -- Placeholder
+        CURRENT_TIMESTAMP as last_audit -- Placeholder
+      FROM product_stock ps
+      JOIN product_variations pv ON ps.product_variation_id = pv.id
+      JOIN products p ON pv.product_id = p.id
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE ps.branch_id = $1
+      ORDER BY p.name ASC, pv.color ASC;
+    `,
+      [branchId],
+    );
+    return rows;
+  }
 }
 
 export const inventoryRepository = new InventoryRepository();
