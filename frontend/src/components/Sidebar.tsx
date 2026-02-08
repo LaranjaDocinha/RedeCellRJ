@@ -44,8 +44,9 @@ const navGroups: NavGroup[] = [
     items: [
       { path: '/', label: 'Início', icon: <FaHome />, id: 'home-link' },
       { path: '/dashboard', label: 'Dashboard', icon: <FaTachometerAlt />, id: 'dashboard-link' },
+      { path: '/time-clock', label: 'Meu Ponto', icon: <FaClock /> },
       { path: '/pos', label: 'Ponto de Venda', icon: <FaShoppingCart />, id: 'pos-link' },
-      { path: '/shifts', label: 'Gestão de Turnos', icon: <FaClock /> },
+      { path: '/shifts', label: 'Auditoria de Turnos', icon: <FaHistory /> },
       { path: '/service-orders', label: 'Ordens de Serviço', icon: <FaClipboardCheck /> },
       { path: '/customers', label: 'Clientes', icon: <FaUsers />, id: 'customers-link' },
       { path: '/orders', label: 'Recepção', icon: <FaClipboardList /> },

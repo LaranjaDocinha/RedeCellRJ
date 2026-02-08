@@ -98,21 +98,23 @@ export const sendError = (
 
   if (statusCode >= 400 && statusCode < 500) {
 
-    let failData: any;
+        let failData: any;
 
-    if (Array.isArray(data)) {
+        if (Array.isArray(data)) {
 
-      failData = { errors: data, message };
+          failData = { errors: data, message, code };
 
-    } else if (typeof data === 'object' && data !== null) {
+        } else if (typeof data === 'object' && data !== null) {
 
-      failData = { ...data, message };
+          failData = { ...data, message, code };
 
-    } else {
+        } else {
 
-      failData = { message, details: data };
+          failData = { message, code, details: data };
 
-    }
+        }
+
+    
 
     return ResponseHelper.fail(res, failData, statusCode);
 

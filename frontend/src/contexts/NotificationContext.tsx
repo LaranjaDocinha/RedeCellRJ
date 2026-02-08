@@ -21,6 +21,7 @@ export interface AppNotification {
 interface NotificationContextType {
   notifications: AppNotification[];
   addNotification: (msg: string, sev?: AlertColor, type?: string, metadata?: any) => void;
+  showNotification: (msg: string, sev?: AlertColor, type?: string, metadata?: any) => void;
   markAsRead: (id: string | number) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   loading: boolean;
@@ -101,6 +102,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     <NotificationContext.Provider value={{ 
         notifications, 
         addNotification,
+        showNotification: addNotification,
         markAsRead, 
         markAllAsRead, 
         loading 

@@ -4,7 +4,7 @@ import { setupInterceptors } from './apiInterceptors';
 import { API_BASE_URL } from '../config/constants';
 
 const api = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
+  baseURL: `${API_BASE_URL}/api/`,
   withCredentials: true, // Importante para cookies (refreshToken)
 });
 

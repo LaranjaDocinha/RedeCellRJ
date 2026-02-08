@@ -293,7 +293,10 @@ const AppContent: React.FC = () => {
               <CartProvider>
                 <NotificationProvider>
                   <Suspense fallback={<SkeletonLoader width="100%" height="100vh" />}>
-                    <RouterProvider router={router} />
+                    <RouterProvider 
+                      router={router} 
+                      fallbackElement={<SkeletonLoader width="100%" height="100vh" />}
+                    />
                   </Suspense>
                 </NotificationProvider>
               </CartProvider>

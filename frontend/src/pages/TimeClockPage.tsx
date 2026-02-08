@@ -31,14 +31,10 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
-import moment from 'moment';
-import 'moment/locale/pt-br';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../components/Button';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { FaArrowRight } from 'react-icons/fa';
-
-moment.locale('pt-br');
 
 const TimeClockPage: React.FC = () => {
   const theme = useTheme();
@@ -46,7 +42,6 @@ const TimeClockPage: React.FC = () => {
   const { token } = useAuth();
   const { addNotification } = useNotification();
   
-  const [currentTime, setCurrentTime] = useState(moment());
   const [isClockedIn, setIsClockedIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -89,11 +84,26 @@ const TimeClockPage: React.FC = () => {
 
   useEffect(() => { fetchClockStatus(); }, [fetchClockStatus]);
 
-  // 2. Clock Update Timer
+  // 2. Clock Update Timer using native Date
+  const [now, setNow] = useState(new Date());
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(moment()), 1000);
+    const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const formatDate = (date: Date, options: Intl.DateTimeFormatOptions) => {
+    return new Intl.DateTimeFormat('pt-BR', options).format(date);
+  };
+
+  const handleReportClick = () => {
+    addNotification('Gerando relatório de ponto...', 'info');
+    // Futura implementação: navegar para página de relatórios ou abrir modal
+  };
+
+  const handleJustifyClick = () => {
+    addNotification('Funcionalidade de justificativa em breve.', 'info');
+    // Futura implementação: abrir modal de justificativa
+  };
 
   const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
 
@@ -141,11 +151,14 @@ const TimeClockPage: React.FC = () => {
 
   const sessionDuration = useMemo(() => {
     if (!isClockedIn || !sessionStartTime) return null;
-    const duration = moment.duration(currentTime.diff(moment(sessionStartTime)));
-    const hours = Math.floor(duration.asHours());
-    const mins = duration.minutes();
+    const start = new Date(sessionStartTime).getTime();
+    const current = now.getTime();
+    const diff = current - start;
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     return `${hours}h ${mins}m`;
-  }, [currentTime, isClockedIn, sessionStartTime]);
+  }, [now, isClockedIn, sessionStartTime]);
 
   if (loading) return (
     <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
@@ -166,8 +179,8 @@ const TimeClockPage: React.FC = () => {
             </Stack>
           </Box>
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button variant="outlined" color="inherit" label="Relatório" startIcon={<CalendarToday />} />
-            <Button variant="outlined" color="inherit" label="Justificar" startIcon={<PendingIcon />} />
+            <Button variant="outlined" color="inherit" label="Relatório" startIcon={<CalendarToday />} onClick={handleReportClick} />
+            <Button variant="outlined" color="inherit" label="Justificar" startIcon={<PendingIcon />} onClick={handleJustifyClick} />
           </Box>
         </Box>
 
@@ -186,10 +199,14 @@ const TimeClockPage: React.FC = () => {
               <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: 3, mb: 2, fontWeight: 400 }}>HORÁRIO ATUAL</Typography>
               <Box sx={{ position: 'relative', mb: 4 }}>
                 <Typography variant="h1" sx={{ fontWeight: 400, fontSize: { xs: '4rem', md: '6rem' }, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '-2px' }}>
-                    {currentTime.format('HH:mm')}
-                    <Typography component="span" variant="h4" sx={{ ml: 1, opacity: 0.3, fontWeight: 400 }}>{currentTime.format('ss')}</Typography>
+                    {formatDate(now, { hour: '2-digit', minute: '2-digit' })}
+                    <Typography component="span" variant="h4" sx={{ ml: 1, opacity: 0.3, fontWeight: 400 }}>
+                      {formatDate(now, { second: '2-digit' })}
+                    </Typography>
                 </Typography>
-                <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 400 }}>{currentTime.format('dddd, D [de] MMMM')}</Typography>
+                <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 400, textTransform: 'capitalize' }}>
+                  {formatDate(now, { weekday: 'long', day: 'numeric', month: 'long' })}
+                </Typography>
               </Box>
 
               <Box sx={{ position: 'relative', mb: 6 }}>
@@ -256,11 +273,16 @@ const TimeClockPage: React.FC = () => {
                             <Box key={entry.id} component={motion.div} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }} sx={{ position: 'relative', mb: 3 }}>
                                 <Box sx={{ position: 'absolute', left: -41, top: 4, width: 16, height: 16, borderRadius: '50%', bgcolor: theme.palette.background.paper, border: `3px solid ${theme.palette.primary.main}`, zIndex: 1 }} />
                                 <Grid container alignItems="center">
-                                    <Grid size={{ xs: 4, sm: 3 }}><Typography variant="body2" sx={{ color: theme.palette.primary.main }}>{moment(entry.clock_in_time).format('DD/MM')}</Typography></Grid>
+                                    <Grid size={{ xs: 4, sm: 3 }}><Typography variant="body2" sx={{ color: theme.palette.primary.main }}>
+                                      {new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(entry.clock_in_time))}
+                                    </Typography></Grid>
                                     <Grid size={{ xs: 8, sm: 9 }}>
                                         <Box sx={{ p: 1.5, borderRadius: '12px', bgcolor: isDarkMode ? alpha('#fff', 0.02) : '#fbfbfb', border: `1px solid ${theme.palette.divider}` }}>
                                             <Stack direction="row" justifyContent="space-between">
-                                                <Typography variant="body2">{moment(entry.clock_in_time).format('HH:mm')} - {entry.clock_out_time ? moment(entry.clock_out_time).format('HH:mm') : '...'}</Typography>
+                                                <Typography variant="body2">
+                                                  {new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(entry.clock_in_time))} - 
+                                                  {entry.clock_out_time ? new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(entry.clock_out_time)) : '...'}
+                                                </Typography>
                                                 <OnTimeIcon sx={{ color: 'success.main', fontSize: 16 }} />
                                             </Stack>
                                         </Box>

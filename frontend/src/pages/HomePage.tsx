@@ -105,7 +105,7 @@ const HomePage: React.FC = () => {
   const { data: stats, refetch: refetchStats } = useQuery({
     queryKey: ['home-cockpit-stats'],
     queryFn: async () => {
-      const res = await api.get('/dashboard?period=today');
+      const res = await api.get('dashboard?period=today');
       return res.data.data || res.data;
     },
     enabled: !!token
@@ -114,7 +114,7 @@ const HomePage: React.FC = () => {
   const fetchClockStatus = useCallback(async () => {
     if (!token) return;
     try {
-      const res = await api.get('/time-clock/me/latest');
+      const res = await api.get('time-clock/me/latest');
       const entry = res.data.data || res.data;
       setIsClockedIn(entry && entry.clock_in_time && !entry.clock_out_time);
     } catch (e) { console.error(e); } finally { setClockLoading(false); }
@@ -129,7 +129,7 @@ const HomePage: React.FC = () => {
   const handleClockAction = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setClockActionLoading(true);
-    const endpoint = isClockedIn ? '/time-clock/clock-out' : '/time-clock/clock-in';
+    const endpoint = isClockedIn ? 'time-clock/clock-out' : 'time-clock/clock-in';
     try {
       await api.post(endpoint, { branchId: 1 });
       addNotification(`Turno ${!isClockedIn ? 'iniciado' : 'encerrado'}!`, 'success');

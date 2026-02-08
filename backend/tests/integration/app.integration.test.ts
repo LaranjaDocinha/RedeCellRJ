@@ -91,9 +91,9 @@ describe('app.ts Integration', () => {
   it('should handle 404 errors with the errorMiddleware', async () => {
     const res = await request(app).get('/non-existent-route-very-random');
     expect(res.statusCode).toEqual(404);
-    // Standard system returns error.code
-    expect(res.body.error.code).toEqual('NOT_FOUND');
-    expect(res.body.success).toBe(false);
+    // Standard system returns data.code
+    expect(res.body.data.code).toEqual('NOT_FOUND');
+    expect(res.body.status).toBe('fail');
   });
 
   it('should correctly set CORS headers', async () => {
