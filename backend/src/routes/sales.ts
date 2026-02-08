@@ -73,7 +73,7 @@ salesRouter.post(
         customerId: req.body.customerId,
         branchId: req.body.branchId,
       });
-      console.log('DEBUG SALES RESPONSE:', JSON.stringify(newSale));
+      
       return sendSuccess(res, newSale, 201);
     } catch (error) {
       next(error);

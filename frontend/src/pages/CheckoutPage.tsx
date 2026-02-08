@@ -48,21 +48,8 @@ const CheckoutPage: React.FC = () => {
 
       <Grid container spacing={4}>
         {/* Esquerda: Checkout Flow */}
-        <Grid item xs={12} lg={8}>
-import {
-  FaUser,
-  FaMapMarkerAlt,
-  FaCreditCard,
-  FaCheckCircle,
-  FaTag,
-  FaShieldAlt,
-  FaLock,
-  FaArrowRight,
-  FaApple,
-  FaGooglePay
-} from 'react-icons/fa';
-
-// ... inside component
+        <Grid size={{ xs: 12, lg: 8 }}>
+            <Stack spacing={3}>
                 {/* 8.1 One-Click Checkout & 8.2 Mobile Pays */}
                 <Paper sx={{ p: 4, borderRadius: '24px', bgcolor: alpha(theme.palette.text.primary, 0.02), border: `1px dashed ${theme.palette.divider}`, mb: 3 }}>
                     <Typography variant="subtitle2" fontWeight={400} mb={2} textAlign="center">EXPRESS CHECKOUT</Typography>
@@ -80,8 +67,8 @@ import {
                         <Typography variant="h6" fontWeight={400}>Identificação</Typography>
                     </Stack>
                     <Grid container spacing={2}>
-                        <Grid item xs={12} md={6}><TextField fullWidth label="Nome Completo" size="small" variant="standard" /></Grid>
-                        <Grid item xs={12} md={6}><TextField fullWidth label="E-mail" size="small" variant="standard" /></Grid>
+                        <Grid size={{ xs: 12, md: 6 }}><TextField fullWidth label="Nome Completo" size="small" variant="standard" /></Grid>
+                        <Grid size={{ xs: 12, md: 6 }}><TextField fullWidth label="E-mail" size="small" variant="standard" /></Grid>
                     </Grid>
                 </Paper>
 
@@ -92,8 +79,8 @@ import {
                         <Typography variant="h6" fontWeight={400}>Endereço de Entrega</Typography>
                     </Stack>
                     <Grid container spacing={2}>
-                        <Grid item xs={12} md={8}><TextField fullWidth label="Endereço" size="small" variant="standard" /></Grid>
-                        <Grid item xs={12} md={4}><TextField fullWidth label="CEP" size="small" variant="standard" /></Grid>
+                        <Grid size={{ xs: 12, md: 8 }}><TextField fullWidth label="Endereço" size="small" variant="standard" /></Grid>
+                        <Grid size={{ xs: 12, md: 4 }}><TextField fullWidth label="CEP" size="small" variant="standard" /></Grid>
                     </Grid>
                 </Paper>
 
@@ -104,10 +91,10 @@ import {
                         <Typography variant="h6" fontWeight={400}>Forma de Pagamento</Typography>
                     </Stack>
                     <Grid container spacing={2}>
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <Button fullWidth variant="outlined" startIcon={<FaCreditCard />} sx={{ py: 2, borderRadius: '16px' }}>Cartão de Crédito</Button>
                         </Grid>
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <Button fullWidth variant="outlined" sx={{ py: 2, borderRadius: '16px', fontWeight: 400, color: '#32bcad', borderColor: '#32bcad' }}>PIX (-5% OFF)</Button>
                         </Grid>
                     </Grid>
@@ -116,7 +103,7 @@ import {
         </Grid>
 
         {/* Direita: Resumo */}
-        <Grid item xs={12} lg={4}>
+        <Grid size={{ xs: 12, lg: 4 }}>
             <Paper sx={{ p: 4, borderRadius: '32px', position: 'sticky', top: 20 }}>
                 <Typography variant="h6" fontWeight={400} gutterBottom>Resumo</Typography>
                 <Divider sx={{ my: 2 }} />

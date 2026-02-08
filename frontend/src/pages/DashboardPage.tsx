@@ -31,7 +31,8 @@ import { motion } from 'framer-motion';
 
 const StaggeredContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <motion.div initial="hidden" animate="visible" variants={{
-    visible: { transition: { staggerChildren: 0.1 } }
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
   }}>
     {children}
   </motion.div>
@@ -67,8 +68,7 @@ const DashboardPage: React.FC = () => {
   if (isNavigating) return <DashboardSkeleton />;
 
   return (
-    <PageTransition>
-      <Box sx={{ p: 4, bgcolor: 'background.default', minHeight: '100vh', position: 'relative' }}>
+    <Box sx={{ p: 4, bgcolor: 'background.default', minHeight: '100vh', position: 'relative' }}>
         
         {isNavigating && (
             <LinearProgress sx={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3 }} />
@@ -198,7 +198,6 @@ const DashboardPage: React.FC = () => {
           </Grid>
         </StaggeredContainer>
       </Box>
-    </PageTransition>
   );
 };
 

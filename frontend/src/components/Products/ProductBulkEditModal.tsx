@@ -106,7 +106,7 @@ export const ProductBulkEditModal: React.FC<ProductBulkEditModalProps> = ({ open
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth PaperProps={{ sx: { borderRadius: '16px' } }}>
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <DialogTitle component="div" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box display="flex" alignItems="center" gap={1.5}>
             <FaCalculator color={theme.palette.primary.main} />
             <Typography variant="h6" fontWeight={400}>Edição Expressa de Inventário</Typography>

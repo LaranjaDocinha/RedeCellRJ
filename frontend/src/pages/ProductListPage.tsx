@@ -352,7 +352,15 @@ const ProductListPage: React.FC = () => {
         </Box>
 
         {/* Modals */}
-        <Dialog open={isProductModalOpen} onClose={() => setIsProductModalOpen(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: '16px', bgcolor: theme.palette.background.default } }}>
+        <Dialog 
+          open={isProductModalOpen} 
+          onClose={() => setIsProductModalOpen(false)} 
+          maxWidth="md" 
+          fullWidth 
+          disableEnforceFocus={true}
+          disableRestoreFocus={false}
+          PaperProps={{ sx: { borderRadius: '16px', bgcolor: theme.palette.background.default } }}
+        >
           <DialogTitle component="div" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 3 }}>
             <Typography variant="h5" sx={{ fontWeight: 400 }}>Cadastrar Novo Produto</Typography>
             <IconButton onClick={() => setIsProductModalOpen(false)} size="small"><FaTimes /></IconButton>

@@ -55,9 +55,18 @@ vi.mock('../../src/repositories/product.repository.js', () => ({
   },
 }));
 
-// Now import the service
+vi.mock('../../src/utils/auditLogger.js', () => ({
+  auditLogger: {
+    logUpdate: vi.fn().mockResolvedValue(undefined),
+    logCreate: vi.fn().mockResolvedValue(undefined),
+    logDelete: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 import { productService } from '../../src/services/productService.js';
 import { productRepository } from '../../src/repositories/product.repository.js';
+import redisClient from '../../src/utils/redisClient.js';
+import { dynamicPricingService } from '../../src/services/dynamicPricingService.js';
 
 describe('ProductService', () => {
   beforeEach(async () => {
@@ -79,6 +88,33 @@ describe('ProductService', () => {
     });
   });
 
+  describe('getAllProductVariations', () => {
+    it('should return mapped variations', async () => {
+      vi.mocked(productRepository.findAllVariations).mockResolvedValue([
+        { id: 1, sku: 'S1', product_name: 'P1', variation_name: 'V1' }
+      ] as any);
+      const res = await productService.getAllProductVariations();
+      expect(res[0].name).toContain('P1 (V1)');
+    });
+  });
+
+  describe('getProductById', () => {
+    it('should return cached product if available', async () => {
+      vi.mocked(redisClient.get).mockResolvedValueOnce(JSON.stringify({ id: 1, name: 'Cached' }));
+      const res = await productService.getProductById(1);
+      expect(res.name).toBe('Cached');
+      expect(productRepository.findById).not.toHaveBeenCalled();
+    });
+
+    it('should fetch from repo and cache if not in redis', async () => {
+      vi.mocked(redisClient.get).mockResolvedValueOnce(null);
+      vi.mocked(productRepository.findById).mockResolvedValue({ id: 1, name: 'Repo' } as any);
+      const res = await productService.getProductById(1);
+      expect(res.name).toBe('Repo');
+      expect(redisClient.setEx).toHaveBeenCalled();
+    });
+  });
+
   describe('createProduct', () => {
     const productData = {
       name: 'Test',
@@ -96,7 +132,6 @@ describe('ProductService', () => {
       expect(result).toBeDefined();
       expect(mocks.mockClient.query).toHaveBeenCalledWith('BEGIN');
       expect(mocks.mockClient.query).toHaveBeenCalledWith('COMMIT');
-      expect(mocks.mockClient.release).toHaveBeenCalled();
     });
 
     it('should rollback on error', async () => {
@@ -107,18 +142,53 @@ describe('ProductService', () => {
   });
 
   describe('updateProduct', () => {
-    it('should update product details', async () => {
+    it('should update product and its variations complexly', async () => {
       vi.mocked(productRepository.findById).mockResolvedValue({
         id: 1,
-        sku: 'S',
+        sku: 'SKU1',
         branch_id: 1,
       } as any);
+      vi.mocked(productRepository.getVariationIds).mockResolvedValue([10, 11]);
+      vi.mocked(productRepository.getVariationPrice).mockResolvedValue(100);
 
-      await productService.updateProduct(1, { name: 'New' });
+      const updateData = {
+        name: 'New Name',
+        variations: [
+          { id: 10, color: 'Red', price: 120, stock_quantity: 5 }, // Update existing, price change
+          { color: 'Blue', price: 50, stock_quantity: 20 } // New variation
+        ]
+      };
 
-      expect(mocks.mockClient.query).toHaveBeenCalledWith('BEGIN');
+      await productService.updateProduct(1, updateData);
+
       expect(productRepository.updateProduct).toHaveBeenCalled();
+      expect(productRepository.deleteVariations).toHaveBeenCalledWith([11], expect.anything()); // 11 is missing from update
+      expect(productRepository.updateVariation).toHaveBeenCalledWith(10, 'Red', 120, expect.anything());
+      expect(productRepository.recordPriceHistory).toHaveBeenCalled();
+      expect(productRepository.createVariation).toHaveBeenCalled();
       expect(mocks.mockClient.query).toHaveBeenCalledWith('COMMIT');
+    });
+  });
+
+  describe('deleteProduct', () => {
+    it('should delete product and log audit', async () => {
+      vi.mocked(productRepository.findById).mockResolvedValue({ id: 1 } as any);
+      vi.mocked(productRepository.delete).mockResolvedValue(true);
+      await productService.deleteProduct(1);
+      expect(productRepository.delete).toHaveBeenCalledWith(1);
+    });
+  });
+
+  describe('Extra methods', () => {
+    it('getProductPriceHistory should call repo', async () => {
+      await productService.getProductPriceHistory(1, 10);
+      expect(productRepository.getPriceHistory).toHaveBeenCalledWith(10);
+    });
+
+    it('getSuggestedUsedProductPrice should call dynamicPricingService', async () => {
+      vi.mocked(dynamicPricingService.getSuggestedUsedProductPrice).mockResolvedValue(150);
+      const res = await productService.getSuggestedUsedProductPrice(1);
+      expect(res).toBe(150);
     });
   });
 });

@@ -123,7 +123,7 @@ const AuditLogsPage: React.FC = () => {
         <Box sx={{ mb: 4, p: 3, bgcolor: 'background.paper', borderRadius: '24px', border: '1px solid', borderColor: 'divider' }}>
           <Typography variant="overline" fontWeight={400} color="text.secondary" gutterBottom display="block">FILTROS DE BUSCA</Typography>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -132,7 +132,7 @@ const AuditLogsPage: React.FC = () => {
                 onChange={(e) => setFilterEntityType(e.target.value)}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -141,7 +141,7 @@ const AuditLogsPage: React.FC = () => {
                 onChange={(e) => setFilterEntityId(e.target.value)}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -150,7 +150,7 @@ const AuditLogsPage: React.FC = () => {
                 onChange={(e) => setFilterAction(e.target.value)}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -159,7 +159,7 @@ const AuditLogsPage: React.FC = () => {
                 onChange={(e) => setFilterUserId(e.target.value)}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <DatePicker
                 label="Data de Início"
                 value={filterStartDate}
@@ -167,7 +167,7 @@ const AuditLogsPage: React.FC = () => {
                 slotProps={{ textField: { fullWidth: true, size: 'small' } }}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <DatePicker
                 label="Data Final"
                 value={filterEndDate}
@@ -175,7 +175,7 @@ const AuditLogsPage: React.FC = () => {
                 slotProps={{ textField: { fullWidth: true, size: 'small' } }}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Logs por Página</InputLabel>
                 <Select value={limit} onChange={handleLimitChange} label="Logs por Página">
@@ -186,7 +186,7 @@ const AuditLogsPage: React.FC = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={3} display="flex" alignItems="flex-end">
+            <Grid size={{ xs: 12, md: 3 }} display="flex" alignItems="flex-end">
               <Button fullWidth variant="outlined" onClick={handleClearFilters} sx={{ borderRadius: '12px' }}>Limpar Filtros</Button>
             </Grid>
           </Grid>

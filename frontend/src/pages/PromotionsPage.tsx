@@ -75,8 +75,8 @@ const PromotionsPage: React.FC = () => {
     setLoading(true);
     try {
       const [discRes, coupRes] = await Promise.all([
-        api.get('/api/discounts'),
-        api.get('/api/coupons')
+        api.get('discounts'),
+        api.get('coupons')
       ]);
       
       setDiscounts(discRes.data);
@@ -117,7 +117,7 @@ const PromotionsPage: React.FC = () => {
   };
 
   const handleSave = async (data: any) => {
-    const endpoint = activeTab === 0 ? '/api/discounts' : '/api/coupons';
+    const endpoint = activeTab === 0 ? 'discounts' : 'coupons';
     const method = editingItem ? 'put' : 'post';
     const url = editingItem 
         ? `${endpoint}/${activeTab === 0 ? editingItem.id : editingItem.code}` 
@@ -136,7 +136,7 @@ const PromotionsPage: React.FC = () => {
 
   const handleDelete = async (item: PromotionBase) => {
     if (!window.confirm('Excluir esta promoção definitivamente?')) return;
-    const endpoint = activeTab === 0 ? '/api/discounts' : '/api/coupons';
+    const endpoint = activeTab === 0 ? 'discounts' : 'coupons';
     const idParam = activeTab === 0 ? item.id : item.code;
     try {
       await api.delete(`${endpoint}/${idParam}`);
@@ -207,7 +207,7 @@ const PromotionsPage: React.FC = () => {
         </Box>
 
         <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '16px', bgcolor: theme.palette.background.default, backgroundImage: 'none' } }}>
-            <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 3 }}>
+            <DialogTitle component="div" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 3 }}>
                 <Typography variant="h5">{editingItem ? 'Editar' : 'Nova'} {activeTab === 0 ? 'Regra de Desconto' : 'Estratégia de Cupom'}</Typography>
                 <IconButton onClick={handleCloseDialog} size="small"><FaTimes /></IconButton>
             </DialogTitle>

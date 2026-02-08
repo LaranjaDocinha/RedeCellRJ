@@ -4,6 +4,7 @@ import { settingsService } from '../services/settingsService.js';
 import { featureFlagService } from '../services/featureFlagService.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { ValidationError, AppError } from '../utils/errors.js';
+import { ResponseHelper } from '../utils/responseHelper.js';
 
 const settingsRouter = Router();
 
@@ -45,7 +46,7 @@ settingsRouter.use(authMiddleware.authenticate);
 settingsRouter.get('/flags', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const flags = await featureFlagService.getAllFlags();
-    res.status(200).json(flags);
+    ResponseHelper.success(res, flags);
   } catch (error) {
     next(error);
   }
@@ -59,7 +60,7 @@ settingsRouter.post(
       const { name } = req.params;
       const { isEnabled } = req.body;
       await featureFlagService.toggleFlag(name, isEnabled);
-      res.status(200).json({ message: `Flag ${name} updated to ${isEnabled}` });
+      ResponseHelper.success(res, { message: `Flag ${name} updated to ${isEnabled}` });
     } catch (error) {
       next(error);
     }
@@ -72,7 +73,7 @@ settingsRouter.use(authMiddleware.authorize('manage', 'Settings'));
 settingsRouter.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const settings = await settingsService.getAllSettings();
-    res.status(200).json(settings);
+    ResponseHelper.success(res, settings);
   } catch (error) {
     next(error);
   }
@@ -85,7 +86,7 @@ settingsRouter.get('/:key', async (req: Request, res: Response, next: NextFuncti
     if (!setting) {
       throw new AppError('Setting not found', 404);
     }
-    res.status(200).json(setting);
+    ResponseHelper.success(res, setting);
   } catch (error) {
     next(error);
   }
@@ -98,7 +99,7 @@ settingsRouter.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const newSetting = await settingsService.createSetting(req.body);
-      res.status(201).json(newSetting);
+      ResponseHelper.created(res, newSetting);
     } catch (error) {
       next(error);
     }
@@ -115,7 +116,7 @@ settingsRouter.put(
       if (!updatedSetting) {
         throw new AppError('Setting not found', 404);
       }
-      res.status(200).json(updatedSetting);
+      ResponseHelper.success(res, updatedSetting);
     } catch (error) {
       next(error);
     }

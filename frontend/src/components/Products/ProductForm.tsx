@@ -43,7 +43,9 @@ import { fetchProductById, createProduct, updateProduct } from '../../services/p
 import axios from 'axios';
 import styled from 'styled-components';
 
-const StyledSection = styled(Box)<{ isDarkMode: boolean }>`
+const StyledSection = styled(Box).withConfig({
+  shouldForwardProp: (prop) => prop !== 'isDarkMode',
+})<{ isDarkMode: boolean }>`
   background: ${props => props.isDarkMode ? 'rgba(255, 255, 255, 0.03)' : '#ffffff'};
   border-radius: 12px;
   padding: 16px;
@@ -60,7 +62,9 @@ const SectionHeader = styled(Box)`
   & p { font-weight: 400; letter-spacing: 0.5px; text-transform: uppercase; font-size: 0.7rem; }
 `;
 
-const VariationContainer = styled(Box)<{ isDarkMode: boolean }>`
+const VariationContainer = styled(Box).withConfig({
+  shouldForwardProp: (prop) => prop !== 'isDarkMode',
+})<{ isDarkMode: boolean }>`
   border: 1px solid ${props => props.isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#f0f0f0'};
   border-radius: 8px;
   padding: 12px;
@@ -183,24 +187,24 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess, onCance
         <Grid container spacing={1.5}>
           
           {/* IDENTIFICAÇÃO */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <StyledSection isDarkMode={isDarkMode}>
               <Grid container spacing={2}>
-                <Grid item xs={12} md={8}>
+                <Grid size={{ xs: 12, md: 8 }}>
                   <TextField
                     fullWidth label="Nome do Produto" size="small"
                     {...register('name')} error={!!errors.name}
                     InputProps={{ sx: { borderRadius: '8px' } }}
                   />
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 4 }}>
                   <TextField
                     fullWidth label="SKU Base" size="small"
                     {...register('sku')} error={!!errors.sku}
                     InputProps={{ sx: { borderRadius: '8px' } }}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth label="Descrição" multiline rows={1} size="small"
                     {...register('description')}
@@ -212,7 +216,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess, onCance
           </Grid>
 
           {/* PREÇOS E ESTOQUE */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <StyledSection isDarkMode={isDarkMode}>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                 <SectionHeader sx={{ mb: 0 }}>
@@ -241,7 +245,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess, onCance
                       </IconButton>
                     )}
                     <Grid container spacing={2}>
-                      <Grid item xs={12} md={7}>
+                      <Grid size={{ xs: 12, md: 7 }}>
                         <TextField 
                           fullWidth size="small" label="Modelo / Cor" variant="standard"
                           {...register(`variations.${index}.name`)} 
@@ -249,7 +253,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess, onCance
                           InputProps={{ sx: { fontSize: '0.9rem' } }}
                         />
                       </Grid>
-                      <Grid item xs={12} md={5}>
+                      <Grid size={{ xs: 12, md: 5 }}>
                         <TextField 
                           fullWidth size="small" label="SKU Variação" variant="standard"
                           {...register(`variations.${index}.sku`)} 
@@ -258,21 +262,21 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess, onCance
                         />
                       </Grid>
                       
-                      <Grid item xs={4}>
+                      <Grid size={{ xs: 4 }}>
                         <TextField 
                           fullWidth size="small" label="Compra (R$)" type="number" variant="standard"
                           {...register(`variations.${index}.cost_price`)} 
                           inputProps={{ style: { color: theme.palette.error.main, fontWeight: 400, fontSize: '0.85rem' } }} 
                         />
                       </Grid>
-                      <Grid item xs={4}>
+                      <Grid size={{ xs: 4 }}>
                         <TextField 
                           fullWidth size="small" label="Venda (R$)" type="number" variant="standard"
                           {...register(`variations.${index}.price`)} 
                           inputProps={{ style: { color: theme.palette.success.main, fontWeight: 400, fontSize: '0.85rem' } }} 
                         />
                       </Grid>
-                      <Grid item xs={4}>
+                      <Grid size={{ xs: 4 }}>
                         <TextField 
                           fullWidth size="small" label="Estoque" type="number" variant="standard"
                           {...register(`variations.${index}.stock_quantity`)} 
@@ -287,7 +291,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ productId, onSuccess, onCance
           </Grid>
 
           {/* FORNECEDORES */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <StyledSection isDarkMode={isDarkMode} sx={{ py: 1.5 }}>
               <Box display="flex" alignItems="center" gap={2}>
                 <Typography variant="caption" sx={{ fontWeight: 400, color: 'text.secondary', minWidth: '80px' }}>FORNECEDORES:</Typography>

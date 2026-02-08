@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import * as Sentry from "@sentry/react";
 import { showReportDialog } from "@sentry/react"; // Importar showReportDialog
 import './index.css';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './i18n'; // Importar a configuração do i18n
 import App from './App';
 import reportWebVitals from './reportWebVitals';

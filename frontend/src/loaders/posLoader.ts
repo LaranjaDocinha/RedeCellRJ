@@ -4,13 +4,11 @@ import { fetchAllCategories } from '../services/categoryService';
 import { fetchAllCustomers } from '../services/customerService';
 
 export const posLoader = async ({ request }: LoaderFunctionArgs) => {
-  const token = localStorage.getItem('token') || '';
-  
   try {
     const [productsData, categories, customers] = await Promise.all([
-      fetchAllProducts(token, undefined, undefined, 1, 50).catch(() => ({ products: [], totalCount: 0 })),
-      fetchAllCategories(token).catch(() => []),
-      fetchAllCustomers(token).catch(() => ({ customers: [] }))
+      fetchAllProducts('', undefined, undefined, 1, 50).catch(() => ({ products: [], totalCount: 0 })),
+      fetchAllCategories().catch(() => []),
+      fetchAllCustomers().catch(() => ({ customers: [] }))
     ]);
 
     return {

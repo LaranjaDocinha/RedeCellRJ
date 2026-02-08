@@ -217,7 +217,7 @@ const TagsPage: React.FC = () => {
         disableRestoreFocus
         PaperProps={{ sx: { borderRadius: '24px', p: 1 } }}
       >
-        <DialogTitle sx={{ fontWeight: 400, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <DialogTitle component="div" sx={{ fontWeight: 400, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box display="flex" alignItems="center" gap={1.5}>
                 <Box sx={{ width: 40, height: 40, borderRadius: '12px', bgcolor: 'primary.50', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <FaTags color={theme.palette.primary.main} size={20} />

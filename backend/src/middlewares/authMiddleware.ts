@@ -9,7 +9,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey';
 
 const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   // Debug log JWT_SECRET used (only first few chars for security)
-  // console.log('[AUTH DEBUG] Using secret starting with:', JWT_SECRET.substring(0, 3));
+  // 
 
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -17,11 +17,11 @@ const authenticate = async (req: Request, res: Response, next: NextFunction) => 
   }
 
   const token = authHeader.split(' ')[1];
-  console.log('[AUTH DEBUG] Received token string:', token);
+  
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as UserPayload & { ip?: string; ua?: string };
-    console.log('[AUTH DEBUG] Decoded token:', JSON.stringify(decoded));
+    
 
     // Sugestão Sênior #9: Session Hijacking Protection
     const currentIp = req.ip || req.headers['x-forwarded-for']?.toString();

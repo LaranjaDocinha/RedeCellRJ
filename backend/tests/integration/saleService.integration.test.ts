@@ -54,7 +54,7 @@ describe('Sale Service API - Integration', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .send(saleData);
 
-    console.log('DEBUG TEST RES BODY:', JSON.stringify(res.body));
+    
     expect(res.statusCode).toEqual(201);
     expect(res.body.data).toHaveProperty('sale_id');
 
@@ -91,7 +91,7 @@ describe('Sale Service API - Integration', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .send(saleData);
 
-    console.log('DEBUG TEST RES BODY:', JSON.stringify(res.body));
+    
     expect(res.statusCode).toEqual(201);
 
     const paymentsCheck = await getPool().query(
@@ -136,7 +136,7 @@ describe('Sale Service API - Integration', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .send(saleData);
 
-    console.log('DEBUG TEST RES BODY:', JSON.stringify(res.body));
+    
     expect(res.statusCode).toEqual(201);
 
     const customerCheck = await pool.query(

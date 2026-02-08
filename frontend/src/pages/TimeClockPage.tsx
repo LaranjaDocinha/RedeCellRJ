@@ -35,6 +35,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../components/Button';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { FaArrowRight } from 'react-icons/fa';
+import { TimeClockReportModal, TimeClockJustifyModal } from '../components/TimeClock/TimeClockModals';
 
 const TimeClockPage: React.FC = () => {
   const theme = useTheme();
@@ -47,6 +48,10 @@ const TimeClockPage: React.FC = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [recentEntries, setRecentEntries] = useState<any[]>([]);
   const [sessionStartTime, setSessionStartTime] = useState<string | null>(null);
+
+  // Modal States
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isJustifyModalOpen, setIsJustifyModalOpen] = useState(false);
 
   // 1. Fetch Initial Status
   const fetchClockStatus = useCallback(async () => {
@@ -96,13 +101,11 @@ const TimeClockPage: React.FC = () => {
   };
 
   const handleReportClick = () => {
-    addNotification('Gerando relatório de ponto...', 'info');
-    // Futura implementação: navegar para página de relatórios ou abrir modal
+    setIsReportModalOpen(true);
   };
 
   const handleJustifyClick = () => {
-    addNotification('Funcionalidade de justificativa em breve.', 'info');
-    // Futura implementação: abrir modal de justificativa
+    setIsJustifyModalOpen(true);
   };
 
   const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
@@ -299,6 +302,21 @@ const TimeClockPage: React.FC = () => {
           </Grid>
         </Grid>
       </Box>
+
+      <TimeClockReportModal 
+        open={isReportModalOpen} 
+        onClose={() => setIsReportModalOpen(false)} 
+      />
+
+      <TimeClockJustifyModal 
+        open={isJustifyModalOpen} 
+        onClose={() => setIsJustifyModalOpen(false)} 
+        onSubmit={(data) => {
+          console.log('Justificativa enviada:', data);
+          setIsJustifyModalOpen(false);
+          addNotification('Justificativa enviada para análise!', 'success');
+        }}
+      />
     </ErrorBoundary>
   );
 };

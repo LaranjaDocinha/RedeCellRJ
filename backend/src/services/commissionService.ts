@@ -31,7 +31,7 @@ export const commissionService = {
 
         const ruleRes = await client.query(ruleQuery, [sale.user_id, roleId || null, item.category_id || null]);
         const rule = ruleRes.rows[0];
-        logger.debug(`[Commission] Rule match for User: ${sale.user_id}, Category: ${item.category_id}: ${rule ? 'FOUND' : 'NOT FOUND'}`);
+        
 
         if (rule) {
           const amount = Number(item.total_price);

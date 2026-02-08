@@ -140,7 +140,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ onSubmit, onCancel,
   const fetchCustomers = useCallback(async () => {
     setLoadingCustomers(true);
     try {
-      const res = await api.get('/api/customers');
+      const res = await api.get('/customers');
       setCustomers(res.data || []);
     } catch (e) { console.error('Error fetching customers:', e); }
     finally { setLoadingCustomers(false); }

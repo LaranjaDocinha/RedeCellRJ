@@ -14,12 +14,12 @@ export async function loginUser(email: string, password: string): Promise<string
     );
   }
 
-  console.log(`[AUTH TEST DEBUG] Login response for ${email}:`, JSON.stringify(response.body));
+  
   if (!response.body.data) {
-    console.error(`[AUTH TEST ERROR] No data in response body for ${email}`);
+    
     return '';
   }
-  console.log(`[AUTH TEST DEBUG] Token for ${email}:`, response.body.data.accessToken);
+  
   return response.body.data.accessToken;
 }
 

@@ -43,7 +43,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (!isAuthenticated) return;
     setLoading(true);
     try {
-      const response = await api.get('/notifications');
+      const response = await api.get('notifications');
       // Verify if data is an array before mapping
       if (Array.isArray(response.data)) {
         // Map backend type to frontend severity
@@ -82,7 +82,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const markAsRead = async (id: string | number) => {
     try {
-      await api.patch(`/notifications/${id}/read`);
+      await api.patch(`notifications/${id}/read`);
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
     } catch (error) {
       console.error('Failed to mark notification as read', error);
@@ -91,7 +91,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const markAllAsRead = async () => {
     try {
-      await api.post('/notifications/read-all');
+      await api.post('notifications/read-all');
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     } catch (error) {
       console.error('Failed to mark all as read', error);

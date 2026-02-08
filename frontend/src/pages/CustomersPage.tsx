@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { 
   Box, Typography, Button, IconButton, Tooltip, Chip, 
-  LinearProgress, alpha, useTheme, Avatar, Paper
+  LinearProgress, alpha, useTheme, Avatar, Paper,
+  Dialog, DialogTitle, DialogContent
 } from '@mui/material';
 import { 
   DataGrid, GridColDef, GridToolbarContainer, 
@@ -12,12 +13,14 @@ import {
   Visibility as ViewIcon, 
   Edit as EditIcon, 
   WhatsApp as WhatsAppIcon, 
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
-import axios from 'axios';
+import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { useNavigation } from 'react-router-dom';
+import { CustomerForm } from '../components/CustomerForm';
 
 const CustomersPage: React.FC = () => {
   const theme = useTheme();
@@ -29,20 +32,33 @@ const CustomersPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/api/customers', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setCustomers(response.data.data || []);
+      const response = await api.get('/customers');
+      setCustomers(response.data.data || response.data || []);
     } catch (error) {
       addNotification('Erro ao carregar clientes.', 'error');
     } finally {
       setLoading(false);
     }
-  }, [token, addNotification]);
+  }, [addNotification]);
+
+  const handleCreateCustomer = async (data: any) => {
+    try {
+      setLoading(true);
+      await api.post('/customers', data);
+      addNotification('Cliente cadastrado com sucesso!', 'success');
+      setIsModalOpen(false);
+      fetchCustomers();
+    } catch (error: any) {
+      addNotification(error.response?.data?.message || 'Erro ao cadastrar cliente.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchCustomers();
@@ -131,7 +147,12 @@ const CustomersPage: React.FC = () => {
           <Button startIcon={<RefreshIcon />} onClick={fetchCustomers} variant="outlined" sx={{ borderRadius: '12px' }}>
             Atualizar
           </Button>
-          <Button startIcon={<AddIcon />} variant="contained" sx={{ borderRadius: '12px' }}>
+          <Button 
+            startIcon={<AddIcon />} 
+            variant="contained" 
+            onClick={() => setIsModalOpen(true)}
+            sx={{ borderRadius: '12px' }}
+          >
             Novo Cliente
           </Button>
         </Box>
@@ -157,6 +178,31 @@ const CustomersPage: React.FC = () => {
           }}
         />
       </Paper>
+
+      {/* Modal de Novo Cliente */}
+      <Dialog 
+        open={isModalOpen} 
+        onClose={() => setIsModalOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: '28px', p: 1, backgroundImage: 'none' }
+        }}
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h5" component="span" sx={{ fontWeight: 400 }}>Cadastrar Novo Cliente</Typography>
+          <IconButton onClick={() => setIsModalOpen(false)}><CloseIcon /></IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 1 }}>
+            <CustomerForm 
+              onSubmit={handleCreateCustomer} 
+              onCancel={() => setIsModalOpen(false)} 
+              loading={loading}
+            />
+          </Box>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };

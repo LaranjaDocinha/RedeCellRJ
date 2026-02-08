@@ -1,7 +1,7 @@
 import api from './api';
 import type { ServiceOrder } from '../types/serviceOrder';
 
-const API_URL = '/api/service-orders';
+const API_URL = '/service-orders';
 
 export const getServiceOrders = async (token?: string, filters: { status?: string; customer_name?: string } = {}): Promise<ServiceOrder[]> => {
   try {

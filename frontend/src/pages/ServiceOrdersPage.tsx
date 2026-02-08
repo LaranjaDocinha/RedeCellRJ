@@ -182,7 +182,7 @@ const ServiceOrdersPage: React.FC<ServiceOrdersPageProps> = ({ initialOrders }) 
                 { label: 'PRONTO / TESTADO', val: orders.filter(o => o.status === 'Finalizado').length, color: theme.palette.success.main, icon: <FaCheckCircle /> },
                 { label: 'EFICIÊNCIA MÉDIA', val: '1.4h', color: theme.palette.info.main, icon: <FaChartLine /> }
             ].map((s, i) => (
-                <Grid item xs={6} md={3} key={i}>
+                <Grid size={{ xs: 6, md: 3 }} key={i}>
                     <Paper elevation={0} sx={{ p: 2, borderRadius: '20px', border: '1px solid ' + theme.palette.divider, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: alpha(s.color, 0.03) }}>
                         <Box>
                             <Typography variant="overline" sx={{ fontWeight: 400, opacity: 0.6 }}>{s.label}</Typography>
@@ -364,7 +364,15 @@ const ServiceOrdersPage: React.FC<ServiceOrdersPageProps> = ({ initialOrders }) 
         </Box>
 
         {/* Modal de Recepção Técnica (#3, #16) */}
-        <Dialog open={isFormOpen} onClose={() => setIsFormOpen(false)} maxWidth="lg" fullWidth PaperProps={{ sx: { borderRadius: '28px', p: 1 } }}>
+        <Dialog 
+            open={isFormOpen} 
+            onClose={() => setIsFormOpen(false)} 
+            maxWidth="lg" 
+            fullWidth 
+            disableEnforceFocus={true}
+            disableRestoreFocus={false}
+            PaperProps={{ sx: { borderRadius: '28px', p: 1 } }}
+        >
             <DialogTitle component="div" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 3 }}>
                 <Box>
                     <Typography variant="h5" sx={{ fontWeight: 400 }}>Check-in de Aparelho</Typography>

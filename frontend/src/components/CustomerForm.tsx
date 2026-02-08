@@ -11,7 +11,7 @@ import {
   StyledButtonContainer,
 } from './CustomerForm.styled';
 import { Button } from '../components/Button';
-import { Box, Chip, Stack, FormHelperText, CircularProgress, InputAdornment } from '@mui/material';
+import { Box, Chip, Stack, CircularProgress, LinearProgress } from '@mui/material';
 import { fetchAddressByCep } from '../utils/addressUtils';
 
 // Schema de Validação Profissional
@@ -22,7 +22,18 @@ const customerSchema = z.object({
   cpf: z.string().optional().or(z.literal('')),
   cep: z.string().optional().or(z.literal('')),
   address: z.string().optional(),
-// ...
+  tags: z.array(z.string()).default([]),
+});
+
+type CustomerFormData = z.infer<typeof customerSchema>;
+
+interface CustomerFormProps {
+  initialData?: any;
+  onSubmit: (data: CustomerFormData) => void;
+  onCancel: () => void;
+  loading?: boolean;
+}
+
 export const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, onSubmit, onCancel, loading }) => {
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<CustomerFormData>({
     resolver: zodResolver(customerSchema),
@@ -39,19 +50,65 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, onSubmi
     const handleCepBlur = async () => {
         if (cepValue && cepValue.replace(/\D/g, '').length === 8) {
             setIsCepLoading(true);
-            const address = await fetchAddressByCep(cepValue);
-            if (address) {
-                setValue('address', `${address.street}, - ${address.neighborhood}, ${address.city} - ${address.state}`);
+            try {
+                const address = await fetchAddressByCep(cepValue);
+                if (address) {
+                    setValue('address', `${address.street}, ${address.neighborhood}, ${address.city} - ${address.state}`);
+                }
+            } catch (error) {
+                console.error('Failed to fetch address:', error);
+            } finally {
+                setIsCepLoading(false);
             }
-            setIsCepLoading(false);
         }
     };
     
     const timeout = setTimeout(handleCepBlur, 1000);
     return () => clearTimeout(timeout);
   }, [cepValue, setValue]);
-// ...
+
+  const handleAddTag = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (tagInput && !tags.includes(tagInput)) {
+        setValue('tags', [...tags, tagInput]);
+        setTagInput('');
+      }
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setValue('tags', tags.filter(t => t !== tagToRemove));
+  };
+
+  return (
+    <StyledForm onSubmit={handleSubmit(onSubmit)}>
       <Box sx={{ display: 'flex', gap: 2, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', minWidth: { xs: '100%', sm: 0 } }}>
+          <StyledLabel>Nome Completo</StyledLabel>
+          <StyledInput {...register('name')} placeholder="Ex: João Silva" />
+          {errors.name && <Typography variant="caption" color="error">{errors.name.message}</Typography>}
+        </Box>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', minWidth: { xs: '100%', sm: 0 } }}>
+          <StyledLabel>CPF (Opcional)</StyledLabel>
+          <StyledInput {...register('cpf')} placeholder="000.000.000-00" />
+        </Box>
+      </Box>
+
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: { xs: 'wrap', sm: 'nowrap' }, mt: 2 }}>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', minWidth: { xs: '100%', sm: 0 } }}>
+          <StyledLabel>E-mail</StyledLabel>
+          <StyledInput {...register('email')} placeholder="email@exemplo.com" />
+          {errors.email && <Typography variant="caption" color="error">{errors.email.message}</Typography>}
+        </Box>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', minWidth: { xs: '100%', sm: 0 } }}>
+          <StyledLabel>WhatsApp / Telefone</StyledLabel>
+          <StyledInput {...register('phone')} placeholder="(21) 99999-9999" />
+          {errors.phone && <Typography variant="caption" color="error">{errors.phone.message}</Typography>}
+        </Box>
+      </Box>
+
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: { xs: 'wrap', sm: 'nowrap' }, mt: 2 }}>
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', minWidth: { xs: '100%', sm: 0 } }}>
           <StyledLabel>CEP</StyledLabel>
           <StyledInput 
@@ -75,7 +132,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, onSubmi
         </Box>
       </Box>
 
-      <StyledFormField>
+      <StyledFormField sx={{ mt: 2 }}>
         <StyledLabel>Tags de Interesse</StyledLabel>
         <StyledInput 
           placeholder="Pressione Enter para adicionar" 
@@ -97,3 +154,9 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, onSubmi
     </StyledForm>
   );
 };
+
+const Typography: React.FC<any> = ({ children, color, variant }) => (
+    <Box component="span" sx={{ color: color === 'error' ? 'error.main' : 'inherit', fontSize: variant === 'caption' ? '0.75rem' : 'inherit' }}>
+        {children}
+    </Box>
+);

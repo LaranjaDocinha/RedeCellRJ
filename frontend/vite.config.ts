@@ -3,8 +3,7 @@ import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { VitePWA } from 'vite-plugin-pwa';
 import viteCompression from 'vite-plugin-compression';
-
-import path from 'path'; // Import the 'path' module
+import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -20,8 +19,8 @@ export default defineConfig({
       filename: 'sw.ts',
       registerType: 'autoUpdate',
       injectManifest: {
-        maximumFileSizeToCacheInBytes: 8000000, // Increase limit to 8MB
-        globIgnores: ['**\/stats.html'], // Ignore stats.html
+        maximumFileSizeToCacheInBytes: 8000000,
+        globIgnores: ['**\/stats.html'],
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
@@ -56,14 +55,13 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            // Separa as dependências em chunks separados para melhor análise
             return id.toString().split('node_modules/')[1].split('/')[0].toString();
           }
         },
       },
     },
   },
-  resolve: { // Add resolve configuration
+  resolve: {
     alias: [
       { find: '@utils', replacement: path.resolve(__dirname, './src/utils') },
       { find: 'stream', replacement: 'stream-browserify' },
@@ -90,21 +88,16 @@ export default defineConfig({
     include: ['axios', 'react-window', 'react-virtualized-auto-sizer'],
     exclude: [],
   },
-      test: {
-        globals: true,
-        environment: 'jsdom',
-        setupFiles: './src/setupTests.tsx',
-                    testTimeout: 100000,
-                    css: false,
-                    deps: {
-                        inline: ['styled-components', '@mui/material', 'react-joyride', '@mui/x-data-grid'],
-        },
-        include: ['**/*.test.tsx', '**/*.test.ts'],
-  
-    // pool: 'forks',
-    esbuild: {
-      jsx: 'automatic',
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/setupTests.tsx',
+    testTimeout: 100000,
+    css: false,
+    deps: {
+      inline: ['styled-components', '@mui/material', 'react-joyride', '@mui/x-data-grid'],
     },
+    include: ['**/*.test.tsx', '**/*.test.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

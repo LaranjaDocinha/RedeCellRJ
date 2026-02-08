@@ -35,7 +35,7 @@ export const AISuggestionsModal: React.FC<AISuggestionsModalProps> = ({ open, on
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '24px' } }}>
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 3 }}>
+      <DialogTitle component="div" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 3 }}>
         <Box display="flex" alignItems="center" gap={1.5}>
             <FaRobot color={theme.palette.primary.main} size={24} />
             <Typography variant="h6" fontWeight={400}>Sugestões do Consultor IA</Typography>

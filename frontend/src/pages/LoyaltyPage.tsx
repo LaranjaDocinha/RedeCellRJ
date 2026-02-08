@@ -35,7 +35,7 @@ import {
 } from 'react-icons/fa';
 import { useNotification } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
+import api from '../services/api';
 
 const StyledPageContainer = styled(motion.div)`
   padding: 24px;
@@ -84,9 +84,7 @@ const LoyaltyPage: React.FC = () => {
     if (!token) return;
     setLoading(true);
     try {
-      const response = await axios.get('/api/loyalty/summary', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('loyalty/summary');
       setCustomers(Array.isArray(response.data) ? response.data : []);
     } catch (err: any) {
       addNotification('Erro ao carregar dados de fidelidade', 'error');
@@ -97,14 +95,12 @@ const LoyaltyPage: React.FC = () => {
 
   const fetchTransactions = useCallback(async (customerId: number) => {
     try {
-        const response = await axios.get(`/api/loyalty/transactions/${customerId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await api.get(`loyalty/transactions/${customerId}`);
         setTransactions(response.data);
     } catch (e) {
         addNotification('Erro ao buscar histórico', 'error');
     }
-  }, [token, addNotification]);
+  }, [addNotification]);
 
   useEffect(() => {
     fetchLoyaltyData();

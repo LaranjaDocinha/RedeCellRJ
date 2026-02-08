@@ -128,10 +128,64 @@ export const loyaltyService = {
     }
 
     const { rows } = await getPool().query(
-      'SELECT points_change, reason, created_at FROM loyalty_transactions WHERE customer_id = $1 ORDER BY created_at DESC',
+      'SELECT points as points_change, reason, created_at, type as action_type FROM loyalty_transactions WHERE customer_id = $1 ORDER BY created_at DESC',
       [customerId],
     );
 
+    return rows;
+  },
+
+  async getLoyaltySummary() {
+    const query = `
+      SELECT 
+        c.id as customer_id,
+        c.name,
+        c.email,
+        c.phone,
+        c.loyalty_points,
+        lt.name as tier_name,
+        COALESCE(SUM(CASE WHEN tr.points > 0 THEN tr.points ELSE 0 END), 0) as total_earned,
+        ABS(COALESCE(SUM(CASE WHEN tr.points < 0 THEN tr.points ELSE 0 END), 0)) as total_redeemed
+      FROM customers c
+      LEFT JOIN loyalty_tiers lt ON c.loyalty_points >= lt.min_points
+      LEFT JOIN loyalty_transactions tr ON c.id = tr.customer_id
+      GROUP BY c.id, lt.name, lt.min_points
+      ORDER BY c.loyalty_points DESC, c.name ASC
+    `;
+    
+    // Note: The logic above for tier_name might return multiple rows if not handled correctly with a window function or subquery to get the HIGHEST tier.
+    // Let's refine the tier join to get only the highest tier for each customer.
+    
+    const refinedQuery = `
+      WITH CustomerTiers AS (
+        SELECT 
+          c.id as customer_id,
+          c.name,
+          c.email,
+          c.phone,
+          c.loyalty_points,
+          (SELECT name FROM loyalty_tiers WHERE min_points <= c.loyalty_points ORDER BY min_points DESC LIMIT 1) as tier_name
+        FROM customers c
+      )
+      SELECT 
+        ct.*,
+        COALESCE(SUM(CASE WHEN tr.points > 0 THEN tr.points ELSE 0 END), 0) as total_earned,
+        ABS(COALESCE(SUM(CASE WHEN tr.points < 0 THEN tr.points ELSE 0 END), 0)) as total_redeemed
+      FROM CustomerTiers ct
+      LEFT JOIN loyalty_transactions tr ON ct.customer_id = tr.customer_id
+      GROUP BY ct.customer_id, ct.name, ct.email, ct.phone, ct.loyalty_points, ct.tier_name
+      ORDER BY ct.loyalty_points DESC, ct.name ASC
+    `;
+
+    const result = await getPool().query(refinedQuery);
+    return result.rows;
+  },
+
+  async getTransactionsByCustomerId(customerId: number) {
+    const { rows } = await getPool().query(
+      'SELECT id, customer_id, points as points_change, reason, created_at, type as action_type FROM loyalty_transactions WHERE customer_id = $1 ORDER BY created_at DESC',
+      [customerId],
+    );
     return rows;
   },
 
